@@ -301,7 +301,7 @@ export default function ProductManagement() {
                         value={product.name}
                         onChange={(e) => {
                             if (isEditing) {
-                                onEditingProductChange((prev: Product) => ({ ...prev, name: e.target.value }))
+                                onEditingProductChange((prev: Product | null) => prev ? { ...prev, name: e.target.value } : null)
                             } else {
                                 setNewProduct(prev => ({ ...prev, name: e.target.value }))
                             }
@@ -317,7 +317,7 @@ export default function ProductManagement() {
                         value={product.price}
                         onChange={(e) => {
                             if (isEditing) {
-                                onEditingProductChange((prev: Product) => ({ ...prev, price: parseFloat(e.target.value) }))
+                                onEditingProductChange((prev: Product | null) => prev ? { ...prev, price: parseFloat(e.target.value) } : null)
                             } else {
                                 setNewProduct(prev => ({ ...prev, price: parseFloat(e.target.value) }))
                             }
@@ -332,7 +332,7 @@ export default function ProductManagement() {
                         value={product.description}
                         onChange={(e) => {
                             if (isEditing) {
-                                onEditingProductChange((prev: Product) => ({ ...prev, description: e.target.value }))
+                                onEditingProductChange((prev: Product | null) => prev ? { ...prev, description: e.target.value } : null)
                             } else {
                                 setNewProduct(prev => ({ ...prev, description: e.target.value }))
                             }
@@ -346,7 +346,7 @@ export default function ProductManagement() {
                         value={product.category}
                         onValueChange={(value) => {
                             if (isEditing) {
-                                onEditingProductChange((prev: Product) => ({ ...prev, category: value }))
+                                onEditingProductChange((prev: Product | null) => prev ? { ...prev, category: value } : null)
                             } else {
                                 setNewProduct(prev => ({ ...prev, category: value }))
                             }
@@ -368,7 +368,7 @@ export default function ProductManagement() {
                         value={product.brand}
                         onValueChange={(value) => {
                             if (isEditing) {
-                                onEditingProductChange((prev: Product) => ({ ...prev, brand: value }))
+                                onEditingProductChange((prev: Product | null) => prev ? { ...prev, brand: value } : null)
                             } else {
                                 setNewProduct(prev => ({ ...prev, brand: value }))
                             }
@@ -485,7 +485,7 @@ export default function ProductManagement() {
                                 const tag = e.currentTarget.value.trim();
                                 if (tag) {
                                     if (isEditing) {
-                                        onEditingProductChange((prev: Product) => ({ ...prev, tags: [...(prev.tags || []), tag] }))
+                                        onEditingProductChange((prev: Product | null) => prev ? { ...prev, tags: [...(prev.tags || []), tag] } : null)
                                     } else {
                                         setNewProduct(prev => ({ ...prev, tags: [...(prev.tags || []), tag] }))
                                     }
