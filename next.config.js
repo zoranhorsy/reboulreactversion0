@@ -1,13 +1,17 @@
-import type { NextConfig } from 'next'
-
-const nextConfig: NextConfig = {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
     reactStrictMode: true,
-    swcMinify: true,
     images: {
-        domains: ['placeholder.com'], // Ajoutez ici les domaines pour les images externes si nécessaire
+        domains: ['placeholder.com'], // Add any domains you're loading images from
     },
-    // Vous pouvez ajouter d'autres configurations ici selon vos besoins
+    webpack(config) {
+        config.module.rules.push({
+            test: /\.svg$/,
+            use: ["@svgr/webpack"]
+        });
+        return config;
+    }
 }
 
-export default nextConfig
+module.exports = nextConfig
 

@@ -16,32 +16,50 @@ export const ScrollTriggerAnimation: React.FC<ScrollTriggerAnimationProps> = ({ 
     useEffect(() => {
         const element = ref.current
         if (element) {
-            gsap.fromTo(
-                element.children,
-                {
-                    opacity: 0,
-                    y: 50,
-                },
-                {
-                    opacity: 1,
-                    y: 0,
-                    stagger: 0.2,
-                    duration: 1,
-                    ease: 'power3.out',
-                    scrollTrigger: {
-                        trigger: element,
-                        start: 'top 80%',
-                        end: 'bottom 20%',
-                        toggleActions: 'play none none reverse',
-                    },
-                }
-            )
-        }
+            const childElements = Array.from(element.children)
 
-        return () => {
-            ScrollTrigger.getAll().forEach(trigger => trigger.kill())
+            const setupAnimations = () => {
+                childElements.forEach((child, index) => {
+                    const tl = gsap.timeline({
+                        scrollTrigger: {
+                            trigger: child as Element,
+                            start: 'top bottom-=100',
+                            end: 'top center',
+                            toggleActions: 'play none none reverse',
+                        }
+                    });
+
+                    tl.fromTo(child,
+                        {
+                            opacity: 0,
+                            y: 50,
+                            scale: 0.95,
+                        },
+                        {
+                            opacity: 1,
+                            y: 0,
+                            scale: 1,
+                            duration: 0.8,
+                            ease: 'power3.out',
+                        }
+                    );
+                });
+            }
+
+            setupAnimations();
+
+            // Réinitialiser les animations lors du redimensionnement
+            const resizeObserver = new ResizeObserver(() => {
+                ScrollTrigger.refresh();
+            });
+            resizeObserver.observe(element);
+
+            return () => {
+                ScrollTrigger.getAll().forEach(trigger => trigger.kill());
+                resizeObserver.disconnect();
+            }
         }
-    }, [])
+    }, []);
 
     return <div ref={ref}>{children}</div>
 }
