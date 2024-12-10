@@ -574,7 +574,7 @@ export default function ProductManagement() {
                                             <Edit className="h-4 w-4 inline-block mr-1"/> Modifier
                                         </Button>
                                         <AlertDialog>
-                                            <AlertDialogTrigger asChild>
+                                            <AlertDialogTrigger>
                                                 <Button variant="destructive" onClick={() => setDeletingProductId(product.id)}>
                                                     <Trash2 className="h-4 w-4 inline-block mr-1"/> Supprimer
                                                 </Button>
