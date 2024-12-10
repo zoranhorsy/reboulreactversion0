@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/components/ui/use-toast"
 import { Textarea } from "@/components/ui/textarea"
@@ -62,7 +62,8 @@ export default function ProductManagement() {
             }
             const data = await response.json()
             if (!Array.isArray(data)) {
-                throw new Error('Data is not an array')
+                console.error('Fetched data is not an array')
+                return
             }
             setProducts(data)
         } catch (error) {
@@ -88,7 +89,8 @@ export default function ProductManagement() {
                 body: JSON.stringify(newProduct),
             })
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`)
+                console.error(`HTTP error! status: ${response.status}`)
+                return
             }
             const addedProduct = await response.json()
 
@@ -118,7 +120,8 @@ export default function ProductManagement() {
                 body: JSON.stringify(editingProduct),
             })
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`)
+                console.error(`HTTP error! status: ${response.status}`)
+                return
             }
             setEditingProduct(null)
             stableToast({
@@ -144,7 +147,8 @@ export default function ProductManagement() {
                 method: 'DELETE',
             })
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`)
+                console.error(`HTTP error! status: ${response.status}`)
+                return
             }
             stableToast({
                 title: "Produit supprimé",
@@ -181,8 +185,14 @@ export default function ProductManagement() {
             })
 
             if (!response.ok) {
+                console.error(`HTTP error! status: ${response.status}`)
                 const errorData = await response.json()
-                throw new Error(`Upload failed: ${errorData.message || response.statusText}`)
+                stableToast({
+                    title: 'Erreur de téléchargement d\'image',
+                    description: errorData.message || response.statusText,
+                    variant: 'destructive'
+                })
+                return;
             }
 
             const data = await response.json()
