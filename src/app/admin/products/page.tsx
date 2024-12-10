@@ -78,7 +78,7 @@ export default function ProductManagement() {
         }
 
         fetchProducts()
-    }, [])
+    }, [ toast ])
 
     const refreshProducts = () => {
         const fetchProducts = async () => {
