@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -16,7 +16,6 @@ import { Badge } from "@/components/ui/badge"
 import { X, Edit, Trash2, Plus } from 'lucide-react'
 import Image from 'next/image'
 
-// Define types outside the component
 type Variant = {
     size: string
     color: string
@@ -38,7 +37,6 @@ type Product = {
 const categories = ["Vestes", "Pantalons", "T-shirts", "Sweats", "Accessoires"]
 const brands = ["Stone Island", "CP Company"]
 
-
 export default function ProductManagement() {
     const [products, setProducts] = useState<Product[]>([])
     const [newProduct, setNewProduct] = useState<Omit<Product, 'id'>>({
@@ -54,56 +52,32 @@ export default function ProductManagement() {
     const [editingProduct, setEditingProduct] = useState<Product | null>(null)
     const [deletingProductId, setDeletingProductId] = useState<number | null>(null)
     const { toast } = useToast()
+    const stableToast = useCallback((props) => toast(props), [toast])
+
+    const fetchProducts = useCallback(async () => {
+        try {
+            const response = await fetch('/api/products')
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`)
+            }
+            const data = await response.json()
+            if (!Array.isArray(data)) {
+                throw new Error('Data is not an array')
+            }
+            setProducts(data)
+        } catch (error) {
+            console.error('Error fetching products:', error)
+            stableToast({
+                title: "Erreur",
+                description: `Impossible de charger les produits: ${error instanceof Error ? error.message : 'Erreur inconnue'}`,
+                variant: "destructive",
+            })
+        }
+    }, [stableToast])
 
     useEffect(() => {
-        const fetchProducts = async () => {
-            try {
-                const response = await fetch('/api/products')
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`)
-                }
-                const data = await response.json()
-                if (!Array.isArray(data)) {
-                    throw new Error('Data is not an array')
-                }
-                setProducts(data)
-            } catch (error) {
-                console.error('Error fetching products:', error)
-                toast({
-                    title: "Erreur",
-                    description: `Impossible de charger les produits: ${error instanceof Error ? error.message : 'Erreur inconnue'}`,
-                    variant: "destructive",
-                })
-            }
-        }
-
         fetchProducts()
-    }, [ toast ])
-
-    const refreshProducts = () => {
-        const fetchProducts = async () => {
-            try {
-                const response = await fetch('/api/products')
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`)
-                }
-                const data = await response.json()
-                if (!Array.isArray(data)) {
-                    throw new Error('Data is not an array')
-                }
-                setProducts(data)
-            } catch (error) {
-                console.error('Error fetching products:', error)
-                toast({
-                    title: "Erreur",
-                    description: `Impossible de charger les produits: ${error instanceof Error ? error.message : 'Erreur inconnue'}`,
-                    variant: "destructive",
-                })
-            }
-        }
-        fetchProducts()
-    }
-
+    }, [fetchProducts, toast])
 
     const handleAddProduct = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -119,14 +93,14 @@ export default function ProductManagement() {
             const addedProduct = await response.json()
 
             setNewProduct({ name: '', price: 0, description: '', category: '', brand: '', images: [], variants: [], tags: [] })
-            toast({
+            stableToast({
                 title: "Produit ajouté",
                 description: `${addedProduct.name} a été ajouté avec succès.`,
             })
-            refreshProducts() // Refresh the product list after adding
+            fetchProducts()
         } catch (error) {
             console.error('Error adding product:', error)
-            toast({
+            stableToast({
                 title: "Erreur",
                 description: `Impossible d'ajouter le produit: ${error instanceof Error ? error.message : 'Erreur inconnue'}`,
                 variant: "destructive",
@@ -147,14 +121,14 @@ export default function ProductManagement() {
                 throw new Error(`HTTP error! status: ${response.status}`)
             }
             setEditingProduct(null)
-            toast({
+            stableToast({
                 title: 'Produit modifié',
                 description: `${editingProduct.name} a été modifié avec succès.`
             })
-            refreshProducts() // Refresh the product list after editing
+            fetchProducts()
         } catch (error) {
             console.error('Error updating product:', error)
-            toast({
+            stableToast({
                 title: 'Erreur',
                 description: `Impossible de modifier le produit: ${
                     error instanceof Error ? error.message : 'Erreur inconnue'
@@ -172,16 +146,14 @@ export default function ProductManagement() {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`)
             }
-            toast({
+            stableToast({
                 title: "Produit supprimé",
                 description: "Le produit a été supprimé avec succès.",
             })
-
-            refreshProducts() // Refresh the product list after deletion
-
+            fetchProducts()
         } catch (error) {
             console.error('Error deleting product:', error)
-            toast({
+            stableToast({
                 title: "Erreur",
                 description: `Impossible de supprimer le produit: ${error instanceof Error ? error.message : 'Erreur inconnue'}`,
                 variant: "destructive",
@@ -218,12 +190,12 @@ export default function ProductManagement() {
             if (!data.success || !Array.isArray(data.urls)) {
                 const errorMessage = data.message || 'Image upload failed';
                 console.error('Image upload failed:', errorMessage);
-                toast({
+                stableToast({
                     title: 'Erreur de téléchargement d\'image',
                     description: errorMessage,
                     variant: 'destructive'
                 })
-                return; // Stop further execution if upload fails
+                return;
             }
 
             const imageUrls = data.urls
@@ -236,14 +208,14 @@ export default function ProductManagement() {
                 setNewProduct(prev => ({ ...prev, images: [...(prev.images || []), ...imageUrls] }))
             }
 
-            toast({
+            stableToast({
                 title: 'Image téléchargée',
                 description: "L'image a été téléchargée et optimisée avec succès."
             })
-            refreshProducts()
+            fetchProducts()
         } catch (error) {
             console.error('Error uploading image:', error)
-            toast({
+            stableToast({
                 title: 'Erreur',
                 description:
                     error instanceof Error
@@ -270,7 +242,6 @@ export default function ProductManagement() {
         }
     }
 
-
     const ProductForm = ({
                              product,
                              isEditing,
@@ -286,22 +257,21 @@ export default function ProductManagement() {
     }) => {
         const [newVariant, setNewVariant] = useState<Omit<Variant, 'stock'>>({ size: '', color: '' })
         const [newVariantStock, setNewVariantStock] = useState(0)
-        const { toast } = useToast() // Access toast here
 
         const handleAddVariant = () => {
-            if (newVariant.size && newVariant.color && !isNaN(newVariantStock)) { // Check for valid stock
+            if (newVariant.size && newVariant.color && !isNaN(newVariantStock)) {
                 const variant = { ...newVariant, stock: newVariantStock }
 
                 if (isEditing) {
-                    onEditingProductChange(prev => prev ? { ...prev, variants: [...prev.variants, variant] } : null)
+                    onEditingProductChange((prev: Product | null) => prev ? { ...prev, variants: [...product.variants, variant] } : null)
                 } else {
-                    setNewProduct(prev => ({ ...prev, variants: [...prev.variants, variant] }))
+                    setNewProduct((prev: Omit<Product, 'id'>) => ({ ...prev, variants: [...prev.variants, variant] }))
                 }
 
                 setNewVariant({ size: '', color: '' })
                 setNewVariantStock(0)
             } else {
-                toast({
+                stableToast({
                     title: 'Erreur',
                     description: "Veuillez remplir tous les champs de la variante et entrer un stock valide.",
                     variant: 'destructive'
@@ -311,95 +281,15 @@ export default function ProductManagement() {
 
         const handleRemoveVariant = (index: number) => {
             if (isEditing) {
-                onEditingProductChange(prev => {
-                    if (!prev) return null
-                    const updatedVariants = [...prev.variants]
-                    updatedVariants.splice(index, 1)
-                    return { ...prev, variants: updatedVariants }
-                })
+                onEditingProductChange({
+                    ...product,
+                    variants: product.variants.filter((_, i) => i !== index)
+                } as Product)
             } else {
-                setNewProduct(prev => ({ ...prev, variants: prev.variants.filter((_, i) => i !== index) }))
-            }
-        }
-
-        const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, isEditing: boolean, product?: Product) => {
-            const files = e.target.files
-            if (!files) return
-
-            const formData = new FormData()
-            for (let i = 0; i < files.length; i++) {
-                formData.append('images', files[i])
-            }
-
-            if (isEditing && product) {
-                formData.append('productId', product.id.toString())
-            }
-
-            try {
-                const response = await fetch('/api/upload', {
-                    method: 'POST',
-                    body: formData
-                })
-
-                if (!response.ok) {
-                    const errorData = await response.json()
-                    throw new Error(`Upload failed: ${errorData.message || response.statusText}`)
-                }
-
-                const data = await response.json()
-
-                if (!data.success || !Array.isArray(data.urls)) {
-                    const errorMessage = data.message || 'Image upload failed';
-                    console.error('Image upload failed:', errorMessage);
-                    toast({
-                        title: 'Erreur de téléchargement d\'image',
-                        description: errorMessage,
-                        variant: 'destructive'
-                    })
-                    return
-                }
-
-                const imageUrls = data.urls
-
-                if (isEditing && editingProduct) {
-                    onEditingProductChange(prev =>
-                        prev ? { ...prev, images: [...(prev.images || []), ...imageUrls] } : null
-                    )
-                } else {
-                    setNewProduct(prev => ({ ...prev, images: [...(prev.images || []), ...imageUrls] }))
-                }
-
-                toast({
-                    title: 'Image téléchargée',
-                    description: "L'image a été téléchargée et optimisée avec succès."
-                })
-            } catch (error) {
-                console.error('Error uploading image:', error)
-                toast({
-                    title: 'Erreur',
-                    description:
-                        error instanceof Error
-                            ? error.message
-                            : "Une erreur est survenue lors du téléchargement de l'image.",
-                    variant: 'destructive'
-                })
-            }
-        }
-
-
-        const handleRemoveImage = (imageUrl: string, isEditing: boolean) => {
-            if (isEditing && editingProduct) {
-                onEditingProductChange(prev => prev ? { ...prev, images: prev.images.filter(img => img !== imageUrl) } : null)
-            } else {
-                setNewProduct(prev => ({ ...prev, images: prev.images.filter(img => img !== imageUrl) }))
-            }
-        }
-
-        const handleRemoveTag = (tag: string, isEditing: boolean) => {
-            if (isEditing && editingProduct) {
-                onEditingProductChange(prev => prev ? { ...prev, tags: prev.tags.filter(t => t !== tag) } : null)
-            } else {
-                setNewProduct(prev => ({ ...prev, tags: prev.tags.filter(t => t !== tag) }))
+                setNewProduct(prev => ({
+                    ...prev,
+                    variants: prev.variants.filter((_, i) => i !== index)
+                }))
             }
         }
 
@@ -412,7 +302,7 @@ export default function ProductManagement() {
                         value={product.name}
                         onChange={(e) => {
                             if (isEditing) {
-                                onEditingProductChange({ ...product, name: e.target.value })
+                                onEditingProductChange({ ...product, name: e.target.value } as Product)
                             } else {
                                 setNewProduct(prev => ({ ...prev, name: e.target.value }))
                             }
@@ -428,7 +318,7 @@ export default function ProductManagement() {
                         value={product.price}
                         onChange={(e) => {
                             if (isEditing) {
-                                onEditingProductChange({ ...product, price: parseFloat(e.target.value) })
+                                onEditingProductChange({ ...product, price: parseFloat(e.target.value) } as Product)
                             } else {
                                 setNewProduct(prev => ({ ...prev, price: parseFloat(e.target.value) }))
                             }
@@ -443,7 +333,7 @@ export default function ProductManagement() {
                         value={product.description}
                         onChange={(e) => {
                             if (isEditing) {
-                                onEditingProductChange({ ...product, description: e.target.value })
+                                onEditingProductChange({ ...product, description: e.target.value } as Product)
                             } else {
                                 setNewProduct(prev => ({ ...prev, description: e.target.value }))
                             }
@@ -457,7 +347,7 @@ export default function ProductManagement() {
                         value={product.category}
                         onValueChange={(value) => {
                             if (isEditing) {
-                                onEditingProductChange({ ...product, category: value })
+                                onEditingProductChange({ ...product, category: value } as Product)
                             } else {
                                 setNewProduct(prev => ({ ...prev, category: value }))
                             }
@@ -479,7 +369,7 @@ export default function ProductManagement() {
                         value={product.brand}
                         onValueChange={(value) => {
                             if (isEditing) {
-                                onEditingProductChange({ ...product, brand: value })
+                                onEditingProductChange({ ...product, brand: value } as Product)
                             } else {
                                 setNewProduct(prev => ({ ...prev, brand: value }))
                             }
@@ -499,7 +389,7 @@ export default function ProductManagement() {
                     <Label>Images</Label>
                     <div className="flex flex-wrap gap-2 mb-2">
                         {(product.images || []).map((image, index) => (
-                            <div key={index} className="relative w-24 h-24 rounded-lg overflow-hidden shadow-sm">
+                            <div key={index} className="relative w-24 h-24">
                                 <Image src={image} alt={`Product image ${index + 1}`} fill className="object-cover" />
                                 <Button
                                     variant="destructive"
@@ -593,14 +483,14 @@ export default function ProductManagement() {
                         placeholder="Ajouter un tag"
                         onKeyDown={(e) => {
                             if (e.key === 'Enter') {
-                                const tag = e.target.value.trim();
+                                const tag = e.currentTarget.value.trim();
                                 if (tag) {
                                     if (isEditing) {
-                                        onEditingProductChange(prev => prev ? { ...prev, tags: [...prev.tags, tag] } : null)
+                                        onEditingProductChange({ ...product, tags: [...product.tags, tag] } as Product)
                                     } else {
                                         setNewProduct(prev => ({ ...prev, tags: [...prev.tags, tag] }))
                                     }
-                                    e.target.value = '';
+                                    e.currentTarget.value = '';
                                 }
                             }
                         }}
@@ -731,7 +621,7 @@ export default function ProductManagement() {
                         <AlertDialogHeader>
                             <AlertDialogTitle>Supprimer un produit</AlertDialogTitle>
                             <AlertDialogDescription>
-                                Êtes-vous sûr de vouloir supprimer ce produit&apos; ? Cette action est irréversible.
+                                Êtes-vous sûr de vouloir supprimer ce produit ? Cette action est irréversible.
                             </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
