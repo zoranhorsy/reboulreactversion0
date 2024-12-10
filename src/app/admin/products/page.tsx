@@ -263,7 +263,7 @@ export default function ProductManagement() {
                 const variant = { ...newVariant, stock: newVariantStock }
 
                 if (isEditing) {
-                    onEditingProductChange((prev: Product | null) => prev ? { ...prev, variants: [...product.variants, variant] } : null)
+                    onEditingProductChange((prev: Product | null) => prev ? { ...prev, variants: [...prev.variants, variant] } : null)
                 } else {
                     setNewProduct((prev: Omit<Product, 'id'>) => ({ ...prev, variants: [...prev.variants, variant] }))
                 }
