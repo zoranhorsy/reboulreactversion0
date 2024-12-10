@@ -252,7 +252,7 @@ export default function ProductManagement() {
         product: Omit<Product, 'id'> | Product
         isEditing: boolean
         onSubmit: (e: React.FormEvent) => void
-        onEditingProductChange: (updatedProduct: Product | null) => void
+        onEditingProductChange: (updatedProduct: Product | ((prev: Product | null) => Product | null)) => void
         setNewProduct: React.Dispatch<React.SetStateAction<Omit<Product, 'id'>>>
     }) => {
         const [newVariant, setNewVariant] = useState<Omit<Variant, 'stock'>>({ size: '', color: '' })
@@ -263,7 +263,9 @@ export default function ProductManagement() {
                 const variant = { ...newVariant, stock: newVariantStock }
 
                 if (isEditing) {
-                    onEditingProductChange((prev: Product | null) => prev ? { ...prev, variants: [...prev.variants, variant] } : null)
+                    onEditingProductChange((prev: Product | null) =>
+                        prev ? { ...prev, variants: [...prev.variants, variant] } : null
+                    )
                 } else {
                     setNewProduct((prev: Omit<Product, 'id'>) => ({ ...prev, variants: [...prev.variants, variant] }))
                 }
@@ -281,10 +283,7 @@ export default function ProductManagement() {
 
         const handleRemoveVariant = (index: number) => {
             if (isEditing) {
-                onEditingProductChange({
-                    ...product,
-                    variants: product.variants.filter((_, i) => i !== index)
-                } as Product)
+                onEditingProductChange((prev: Product | null) => prev ? { ...prev, variants: prev.variants.filter((_, i) => i !== index) } : null)
             } else {
                 setNewProduct(prev => ({
                     ...prev,
@@ -302,7 +301,7 @@ export default function ProductManagement() {
                         value={product.name}
                         onChange={(e) => {
                             if (isEditing) {
-                                onEditingProductChange({ ...product, name: e.target.value } as Product)
+                                onEditingProductChange((prev: Product) => ({ ...prev, name: e.target.value }))
                             } else {
                                 setNewProduct(prev => ({ ...prev, name: e.target.value }))
                             }
@@ -318,7 +317,7 @@ export default function ProductManagement() {
                         value={product.price}
                         onChange={(e) => {
                             if (isEditing) {
-                                onEditingProductChange({ ...product, price: parseFloat(e.target.value) } as Product)
+                                onEditingProductChange((prev: Product) => ({ ...prev, price: parseFloat(e.target.value) }))
                             } else {
                                 setNewProduct(prev => ({ ...prev, price: parseFloat(e.target.value) }))
                             }
@@ -333,7 +332,7 @@ export default function ProductManagement() {
                         value={product.description}
                         onChange={(e) => {
                             if (isEditing) {
-                                onEditingProductChange({ ...product, description: e.target.value } as Product)
+                                onEditingProductChange((prev: Product) => ({ ...prev, description: e.target.value }))
                             } else {
                                 setNewProduct(prev => ({ ...prev, description: e.target.value }))
                             }
@@ -347,7 +346,7 @@ export default function ProductManagement() {
                         value={product.category}
                         onValueChange={(value) => {
                             if (isEditing) {
-                                onEditingProductChange({ ...product, category: value } as Product)
+                                onEditingProductChange((prev: Product) => ({ ...prev, category: value }))
                             } else {
                                 setNewProduct(prev => ({ ...prev, category: value }))
                             }
@@ -369,7 +368,7 @@ export default function ProductManagement() {
                         value={product.brand}
                         onValueChange={(value) => {
                             if (isEditing) {
-                                onEditingProductChange({ ...product, brand: value } as Product)
+                                onEditingProductChange((prev: Product) => ({ ...prev, brand: value }))
                             } else {
                                 setNewProduct(prev => ({ ...prev, brand: value }))
                             }
@@ -486,9 +485,9 @@ export default function ProductManagement() {
                                 const tag = e.currentTarget.value.trim();
                                 if (tag) {
                                     if (isEditing) {
-                                        onEditingProductChange({ ...product, tags: [...product.tags, tag] } as Product)
+                                        onEditingProductChange((prev: Product) => ({ ...prev, tags: [...(prev.tags || []), tag] }))
                                     } else {
-                                        setNewProduct(prev => ({ ...prev, tags: [...prev.tags, tag] }))
+                                        setNewProduct(prev => ({ ...prev, tags: [...(prev.tags || []), tag] }))
                                     }
                                     e.currentTarget.value = '';
                                 }
