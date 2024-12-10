@@ -1,7 +1,5 @@
 'use client'
 
-import { toast } from 'react-toastify'; // Assuming react-toastify is used
-
 import { useState, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
