@@ -52,7 +52,7 @@ export default function ProductManagement() {
     const [editingProduct, setEditingProduct] = useState<Product | null>(null)
     const [deletingProductId, setDeletingProductId] = useState<number | null>(null)
     const { toast } = useToast()
-    const stableToast = useCallback((props) => toast(props), [toast])
+    const stableToast = useCallback((props: Parameters<typeof toast>[0]) => toast(props), [toast])
 
     const fetchProducts = useCallback(async () => {
         try {
