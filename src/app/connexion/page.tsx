@@ -52,7 +52,7 @@ export default function Login() {
                 <Button type="submit" className="w-full">Se connecter</Button>
             </form>
             <p className="mt-4 text-center">
-                Pas encore de compte ? <Link href="/inscription" className="text-primary hover:underline">S'inscrire</Link>
+                Pas encore de compte ? <Link href="/inscription" className="text-primary hover:underline">S&apos;inscrire</Link>
             </p>
         </div>
     )

@@ -39,7 +39,7 @@ export default function AdminLogin() {
                     <h1 className="text-2xl font-bold mb-6 text-center">Connexion Admin</h1>
                     <div className="mb-4">
                         <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="username">
-                            Nom d'utilisateur
+                            Nom d&apos;utilisateur
                         </label>
                         <Input
                             id="username"

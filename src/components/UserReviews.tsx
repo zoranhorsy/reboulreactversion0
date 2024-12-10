@@ -63,7 +63,7 @@ export function UserReviews() {
                       </DialogTrigger>
                       <DialogContent>
                         <DialogHeader>
-                          <DialogTitle>Modifier l'avis</DialogTitle>
+                          <DialogTitle>Modifier l&apos;avis</DialogTitle>
                         </DialogHeader>
                         <EditReviewForm review={review} onUpdate={handleUpdateReview} />
                       </DialogContent>
@@ -116,7 +116,7 @@ function EditReviewForm({ review, onUpdate }: { review: Review, onUpdate: (revie
               rows={4}
           />
         </div>
-        <Button type="submit">Mettre à jour l'avis</Button>
+        <Button type="submit">Mettre à jour l&apos;avis</Button>
       </form>
   )
 }

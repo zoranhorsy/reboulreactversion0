@@ -116,7 +116,7 @@ export function ProductReviews({ productId, initialReviews = [] }: ProductReview
                     rows={4}
                 />
                 <Button type="submit" disabled={newReview.rating === 0 || newReview.comment.trim() === ''}>
-                    Soumettre l'avis
+                    Soumettre l&apos;avis
                 </Button>
             </form>
         </div>

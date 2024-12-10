@@ -12,13 +12,13 @@ export function AboutSection() {
                     </div>
                     <div className="about-text lg:w-1/2">
                         <p className="animate-on-scroll text-gray-700 mb-6">
-                            Depuis notre création, Reboul Store s'est imposé comme la référence en matière de mode premium à Marseille.
-                            Notre passion pour les vêtements de qualité et notre engagement envers l'excellence nous permettent de vous
+                            Depuis notre création, Reboul Store s&apos;est imposé comme la référence en matière de mode premium à Marseille.
+                            Notre passion pour les vêtements de qualité et notre engagement envers l&apos;excellence nous permettent de vous
                             offrir une sélection unique des meilleures marques internationales.
                         </p>
                         <p className="animate-on-scroll text-gray-700 mb-6">
-                            Chez Reboul Store, nous croyons que le style est une expression de soi. C'est pourquoi nous nous efforçons
-                            de proposer une gamme diversifiée de vêtements et d'accessoires qui répondent aux goûts et aux besoins de
+                            Chez Reboul Store, nous croyons que le style est une expression de soi. C&apos;est pourquoi nous nous efforçons
+                            de proposer une gamme diversifiée de vêtements et d&apos;accessoires qui répondent aux goûts et aux besoins de
                             notre clientèle exigeante.
                         </p>
                         <Link href="/about" className="animate-on-scroll text-black font-semibold hover:underline">
@@ -30,4 +30,3 @@ export function AboutSection() {
         </section>
     )
 }
-

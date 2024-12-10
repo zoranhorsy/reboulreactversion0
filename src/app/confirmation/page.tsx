@@ -73,7 +73,7 @@ export default function Confirmation() {
                         <ul className="list-disc list-inside space-y-2">
                             <li>Vous recevrez un e-mail de confirmation avec les détails de votre commande.</li>
                             <li>Nous vous enverrons une mise à jour lorsque votre commande sera expédiée.</li>
-                            <li>Vous pouvez suivre l'état de votre commande dans votre compte client.</li>
+                            <li>Vous pouvez suivre l&apos;état de votre commande dans votre compte client.</li>
                         </ul>
                     </div>
                 </CardContent>
@@ -81,7 +81,7 @@ export default function Confirmation() {
                     <Button variant="outline" asChild>
                         <Link href="/" className="flex items-center">
                             <ArrowRight className="mr-2 h-4 w-4" />
-                            Retour à l'accueil
+                            Retour à l&apos;accueil
                         </Link>
                     </Button>
                     <Button asChild>
