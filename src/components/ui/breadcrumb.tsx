@@ -1,6 +1,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { ChevronRight } from 'lucide-react'
+import anime from 'animejs/lib/anime.es.js'
 
 import { cn } from "@/lib/utils"
 
@@ -30,13 +31,32 @@ BreadcrumbList.displayName = "BreadcrumbList"
 const BreadcrumbItem = React.forwardRef<
     HTMLLIElement,
     React.ComponentPropsWithoutRef<"li">
->(({ className, ...props }, ref) => (
-    <li
-        ref={ref}
-        className={cn("inline-flex items-center gap-1.5", className)}
-        {...props}
-    />
-))
+>(({ className, ...props }, ref) => {
+    const itemRef = React.useRef(null)
+
+    React.useEffect(() => {
+        anime({
+            targets: itemRef.current,
+            opacity: [0, 1],
+            translateY: [10, 0],
+            duration: 500,
+            easing: 'easeOutQuad',
+            delay: anime.stagger(100)
+        })
+    }, [])
+
+    return (
+        <li
+            ref={(node) => {
+                itemRef.current = node
+                if (typeof ref === 'function') ref(node)
+                else if (ref) ref.current = node
+            }}
+            className={cn("inline-flex items-center gap-1.5", className)}
+            {...props}
+        />
+    )
+})
 BreadcrumbItem.displayName = "BreadcrumbItem"
 
 const BreadcrumbLink = React.forwardRef<

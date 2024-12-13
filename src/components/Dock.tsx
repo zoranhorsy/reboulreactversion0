@@ -1,112 +1,176 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Home, ShoppingBag, User, X, Info, ShoppingCart, LogIn } from 'lucide-react'
 import Link from 'next/link'
-import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from 'framer-motion'
-import { Home, ShoppingBag, Info, Mail, User } from 'lucide-react'
-
-interface DockItemProps {
-    icon: React.ReactNode
-    label: string
-    href: string
-    mouseX: MotionValue
-}
-
-const DockItem = ({ icon, label, href, mouseX }: DockItemProps) => {
-    const ref = useRef<HTMLDivElement>(null)
-    const [isHovered, setIsHovered] = useState(false)
-
-    const distance = useMotionValue(0)
-    const widthSync = useTransform(distance, [-150, 0, 150], [40, 60, 40])
-    const width = useSpring(widthSync, { mass: 0.1, stiffness: 150, damping: 12 })
-
-    useEffect(() => {
-        const updateDistance = () => {
-            const el = ref.current
-            if (!el) return
-            const rect = el.getBoundingClientRect()
-            const distanceFromCenter = mouseX.get() - (rect.left + rect.width / 2)
-            distance.set(distanceFromCenter)
-        }
-
-        const unsubscribeX = mouseX.on("change", updateDistance)
-        return () => {
-            unsubscribeX()
-        }
-    }, [mouseX, distance])
-
-    return (
-        <motion.div ref={ref} style={{ width }} className="aspect-square">
-            <Link href={href} className="relative group flex items-center justify-center h-full">
-                <motion.div
-                    className="relative flex items-center justify-center w-full h-full rounded-2xl bg-neutral-800 text-white"
-                    whileHover={{ scale: 1.1 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                    onHoverStart={() => setIsHovered(true)}
-                    onHoverEnd={() => setIsHovered(false)}
-                >
-                    {icon}
-                </motion.div>
-                <AnimatePresence>
-                    {isHovered && (
-                        <motion.span
-                            initial={{ opacity: 0, y: -10 }}
-                            animate={{ opacity: 1, y: -40 }}
-                            exit={{ opacity: 0, y: -10 }}
-                            className="absolute left-1/2 -translate-x-1/2 bg-neutral-800 text-white text-xs px-2 py-1 rounded-md whitespace-nowrap"
-                        >
-                            {label}
-                        </motion.span>
-                    )}
-                </AnimatePresence>
-            </Link>
-        </motion.div>
-    )
-}
+import Image from 'next/image'
+import { CartSheet } from '@/components/cart/CartSheet'
+import { useCart } from '@/app/contexts/CartContext'
 
 export function Dock() {
-    const [mouseX, setMouseX] = useState(0)
-    const ref = useRef<HTMLDivElement>(null)
+    const [isOpen, setIsOpen] = useState(false)
+    const [isInverted, setIsInverted] = useState(false)
+    const [showBadge, setShowBadge] = useState(false)
+    const { items } = useCart()
 
-    const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
-        const rect = ref.current?.getBoundingClientRect()
-        if (rect) {
-            setMouseX(event.clientX - rect.left)
-        }
-    }
-
-    const handleMouseLeave = () => {
-        setMouseX(0)
-    }
-
-    const items = [
-        { icon: <Home className="w-6 h-6" />, label: 'Accueil', href: '/' },
-        { icon: <ShoppingBag className="w-6 h-6" />, label: 'Catalogue', href: '/catalogue' },
-        { icon: <Info className="w-6 h-6" />, label: 'À propos', href: '/about' },
-        { icon: <Mail className="w-6 h-6" />, label: 'Contact', href: '/contact' },
-        { icon: <User className="w-6 h-6" />, label: 'Compte', href: '/connexion' },
-    ]
-
-    const mouseXMotion = useMotionValue(0)
+    const itemCount = items.reduce((total, item) => total + item.quantity, 0)
 
     useEffect(() => {
-        mouseXMotion.set(mouseX)
-    }, [mouseX, mouseXMotion])
+        if (itemCount > 0) {
+            setShowBadge(true)
+        }
+    }, [itemCount])
+
+    const toggleMenu = () => {
+        setIsOpen(!isOpen)
+        setIsInverted(!isInverted)
+    }
+
+    useEffect(() => {
+        const handleOutsideClick = (event: MouseEvent) => {
+            if (isOpen && !(event.target as Element).closest('#ios-menu')) {
+                setIsOpen(false)
+                setIsInverted(false)
+            }
+        }
+
+        document.addEventListener('click', handleOutsideClick)
+
+        return () => {
+            document.removeEventListener('click', handleOutsideClick)
+        }
+    }, [isOpen])
+
+    const menuItems = [
+        { href: "/", icon: Home, label: "Accueil" },
+        { href: "/catalogue", icon: ShoppingBag, label: "Catalogue" },
+        { href: "/about", icon: Info, label: "À propos" },
+        { href: "/profil", icon: User, label: "Profil" },
+        { href: "/connexion", icon: LogIn, label: "Connexion" },
+        { href: "/admin", icon: LogIn, label: "Administration" },
+    ]
 
     return (
-        <motion.div
-            ref={ref}
-            onMouseMove={handleMouseMove}
-            onMouseLeave={handleMouseLeave}
-            className="fixed bottom-8 left-0 right-0 mx-auto w-fit flex items-center gap-1 p-2 bg-neutral-800 backdrop-blur-md rounded-full shadow-lg border border-gray-700"
-            initial={{ y: 100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        >
-            {items.map((item, index) => (
-                <DockItem key={index} {...item} mouseX={mouseXMotion} />
-            ))}
-        </motion.div>
+        <>
+            <motion.div
+                className="fixed left-4 top-4 z-50"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+            >
+
+                <motion.button
+                    onClick={toggleMenu}
+                    className="rounded-full transition-all duration-300"
+                    aria-label="Ouvrir le menu"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                >
+                    <Image
+                        src={isInverted ? "/images/logo_white.png" : "/images/logo_black.png"}
+                        alt="Reboul Logo"
+                        width={48}
+                        height={48}
+                        className="transition-transform duration-300"
+                    />
+                    <AnimatePresence>
+                        {showBadge && itemCount > 0 && (
+                            <motion.span
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                exit={{ scale: 0 }}
+                                className="absolute -top-1 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center"
+                            >
+                                {itemCount}
+                            </motion.span>
+                        )}
+                    </AnimatePresence>
+                </motion.button>
+            </motion.div>
+
+            <AnimatePresence>
+                {isOpen && (
+                    <motion.div
+                        id="ios-menu"
+                        className={`fixed left-2 top-3 w-64 rounded-2xl h-fit ${
+                            isInverted ? 'bg-neutral-900 text-white' : 'bg-white text-gray-800'
+                        } z-40`}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                    >
+                        <div className="container mx-auto px-4 py-8">
+                            <motion.button
+                                onClick={() => {
+                                    setIsOpen(false)
+                                    setIsInverted(false)
+                                }}
+                                className={`absolute top-4 right-4 p-2 rounded-lg ${
+                                    isInverted ? 'bg-gray-800 hover:bg-gray-700' : 'bg-gray-100 hover:bg-gray-200'
+                                } transition-colors duration-300`}
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.9 }}
+                                aria-label="Fermer le menu"
+                            >
+                                <X className={`h-6 w-6 ${isInverted ? 'text-white' : 'text-gray-800'}`} />
+                            </motion.button>
+                            <nav className="mt-16">
+                                <ul className="space-y-4">
+                                    {menuItems.map((item) => (
+                                        <motion.li
+                                            key={item.label}
+                                            whileHover={{ x: 10 }}
+                                            whileTap={{ scale: 0.95 }}
+                                        >
+                                            <Link href={item.href} className={`flex items-center space-x-4 text-lg ${
+                                                isInverted ? 'text-white hover:text-gray-300' : 'text-gray-800 hover:text-primary'
+                                            } transition-all duration-300 group`}>
+                                                <motion.div
+                                                    whileHover={{ scale: 1.1 }}
+                                                    whileTap={{ scale: 0.95 }}
+                                                    className={`p-2 rounded-lg transition-colors duration-300 ${
+                                                        isInverted
+                                                            ? 'bg-neutral-50 group-hover:bg-neutral-300 text-black'
+                                                            : 'bg-gray-100 group-hover:bg-gray-200 text-gray-800'
+                                                    }`}
+                                                >
+                                                    <item.icon className="h-5 w-5" />
+                                                </motion.div>
+                                                <span className="font-normal">{item.label}</span>
+                                            </Link>
+                                        </motion.li>
+                                    ))}
+                                </ul>
+
+                                <div className="mt-6 pt-6 border-t border-gray-700">
+                                    <CartSheet>
+                                        <button
+                                            className="w-full flex items-center justify-center space-x-2 text-lg bg-white text-black p-2 rounded-lg hover:bg-gray-100 transition-all duration-300 relative"
+                                        >
+                                            <ShoppingCart className="h-6 w-6" />
+                                            <span className="font-light">Mon Panier</span>
+                                            <AnimatePresence>
+                                                {showBadge && itemCount > 0 && (
+                                                    <motion.span
+                                                        initial={{ scale: 0 }}
+                                                        animate={{ scale: 1 }}
+                                                        exit={{ scale: 0 }}
+                                                        className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center"
+                                                    >
+                                                        {itemCount}
+                                                    </motion.span>
+                                                )}
+                                            </AnimatePresence>
+                                        </button>
+                                    </CartSheet>
+                                </div>
+                            </nav>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </>
     )
 }
 

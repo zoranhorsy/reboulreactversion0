@@ -66,7 +66,7 @@ export function Loader() {
                 // Faire disparaître le loader après 5 secondes
                 gsap.to(containerRef.current, {
                     opacity: 0,
-                    duration: 6,
+                    duration: 3,
                     delay: 5, // Augmenté de 2 à 5 secondes
                     ease: 'power2.inOut',
                     onComplete: () => {

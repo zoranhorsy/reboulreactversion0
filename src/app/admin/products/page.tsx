@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/components/ui/use-toast"
 import { Textarea } from "@/components/ui/textarea"
@@ -15,24 +15,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { X, Edit, Trash2, Plus } from 'lucide-react'
 import Image from 'next/image'
-
-type Variant = {
-    size: string
-    color: string
-    stock: number
-}
-
-type Product = {
-    id: number
-    name: string
-    price: number
-    description: string
-    category: string
-    brand: string
-    images: string[]
-    variants: Variant[]
-    tags: string[]
-}
+import { Product, fetchProducts, createProduct, updateProduct, deleteProduct } from '@/lib/api'
 
 const categories = ["Vestes", "Pantalons", "T-shirts", "Sweats", "Accessoires"]
 const brands = ["Stone Island", "CP Company"]
@@ -47,25 +30,21 @@ export default function ProductManagement() {
         brand: '',
         images: [],
         variants: [],
-        tags: []
+        tags: [],
+        reviews: [],
+        questions: [],
+        faqs: [],
+        sizeChart: []
     })
     const [editingProduct, setEditingProduct] = useState<Product | null>(null)
-    const [deletingProductId, setDeletingProductId] = useState<number | null>(null)
+    const [deletingProductId, setDeletingProductId] = useState<string | null>(null)
     const { toast } = useToast()
     const stableToast = useCallback((props: Parameters<typeof toast>[0]) => toast(props), [toast])
 
-    const fetchProducts = useCallback(async () => {
+    const fetchProductsData = useCallback(async () => {
         try {
-            const response = await fetch('/api/products')
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`)
-            }
-            const data = await response.json()
-            if (!Array.isArray(data)) {
-                console.error('Fetched data is not an array')
-                return
-            }
-            setProducts(data)
+            const { products: fetchedProducts } = await fetchProducts({})
+            setProducts(fetchedProducts)
         } catch (error) {
             console.error('Error fetching products:', error)
             stableToast({
@@ -77,29 +56,22 @@ export default function ProductManagement() {
     }, [stableToast])
 
     useEffect(() => {
-        fetchProducts()
-    }, [fetchProducts, toast])
+        fetchProductsData()
+    }, [fetchProductsData])
 
     const handleAddProduct = async (e: React.FormEvent) => {
         e.preventDefault()
         try {
-            const response = await fetch('/api/products', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(newProduct),
+            const addedProduct = await createProduct(newProduct)
+            setNewProduct({
+                name: '', price: 0, description: '', category: '', brand: '',
+                images: [], variants: [], tags: [], reviews: [], questions: [], faqs: [], sizeChart: []
             })
-            if (!response.ok) {
-                console.error(`HTTP error! status: ${response.status}`)
-                return
-            }
-            const addedProduct = await response.json()
-
-            setNewProduct({ name: '', price: 0, description: '', category: '', brand: '', images: [], variants: [], tags: [] })
             stableToast({
                 title: "Produit ajouté",
                 description: `${addedProduct.name} a été ajouté avec succès.`,
             })
-            fetchProducts()
+            fetchProductsData()
         } catch (error) {
             console.error('Error adding product:', error)
             stableToast({
@@ -114,21 +86,13 @@ export default function ProductManagement() {
         e.preventDefault()
         if (!editingProduct) return;
         try {
-            const response = await fetch(`/api/products/${editingProduct.id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(editingProduct),
-            })
-            if (!response.ok) {
-                console.error(`HTTP error! status: ${response.status}`)
-                return
-            }
+            await updateProduct(editingProduct.id, editingProduct)
             setEditingProduct(null)
             stableToast({
                 title: 'Produit modifié',
                 description: `${editingProduct.name} a été modifié avec succès.`
             })
-            fetchProducts()
+            fetchProductsData()
         } catch (error) {
             console.error('Error updating product:', error)
             stableToast({
@@ -141,20 +105,14 @@ export default function ProductManagement() {
         }
     }
 
-    const handleDeleteProduct = async (id: number) => {
+    const handleDeleteProduct = async (id: string) => {
         try {
-            const response = await fetch(`/api/products/${id}`, {
-                method: 'DELETE',
-            })
-            if (!response.ok) {
-                console.error(`HTTP error! status: ${response.status}`)
-                return
-            }
+            await deleteProduct(id)
             stableToast({
                 title: "Produit supprimé",
                 description: "Le produit a été supprimé avec succès.",
             })
-            fetchProducts()
+            fetchProductsData()
         } catch (error) {
             console.error('Error deleting product:', error)
             stableToast({
@@ -175,7 +133,7 @@ export default function ProductManagement() {
         }
 
         if (isEditing && product) {
-            formData.append('productId', product.id.toString())
+            formData.append('productId', product.id)
         }
 
         try {
@@ -185,27 +143,13 @@ export default function ProductManagement() {
             })
 
             if (!response.ok) {
-                console.error(`HTTP error! status: ${response.status}`)
-                const errorData = await response.json()
-                stableToast({
-                    title: 'Erreur de téléchargement d\'image',
-                    description: errorData.message || response.statusText,
-                    variant: 'destructive'
-                })
-                return;
+                throw new Error(`HTTP error! status: ${response.status}`)
             }
 
             const data = await response.json()
 
             if (!data.success || !Array.isArray(data.urls)) {
-                const errorMessage = data.message || 'Image upload failed';
-                console.error('Image upload failed:', errorMessage);
-                stableToast({
-                    title: 'Erreur de téléchargement d\'image',
-                    description: errorMessage,
-                    variant: 'destructive'
-                })
-                return;
+                throw new Error(data.message || 'Image upload failed')
             }
 
             const imageUrls = data.urls
@@ -222,7 +166,6 @@ export default function ProductManagement() {
                 title: 'Image téléchargée',
                 description: "L'image a été téléchargée et optimisée avec succès."
             })
-            fetchProducts()
         } catch (error) {
             console.error('Error uploading image:', error)
             stableToast({
@@ -265,13 +208,14 @@ export default function ProductManagement() {
         onEditingProductChange: (updatedProduct: Product | ((prev: Product | null) => Product | null)) => void
         setNewProduct: React.Dispatch<React.SetStateAction<Omit<Product, 'id'>>>
     }) => {
-        const [newVariant, setNewVariant] = useState<Omit<Variant, 'stock'>>({ size: '', color: '' })
+        const [newVariant, setNewVariant] = useState<Omit<Product['variants'][0], 'stock'>>({ size: '', color: '' })
         const [newVariantStock, setNewVariantStock] = useState(0)
+        const [newQuestion, setNewQuestion] = useState({ question: '', answer: '' })
+        const [newFaq, setNewFaq] = useState({ question: '', answer: '' })
 
         const handleAddVariant = () => {
             if (newVariant.size && newVariant.color && !isNaN(newVariantStock)) {
                 const variant = { ...newVariant, stock: newVariantStock }
-
                 if (isEditing) {
                     onEditingProductChange((prev: Product | null) =>
                         prev ? { ...prev, variants: [...prev.variants, variant] } : null
@@ -279,7 +223,6 @@ export default function ProductManagement() {
                 } else {
                     setNewProduct((prev: Omit<Product, 'id'>) => ({ ...prev, variants: [...prev.variants, variant] }))
                 }
-
                 setNewVariant({ size: '', color: '' })
                 setNewVariantStock(0)
             } else {
@@ -291,49 +234,72 @@ export default function ProductManagement() {
             }
         }
 
-        const handleRemoveVariant = (index: number) => {
-            if (isEditing) {
-                onEditingProductChange((prev: Product | null) => prev ? { ...prev, variants: prev.variants.filter((_, i) => i !== index) } : null)
-            } else {
-                setNewProduct(prev => ({
-                    ...prev,
-                    variants: prev.variants.filter((_, i) => i !== index)
-                }))
+        const handleAddQuestion = () => {
+            if (newQuestion.question && newQuestion.answer) {
+                if (isEditing) {
+                    onEditingProductChange((prev: Product | null) =>
+                        prev ? { ...prev, questions: [...prev.questions, { ...newQuestion, id: prev.questions.length + 1 }] } : null
+                    )
+                } else {
+                    setNewProduct((prev: Omit<Product, 'id'>) => ({
+                        ...prev,
+                        questions: [...prev.questions, { ...newQuestion, id: prev.questions.length + 1 }]
+                    }))
+                }
+                setNewQuestion({ question: '', answer: '' })
+            }
+        }
+
+        const handleAddFaq = () => {
+            if (newFaq.question && newFaq.answer) {
+                if (isEditing) {
+                    onEditingProductChange((prev: Product | null) =>
+                        prev ? { ...prev, faqs: [...prev.faqs, newFaq] } : null
+                    )
+                } else {
+                    setNewProduct((prev: Omit<Product, 'id'>) => ({
+                        ...prev,
+                        faqs: [...prev.faqs, newFaq]
+                    }))
+                }
+                setNewFaq({ question: '', answer: '' })
             }
         }
 
         return (
-            <form onSubmit={onSubmit} className="space-y-6 overflow-y-scroll h-96">
-                <div>
-                    <Label htmlFor="name">Nom du produit</Label>
-                    <Input
-                        id="name"
-                        value={product.name}
-                        onChange={(e) => {
-                            if (isEditing) {
-                                onEditingProductChange((prev: Product | null) => prev ? { ...prev, name: e.target.value } : null)
-                            } else {
-                                setNewProduct(prev => ({ ...prev, name: e.target.value }))
-                            }
-                        }}
-                        required
-                    />
-                </div>
-                <div>
-                    <Label htmlFor="price">Prix</Label>
-                    <Input
-                        id="price"
-                        type="number"
-                        value={product.price}
-                        onChange={(e) => {
-                            if (isEditing) {
-                                onEditingProductChange((prev: Product | null) => prev ? { ...prev, price: parseFloat(e.target.value) } : null)
-                            } else {
-                                setNewProduct(prev => ({ ...prev, price: parseFloat(e.target.value) }))
-                            }
-                        }}
-                        required
-                    />
+            <form onSubmit={onSubmit} className="space-y-4 pr-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <Label htmlFor="name">Nom du produit</Label>
+                        <Input
+                            id="name"
+                            value={product.name}
+                            onChange={(e) => {
+                                if (isEditing) {
+                                    onEditingProductChange((prev: Product | null) => prev ? { ...prev, name: e.target.value } : null)
+                                } else {
+                                    setNewProduct(prev => ({ ...prev, name: e.target.value }))
+                                }
+                            }}
+                            required
+                        />
+                    </div>
+                    <div>
+                        <Label htmlFor="price">Prix</Label>
+                        <Input
+                            id="price"
+                            type="number"
+                            value={product.price}
+                            onChange={(e) => {
+                                if (isEditing) {
+                                    onEditingProductChange((prev: Product | null) => prev ? { ...prev, price: parseFloat(e.target.value) } : null)
+                                } else {
+                                    setNewProduct(prev => ({ ...prev, price: parseFloat(e.target.value) }))
+                                }
+                            }}
+                            required
+                        />
+                    </div>
                 </div>
                 <div>
                     <Label htmlFor="description">Description</Label>
@@ -350,163 +316,227 @@ export default function ProductManagement() {
                         required
                     />
                 </div>
-                <div>
-                    <Label htmlFor="category">Catégorie</Label>
-                    <Select
-                        value={product.category}
-                        onValueChange={(value) => {
-                            if (isEditing) {
-                                onEditingProductChange((prev: Product | null) => prev ? { ...prev, category: value } : null)
-                            } else {
-                                setNewProduct(prev => ({ ...prev, category: value }))
-                            }
-                        }}
-                    >
-                        <SelectTrigger>
-                            <SelectValue placeholder="Sélectionnez une catégorie" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {categories.map((category) => (
-                                <SelectItem key={category} value={category}>{category}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <Label htmlFor="category">Catégorie</Label>
+                        <Select
+                            value={product.category}
+                            onValueChange={(value) => {
+                                if (isEditing) {
+                                    onEditingProductChange((prev: Product | null) => prev ? { ...prev, category: value } : null)
+                                } else {
+                                    setNewProduct(prev => ({ ...prev, category: value }))
+                                }
+                            }}
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Sélectionner une catégorie" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {categories.map((category) => (
+                                    <SelectItem key={category} value={category}>
+                                        {category}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div>
+                        <Label htmlFor="brand">Marque</Label>
+                        <Select
+                            value={product.brand}
+                            onValueChange={(value) => {
+                                if (isEditing) {
+                                    onEditingProductChange((prev: Product | null) => prev ? { ...prev, brand: value } : null)
+                                } else {
+                                    setNewProduct(prev => ({ ...prev, brand: value }))
+                                }
+                            }}
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Sélectionner une marque" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {brands.map((brand) => (
+                                    <SelectItem key={brand} value={brand}>
+                                        {brand}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
                 </div>
                 <div>
-                    <Label htmlFor="brand">Marque</Label>
-                    <Select
-                        value={product.brand}
-                        onValueChange={(value) => {
-                            if (isEditing) {
-                                onEditingProductChange((prev: Product | null) => prev ? { ...prev, brand: value } : null)
-                            } else {
-                                setNewProduct(prev => ({ ...prev, brand: value }))
-                            }
-                        }}
-                    >
-                        <SelectTrigger>
-                            <SelectValue placeholder="Sélectionnez une marque" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {brands.map((brand) => (
-                                <SelectItem key={brand} value={brand}>{brand}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-                <div>
-                    <Label>Images</Label>
-                    <div className="flex flex-wrap gap-2 mb-2">
-                        {(product.images || []).map((image, index) => (
-                            <div key={index} className="relative w-24 h-24">
-                                <Image src={image} alt={`Product image ${index + 1}`} fill className="object-cover" />
+                    <Label htmlFor="images">Images</Label>
+                    <input
+                        type="file"
+                        id="images"
+                        multiple
+                        onChange={(e) => handleImageUpload(e, isEditing, product as Product)}
+                        className="border border-gray-300 rounded px-3 py-2 w-full"
+                    />
+                    <div className="flex flex-wrap gap-2 mt-2">
+                        {product.images && product.images.map((imageUrl) => (
+                            <div key={imageUrl} className="relative">
+                                <Image src={imageUrl} alt="Product Image" width={50} height={50} className="object-cover rounded" />
                                 <Button
-                                    variant="destructive"
+                                    variant="ghost"
                                     size="icon"
-                                    className="absolute top-1 right-1 h-6 w-6 bg-white/50 rounded-full"
-                                    onClick={() => handleRemoveImage(image, isEditing)}
-                                    aria-label="Remove Image"
+                                    className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center"
+                                    onClick={() => handleRemoveImage(imageUrl, isEditing)}
                                 >
+                                    <X className="h-3 w-3" />
+                                </Button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+                <div>
+                    <Label htmlFor="tags">Tags</Label>
+                    <Input
+                        id="tags"
+                        value={product.tags.join(', ')}
+                        onChange={(e) => {
+                            if (isEditing) {
+                                onEditingProductChange((prev: Product | null) => prev ? { ...prev, tags: e.target.value.split(',').map(tag => tag.trim()) } : null)
+                            } else {
+                                setNewProduct(prev => ({ ...prev, tags: e.target.value.split(',').map(tag => tag.trim()) }))
+                            }
+                        }}
+                    />
+                </div>
+                <div>
+                    <Label>Variantes</Label>
+                    <div className="space-y-1">
+                        {product.variants.map((variant, index) => (
+                            <div key={index} className="flex items-center space-x-2">
+                                <Input value={variant.size} onChange={(e) => {
+                                    if (isEditing) {
+                                        onEditingProductChange((prev: Product | null) => prev ? { ...prev, variants: prev.variants.map((v, i) => i === index ? { ...v, size: e.target.value } : v) } : null)
+                                    } else {
+                                        setNewProduct(prev => ({ ...prev, variants: prev.variants.map((v, i) => i === index ? { ...v, size: e.target.value } : v) }))
+                                    }
+                                }} placeholder="Taille" />
+                                <Input value={variant.color} onChange={(e) => {
+                                    if (isEditing) {
+                                        onEditingProductChange((prev: Product | null) => prev ? { ...prev, variants: prev.variants.map((v, i) => i === index ? { ...v, color: e.target.value } : v) } : null)
+                                    } else {
+                                        setNewProduct(prev => ({ ...prev, variants: prev.variants.map((v, i) => i === index ? { ...v, color: e.target.value } : v) }))
+                                    }
+                                }} placeholder="Couleur" />
+                                <Input type="number" value={variant.stock} onChange={(e) => {
+                                    if (isEditing) {
+                                        onEditingProductChange((prev: Product | null) => prev ? { ...prev, variants: prev.variants.map((v, i) => i === index ? { ...v, stock: parseInt(e.target.value, 10) } : v) } : null)
+                                    } else {
+                                        setNewProduct(prev => ({ ...prev, variants: prev.variants.map((v, i) => i === index ? { ...v, stock: parseInt(e.target.value, 10) } : v) }))
+                                    }
+                                }} placeholder="Stock" />
+                                <Button variant="ghost" onClick={() => {
+                                    if (isEditing) {
+                                        onEditingProductChange((prev: Product | null) => prev ? { ...prev, variants: prev.variants.filter((_, i) => i !== index) } : null)
+                                    } else {
+                                        setNewProduct(prev => ({ ...prev, variants: prev.variants.filter((_, i) => i !== index) }))
+                                    }
+                                }}>
                                     <X className="h-4 w-4" />
                                 </Button>
                             </div>
                         ))}
                     </div>
-                    <Input
-                        id={`${isEditing ? 'edit' : 'new'}-images`}
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        onChange={(e) => handleImageUpload(e, isEditing, product as Product)}
-                        className="w-full file:border-none file:bg-gray-100 file:text-gray-700 file:rounded-lg file:px-4 file:py-2 file:mr-4 file:text-sm file:font-medium"
-                    />
-                </div>
-                <div>
-                    <Label>Variantes</Label>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Taille</TableHead>
-                                <TableHead>Couleur</TableHead>
-                                <TableHead>Stock</TableHead>
-                                <TableHead>Actions</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {product.variants.map((variant, index) => (
-                                <TableRow key={index}>
-                                    <TableCell>{variant.size}</TableCell>
-                                    <TableCell>{variant.color}</TableCell>
-                                    <TableCell>{variant.stock}</TableCell>
-                                    <TableCell>
-                                        <Button variant="destructive" size="icon" onClick={() => handleRemoveVariant(index)}>
-                                            <X className="h-4 w-4" />
-                                        </Button>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                    <div className="mt-4 grid grid-cols-3 gap-2">
+                    <div className="flex items-center space-x-2 mt-2">
                         <Input
-                            placeholder="Taille"
                             value={newVariant.size}
-                            onChange={e => setNewVariant({ ...newVariant, size: e.target.value })}
+                            onChange={(e) => setNewVariant(prev => ({ ...prev, size: e.target.value }))}
+                            placeholder="Nouvelle taille"
                         />
                         <Input
-                            placeholder="Couleur"
                             value={newVariant.color}
-                            onChange={e => setNewVariant({ ...newVariant, color: e.target.value })}
+                            onChange={(e) => setNewVariant(prev => ({ ...prev, color: e.target.value }))}
+                            placeholder="Nouvelle couleur"
                         />
                         <Input
                             type="number"
-                            placeholder="Stock"
                             value={newVariantStock}
-                            onChange={e => setNewVariantStock(parseInt(e.target.value))}
+                            onChange={(e) => setNewVariantStock(parseInt(e.target.value, 10))}
+                            placeholder="Nouveau stock"
                         />
+                        <Button onClick={handleAddVariant}>Ajouter</Button>
                     </div>
-                    <Button type="button" className="mt-2" onClick={handleAddVariant}>
-                        <Plus className="mr-2 h-4 w-4" /> Ajouter une variante
-                    </Button>
                 </div>
                 <div>
-                    <Label>Tags</Label>
-                    <div className="flex flex-wrap gap-2 mb-2">
-                        {(product.tags ?? []).map((tag) => (
-                            <Badge key={tag} variant="secondary">
-                                {tag}
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="ml-2 h-4 w-4 p-0"
-                                    onClick={() => handleRemoveTag(tag, isEditing)}
-                                >
-                                    <X className="h-3 w-3" />
-                                </Button>
-                            </Badge>
+                    <Label>Questions et Réponses</Label>
+                    <div className="space-y-1">
+                        {product.questions.map((q, index) => (
+                            <div key={index} className="flex flex-col space-y-1">
+                                <Input value={q.question} onChange={(e) => {
+                                    if (isEditing) {
+                                        onEditingProductChange((prev: Product | null) => prev ? { ...prev, questions: prev.questions.map((question, i) => i === index ? { ...question, question: e.target.value } : question) } : null)
+                                    } else {
+                                        setNewProduct(prev => ({ ...prev, questions: prev.questions.map((question, i) => i === index ? { ...question, question: e.target.value } : question) }))
+                                    }
+                                }} placeholder="Question" />
+                                <Input value={q.answer || ''} onChange={(e) => {
+                                    if (isEditing) {
+                                        onEditingProductChange((prev: Product | null) => prev ? { ...prev, questions: prev.questions.map((question, i) => i === index ? { ...question, answer: e.target.value } : question) } : null)
+                                    } else {
+                                        setNewProduct(prev => ({ ...prev, questions: prev.questions.map((question, i) => i === index ? { ...question, answer: e.target.value } : question) }))
+                                    }
+                                }} placeholder="Réponse" />
+                            </div>
                         ))}
                     </div>
-                    <Input
-                        id={`${isEditing ? 'edit' : 'new'}-tags`}
-                        type="text"
-                        placeholder="Ajouter un tag"
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                                const tag = e.currentTarget.value.trim();
-                                if (tag) {
-                                    if (isEditing) {
-                                        onEditingProductChange((prev: Product | null) => prev ? { ...prev, tags: [...(prev.tags || []), tag] } : null)
-                                    } else {
-                                        setNewProduct(prev => ({ ...prev, tags: [...(prev.tags || []), tag] }))
-                                    }
-                                    e.currentTarget.value = '';
-                                }
-                            }
-                        }}
-                    />
+                    <div className="flex flex-col space-y-1 mt-2">
+                        <Input
+                            value={newQuestion.question}
+                            onChange={(e) => setNewQuestion(prev => ({ ...prev, question: e.target.value }))}
+                            placeholder="Nouvelle question"
+                        />
+                        <Input
+                            value={newQuestion.answer}
+                            onChange={(e) => setNewQuestion(prev => ({ ...prev, answer: e.target.value }))}
+                            placeholder="Nouvelle réponse"
+                        />
+                        <Button onClick={handleAddQuestion}>Ajouter Q&R</Button>
+                    </div>
                 </div>
-                <Button type="submit" className="w-full bg-primary text-white hover:bg-primary/90 rounded-lg px-6 py-3 font-medium">
-                    {isEditing ? 'Modifier' : 'Ajouter'} le produit
+                <div>
+                    <Label>FAQs</Label>
+                    <div className="space-y-1">
+                        {product.faqs.map((faq, index)=> (
+                            <div key={index} className="flex flex-col space-y-1">
+                                <Input value={faq.question} onChange={(e) => {
+                                    if (isEditing) {
+                                        onEditingProductChange((prev: Product | null) => prev ? { ...prev, faqs: prev.faqs.map((f, i) => i === index ? { ...f, question: e.target.value } : f) } : null)
+                                    } else {
+                                        setNewProduct(prev => ({ ...prev, faqs: prev.faqs.map((f, i) => i === index ? { ...f, question: e.target.value } : f) }))
+                                    }
+                                }} placeholder="Question FAQ" />
+                                <Input value={faq.answer} onChange={(e) => {
+                                    if (isEditing) {
+                                        onEditingProductChange((prev: Product | null) => prev ? { ...prev, faqs: prev.faqs.map((f, i) => i === index ? { ...f, answer: e.target.value } : f) } : null)
+                                    } else {
+                                        setNewProduct(prev => ({ ...prev, faqs: prev.faqs.map((f, i) => i === index ? { ...f, answer: e.target.value } : f) }))
+                                    }
+                                }} placeholder="Réponse FAQ" />
+                            </div>
+                        ))}
+                    </div>
+                    <div className="flex flex-col space-y-1 mt-2">
+                        <Input
+                            value={newFaq.question}
+                            onChange={(e) => setNewFaq(prev => ({ ...prev, question: e.target.value }))}
+                            placeholder="Nouvelle question FAQ"
+                        />
+                        <Input
+                            value={newFaq.answer}
+                            onChange={(e) => setNewFaq(prev => ({ ...prev, answer: e.target.value }))}
+                            placeholder="Nouvelle réponse FAQ"
+                        />
+                        <Button onClick={handleAddFaq}>Ajouter FAQ</Button>
+                    </div>
+                </div>
+                <Button type="submit" className="w-full">
+                    {isEditing ? "Mettre à jour le produit" : "Ajouter le produit"}
                 </Button>
             </form>
         )
@@ -607,9 +637,12 @@ export default function ProductManagement() {
 
             {editingProduct && (
                 <Dialog open={!!editingProduct} onOpenChange={() => setEditingProduct(null)}>
-                    <DialogContent className="sm:max-w-[700px]">
+                    <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
                         <DialogHeader>
                             <DialogTitle>Modifier le produit</DialogTitle>
+                            <DialogDescription>
+                                Modifiez les détails du produit ci-dessous. Tous les champs sont obligatoires.
+                            </DialogDescription>
                         </DialogHeader>
                         {editingProduct && (
                             <ProductForm

@@ -10,8 +10,15 @@ const nextConfig = {
         ignoreBuildErrors: true,
     },
     reactStrictMode: true,
-    images: {
-        domains: ['placeholder.com'], // Add any domains you're loading images from
+    experimental: { appDir: true, },
+        images: {
+            domains: ['localhost'],
+            remotePatterns: [
+                {
+                    protocol: 'https',
+                    hostname: '**',
+                },
+            ],
     },
     webpack(config) {
         config.module.rules.push({

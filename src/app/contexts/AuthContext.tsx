@@ -2,35 +2,45 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react'
 
-type User = {
-    username: string
-    role: 'admin'
+interface User {
+    email: string
 }
 
-type AuthContextType = {
+interface AuthContextType {
     user: User | null
-    login: (username: string, password: string) => Promise<void>
+    login: (email: string, password: string) => Promise<void>
     logout: () => void
+    isLoading: boolean
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export const useAuth = () => {
+    const context = useContext(AuthContext)
+    if (!context) {
+        throw new Error('useAuth must be used within an AuthProvider')
+    }
+    return context
+}
+
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null)
+    const [isLoading, setIsLoading] = useState(true)
 
     useEffect(() => {
-        const storedUser = localStorage.getItem('user')
-        if (storedUser) {
-            setUser(JSON.parse(storedUser))
+        const token = localStorage.getItem('adminToken')
+        if (token) {
+            // Simuler la vérification du token
+            setUser({ email: 'admin@reboul.com' })
         }
+        setIsLoading(false)
     }, [])
 
-    const login = async (username: string, password: string) => {
-        // Dans un cas réel, vous feriez une requête à votre API ici
-        if (username === 'admin' && password === 'password') {
-            const user = { username, role: 'admin' as const }
-            setUser(user)
-            localStorage.setItem('user', JSON.stringify(user))
+    const login = async (email: string, password: string) => {
+        // Simuler une requête d'authentification
+        if (email === 'admin@reboul.com' && password === 'password123') {
+            setUser({ email })
+            localStorage.setItem('adminToken', 'fake-jwt-token')
         } else {
             throw new Error('Invalid credentials')
         }
@@ -38,21 +48,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const logout = () => {
         setUser(null)
-        localStorage.removeItem('user')
+        localStorage.removeItem('adminToken')
     }
 
     return (
-        <AuthContext.Provider value={{ user, login, logout }}>
+        <AuthContext.Provider value={{ user, login, logout, isLoading }}>
             {children}
         </AuthContext.Provider>
     )
-}
-
-export function useAuth() {
-    const context = useContext(AuthContext)
-    if (context === undefined) {
-        throw new Error('useAuth must be used within an AuthProvider')
-    }
-    return context
 }
 

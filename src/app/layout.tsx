@@ -1,6 +1,5 @@
 import '@/app/globals.css'
 import { Toaster } from "@/components/ui/toaster"
-import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import { CartProvider } from '@/app/contexts/CartContext'
 import { WishlistProvider } from '@/app/contexts/WishlistContext'
@@ -34,7 +33,6 @@ export default function RootLayout({
                     <CartProvider>
                         <Loader />
                         <GsapInitializer />
-                        <Header />
                         <main className="container mx-auto px-4 py-8 mb-32">
                             {children}
                         </main>

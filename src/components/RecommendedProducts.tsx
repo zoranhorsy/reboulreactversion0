@@ -1,73 +1,66 @@
-'use client'
+import { useState, useEffect } from 'react'
+import { ProductCard } from './products/ProductCard'
+import { Product, fetchProducts } from '@/lib/api'
 
-import { useEffect, useState } from 'react'
-import Image from 'next/image'
-import Link from 'next/link'
-import { Card, CardContent, CardFooter } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-
-type Product = {
-    id: number
-    name: string
-    price: number
-    image: string
+interface RecommendedProductsProps {
+    currentProductId: string
     category: string
 }
 
-type ProductRecommendationsProps = {
-    currentProductId?: number
-    currentCategory?: string
-}
-
-export function RecommendedProducts({ currentProductId, currentCategory }: ProductRecommendationsProps) {
+export function RecommendedProducts({ currentProductId, category }: RecommendedProductsProps) {
+    console.log('RecommendedProducts props:', { currentProductId, category });
     const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([])
+    const [isLoading, setIsLoading] = useState(true)
+    const [error, setError] = useState<string | null>(null)
 
     useEffect(() => {
         const fetchRecommendedProducts = async () => {
+            setIsLoading(true)
+            setError(null)
             try {
-                const response = await fetch('/api/products')
-                if (!response.ok) {
-                    throw new Error('Failed to fetch products')
+                console.log('Fetching recommended products for category:', category);
+                const { products: allProducts } = await fetchProducts({ categories: category })
+                console.log('All fetched products:', allProducts);
+
+                if (!Array.isArray(allProducts)) {
+                    throw new Error('Fetched products is not an array')
                 }
-                const allProducts: Product[] = await response.json()
-                const filtered = allProducts
-                    .filter(product =>
-                        product.id !== currentProductId &&
-                        (!currentCategory || product.category === currentCategory)
-                    )
-                    .slice(0, 4)
-                setRecommendedProducts(filtered)
+
+                const filtered = allProducts.filter(product => product.id !== currentProductId);
+                console.log('Filtered products:', filtered);
+                const shuffled = filtered.sort(() => 0.5 - Math.random())
+                console.log('Shuffled products:', shuffled);
+                setRecommendedProducts(shuffled.slice(0, 4))
             } catch (error) {
                 console.error('Error fetching recommended products:', error)
+                setError('Unable to load recommended products. Please try again later.')
+            } finally {
+                setIsLoading(false)
             }
         }
 
         fetchRecommendedProducts()
-    }, [currentProductId, currentCategory])
+    }, [currentProductId, category])
 
+    if (isLoading) {
+        return <div>Chargement des produits recommandés...</div>
+    }
+
+    if (error) {
+        return <div>Erreur : {error}</div>
+    }
+
+    if (recommendedProducts.length === 0) {
+        return <div>Aucun produit recommandé disponible pour le moment.</div>;
+    }
+
+    console.log('Recommended products to render:', recommendedProducts);
     return (
-        <div className="mt-8">
+        <div>
             <h2 className="text-2xl font-bold mb-4">Produits recommandés</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {recommendedProducts.map((product) => (
-                    <Card key={product.id}>
-                        <CardContent className="p-4">
-                            <Image
-                                src={product.image}
-                                alt={product.name}
-                                width={200}
-                                height={200}
-                                className="w-full h-48 object-cover mb-4 rounded"
-                            />
-                            <h3 className="font-semibold text-lg mb-2">{product.name}</h3>
-                            <p className="text-lg font-bold">{product.price} €</p>
-                        </CardContent>
-                        <CardFooter>
-                            <Link href={`/produit/${product.id}`} passHref>
-                                <Button className="w-full">Voir le produit</Button>
-                            </Link>
-                        </CardFooter>
-                    </Card>
+                    <ProductCard key={product.id} product={product} />
                 ))}
             </div>
         </div>

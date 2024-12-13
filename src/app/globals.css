@@ -66,12 +66,18 @@
   }
 }
 
-@layer base {
-  * {
-    @apply border-border;
+
+
+@keyframes slow-spin {
+  from {
+    transform: rotate(0deg);
   }
-  body {
-    @apply bg-background text-foreground;
+  to {
+    transform: rotate(360deg);
   }
+}
+
+.animate-slow-spin {
+  animation: slow-spin 3s linear infinite;
 }
 

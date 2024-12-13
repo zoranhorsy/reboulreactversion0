@@ -1,108 +1,127 @@
-import { NextRequest, NextResponse } from 'next/server'
-import fs from 'fs/promises'
-import path from 'path'
+import { NextResponse } from 'next/server'
+import type { Product } from '@/lib/api'
 
-const productsFilePath = path.join(process.cwd(), 'data', 'products.json')
+// Simulons une base de données avec quelques produits
+const products: Product[] = [
+    {
+        id: 1,
+        name: "T-shirt Premium",
+        price: 29.99,
+        description: "T-shirt de haute qualité en coton bio",
+        category: "Vêtements",
+        brand: "Reboul",
+        images: ["/images/t-shirt-premium.jpg"],
+        variants: [
+            { size: "S", color: "Noir", stock: 10 },
+            { size: "M", color: "Noir", stock: 15 },
+            { size: "L", color: "Noir", stock: 20 },
+        ],
+        tags: ["coton", "bio", "premium"]
+    },
+    // Ajoutez d'autres produits ici...
+]
 
-type Variant = {
-    size: string
-    color: string
-    stock: number
-}
+export async function GET(request: Request) {
+    const { searchParams } = new URL(request.url)
+    const page = parseInt(searchParams.get('page') || '1')
+    const limit = parseInt(searchParams.get('limit') || '12')
+    const sortBy = searchParams.get('sortBy') || 'name'
+    const brand = searchParams.get('brand')
+    const categories = searchParams.get('categories')?.split(',')
+    const tags = searchParams.get('tags')?.split(',')
+    const search = searchParams.get('search')
+    const minPrice = parseFloat(searchParams.get('minPrice') || '0')
+    const maxPrice = parseFloat(searchParams.get('maxPrice') || '1000000')
+    const color = searchParams.get('color')
 
-type Product = {
-    id: number
-    name: string
-    price: number
-    description: string
-    category: string
-    brand: string
-    images: string[]
-    variants: Variant[]
-    tags: string[]
-}
+    let filteredProducts = [...products]
 
-async function getProducts(): Promise<Product[]> {
-    try {
-        await fs.access(productsFilePath)
-    } catch (error) {
-        // If the file doesn't exist, create it with an empty array
-        await fs.writeFile(productsFilePath, '[]')
-        return []
+    if (brand && brand !== 'all') {
+        filteredProducts = filteredProducts.filter(product => product.brand === brand)
     }
 
-    const jsonData = await fs.readFile(productsFilePath, 'utf8')
-    return JSON.parse(jsonData)
-}
-
-async function saveProducts(products: Product[]): Promise<void> {
-    const jsonData = JSON.stringify(products, null, 2)
-    await fs.writeFile(productsFilePath, jsonData)
-}
-
-export async function GET() {
-    try {
-        const products = await getProducts()
-        const sanitizedProducts = products.map(product => ({
-            ...product,
-            variants: product.variants || []
-        }))
-        return NextResponse.json(sanitizedProducts)
-    } catch (error) {
-        console.error('Error fetching products:', error)
-        return NextResponse.json({ error: 'Failed to fetch products' }, { status: 500 })
+    if (categories && categories.length > 0) {
+        filteredProducts = filteredProducts.filter(product => categories.includes(product.category))
     }
-}
 
-export async function POST(request: NextRequest) {
-    try {
-        const newProduct: Omit<Product, 'id'> = await request.json()
-        const products = await getProducts()
-        const productWithId: Product = { ...newProduct, id: Date.now(), variants: newProduct.variants || [] }
-        products.push(productWithId)
-        await saveProducts(products)
-        return NextResponse.json(productWithId, { status: 201 })
-    } catch (error) {
-        console.error('Error adding product:', error)
-        return NextResponse.json({ error: 'Failed to add product' }, { status: 500 })
+    if (tags && tags.length > 0) {
+        filteredProducts = filteredProducts.filter(product =>
+            product.tags && product.tags.some(tag => tags.includes(tag))
+        )
     }
+
+    if (search) {
+        const searchLower = search.toLowerCase()
+        filteredProducts = filteredProducts.filter(product =>
+            product.name.toLowerCase().includes(searchLower) ||
+            product.description.toLowerCase().includes(searchLower)
+        )
+    }
+
+    filteredProducts = filteredProducts.filter(product =>
+        product.price >= minPrice && product.price <= maxPrice
+    )
+
+    if (color && color !== 'all') {
+        filteredProducts = filteredProducts.filter(product =>
+            product.variants.some(variant => variant.color.toLowerCase() === color.toLowerCase())
+        )
+    }
+
+    // Tri
+    filteredProducts.sort((a, b) => {
+        if (sortBy === 'price') {
+            return a.price - b.price
+        }
+        return a.name.localeCompare(b.name)
+    })
+
+    const total = filteredProducts.length
+    const startIndex = (page - 1) * limit
+    const endIndex = startIndex + limit
+    const paginatedProducts = filteredProducts.slice(startIndex, endIndex)
+
+    return NextResponse.json({
+        products: paginatedProducts,
+        total,
+        page,
+        limit
+    })
 }
 
-export async function PUT(request: NextRequest) {
-    try {
-        const updatedProduct: Product = await request.json()
-        const products = await getProducts()
-        const index = products.findIndex(p => p.id === updatedProduct.id)
+export async function POST(request: Request) {
+    const newProduct: Product = await request.json()
+
+    // Dans une vraie application, vous ajouteriez ici la logique pour sauvegarder le produit dans une base de données
+    products.push({ ...newProduct, id: products.length + 1 })
+
+    return NextResponse.json(newProduct, { status: 201 })
+}
+
+export async function PUT(request: Request) {
+    const updatedProduct: Product = await request.json()
+
+    const index = products.findIndex(p => p.id === updatedProduct.id)
+    if (index !== -1) {
+        products[index] = updatedProduct
+        return NextResponse.json(updatedProduct)
+    }
+
+    return NextResponse.json({ error: 'Product not found' }, { status: 404 })
+}
+
+export async function DELETE(request: Request) {
+    const { searchParams } = new URL(request.url)
+    const id = searchParams.get('id')
+
+    if (id) {
+        const index = products.findIndex(p => p.id === parseInt(id))
         if (index !== -1) {
-            products[index] = updatedProduct
-            await saveProducts(products)
-            return NextResponse.json(updatedProduct)
-        }
-        return NextResponse.json({ message: 'Product not found' }, { status: 404 })
-    } catch (error) {
-        console.error('Error updating product:', error)
-        return NextResponse.json({ error: 'Failed to update product' }, { status: 500 })
-    }
-}
-
-export async function DELETE(request: NextRequest) {
-    try {
-        const { searchParams } = new URL(request.url)
-        const id = searchParams.get('id')
-        if (!id) {
-            return NextResponse.json({ message: 'Missing product ID' }, { status: 400 })
-        }
-        const products = await getProducts()
-        const filteredProducts = products.filter(p => p.id !== Number(id))
-        if (products.length !== filteredProducts.length) {
-            await saveProducts(filteredProducts)
-            console.log('Product deleted successfully:', id)
+            products.splice(index, 1)
             return NextResponse.json({ message: 'Product deleted successfully' })
         }
-        return NextResponse.json({ message: 'Product not found' }, { status: 404 })
-    } catch (error) {
-        console.error('Error deleting product:', error)
-        return NextResponse.json({ error: 'Failed to delete product' }, { status: 500 })
     }
+
+    return NextResponse.json({ error: 'Product not found' }, { status: 404 })
 }
 

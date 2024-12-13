@@ -2,109 +2,81 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react'
 
-type CartItem = {
+export interface CartItem {
     id: number
     name: string
     price: number
     quantity: number
     image: string
-    size: string
-    color: string
 }
 
-type CartContextType = {
-    cartItems: CartItem[]
-    addToCart: (item: CartItem) => void
-    removeFromCart: (id: number) => void
+interface CartContextType {
+    items: CartItem[]
+    addItem: (item: CartItem) => void
+    removeItem: (id: number) => void
     updateQuantity: (id: number, quantity: number) => void
     clearCart: () => void
-    applyPromoCode: (code: string) => void
-    promoCode: string
-    discount: number
+    total: number
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined)
 
-export function CartProvider({ children }: { children: React.ReactNode }) {
-    const [cartItems, setCartItems] = useState<CartItem[]>([])
-    const [promoCode, setPromoCode] = useState('')
-    const [discount, setDiscount] = useState(0)
+export const useCart = () => {
+    const context = useContext(CartContext)
+    if (!context) {
+        throw new Error('useCart must be used within a CartProvider')
+    }
+    return context
+}
+
+export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    const [items, setItems] = useState<CartItem[]>([])
 
     useEffect(() => {
         const savedCart = localStorage.getItem('cart')
         if (savedCart) {
-            setCartItems(JSON.parse(savedCart))
+            setItems(JSON.parse(savedCart))
         }
     }, [])
 
     useEffect(() => {
-        localStorage.setItem('cart', JSON.stringify(cartItems))
-    }, [cartItems])
+        localStorage.setItem('cart', JSON.stringify(items))
+    }, [items])
 
-    const addToCart = (item: CartItem) => {
-        setCartItems(prevItems => {
-            const existingItem = prevItems.find(i => i.id === item.id && i.size === item.size && i.color === item.color)
+    const addItem = (item: CartItem) => {
+        setItems(prevItems => {
+            const existingItem = prevItems.find(i => i.id === item.id)
             if (existingItem) {
                 return prevItems.map(i =>
-                    i.id === item.id && i.size === item.size && i.color === item.color
-                        ? { ...i, quantity: i.quantity + item.quantity }
-                        : i
+                    i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
                 )
             }
-            return [...prevItems, item]
+            return [...prevItems, { ...item, quantity: 1 }]
         })
     }
 
-    const removeFromCart = (id: number) => {
-        setCartItems(prevItems => prevItems.filter(item => item.id !== id))
+    const removeItem = (id: number) => {
+        setItems(prevItems => prevItems.filter(item => item.id !== id))
     }
 
     const updateQuantity = (id: number, quantity: number) => {
-        setCartItems(prevItems =>
+        setItems(prevItems =>
             prevItems.map(item =>
-                item.id === id ? { ...item, quantity } : item
+                item.id === id ? { ...item, quantity: Math.max(0, quantity) } : item
             )
         )
     }
 
     const clearCart = () => {
-        setCartItems([])
-        setPromoCode('')
-        setDiscount(0)
+        setItems([])
     }
 
-    const applyPromoCode = (code: string) => {
-        if (code.toLowerCase() === 'reboul10') {
-            const discountAmount = cartItems.reduce((total, item) => total + item.price * item.quantity, 0) * 0.1
-            setDiscount(discountAmount)
-            setPromoCode(code)
-        } else {
-            setDiscount(0)
-            setPromoCode('')
-        }
-    }
+    const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
 
     return (
-        <CartContext.Provider value={{
-            cartItems,
-            addToCart,
-            removeFromCart,
-            updateQuantity,
-            clearCart,
-            applyPromoCode,
-            promoCode,
-            discount
-        }}>
+        <CartContext.Provider value={{ items, addItem, removeItem, updateQuantity, clearCart, total }}>
             {children}
         </CartContext.Provider>
     )
-}
-
-export function useCart() {
-    const context = useContext(CartContext)
-    if (context === undefined) {
-        throw new Error('useCart must be used within a CartProvider')
-    }
-    return context
 }
 

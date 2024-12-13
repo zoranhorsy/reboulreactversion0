@@ -47,13 +47,13 @@ export default function Home() {
 
     return (
         <div className="space-y-16">
-            <section ref={el => sectionRefs.current[0] = el} className="animate-section">
+            <section ref={el => sectionRefs.current[0] = el} className="animate-section font-light">
                 <Hero />
             </section>
 
             <section ref={el => sectionRefs.current[1] = el} className="animate-section bg-gray-100 py-32">
                 <div className="container mx-auto px-4">
-                    <h2 className="animate-on-scroll text-3xl font-bold mb-12 text-center text-black">Nos marques phares</h2>
+                    <h2 className="animate-on-scroll text-3xl font-light mb-12 text-center text-black">Nos marques phares</h2>
                     <AnimatedBrands />
                 </div>
             </section>

@@ -3,7 +3,7 @@ import Image from 'next/image'
 import { X } from 'lucide-react'
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { AddToCartButton } from '@/components/AddToCartButton'
+import { AddToCartButton } from '@/components/cart/AddToCartButton'
 
 type Product = {
     id: number

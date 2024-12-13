@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useEffect } from 'react'
 import { Search, SlidersHorizontal, X } from 'lucide-react'
 import { Button } from "@/components/ui/button"
@@ -29,6 +31,8 @@ type FiltersProps = {
     allTags: string[];
     allColors: string[];
     allBrands: string[];
+    isOpen: boolean;
+    setIsOpen: (value: boolean) => void;
 }
 
 export function Filters({
@@ -49,7 +53,9 @@ export function Filters({
                             categories,
                             allTags,
                             allColors,
-                            allBrands
+                            allBrands,
+                            isOpen,
+                            setIsOpen
                         }: FiltersProps) {
     const [activeFiltersCount, setActiveFiltersCount] = useState(0)
 
@@ -59,9 +65,19 @@ export function Filters({
             filterCategories.length +
             filterTags.length +
             (filterColor !== 'all' ? 1 : 0) +
-            (priceRange[0] !== 0 || priceRange[1] !== 600 ? 1 : 0);
+            (priceRange[0] !== 0 || priceRange[1] !== 1000 ? 1 : 0);
         setActiveFiltersCount(count);
     }, [filterBrand, filterCategories, filterTags, filterColor, priceRange]);
+
+    const resetFilters = () => {
+        setSearchTerm('')
+        setSortBy('name')
+        setFilterBrand('all')
+        setFilterCategories([])
+        setFilterTags([])
+        setPriceRange([0, 1000])
+        setFilterColor('all')
+    }
 
     return (
         <div className="space-y-6">
@@ -186,7 +202,7 @@ export function Filters({
                 <Slider
                     id="price-range"
                     min={0}
-                    max={600}
+                    max={1000}
                     step={10}
                     value={priceRange}
                     onValueChange={setPriceRange}
@@ -198,15 +214,7 @@ export function Filters({
                 </div>
             </div>
 
-            <Button className="w-full" onClick={() => {
-                setSearchTerm('')
-                setSortBy('name')
-                setFilterBrand('all')
-                setFilterCategories([])
-                setFilterTags([])
-                setPriceRange([0, 600])
-                setFilterColor('all')
-            }}>
+            <Button className="w-full" onClick={resetFilters}>
                 Réinitialiser les filtres
             </Button>
         </div>
