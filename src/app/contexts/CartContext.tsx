@@ -10,6 +10,19 @@ export interface CartItem {
     image: string
 }
 
+interface OrderDetails {
+    orderId: string;
+    items: CartItem[];
+    total: number;
+    shippingAddress: {
+        address: string;
+        city: string;
+        postalCode: string;
+        country: string;
+    };
+    estimatedDelivery: string;
+}
+
 interface CartContextType {
     items: CartItem[]
     addItem: (item: CartItem) => void
@@ -17,6 +30,9 @@ interface CartContextType {
     updateQuantity: (id: number, quantity: number) => void
     clearCart: () => void
     total: number
+    lastOrder: OrderDetails | null
+    setLastOrder: (order: OrderDetails) => void
+    clearLastOrder: () => void
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined)
@@ -31,17 +47,31 @@ export const useCart = () => {
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [items, setItems] = useState<CartItem[]>([])
+    const [lastOrder, setLastOrder] = useState<OrderDetails | null>(null)
 
     useEffect(() => {
         const savedCart = localStorage.getItem('cart')
+        const savedLastOrder = localStorage.getItem('lastOrder')
         if (savedCart) {
             setItems(JSON.parse(savedCart))
         }
+        if (savedLastOrder) {
+            setLastOrder(JSON.parse(savedLastOrder))
+        }
+        console.log('CartProvider mounted, lastOrder:', savedLastOrder);
     }, [])
 
     useEffect(() => {
         localStorage.setItem('cart', JSON.stringify(items))
+        console.log('Cart updated:', items)
     }, [items])
+
+    useEffect(() => {
+        if (lastOrder) {
+            localStorage.setItem('lastOrder', JSON.stringify(lastOrder))
+            console.log('Last order updated:', lastOrder)
+        }
+    }, [lastOrder])
 
     const addItem = (item: CartItem) => {
         setItems(prevItems => {
@@ -68,13 +98,37 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     const clearCart = () => {
+        console.log('Clearing cart')
         setItems([])
+        localStorage.removeItem('cart')
     }
 
     const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
 
+    const setLastOrderWithStorage = (order: OrderDetails) => {
+        setLastOrder(order)
+        localStorage.setItem('lastOrder', JSON.stringify(order))
+        console.log('Last order set:', order)
+    }
+
+    const clearLastOrder = () => {
+        console.log('Clearing last order')
+        setLastOrder(null)
+        localStorage.removeItem('lastOrder')
+    }
+
     return (
-        <CartContext.Provider value={{ items, addItem, removeItem, updateQuantity, clearCart, total }}>
+        <CartContext.Provider value={{
+            items,
+            addItem,
+            removeItem,
+            updateQuantity,
+            clearCart,
+            total,
+            lastOrder,
+            setLastOrder: setLastOrderWithStorage,
+            clearLastOrder
+        }}>
             {children}
         </CartContext.Provider>
     )

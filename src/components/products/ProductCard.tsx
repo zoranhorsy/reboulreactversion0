@@ -1,111 +1,136 @@
-import Link from 'next/link'
+import React, { useState } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { AddToCartButton } from '@/components/cart/AddToCartButton'
-import { motion } from 'framer-motion'
-import { Eye } from 'lucide-react'
-import { useState, useEffect } from 'react'
 import { Product } from '@/lib/api'
+import { useCart } from '@/app/contexts/CartContext'
+import { useToast } from '@/components/ui/use-toast'
 
 interface ProductCardProps {
     product: Product
+    compact?: boolean
 }
 
-export function ProductCard({ product }: ProductCardProps) {
-    const [imgSrc, setImgSrc] = useState<string>('/placeholder.svg')
+export function ProductCard({ product, compact = false }: ProductCardProps) {
+    const { addItem } = useCart()
+    const { toast } = useToast()
+    const [isAdding, setIsAdding] = useState(false)
 
-    useEffect(() => {
-        if (product.images && product.images.length > 0) {
-            setImgSrc(product.images[0])
+    const handleAddToCart = async () => {
+        setIsAdding(true)
+        try {
+            await addItem({
+                id: product.id,
+                name: product.name,
+                price: product.price,
+                quantity: 1,
+                image: product.images[0] || '/placeholder.svg'
+            })
+            toast({
+                title: "Produit ajouté au panier",
+                description: `${product.name} a été ajouté à votre panier.`,
+            })
+            console.log('Product added to cart:', product.name)
+        } catch (error) {
+            console.error('Error adding product to cart:', error)
+            toast({
+                title: "Erreur",
+                description: "Impossible d'ajouter le produit au panier.",
+                variant: "destructive",
+            })
+        } finally {
+            setIsAdding(false)
         }
-    }, [product.images])
-
-    const handleImageError = () => {
-        console.error(`Failed to load image for product: ${product.name}`, product.images)
-        setImgSrc('/placeholder.svg')
     }
 
-    console.log('Rendering ProductCard for:', product.name, 'with image:', imgSrc)
+    if (compact) {
+        return (
+            <Card className="overflow-hidden h-full">
+                <div className="flex h-full">
+                    <div className="relative w-1/3">
+                        <Image
+                            src={product.images[0] || '/placeholder.svg'}
+                            alt={product.name}
+                            fill
+                            className="object-cover"
+                            sizes="(max-width: 768px) 33vw, 25vw"
+                        />
+                    </div>
+                    <div className="w-2/3 p-2 sm:p-3 flex flex-col justify-between">
+                        <div>
+                            <h3 className="font-medium text-sm mb-1 line-clamp-1">{product.name}</h3>
+                            <p className="text-xs text-muted-foreground line-clamp-2 hidden sm:block">{product.description}</p>
+                        </div>
+                        <div className="flex items-center justify-between">
+                            <span className="text-sm font-bold">{product.price.toFixed(2)} €</span>
+                            <Badge variant="secondary" className="text-xs">{product.category}</Badge>
+                        </div>
+                    </div>
+                </div>
+            </Card>
+        )
+    }
 
     return (
-        <motion.div
-            className="flex flex-col h-full overflow-hidden rounded-lg border bg-card text-card-foreground shadow-sm transition-all hover:shadow-lg"
-            whileHover={{ scale: 1.03 }}
-            transition={{ type: "spring", stiffness: 300, damping: 10 }}
-        >
-            <div className="relative aspect-square overflow-hidden">
+        <Card className="group h-full overflow-hidden bg-white transition-all duration-300 hover:shadow-lg flex flex-col">
+            <div className="relative pt-[100%]">
                 <Image
-                    src={imgSrc}
+                    src={product.images[0] || '/placeholder.svg'}
                     alt={product.name}
                     fill
-                    className="object-cover transition-transform hover:scale-105"
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    onError={handleImageError}
+                    className="object-cover transition-transform duration-300 group-hover:scale-105"
+                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                    priority
                 />
+                <Badge
+                    variant="secondary"
+                    className="absolute top-2 right-2 text-xs font-medium"
+                >
+                    {product.category}
+                </Badge>
             </div>
-            <CardContent className="flex-grow p-4">
-                <div className="flex justify-between items-start mb-2">
-                    <h3 className="text-lg font-semibold line-clamp-2">{product.name}</h3>
-                    <Badge variant="secondary" className="ml-2">
-                        {product.category}
-                    </Badge>
+            <CardContent className="p-3 sm:p-4 flex flex-col justify-between h-full">
+                <div className="space-y-1 sm:space-y-2 flex-grow">
+                    <h3 className="font-medium text-sm sm:text-base line-clamp-2">
+                        {product.name}
+                    </h3>
+                    <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">
+                        {product.description}
+                    </p>
+                    <p className="text-base sm:text-lg font-bold mt-1 sm:mt-2">
+                        {product.price.toFixed(2)} €
+                    </p>
                 </div>
-                <p className="text-sm text-muted-foreground mb-2">{product.brand}</p>
-                <p className="text-lg font-bold mb-2">{product.price.toFixed(2)} €</p>
-                <div className="flex flex-wrap gap-1 mb-2">
-                    {product.variants && (
-                        <div className="flex flex-wrap gap-1 mb-2">
-                            {Array.from(new Set(product.variants.map(v => v.size))).map((size) => (
-                                <Badge key={size} variant="outline" className="text-xs">
-                                    {size}
-                                </Badge>
-                            ))}
-                        </div>
-                    )}
-                    {product.variants && (
-                        <div className="flex flex-wrap gap-1 mb-2">
-                            {Array.from(new Set(product.variants.map(v => v.color))).map((color) => (
-                                <div
-                                    key={color}
-                                    className="w-4 h-4 rounded-full border border-gray-300"
-                                    style={{ backgroundColor: color }}
-                                    title={color}
-                                />
-                            ))}
-                        </div>
-                    )}
-                </div>
-                <div className="flex flex-wrap gap-1">
-                    {product.tags && product.tags.map((tag) => (
+                <div className="flex flex-wrap gap-1 sm:gap-1.5 mt-2 sm:mt-3">
+                    {product.tags.map((tag) => (
                         <Badge key={tag} variant="outline" className="text-xs">
                             {tag}
                         </Badge>
                     ))}
                 </div>
-                <div className="mt-2">
-                    <Badge variant={product.variants.some(v => v.stock > 10) ? "success" : product.variants.some(v => v.stock > 0) ? "warning" : "destructive"}>
-                        {product.variants.some(v => v.stock > 10) ? "En stock" : product.variants.some(v => v.stock > 0) ? "Stock limité" : "Rupture de stock"}
-                    </Badge>
-                </div>
             </CardContent>
-            <CardFooter className="p-4 pt-0 mt-auto">
-                <div className="flex items-center justify-between w-full">
-                    <AddToCartButton
-                        productId={product.id}
-                        name={product.name}
-                        price={product.price}
-                        image={product.images[0]}
-                    />
-                    <Button variant="outline" size="icon" asChild>
-                        <Link href={`/produit/${product.id}`} aria-label={`Voir les détails de ${product.name}`}>
-                            <Eye className="h-4 w-4" />
-                        </Link>
-                    </Button>
-                </div>
+            <CardFooter className="grid grid-cols-2 gap-2 p-3 sm:p-4 pt-0">
+                <Button
+                    variant="default"
+                    asChild
+                    className="w-full h-8 sm:h-9 text-xs sm:text-sm font-medium"
+                >
+                    <Link href={`/produit/${product.id}`} className="flex items-center justify-center w-full h-full">
+                        Voir détails
+                    </Link>
+                </Button>
+                <Button
+                    variant="outline"
+                    className="w-full h-8 sm:h-9 text-xs sm:text-sm font-medium flex items-center justify-center"
+                    onClick={handleAddToCart}
+                    disabled={isAdding}
+                >
+                    {isAdding ? 'Ajout...' : 'Ajouter au panier'}
+                </Button>
             </CardFooter>
-        </motion.div>
+        </Card>
     )
 }
 

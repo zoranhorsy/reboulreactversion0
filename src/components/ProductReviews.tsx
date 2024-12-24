@@ -1,82 +1,51 @@
-import { useEffect, useRef } from 'react';
-import anime from 'animejs';
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Star } from 'lucide-react';
 
-interface ProductReview {
+interface Review {
+    id: number;
     rating: number;
     comment: string;
+    userName: string;
+    date: string;
 }
 
 interface ProductReviewsProps {
-    productId: number;
-    initialReviews: ProductReview[];
-    onAddReview: (review: ProductReview) => void;
+    reviews: Review[];
 }
 
-const animateStars = (container: HTMLElement) => {
-    anime({
-        targets: container.querySelectorAll('.star'),
-        opacity: [0, 1],
-        scale: [0.5, 1],
-        delay: anime.stagger(100),
-        duration: 500,
-        easing: 'easeOutElastic(1, .8)'
-    });
-};
-
-export function ProductReviews({ productId, initialReviews, onAddReview }: ProductReviewsProps) {
-    const starsContainerRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        if (starsContainerRef.current) {
-            animateStars(starsContainerRef.current);
-        }
-    }, []);
-
-    const renderStars = (rating: number) => {
-        const stars = [];
-        for (let i = 0; i < 5; i++) {
-            stars.push(
-                <span key={i} className={`star ${i < rating ? 'filled' : ''}`}>
-                    ★
-                </span>
-            );
-        }
-        return stars;
-    };
-
+export function ProductReviews({ reviews }: ProductReviewsProps) {
+    const latestReview = reviews.length > 0 ? reviews[0] : null;
 
     return (
-        <div>
-            <h2 className="text-2xl font-bold mb-4">Avis clients</h2>
-            <div ref={starsContainerRef} className="flex">
-                {initialReviews.map((review, index) => (
-                    <div key={index} className="flex items-center mr-4">
-                        {renderStars(review.rating)}
-                        <p className="ml-2">{review.comment}</p>
+        <Card>
+            <CardHeader>
+                <CardTitle>Avis clients</CardTitle>
+            </CardHeader>
+            <CardContent>
+                {latestReview ? (
+                    <div className="space-y-2">
+                        <div className="flex items-center">
+                            {[...Array(5)].map((_, i) => (
+                                <Star
+                                    key={i}
+                                    className={`h-4 w-4 ${
+                                        i < latestReview.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'
+                                    }`}
+                                />
+                            ))}
+                            <span className="ml-2 text-sm text-muted-foreground">{latestReview.rating}/5</span>
+                        </div>
+                        <p className="text-sm">{latestReview.comment.slice(0, 100)}...</p>
+                        <p className="text-xs text-muted-foreground">
+                            {latestReview.userName} - {new Date(latestReview.date).toLocaleDateString()}
+                        </p>
                     </div>
-                ))}
-            </div>
-            <form onSubmit={(e) => {
-                e.preventDefault();
-                const rating = parseInt((document.getElementById('rating') as HTMLInputElement).value, 10);
-                const comment = (document.getElementById('comment') as HTMLInputElement).value;
-                onAddReview({ rating, comment });
-            }}>
-                <label htmlFor="rating">Note:</label>
-                <select id="rating">
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-                    <option value="4">4</option>
-                    <option value="5">5</option>
-                </select>
-                <br/>
-                <label htmlFor="comment">Commentaire:</label>
-                <textarea id="comment"></textarea>
-                <br/>
-                <button type="submit">Ajouter un avis</button>
-            </form>
-        </div>
+                ) : (
+                    <p className="text-sm text-muted-foreground">Aucun avis pour le moment.</p>
+                )}
+            </CardContent>
+        </Card>
     );
 }
 

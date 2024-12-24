@@ -41,3 +41,5 @@ next-env.d.ts
 
 #productsts
 /data/products.json
+
+.env.local

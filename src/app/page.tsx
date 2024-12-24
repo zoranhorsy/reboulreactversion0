@@ -7,6 +7,7 @@ import { FeaturedProducts } from '@/components/FeaturedProducts'
 import { AboutSection } from '@/components/AboutSection'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import {StoreSelector} from "@/components/StoreSelector";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -34,7 +35,6 @@ export default function Home() {
                                 start: 'top 60%',
                                 end: 'bottom 20%',
                                 toggleActions: 'play none none reverse',
-                                // markers: true, // Uncomment for debugging
                             }
                         }
                     )
@@ -48,22 +48,27 @@ export default function Home() {
     return (
         <div className="space-y-16">
             <section ref={el => sectionRefs.current[0] = el} className="animate-section font-light">
-                <Hero />
+                <Hero/>
+            </section>
+
+            <section ref={el => sectionRefs.current[0] = el} className="animate-section font-light">
+                <StoreSelector/>
             </section>
 
             <section ref={el => sectionRefs.current[1] = el} className="animate-section bg-gray-100 py-32">
                 <div className="container mx-auto px-4">
-                    <h2 className="animate-on-scroll text-3xl font-light mb-12 text-center text-black">Nos marques phares</h2>
-                    <AnimatedBrands />
+                    <h2 className="animate-on-scroll text-3xl font-light mb-12 text-center text-black">Nos marques
+                        phares</h2>
+                    <AnimatedBrands/>
                 </div>
             </section>
 
             <section ref={el => sectionRefs.current[2] = el} className="animate-section">
-                <FeaturedProducts />
+                <FeaturedProducts/>
             </section>
 
             <section ref={el => sectionRefs.current[3] = el} className="animate-section">
-                <AboutSection />
+                <AboutSection/>
             </section>
         </div>
     )

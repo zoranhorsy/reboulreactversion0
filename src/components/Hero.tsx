@@ -1,23 +1,63 @@
-'use client'
+import Image from 'next/image'
+import { useAnime } from '@/hooks/useAnime'
 
-import Link from 'next/link'
-import { Button } from "@/components/ui/button"
+interface HeroProps {
+    title: string
+    subtitle: string
+    imageUrl: string
+    overlayColor?: string
+    parallax?: boolean
+}
 
-export function Hero() {
+export function Hero({ title, subtitle, imageUrl, overlayColor = 'rgba(0, 0, 0, 0.5)', parallax = false }: HeroProps) {
+    const titleRef = useAnime({
+        opacity: [0, 1],
+        translateY: [-20, 0],
+        duration: 1000,
+        easing: 'easeOutExpo',
+        delay: 300
+    })
+
+    const subtitleRef = useAnime({
+        opacity: [0, 1],
+        translateY: [20, 0],
+        duration: 1000,
+        easing: 'easeOutExpo',
+        delay: 600
+    })
+
     return (
-        <section className="text-center py-20 bg-white font-light">
-            <div className="container mx-auto px-4">
-                <h1 className="animate-on-scroll text-4xl sm:text-5xl font-light mb-4 sm:mb-6 text-black">Bienvenue chez Reboul Store</h1>
-                <p className="animate-on-scroll text-lg sm:text-xl mb-6 sm:mb-8 text-gray-700 max-w-3xl mx-auto">
-                    Votre destination pour les vêtements premium à Marseille. Découvrez notre collection exclusive de marques de luxe.
-                </p>
-                <Link href="/catalogue">
-                    <Button className="animate-on-scroll bg-black text-white px-6 sm:px-8 py-2 sm:py-3 text-base sm:text-lg font-medium rounded-md hover:bg-gray-800 transition-colors">
-                        Découvrir notre collection
-                    </Button>
-                </Link>
+        <div className="relative h-[60vh] min-h-[400px] w-full overflow-hidden">
+            <div className={`absolute inset-0 ${parallax ? 'parallax-bg' : ''}`}>
+                <Image
+                    src={imageUrl}
+                    alt={title}
+                    layout="fill"
+                    objectFit="cover"
+                    quality={100}
+                    priority
+                />
             </div>
-        </section>
+            <div
+                className="absolute inset-0 flex items-center justify-center"
+                style={{ backgroundColor: overlayColor }}
+            >
+                <div className="text-center text-white max-w-3xl px-4">
+                    <h1
+                        ref={titleRef}
+                        className="text-5xl font-bold mb-4 opacity-0"
+                    >
+                        {title}
+                    </h1>
+                    <p
+                        ref={subtitleRef}
+                        className="text-xl opacity-0"
+                    >
+                        {subtitle}
+                    </p>
+                </div>
+            </div>
+        </div>
     )
 }
 

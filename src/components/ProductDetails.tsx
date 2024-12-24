@@ -1,216 +1,263 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronDown, ChevronUp, Plus, Minus } from 'lucide-react'
+import { Heart, Share, Plus, Minus, ChevronDown } from 'lucide-react'
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ProductGallery } from "@/components/ProductGallery"
-import { RecommendedProducts } from "@/components/RecommendedProducts"
 import { ColorSelector } from "@/components/ColorSelector"
+import { SizeSelector } from "@/components/SizeSelector"
+import { ProductTags } from "@/components/ProductTags"
+import { ProductReviews } from "@/components/ProductReviews"
+import { SizeChart } from "@/components/SizeChart"
+import { ProductQuestions } from "@/components/ProductQuestions"
+import { ProductFAQs } from "@/components/ProductFAQs"
 import { Product } from '@/lib/api'
-import { cn } from "@/lib/utils"
+import { useCart } from '@/app/contexts/CartContext'
+import { useToast } from "@/components/ui/use-toast"
+import { useColorSelector } from '@/hooks/useColorSelector'
+import { Label } from "@/components/ui/label"
 
 interface ProductDetailsProps {
     product: Product
 }
 
 export function ProductDetails({ product }: ProductDetailsProps) {
-    const [selectedVariantState, setSelectedVariantState] = useState<{ size: string; color: string }>(() => {
-        const defaultVariant = product.variants[0];
-        return { size: defaultVariant.size, color: defaultVariant.color };
-    });
-    const [selectedVariantStock, setSelectedVariantStock] = useState(0);
-    const [showDescription, setShowDescription] = useState(false);
-    const [showSizeGuide, setShowSizeGuide] = useState(false);
-    const [quantity, setQuantity] = useState(1);
-
-    useEffect(() => {
-        const newSelectedVariant = product.variants.find(
-            v => v.size === selectedVariantState.size && v.color === selectedVariantState.color
-        );
-        setSelectedVariantStock(newSelectedVariant?.stock ?? 0);
-    }, [selectedVariantState, product.variants]);
+    const [selectedSize, setSelectedSize] = useState(() => product.variants[0]?.size || '')
+    const [selectedVariantStock, setSelectedVariantStock] = useState(0)
+    const [quantity, setQuantity] = useState(1)
+    const [showDetails, setShowDetails] = useState(false)
+    const { addItem } = useCart()
+    const { toast } = useToast()
 
     const availableSizes = [...new Set(product.variants.map(v => v.size))]
     const availableColors = [...new Set(product.variants.map(v => v.color))]
 
+    const {
+        selectedColor,
+        handleColorChange,
+        getSelectedColorValue,
+        getSelectedColorName,
+    } = useColorSelector(availableColors[0], availableColors)
+
+    const sizeStock = useMemo(() => {
+        const stock: Record<string, number> = {};
+        product.variants.forEach(variant => {
+            if (variant.color === selectedColor) {
+                stock[variant.size] = variant.stock;
+            }
+        });
+        return stock;
+    }, [product.variants, selectedColor]);
+
+    useEffect(() => {
+        const newSelectedVariant = product.variants.find(
+            v => v.size === selectedSize && v.color === selectedColor
+        )
+        setSelectedVariantStock(newSelectedVariant?.stock ?? 0)
+    }, [selectedSize, selectedColor, product.variants])
+
+    const handleAddToCart = () => {
+        addItem({
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            quantity: quantity,
+            image: product.images[0] || '/placeholder.png',
+            color: selectedColor,
+            size: selectedSize,
+        })
+        toast({
+            title: "Ajouté au panier",
+            description: `${quantity} x ${product.name} (${selectedColor}, ${selectedSize}) a été ajouté à votre panier.`,
+        })
+    }
+
     return (
-        <div className="min-h-screen bg-white">
-            <div className="max-w-[1400px] mx-auto">
-                <motion.nav
-                    initial={{ opacity: 0, y: -20 }}
+        <div className="container mx-auto px-4 py-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+                <motion.div
+                    initial={{ opacity: 0, y: 50 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5 }}
-                    className="p-4 text-xs tracking-widest uppercase"
                 >
-                    <span className="text-gray-500">REBOUL / {product.category} / {product.name}</span>
-                </motion.nav>
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <ProductGallery images={product.images} productName={product.name} />
+                </motion.div>
+                <motion.div
+                    className="space-y-6"
+                    initial={{ opacity: 0, y: 50 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.2 }}
+                >
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.5, delay: 0.4 }}
+                    >
+                        <h1 className="text-3xl font-bold">{product.name}</h1>
+                        <p className="text-2xl font-semibold text-primary mt-2">{product.price.toFixed(2)} €</p>
+                    </motion.div>
+
+                    <motion.p
+                        className="text-muted-foreground"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.5, delay: 0.6 }}
+                    >
+                        {product.description}
+                    </motion.p>
 
                     <motion.div
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.5, delay: 0.3 }}
-                        className="space-y-8 p-4 lg:p-8"
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        transition={{ duration: 0.5, delay: 0.8 }}
                     >
-                        <div className="space-y-4">
-                            <h1 className="text-3xl font-light tracking-wider uppercase">{product.name}</h1>
-                            <p className="text-2xl font-light">{product.price.toFixed(2)} €</p>
-                        </div>
-
-                        <ColorSelector
-                            availableColors={availableColors}
-                            selectedColor={selectedVariantState.color}
-                            onColorChange={(color) => setSelectedVariantState(prev => ({ ...prev, color }))}
-                        />
-
-                        <div className="space-y-4">
-                            <div className="flex justify-between items-center">
-                                <span className="text-xs tracking-widest uppercase">SIZE: {selectedVariantState.size}</span>
-                                <button
-                                    className="text-xs underline tracking-widest uppercase transition-colors hover:text-gray-600"
-                                    onClick={() => setShowSizeGuide(!showSizeGuide)}
-                                >
-                                    SIZE GUIDE
-                                </button>
-                            </div>
-                            <div className="grid grid-cols-4 gap-2">
-                                {availableSizes.map((size) => (
-                                    <Button
-                                        key={size}
-                                        variant={selectedVariantState.size === size ? "default" : "outline"}
-                                        className={cn(
-                                            "w-full rounded-none border text-xs tracking-widest transition-all duration-300",
-                                            selectedVariantState.size === size
-                                                ? 'bg-black text-white hover:bg-black/90'
-                                                : 'hover:bg-black hover:text-white'
-                                        )}
-                                        onClick={() => setSelectedVariantState(prev => ({ ...prev, size }))}
-                                    >
-                                        {size}
-                                    </Button>
-                                ))}
-                            </div>
-                        </div>
-
-                        <AnimatePresence>
-                            {showSizeGuide && (
-                                <motion.div
-                                    initial={{ opacity: 0, height: 0 }}
-                                    animate={{ opacity: 1, height: 'auto' }}
-                                    exit={{ opacity: 0, height: 0 }}
-                                    transition={{ duration: 0.3 }}
-                                    className="border-t border-b py-4 overflow-hidden"
-                                >
-                                    <h3 className="text-sm font-medium mb-2 tracking-widest uppercase">Size Guide</h3>
-                                    <table className="w-full text-xs">
-                                        <thead>
-                                        <tr className="border-b">
-                                            <th className="py-2 text-left">Size</th>
-                                            <th className="py-2 text-left">Chest (cm)</th>
-                                            <th className="py-2 text-left">Waist (cm)</th>
-                                            <th className="py-2 text-left">Hips (cm)</th>
-                                        </tr>
-                                        </thead>
-                                        <tbody>
-                                        {product.sizeChart.map((size) => (
-                                            <tr key={size.size} className="border-b">
-                                                <td className="py-2">{size.size}</td>
-                                                <td className="py-2">{size.chest}</td>
-                                                <td className="py-2">{size.waist}</td>
-                                                <td className="py-2">{size.hips}</td>
-                                            </tr>
-                                        ))}
-                                        </tbody>
-                                    </table>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-
-                        <div className="flex items-center space-x-4">
-                            <span className="text-xs tracking-widest uppercase">QUANTITY:</span>
-                            <div className="flex items-center border border-black">
-                                <button
-                                    className="px-3 py-2 transition-colors hover:bg-gray-100"
-                                    onClick={() => setQuantity(prev => Math.max(1, prev - 1))}
-                                >
-                                    <Minus size={16} />
-                                </button>
-                                <span className="px-3 py-2 border-l border-r border-black min-w-[40px] text-center">{quantity}</span>
-                                <button
-                                    className="px-3 py-2 transition-colors hover:bg-gray-100"
-                                    onClick={() => setQuantity(prev => Math.min(selectedVariantStock, prev + 1))}
-                                >
-                                    <Plus size={16} />
-                                </button>
-                            </div>
-                        </div>
-
                         <Button
-                            className="w-full h-12 rounded-none bg-black hover:bg-black/90 text-white text-xs tracking-widest transition-all duration-300"
-                            disabled={selectedVariantStock <= 0}
+                            variant="ghost"
+                            onClick={() => setShowDetails(!showDetails)}
+                            className="flex items-center justify-between w-full"
                         >
-                            ADD TO CART
+                            <span>Détails du produit</span>
+                            <motion.div
+                                animate={{ rotate: showDetails ? 180 : 0 }}
+                                transition={{ duration: 0.3 }}
+                            >
+                                <ChevronDown className="h-4 w-4" />
+                            </motion.div>
                         </Button>
-
-                        <div className="text-xs tracking-widest uppercase">
-                            {selectedVariantStock > 0 ? (
-                                <span className="text-green-600">IN STOCK</span>
-                            ) : (
-                                <span className="text-red-600">OUT OF STOCK</span>
-                            )}
-                        </div>
-
-                        <button
-                            onClick={() => setShowDescription(!showDescription)}
-                            className="flex items-center justify-between w-full py-4 border-t border-b transition-colors hover:bg-gray-50"
-                        >
-                            <span className="text-xs tracking-widest uppercase">PRODUCT DESCRIPTION</span>
-                            {showDescription ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                        </button>
-
                         <AnimatePresence>
-                            {showDescription && (
+                            {showDetails && (
                                 <motion.div
                                     initial={{ opacity: 0, height: 0 }}
                                     animate={{ opacity: 1, height: 'auto' }}
                                     exit={{ opacity: 0, height: 0 }}
                                     transition={{ duration: 0.3 }}
-                                    className="space-y-4 text-sm leading-relaxed overflow-hidden"
                                 >
-                                    <p>{product.description}</p>
-                                    <ul className="list-disc pl-4 space-y-2">
-                                        <li>Brand: {product.brand}</li>
-                                        <li>Category: {product.category}</li>
-                                        <li>Composition: 100% cotton</li>
-                                        <li>Made in Italy</li>
-                                    </ul>
-                                    <div className="pt-4">
-                                        <h3 className="font-medium mb-2 text-xs tracking-widest uppercase">Care Instructions:</h3>
-                                        <ul className="list-disc pl-4 space-y-2">
-                                            <li>Machine wash at 30°C</li>
-                                            <li>Do not tumble dry</li>
-                                            <li>Iron at medium temperature</li>
-                                        </ul>
-                                    </div>
+                                    <Card className="mt-2">
+                                        <CardContent className="pt-4">
+                                            <ul className="list-disc pl-5 space-y-1">
+                                                <li>Marque: {product.brand}</li>
+                                                <li>Catégorie: {product.category}</li>
+                                                <li>Type de magasin: {product.storeType}</li>
+                                                <li>En vedette: {product.featured ? 'Oui' : 'Non'}</li>
+                                            </ul>
+                                        </CardContent>
+                                    </Card>
                                 </motion.div>
                             )}
                         </AnimatePresence>
                     </motion.div>
-                </div>
 
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.6 }}
-                    className="mt-16 p-4"
-                >
-                    <h2 className="text-xl font-light tracking-widest uppercase mb-8">YOU MAY ALSO LIKE</h2>
-                    <RecommendedProducts currentProductId={product.id} category={product.category} />
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.5, delay: 1 }}
+                    >
+                        <h2 className="text-lg font-semibold mb-2">Tags</h2>
+                        <ProductTags tags={product.tags} />
+                    </motion.div>
+
+                    <motion.div
+                        className="grid grid-cols-1 sm:grid-cols-2 gap-4"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.5, delay: 1.2 }}
+                    >
+                        <div>
+                            <Label htmlFor="color-selector" className="text-sm font-medium mb-2 block">Couleur</Label>
+                            <ColorSelector
+                                availableColors={availableColors}
+                                selectedColor={selectedColor}
+                                onColorChange={handleColorChange}
+                            />
+                        </div>
+                        <div>
+                            <SizeSelector
+                                availableSizes={availableSizes}
+                                selectedSize={selectedSize}
+                                onSizeChange={setSelectedSize}
+                                sizeStock={sizeStock}
+                            />
+                        </div>
+                    </motion.div>
+
+                    <motion.div
+                        className="flex items-center space-x-4"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.5, delay: 1.4 }}
+                    >
+                        <span className="text-sm font-medium">Quantité:</span>
+                        <div className="flex items-center border rounded-md">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setQuantity(prev => Math.max(1, prev - 1))}
+                            >
+                                <Minus className="h-4 w-4" />
+                            </Button>
+                            <span className="px-4 py-2 text-sm font-medium">{quantity}</span>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setQuantity(prev => Math.min(selectedVariantStock, prev + 1))}
+                            >
+                                <Plus className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    </motion.div>
+
+                    <motion.div
+                        className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.5, delay: 1.6 }}
+                    >
+                        <Button
+                            className="flex-1"
+                            size="lg"
+                            disabled={selectedVariantStock <= 0}
+                            onClick={handleAddToCart}
+                        >
+                            Ajouter au panier
+                        </Button>
+                        <div className="flex space-x-4">
+                            <Button variant="outline" size="icon">
+                                <Heart className="h-4 w-4" />
+                            </Button>
+                            <Button variant="outline" size="icon">
+                                <Share className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    </motion.div>
+
+                    <motion.div
+                        className="text-sm font-medium"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.5, delay: 1.8 }}
+                    >
+                        {selectedVariantStock > 0 ? (
+                            <span className="text-green-600">En stock</span>
+                        ) : (
+                            <span className="text-destructive">Rupture de stock</span>
+                        )}
+                    </motion.div>
                 </motion.div>
             </div>
+
+            <motion.div
+                className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-12"
+                initial={{ opacity: 0, y: 50 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 2 }}
+            >
+                <ProductReviews reviews={product.reviews || []} />
+                <SizeChart sizeChart={product.sizeChart} />
+                <ProductQuestions questions={product.questions} />
+                <ProductFAQs faqs={product.faqs} />
+            </motion.div>
         </div>
     )
 }

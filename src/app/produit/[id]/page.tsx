@@ -6,37 +6,30 @@ import { useToast } from "@/components/ui/use-toast"
 import { getProductById, Product } from '@/lib/api'
 import { ProductDetails } from '@/components/ProductDetails'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
-import { ProductGallery } from '@/components/ProductGallery'
-import { ColorSelector } from '@/components/ColorSelector'
+///import { ErrorDisplay } from '@/components/ErrorDisplay'
+import { useCart } from '@/app/contexts/CartContext'
 
 export default function ProductPage() {
     const { id } = useParams() as { id: string }
     const [product, setProduct] = useState<Product | null>(null)
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
-    const [activeImageIndex, setActiveImageIndex] = useState(0)
-    const [selectedColor, setSelectedColor] = useState<string | null>(null)
     const { toast } = useToast()
+    const { addItem } = useCart()
 
     useEffect(() => {
         const fetchProduct = async () => {
             setIsLoading(true)
             setError(null)
             try {
-                console.log(`Client: Fetching product with ID ${id}...`)
                 const fetchedProduct = await getProductById(id)
                 if (fetchedProduct) {
-                    console.log('Client: Product fetched successfully:', fetchedProduct)
                     setProduct(fetchedProduct)
-                    if (fetchedProduct.variants && fetchedProduct.variants.length > 0) {
-                        setSelectedColor(fetchedProduct.variants[0].color)
-                    }
                 } else {
-                    console.log('Client: Product not found, redirecting to 404 page')
                     notFound()
                 }
             } catch (error) {
-                console.error('Client: Error fetching product:', error)
+                console.error('Error fetching product:', error)
                 setError('Failed to load product. Please try again later.')
                 toast({
                     title: "Error",
@@ -53,12 +46,30 @@ export default function ProductPage() {
         }
     }, [id, toast])
 
+    const handleAddToCart = (selectedColor: string, selectedSize: string) => {
+        if (product) {
+            addItem({
+                id: product.id,
+                name: product.name,
+                price: product.price,
+                quantity: 1,
+                image: product.images[0] || '/placeholder.svg',
+                color: selectedColor,
+                size: selectedSize,
+            })
+            toast({
+                title: "Added to cart",
+                description: `${product.name} (${selectedColor}, ${selectedSize}) has been added to your cart.`,
+            })
+        }
+    }
+
     if (isLoading) {
         return <LoadingSpinner />
     }
 
     if (error) {
-        return <div>Error: {error}</div>
+        return <ErrorDisplay message={error} />
     }
 
     if (!product) {
@@ -66,21 +77,12 @@ export default function ProductPage() {
     }
 
     return (
-        <ProductDetails product={product}>
-            <ProductGallery
-                images={product.images}
-                productName={product.name}
-                onImageChange={setActiveImageIndex}
-                activeIndex={activeImageIndex}
+        <div className="container mx-auto px-4 py-8">
+            <ProductDetails
+                product={product}
+                onAddToCart={handleAddToCart}
             />
-            {product.variants && (
-                <ColorSelector
-                    availableColors={[...new Set(product.variants.map(v => v.color))]}
-                    selectedColor={selectedColor}
-                    onColorChange={setSelectedColor}
-                />
-            )}
-        </ProductDetails>
+        </div>
     )
 }
 

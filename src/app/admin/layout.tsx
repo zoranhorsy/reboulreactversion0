@@ -5,6 +5,8 @@ import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from "@/components/ui/button"
 import { useAuth } from '@/app/contexts/AuthContext'
+import { NotificationCenter } from '@/components/admin/NotificationCenter'
+import { useNotifications } from '@/hooks/useNotifications'
 
 export default function AdminLayout({
                                         children,
@@ -14,6 +16,7 @@ export default function AdminLayout({
     const { user, logout } = useAuth()
     const router = useRouter()
     const pathname = usePathname()
+    const { notifications, addNotification, markAsRead } = useNotifications()
 
     useEffect(() => {
         if (!user && pathname !== '/admin/login') {
@@ -59,6 +62,13 @@ export default function AdminLayout({
 
             {/* Main content */}
             <main className="flex-1 p-8 overflow-y-auto">
+                <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-2xl font-semibold">Bienvenue, {user.email}</h2>
+                    <NotificationCenter
+                        notifications={notifications}
+                        onNotificationRead={markAsRead}
+                    />
+                </div>
                 {children}
             </main>
         </div>

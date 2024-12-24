@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import * as z from 'zod'
 
 import { ScrollToTopButton } from '@/components/ScrollToTopButton'
 import { Button } from '@/components/ui/button'
@@ -9,62 +12,47 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useCart } from '@/app/contexts/CartContext'
 import { useToast } from "@/components/ui/use-toast"
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { CreditCard, Truck, ShoppingBag } from 'lucide-react'
+import { CreditCard, Truck, ShoppingBag, Lock } from 'lucide-react'
+import { StripeProvider } from '@/components/StripeProvider'
+import { CheckoutForm } from '@/components/CheckoutForm'
+
+const shippingSchema = z.object({
+    address: z.string().min(1, "L'adresse est requise"),
+    city: z.string().min(1, "La ville est requise"),
+    postalCode: z.string().regex(/^\d{5}$/, "Le code postal doit contenir 5 chiffres"),
+    country: z.string().min(1, "Le pays est requis"),
+})
+
+type ShippingFormData = z.infer<typeof shippingSchema>
 
 export default function CheckoutPage() {
-    const [paymentInfo, setPaymentInfo] = useState({
-        cardNumber: '',
-        expiry: '',
-        cvc: '',
-        name: '',
+    const { register, handleSubmit, formState: { errors } } = useForm<ShippingFormData>({
+        resolver: zodResolver(shippingSchema)
     })
-    const [shippingInfo, setShippingInfo] = useState({
-        address: '',
-        city: '',
-        postalCode: '',
-        country: '',
-    })
-    const { items: cartItems, total, clearCart } = useCart()
+    const { items: cartItems, total } = useCart()
     const router = useRouter()
     const { toast } = useToast()
-    const [isProcessing, setIsProcessing] = useState(false)
     const [activeTab, setActiveTab] = useState("shipping")
 
     useEffect(() => {
+        console.log('CheckoutPage mounted, cartItems:', cartItems);
         if (!cartItems || cartItems.length === 0) {
-            router.push('/panier')
+            console.log('Cart is empty, redirecting to /');
+            router.push('/')
         }
     }, [cartItems, router])
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault()
-        setIsProcessing(true)
-
-        // Simuler un traitement de paiement
-        await new Promise(resolve => setTimeout(resolve, 2000))
-
-        // Ici, vous implémenteriez la logique réelle de paiement avec Stripe
-        console.log('Informations de paiement:', paymentInfo)
-        console.log('Informations de livraison:', shippingInfo)
-
-        clearCart()
-        toast({
-            title: "Paiement réussi",
-            description: "Votre commande a été traitée avec succès.",
-        })
-        router.push('/confirmation-commande')
-    }
-
-    const handleContinue = (e: React.FormEvent) => {
-        e.preventDefault()
+    const onSubmitShipping = (data: ShippingFormData) => {
+        console.log('Shipping data submitted:', data);
         setActiveTab("payment")
     }
 
     if (!cartItems || cartItems.length === 0) {
-        return null // Le useEffect redirigera vers le panier
+        console.log('Cart is empty, rendering null and redirecting to /');
+        return null
     }
 
     return (
@@ -90,42 +78,42 @@ export default function CheckoutPage() {
                                         <CardTitle>Informations de livraison</CardTitle>
                                     </CardHeader>
                                     <CardContent>
-                                        <form onSubmit={handleContinue} className="space-y-4">
+                                        <form onSubmit={handleSubmit(onSubmitShipping)} className="space-y-4">
                                             <div className="space-y-2">
                                                 <Label htmlFor="address">Adresse</Label>
                                                 <Input
                                                     id="address"
-                                                    value={shippingInfo.address}
-                                                    onChange={(e) => setShippingInfo({ ...shippingInfo, address: e.target.value })}
-                                                    required
+                                                    {...register('address')}
+                                                    aria-invalid={errors.address ? 'true' : 'false'}
                                                 />
+                                                {errors.address && <p className="text-red-500 text-sm">{errors.address.message}</p>}
                                             </div>
                                             <div className="space-y-2">
                                                 <Label htmlFor="city">Ville</Label>
                                                 <Input
                                                     id="city"
-                                                    value={shippingInfo.city}
-                                                    onChange={(e) => setShippingInfo({ ...shippingInfo, city: e.target.value })}
-                                                    required
+                                                    {...register('city')}
+                                                    aria-invalid={errors.city ? 'true' : 'false'}
                                                 />
+                                                {errors.city && <p className="text-red-500 text-sm">{errors.city.message}</p>}
                                             </div>
                                             <div className="space-y-2">
                                                 <Label htmlFor="postalCode">Code postal</Label>
                                                 <Input
                                                     id="postalCode"
-                                                    value={shippingInfo.postalCode}
-                                                    onChange={(e) => setShippingInfo({ ...shippingInfo, postalCode: e.target.value })}
-                                                    required
+                                                    {...register('postalCode')}
+                                                    aria-invalid={errors.postalCode ? 'true' : 'false'}
                                                 />
+                                                {errors.postalCode && <p className="text-red-500 text-sm">{errors.postalCode.message}</p>}
                                             </div>
                                             <div className="space-y-2">
                                                 <Label htmlFor="country">Pays</Label>
                                                 <Input
                                                     id="country"
-                                                    value={shippingInfo.country}
-                                                    onChange={(e) => setShippingInfo({ ...shippingInfo, country: e.target.value })}
-                                                    required
+                                                    {...register('country')}
+                                                    aria-invalid={errors.country ? 'true' : 'false'}
                                                 />
+                                                {errors.country && <p className="text-red-500 text-sm">{errors.country.message}</p>}
                                             </div>
                                             <Button type="submit" className="w-full">Continuer vers le paiement</Button>
                                         </form>
@@ -138,54 +126,9 @@ export default function CheckoutPage() {
                                         <CardTitle>Informations de paiement</CardTitle>
                                     </CardHeader>
                                     <CardContent>
-                                        <form onSubmit={handleSubmit} className="space-y-4">
-                                            <div className="space-y-2">
-                                                <Label htmlFor="name">Nom sur la carte</Label>
-                                                <Input
-                                                    id="name"
-                                                    value={paymentInfo.name}
-                                                    onChange={(e) => setPaymentInfo({ ...paymentInfo, name: e.target.value })}
-                                                    required
-                                                />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label htmlFor="cardNumber">Numéro de carte</Label>
-                                                <Input
-                                                    id="cardNumber"
-                                                    value={paymentInfo.cardNumber}
-                                                    onChange={(e) => setPaymentInfo({ ...paymentInfo, cardNumber: e.target.value })}
-                                                    required
-                                                />
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="expiry">Date d'expiration</Label>
-                                                    <Input
-                                                        id="expiry"
-                                                        value={paymentInfo.expiry}
-                                                        onChange={(e) => setPaymentInfo({ ...paymentInfo, expiry: e.target.value })}
-                                                        placeholder="MM/AA"
-                                                        required
-                                                    />
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="cvc">CVC</Label>
-                                                    <Input
-                                                        id="cvc"
-                                                        value={paymentInfo.cvc}
-                                                        onChange={(e) => setPaymentInfo({ ...paymentInfo, cvc: e.target.value })}
-                                                        required
-                                                    />
-                                                </div>
-                                            </div>
-                                            <Button
-                                                type="submit"
-                                                className="w-full"
-                                                disabled={isProcessing}
-                                            >
-                                                {isProcessing ? 'Traitement en cours...' : 'Payer'}
-                                            </Button>
-                                        </form>
+                                        <StripeProvider>
+                                            <CheckoutForm />
+                                        </StripeProvider>
                                     </CardContent>
                                 </Card>
                             </TabsContent>
@@ -211,6 +154,19 @@ export default function CheckoutPage() {
                                     <span>Total</span>
                                     <span>{total.toFixed(2)} €</span>
                                 </div>
+                            </CardContent>
+                        </Card>
+                        <Card className="mt-4">
+                            <CardHeader>
+                                <CardTitle className="flex items-center">
+                                    <Lock className="mr-2 h-5 w-5" />
+                                    Paiement sécurisé
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <p className="text-sm text-gray-600">
+                                    Vos informations de paiement sont sécurisées. Nous utilisons le cryptage SSL pour protéger vos données.
+                                </p>
                             </CardContent>
                         </Card>
                     </div>

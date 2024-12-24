@@ -13,6 +13,16 @@ interface CartItemProps {
 }
 
 export function CartItem({ id, name, price, quantity, image, onRemove, onUpdateQuantity }: CartItemProps) {
+    const handleDecreaseQuantity = () => {
+        if (quantity > 1) {
+            onUpdateQuantity(quantity - 1)
+        }
+    }
+
+    const handleIncreaseQuantity = () => {
+        onUpdateQuantity(quantity + 1)
+    }
+
     return (
         <div className="flex flex-col sm:flex-row items-start sm:items-center py-4 border-b">
             <Image
@@ -24,16 +34,17 @@ export function CartItem({ id, name, price, quantity, image, onRemove, onUpdateQ
             />
             <div className="flex-grow mb-2 sm:mb-0">
                 <h3 className="font-semibold text-sm sm:text-base">{name}</h3>
-                <p className="text-gray-600 text-sm">{price.toFixed(2)} €</p>
+                <p className="text-gray-600 text-sm">{typeof price === 'number' ? price.toFixed(2) : 'N/A'} €</p>
             </div>
             <div className="flex items-center justify-between w-full sm:w-auto">
                 <div className="flex items-center">
                     <Button
                         variant="outline"
                         size="icon"
-                        onClick={() => onUpdateQuantity(quantity - 1)}
+                        onClick={handleDecreaseQuantity}
                         disabled={quantity === 1}
                         className="h-8 w-8"
+                        aria-label="Diminuer la quantité"
                     >
                         <Minus className="h-3 w-3" />
                     </Button>
@@ -41,8 +52,9 @@ export function CartItem({ id, name, price, quantity, image, onRemove, onUpdateQ
                     <Button
                         variant="outline"
                         size="icon"
-                        onClick={() => onUpdateQuantity(quantity + 1)}
+                        onClick={handleIncreaseQuantity}
                         className="h-8 w-8"
+                        aria-label="Augmenter la quantité"
                     >
                         <Plus className="h-3 w-3" />
                     </Button>
@@ -52,6 +64,7 @@ export function CartItem({ id, name, price, quantity, image, onRemove, onUpdateQ
                     size="icon"
                     onClick={onRemove}
                     className="h-8 w-8 ml-2"
+                    aria-label="Supprimer l'article"
                 >
                     <Trash2 className="h-4 w-4" />
                 </Button>

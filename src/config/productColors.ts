@@ -16,3 +16,8 @@ export function getColorValue(colorName: string): string {
     return color ? color.value : '#CCCCCC' // Couleur par défaut si non trouvée
 }
 
+export function getColorName(colorValue: string): string {
+    const color = productColors.find(c => c.value.toLowerCase() === colorValue.toLowerCase())
+    return color ? color.name : 'Inconnu' // Nom par défaut si non trouvé
+}
+

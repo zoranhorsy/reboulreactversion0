@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Home, ShoppingBag, User, X, Info, ShoppingCart, LogIn } from 'lucide-react'
+import {Home, ShoppingBag, User, X, Info, ShoppingCart, LogIn, Folders} from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { CartSheet } from '@/components/cart/CartSheet'
@@ -43,8 +43,11 @@ export function Dock() {
     }, [isOpen])
 
     const menuItems = [
-        { href: "/", icon: Home, label: "Accueil" },
-        { href: "/catalogue", icon: ShoppingBag, label: "Catalogue" },
+        { href: "/", icon: Home, label: "Home" },
+        { href: "/catalogue", icon: ShoppingBag, label: "Nos Produits" },
+        { href: "/adulte", icon: Folders, label: "Adulte" },
+        { href: "/minots", icon: Folders, label: "Minots" },
+        { href: "/sneakers", icon: Folders, label: "Sneakers" },
         { href: "/about", icon: Info, label: "À propos" },
         { href: "/profil", icon: User, label: "Profil" },
         { href: "/connexion", icon: LogIn, label: "Connexion" },

@@ -10,15 +10,17 @@ const nextConfig = {
         ignoreBuildErrors: true,
     },
     reactStrictMode: true,
-    experimental: { appDir: true, },
-        images: {
-            domains: ['localhost'],
-            remotePatterns: [
-                {
-                    protocol: 'https',
-                    hostname: '**',
-                },
-            ],
+    experimental: { appDir: true },
+    images: {
+        domains: ['localhost'],
+        remotePatterns: [
+            {
+                protocol: 'https',
+                hostname: '**',
+            },
+        ],
+        dangerouslyAllowSVG: true,
+        contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
     },
     webpack(config) {
         config.module.rules.push({
@@ -28,7 +30,6 @@ const nextConfig = {
         return config;
     }
 }
-
 
 module.exports = nextConfig
 

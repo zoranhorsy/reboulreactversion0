@@ -4,7 +4,7 @@ import Footer from '@/components/Footer'
 import { CartProvider } from '@/app/contexts/CartContext'
 import { WishlistProvider } from '@/app/contexts/WishlistContext'
 import { Metadata } from 'next'
-import { GeistSans } from 'geist/font/sans'
+import { GeistSans } from 'geist/font'
 import GsapInitializer from '@/components/GsapInitializer'
 import { Dock } from '@/components/Dock'
 import { AuthProvider } from '@/app/contexts/AuthContext'
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
     title: 'Reboul Store - Vêtements Premium à Marseille',
     description: 'Boutique de vêtements premium à Marseille, spécialisée dans Stone Island, CP Company et plus encore.',
     icons: {
-        icon: '/favicon.ico',
+        icon: '/logo_black.png',
     },
 }
 
@@ -47,4 +47,3 @@ export default function RootLayout({
         </html>
     )
 }
-
