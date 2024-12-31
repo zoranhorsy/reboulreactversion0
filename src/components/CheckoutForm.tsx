@@ -10,17 +10,16 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-// Définition des types nécessaires
 type OrderStatus = 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'returned';
 
 interface OrderItem {
-    productId: string;
+    id: string;
     name: string;
     quantity: number;
     price: number;
     variant: {
-        size: string;
-        color: string;
+        size?: string;
+        color?: string;
     };
 }
 
@@ -28,9 +27,16 @@ interface Order {
     id: string;
     date: string;
     customer: string;
+    email: string;
     total: number;
     status: OrderStatus;
     items: OrderItem[];
+    shippingAddress?: {
+        address?: string;
+        city?: string;
+        postalCode?: string;
+        country?: string;
+    };
 }
 
 export function CheckoutForm() {
@@ -46,14 +52,28 @@ export function CheckoutForm() {
         cvc: ''
     });
 
+    const [shippingAddress, setShippingAddress] = useState({
+        street: '',
+        city: '',
+        postalCode: '',
+        country: ''
+    });
+
+    const [email, setEmail] = useState('');
+
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setCardInfo(prev => ({ ...prev, [name]: value }));
     };
 
+    const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        setShippingAddress(prev => ({ ...prev, [name]: value }));
+    };
+
     const createOrder = async (orderDetails: Order): Promise<Order> => {
         try {
-            console.log('Sending order to API:', orderDetails);
+            console.log('CheckoutForm - Sending order to API:', JSON.stringify(orderDetails, null, 2));
             const response = await fetch('/api/admin/orders', {
                 method: 'POST',
                 headers: {
@@ -62,17 +82,18 @@ export function CheckoutForm() {
                 body: JSON.stringify(orderDetails),
             });
 
+            const data = await response.json();
+            console.log('CheckoutForm - API response:', JSON.stringify(data, null, 2));
+
             if (!response.ok) {
-                const errorData = await response.json();
-                console.error('API error response:', errorData);
-                throw new Error(errorData.error || 'Erreur lors de la création de la commande');
+                console.error('CheckoutForm - API error response:', data);
+                throw new Error(data.error || 'Erreur lors de la création de la commande');
             }
 
-            const data = await response.json();
-            console.log('Order created successfully:', data);
+            console.log('CheckoutForm - Order created successfully:', data);
             return data;
         } catch (error) {
-            console.error('Error creating order:', error);
+            console.error('CheckoutForm - Error creating order:', error);
             throw error;
         }
     };
@@ -80,29 +101,22 @@ export function CheckoutForm() {
     const processCheckout = async (isTest: boolean) => {
         setIsProcessing(true);
         setError(null);
-        console.log('Processing checkout...', { isTest, cartItems });
+        console.log('CheckoutForm - Processing checkout...', { isTest, cartItems });
 
         try {
             if (cartItems.length === 0) {
                 throw new Error('Votre panier est vide');
             }
 
-            await new Promise(resolve => setTimeout(resolve, 2000));
-
-            if (!isTest) {
-                if (cardInfo.cardNumber.length !== 16 || !/^\d+$/.test(cardInfo.cardNumber)) {
-                    throw new Error('Numéro de carte invalide');
-                }
-            }
-
             const orderDetails: Order = {
                 id: `ORD-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
                 date: new Date().toISOString(),
-                customer: "John Doe", // Ceci devrait être remplacé par les informations réelles du client
+                customer: "John Doe", // À remplacer par les informations réelles du client
+                email: email || 'test@example.com', // Utiliser une adresse e-mail par défaut si non fournie
                 total: total,
                 status: 'pending',
                 items: cartItems.map(item => ({
-                    productId: item.id,
+                    id: item.id,
                     name: item.name,
                     quantity: item.quantity,
                     price: item.price,
@@ -110,41 +124,53 @@ export function CheckoutForm() {
                         size: item.variant?.size || 'Default',
                         color: item.variant?.color || 'Default'
                     }
-                }))
+                })),
+                shippingAddress: {
+                    address: shippingAddress.street || 'Adresse de test',
+                    city: shippingAddress.city || 'Ville de test',
+                    postalCode: shippingAddress.postalCode || '12345',
+                    country: shippingAddress.country || 'Pays de test'
+                }
             };
 
-            // Créer la commande dans l'API
+            console.log('CheckoutForm - Order details before API call:', JSON.stringify(orderDetails, null, 2));
             const createdOrder = await createOrder(orderDetails);
+            console.log('CheckoutForm - Created order:', JSON.stringify(createdOrder, null, 2));
 
-            console.log('Setting last order:', createdOrder);
             setLastOrder(createdOrder);
 
-            console.log('Checkout successful, redirecting to confirmation page...');
+            console.log('CheckoutForm - Checkout successful, redirecting to confirmation page...');
 
             toast({
-                title: isTest ? "Test de paiement réussi" : "Paiement réussi",
+                title: "Commande traitée",
                 description: "Votre commande a été traitée avec succès.",
             });
 
-            // Clear the cart before redirection
             clearCart();
 
-            // Use setTimeout to ensure the cart is cleared before navigation
             setTimeout(() => {
                 router.push('/confirmation-commande');
             }, 100);
 
         } catch (error) {
-            console.error('Error:', error);
-            setError((error as Error).message);
+            console.error('CheckoutForm - Checkout error:', error);
+            setError(error instanceof Error ? error.message : 'Une erreur inattendue s\'est produite');
             toast({
-                title: "Erreur de paiement",
-                description: (error as Error).message,
+                title: "Erreur de commande",
+                description: error instanceof Error ? error.message : 'Une erreur inattendue s\'est produite',
                 variant: "destructive",
             });
         } finally {
             setIsProcessing(false);
         }
+    };
+
+    const validateCardInfo = () => {
+        return [];
+    };
+
+    const validateEmail = (email: string) => {
+        return true;
     };
 
     const handleSubmit = (event: React.FormEvent) => {
@@ -158,6 +184,68 @@ export function CheckoutForm() {
 
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
+                <Label htmlFor="email">Adresse e-mail</Label>
+                <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    required
+                    placeholder="votre@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                />
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="street">Adresse</Label>
+                <Input
+                    id="street"
+                    name="street"
+                    type="text"
+                    required
+                    placeholder="123 Rue de la Paix"
+                    value={shippingAddress.street}
+                    onChange={handleAddressChange}
+                />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <Label htmlFor="city">Ville</Label>
+                    <Input
+                        id="city"
+                        name="city"
+                        type="text"
+                        required
+                        placeholder="Paris"
+                        value={shippingAddress.city}
+                        onChange={handleAddressChange}
+                    />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="postalCode">Code Postal</Label>
+                    <Input
+                        id="postalCode"
+                        name="postalCode"
+                        type="text"
+                        required
+                        placeholder="75000"
+                        value={shippingAddress.postalCode}
+                        onChange={handleAddressChange}
+                    />
+                </div>
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="country">Pays</Label>
+                <Input
+                    id="country"
+                    name="country"
+                    type="text"
+                    required
+                    placeholder="France"
+                    value={shippingAddress.country}
+                    onChange={handleAddressChange}
+                />
+            </div>
             <div className="space-y-2">
                 <Label htmlFor="cardNumber">Numéro de carte</Label>
                 <Input

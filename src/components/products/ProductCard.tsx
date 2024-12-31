@@ -48,23 +48,23 @@ export function ProductCard({ product, compact = false }: ProductCardProps) {
     if (compact) {
         return (
             <Card className="overflow-hidden h-full">
-                <div className="flex h-full">
-                    <div className="relative w-1/3">
+                <div className="flex flex-col xs:flex-row h-full">
+                    <div className="relative w-full xs:w-1/3 aspect-square xs:aspect-auto">
                         <Image
                             src={product.images[0] || '/placeholder.svg'}
                             alt={product.name}
                             fill
                             className="object-cover"
-                            sizes="(max-width: 768px) 33vw, 25vw"
+                            sizes="(max-width: 480px) 100vw, (max-width: 768px) 50vw, 33vw"
                         />
                     </div>
-                    <div className="w-2/3 p-2 sm:p-3 flex flex-col justify-between">
+                    <div className="w-full xs:w-2/3 p-2 xs:p-3 sm:p-4 flex flex-col justify-between">
                         <div>
-                            <h3 className="font-medium text-sm mb-1 line-clamp-1">{product.name}</h3>
-                            <p className="text-xs text-muted-foreground line-clamp-2 hidden sm:block">{product.description}</p>
+                            <h3 className="font-medium text-sm sm:text-base mb-1 line-clamp-1">{product.name}</h3>
+                            <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 hidden xs:block">{product.description}</p>
                         </div>
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm font-bold">{product.price.toFixed(2)} €</span>
+                        <div className="flex items-center justify-between mt-2 xs:mt-0">
+                            <span className="text-sm sm:text-base font-bold">{product.price.toFixed(2)} €</span>
                             <Badge variant="secondary" className="text-xs">{product.category}</Badge>
                         </div>
                     </div>
@@ -75,13 +75,13 @@ export function ProductCard({ product, compact = false }: ProductCardProps) {
 
     return (
         <Card className="group h-full overflow-hidden bg-white transition-all duration-300 hover:shadow-lg flex flex-col">
-            <div className="relative pt-[100%]">
+            <div className="relative pt-[100%] xs:pt-[75%] sm:pt-[100%]">
                 <Image
                     src={product.images[0] || '/placeholder.svg'}
                     alt={product.name}
                     fill
                     className="object-cover transition-transform duration-300 group-hover:scale-105"
-                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                    sizes="(max-width: 480px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                     priority
                 />
                 <Badge
@@ -91,31 +91,31 @@ export function ProductCard({ product, compact = false }: ProductCardProps) {
                     {product.category}
                 </Badge>
             </div>
-            <CardContent className="p-3 sm:p-4 flex flex-col justify-between h-full">
-                <div className="space-y-1 sm:space-y-2 flex-grow">
-                    <h3 className="font-medium text-sm sm:text-base line-clamp-2">
+            <CardContent className="p-3 sm:p-4 md:p-5 flex flex-col justify-between flex-grow">
+                <div className="space-y-1 sm:space-y-2">
+                    <h3 className="font-medium text-sm sm:text-base md:text-lg line-clamp-2">
                         {product.name}
                     </h3>
-                    <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">
+                    <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 md:line-clamp-3">
                         {product.description}
                     </p>
-                    <p className="text-base sm:text-lg font-bold mt-1 sm:mt-2">
+                    <p className="text-base sm:text-lg md:text-xl font-bold mt-1 sm:mt-2">
                         {product.price.toFixed(2)} €
                     </p>
                 </div>
                 <div className="flex flex-wrap gap-1 sm:gap-1.5 mt-2 sm:mt-3">
-                    {product.tags.map((tag) => (
+                    {product.tags.slice(0, 3).map((tag) => (
                         <Badge key={tag} variant="outline" className="text-xs">
                             {tag}
                         </Badge>
                     ))}
                 </div>
             </CardContent>
-            <CardFooter className="grid grid-cols-2 gap-2 p-3 sm:p-4 pt-0">
+            <CardFooter className="grid grid-cols-2 gap-2 p-3 sm:p-4 md:p-5 pt-0">
                 <Button
                     variant="default"
                     asChild
-                    className="w-full h-8 sm:h-9 text-xs sm:text-sm font-medium"
+                    className="w-full h-8 sm:h-9 md:h-10 text-xs sm:text-sm font-medium"
                 >
                     <Link href={`/produit/${product.id}`} className="flex items-center justify-center w-full h-full">
                         Voir détails
@@ -123,11 +123,13 @@ export function ProductCard({ product, compact = false }: ProductCardProps) {
                 </Button>
                 <Button
                     variant="outline"
-                    className="w-full h-8 sm:h-9 text-xs sm:text-sm font-medium flex items-center justify-center"
+                    className="w-full h-8 sm:h-9 md:h-10 text-[10px] xs:text-xs sm:text-sm font-medium flex items-center justify-center px-1 sm:px-2"
                     onClick={handleAddToCart}
                     disabled={isAdding}
                 >
-                    {isAdding ? 'Ajout...' : 'Ajouter au panier'}
+                    <span className="truncate">
+                        {isAdding ? 'Ajout...' : 'Ajouter au panier'}
+                    </span>
                 </Button>
             </CardFooter>
         </Card>

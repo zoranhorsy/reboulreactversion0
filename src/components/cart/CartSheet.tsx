@@ -1,18 +1,22 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useCart } from '@/app/contexts/CartContext'
 import { CartItem } from './CartItem'
 import { useToast } from "@/components/ui/use-toast"
-import { ShoppingCart } from 'lucide-react'
 import Link from 'next/link'
 
-export function CartSheet({ children }: { children: React.ReactNode }) {
+interface CartSheetProps {
+    children: React.ReactNode;
+    isOpen: boolean;
+    onOpenChange: (isOpen: boolean) => void;
+}
+
+export function CartSheet({ children, isOpen, onOpenChange }: CartSheetProps) {
     const { items: cartItems, total, removeItem, updateQuantity, clearCart } = useCart()
-    const [isOpen, setIsOpen] = useState(false)
     const [discount, setDiscount] = useState(0)
     const [promoCode, setPromoCode] = useState('')
     const { toast } = useToast()
@@ -22,7 +26,7 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
     const totalSavings = discount + (subtotal > 100 ? 5.99 : 0)
     const finalTotal = subtotal - discount + shippingCost
 
-    const applyPromoCode = () => {
+    const applyPromoCode = useCallback(() => {
         if (promoCode.toLowerCase() === 'reboul10') {
             const newDiscount = subtotal * 0.1
             setDiscount(newDiscount)
@@ -38,27 +42,33 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
             })
         }
         setPromoCode('')
-    }
+    }, [promoCode, subtotal, toast])
+
+    useEffect(() => {
+        if (cartItems.length === 0) {
+            setDiscount(0)
+        }
+    }, [cartItems])
 
     return (
-        <Sheet open={isOpen} onOpenChange={setIsOpen}>
+        <Sheet open={isOpen} onOpenChange={onOpenChange}>
             <SheetTrigger asChild>
                 {children}
             </SheetTrigger>
-            <SheetContent className="w-full sm:max-w-md">
+            <SheetContent className="w-full sm:max-w-md flex flex-col">
                 <SheetHeader>
                     <SheetTitle>Votre panier</SheetTitle>
                 </SheetHeader>
                 {cartItems.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full">
                         <p className="text-center mb-4">Votre panier est vide</p>
-                        <Button asChild onClick={() => setIsOpen(false)}>
+                        <Button asChild onClick={() => onOpenChange(false)}>
                             <Link href="/catalogue">Continuer mes achats</Link>
                         </Button>
                     </div>
                 ) : (
                     <div className="flex flex-col h-full">
-                        <div className="flex-grow overflow-auto">
+                        <div className="flex-grow overflow-auto space-y-4">
                             {cartItems.map((item) => (
                                 <CartItem
                                     key={item.id}
@@ -96,17 +106,18 @@ export function CartSheet({ children }: { children: React.ReactNode }) {
                                         placeholder="Code promo"
                                         value={promoCode}
                                         onChange={(e) => setPromoCode(e.target.value)}
+                                        aria-label="Code promo"
                                     />
                                     <Button onClick={applyPromoCode}>Appliquer</Button>
                                 </div>
                             </div>
                             <div className="mt-4 space-y-2">
-                                <Button className="w-full" asChild onClick={() => setIsOpen(false)}>
+                                <Button className="w-full" asChild onClick={() => onOpenChange(false)}>
                                     <Link href="/checkout">Passer à la caisse</Link>
                                 </Button>
                                 <Button variant="outline" className="w-full" onClick={() => {
                                     clearCart()
-                                    setIsOpen(false)
+                                    onOpenChange(false)
                                 }}>
                                     Vider le panier
                                 </Button>

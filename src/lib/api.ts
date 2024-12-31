@@ -20,6 +20,12 @@ export interface Product {
 }
 
 export type OrderStatus = 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'returned';
+export interface UserInfo {
+    name: string;
+    email: string;
+    address: string;
+    avatarUrl?: string;
+}
 
 export interface OrderItem {
     productId: string;
@@ -459,5 +465,103 @@ export async function updateProductStock(productId: string, quantity: number, va
 
     product.variants[variantIndex].stock -= quantity;
     console.log(`Updated stock for product ${productId}, new stock: ${product.variants[variantIndex].stock}`);
+}
+
+export async function updateUserInfo(userInfo: UserInfo): Promise<UserInfo> {
+    console.log("API: Updating user info:", userInfo);
+    await new Promise(resolve => setTimeout(resolve, 500));
+    return userInfo;
+}
+
+export interface Address {
+    id: string;
+    name: string;
+    street: string;
+    city: string;
+    postalCode: string;
+    country: string;
+    isDefault: boolean;
+}
+
+let cachedAddresses: Address[] = [
+    {
+        id: '1',
+        name: 'Domicile',
+        street: '123 Rue de la République',
+        city: 'Marseille',
+        postalCode: '13001',
+        country: 'France',
+        isDefault: true
+    },
+    {
+        id: '2',
+        name: 'Bureau',
+        street: '45 Avenue des Champs-Élysées',
+        city: 'Paris',
+        postalCode: '75008',
+        country: 'France',
+        isDefault: false
+    }
+];
+
+export async function fetchAddresses(): Promise<Address[]> {
+    console.log("API: Fetching addresses");
+    await new Promise(resolve => setTimeout(resolve, 500));
+    return cachedAddresses;
+}
+
+export async function addAddress(address: Omit<Address, 'id'>): Promise<Address> {
+    console.log("API: Adding new address", address);
+    await new Promise(resolve => setTimeout(resolve, 500));
+    const newAddress: Address = { ...address, id: Date.now().toString() };
+    cachedAddresses.push(newAddress);
+    return newAddress;
+}
+
+export async function updateAddress(id: string, address: Partial<Address>): Promise<Address> {
+    console.log("API: Updating address", id, address);
+    await new Promise(resolve => setTimeout(resolve, 500));
+    const index = cachedAddresses.findIndex(a => a.id === id);
+    if (index === -1) throw new Error("Address not found");
+    cachedAddresses[index] = { ...cachedAddresses[index], ...address };
+    return cachedAddresses[index];
+}
+
+export async function deleteAddress(id: string): Promise<void> {
+    console.log("API: Deleting address", id);
+    await new Promise(resolve => setTimeout(resolve, 500));
+    const index = cachedAddresses.findIndex(a => a.id === id);
+    if (index === -1) throw new Error("Address not found");
+    cachedAddresses.splice(index, 1);
+}
+
+export async function setDefaultAddress(id: string): Promise<Address[]> {
+    console.log("API: Setting default address", id);
+    await new Promise(resolve => setTimeout(resolve, 500));
+    cachedAddresses = cachedAddresses.map(address => ({
+        ...address,
+        isDefault: address.id === id
+    }));
+    return cachedAddresses;
+}
+
+export async function changePassword(currentPassword: string, newPassword: string): Promise<{ success: boolean, message: string }> {
+    console.log("API: Changing password");
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    // Ici, vous feriez normalement une vérification du mot de passe actuel
+    // et mettriez à jour le nouveau mot de passe dans la base de données
+    if (currentPassword === "password123") {
+        return { success: true, message: "Mot de passe changé avec succès" };
+    } else {
+        return { success: false, message: "Le mot de passe actuel est incorrect" };
+    }
+}
+
+export async function logout(): Promise<void> {
+    console.log("API: Logging out user");
+    await new Promise(resolve => setTimeout(resolve, 500));
+    // Ici, vous feriez normalement une requête à votre backend pour invalider la session
+    console.log("API: User logged out successfully");
 }
 

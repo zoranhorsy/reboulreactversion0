@@ -33,9 +33,16 @@ interface CartContextType {
     lastOrder: OrderDetails | null
     setLastOrder: (order: OrderDetails) => void
     clearLastOrder: () => void
+    itemCount: number;
 }
 
-const CartContext = createContext<CartContextType | undefined>(undefined)
+type CartContextValue = CartContextType & {
+    lastOrder: OrderDetails | null;
+    setLastOrder: (order: OrderDetails) => void;
+    clearLastOrder: () => void;
+};
+
+const CartContext = createContext<CartContextValue | undefined>(undefined);
 
 export const useCart = () => {
     const context = useContext(CartContext)
@@ -75,15 +82,15 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const addItem = (item: CartItem) => {
         setItems(prevItems => {
-            const existingItem = prevItems.find(i => i.id === item.id)
+            const existingItem = prevItems.find(i => i.id === item.id);
             if (existingItem) {
                 return prevItems.map(i =>
-                    i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
-                )
+                    i.id === item.id ? { ...i, quantity: +(i.quantity + item.quantity).toFixed(2) } : i
+                );
             }
-            return [...prevItems, { ...item, quantity: 1 }]
-        })
-    }
+            return [...prevItems, { ...item, quantity: +item.quantity.toFixed(2) }];
+        });
+    };
 
     const removeItem = (id: number) => {
         setItems(prevItems => prevItems.filter(item => item.id !== id))
@@ -104,6 +111,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
+
+    const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
     const setLastOrderWithStorage = (order: OrderDetails) => {
         setLastOrder(order)
@@ -127,7 +136,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
             total,
             lastOrder,
             setLastOrder: setLastOrderWithStorage,
-            clearLastOrder
+            clearLastOrder,
+            itemCount
         }}>
             {children}
         </CartContext.Provider>

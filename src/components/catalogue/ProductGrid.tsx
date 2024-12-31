@@ -1,15 +1,12 @@
 'use client'
 
 import React, { useState, useMemo } from 'react'
-import Image from 'next/image'
-import Link from 'next/link'
 import { Loader2, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { AddToCartButton } from '@/components/cart/AddToCartButton'
-import { WishlistButton } from '@/components/WishlistButton'
 import { useProducts } from '@/hooks/useProducts'
-import { Product } from '@/lib/api'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { ProductCard } from '@/components/products/ProductCard'
 
 type ProductGridProps = {
     storeType: 'adult' | 'kids' | 'sneakers'
@@ -17,7 +14,7 @@ type ProductGridProps = {
     viewMode?: 'grid' | 'list'
 }
 
-export function ProductGrid({ storeType, category, viewMode = 'grid' }: ProductGridProps) {
+function ProductGridContent({ storeType, category, viewMode = 'grid' }: ProductGridProps) {
     const [currentPage, setCurrentPage] = useState(1)
     const [sortBy, setSortBy] = useState('name')
     const pageSize = 12
@@ -89,66 +86,50 @@ export function ProductGrid({ storeType, category, viewMode = 'grid' }: ProductG
                         key={product.id}
                         className={`product-card ${viewMode === 'list' ? 'w-full' : 'w-full sm:w-1/2 md:w-1/3 lg:w-1/4'} px-2 mb-4`}
                     >
-                        <div className="bg-white rounded-lg shadow-md transition-all duration-300 hover:shadow-lg hover:-translate-y-1 flex flex-col h-full overflow-hidden">
-                            <Link href={`/produit/${product.id}`} className="block flex-grow">
-                                <div className="relative w-full pb-[100%] overflow-hidden group">
-                                    <Image
-                                        src={product.images[0] || '/placeholder.png'}
-                                        alt={product.name}
-                                        fill
-                                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                                        className="rounded-t-lg object-cover object-center transition-transform duration-300 group-hover:scale-110"
-                                        onError={(e) => {
-                                            const target = e.target as HTMLImageElement;
-                                            target.src = '/placeholder.png';
-                                            target.onerror = null; // Prevent infinite loop
-                                        }}
-                                    />
-                                </div>
-                                <div className="p-4 flex-grow">
-                                    <h2 className="text-lg font-semibold mb-2 text-gray-800 line-clamp-2 hover:text-primary transition-colors duration-300">{product.name}</h2>
-                                    <p className="text-2xl font-bold mb-2 text-primary">{product.price.toFixed(2)} €</p>
-                                    <p className="text-sm mb-2 text-gray-600">{product.brand}</p>
-                                </div>
-                            </Link>
-                            <div className="mt-auto flex justify-between items-center p-4 bg-gray-50 border-t border-gray-100">
-                                <AddToCartButton product={product} />
-                                <WishlistButton product={product} />
-                            </div>
-                        </div>
+                        <ProductCard product={product} compact={viewMode === 'list'} />
                     </div>
                 ))}
             </div>
             {totalPages > 1 && (
-                <div className="flex flex-col sm:flex-row justify-center items-center mt-6 gap-2 sm:gap-4">
-                    <Button
-                        variant="outline"
-                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                        disabled={currentPage === 1}
-                        className="w-full sm:w-auto text-xs px-4 py-2 rounded-full transition-colors duration-300 hover:bg-primary hover:text-white"
-                        aria-label="Page précédente"
-                    >
-                        <ChevronLeft className="h-4 w-4 mr-1" />
-                        Précédent
-                    </Button>
-                    <div className="flex items-center gap-2 px-2">
-                        <span className="text-xs">
-                          Page {currentPage} sur {totalPages}
-                        </span>
+                <nav aria-label="Pagination" className="mt-6">
+                    <div className="flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-4">
+                        <Button
+                            variant="outline"
+                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                            disabled={currentPage === 1}
+                            className="w-full sm:w-auto text-xs px-4 py-2 rounded-full transition-colors duration-300 hover:bg-primary hover:text-white"
+                            aria-label="Page précédente"
+                        >
+                            <ChevronLeft className="h-4 w-4 mr-1" />
+                            Précédent
+                        </Button>
+                        <div className="flex items-center gap-2 px-2">
+                            <span className="text-xs" aria-current="page">
+                                Page {currentPage} sur {totalPages}
+                            </span>
+                        </div>
+                        <Button
+                            variant="outline"
+                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                            disabled={currentPage === totalPages}
+                            className="w-full sm:w-auto text-xs px-4 py-2 rounded-full transition-colors duration-300 hover:bg-primary hover:text-white"
+                            aria-label="Page suivante"
+                        >
+                            Suivant
+                            <ChevronRight className="h-4 w-4 ml-1" />
+                        </Button>
                     </div>
-                    <Button
-                        variant="outline"
-                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                        disabled={currentPage === totalPages}
-                        className="w-full sm:w-auto text-xs px-4 py-2 rounded-full transition-colors duration-300 hover:bg-primary hover:text-white"
-                        aria-label="Page suivante"
-                    >
-                        Suivant
-                        <ChevronRight className="h-4 w-4 ml-1" />
-                    </Button>
-                </div>
+                </nav>
             )}
         </div>
+    )
+}
+
+export function ProductGrid(props: ProductGridProps) {
+    return (
+        <ErrorBoundary>
+            <ProductGridContent {...props} />
+        </ErrorBoundary>
     )
 }
 
