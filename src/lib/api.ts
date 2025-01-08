@@ -1,11 +1,17 @@
-import { v4 as uuidv4 } from 'uuid';
+import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from 'axios';
+import { toast } from "@/components/ui/use-toast"
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+
+// Types
 export interface Product {
     id: string;
     name: string;
     description: string;
     price: number;
-    category: string;
+    stock: number;
+    category: number | null;
+    image_url: string;
     brand: string;
     images: string[];
     variants: { size: string; color: string; stock: number }[];
@@ -17,551 +23,670 @@ export interface Product {
     storeType: 'adult' | 'kids' | 'sneakers';
     featured: boolean;
     colors: string[];
-}
-
-export type OrderStatus = 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'returned';
-export interface UserInfo {
-    name: string;
-    email: string;
-    address: string;
-    avatarUrl?: string;
-}
-
-export interface OrderItem {
-    productId: string;
-    name: string;
-    quantity: number;
-    price: number;
-    variant: {
-        size: string;
-        color: string;
-    };
+    category_id?: number;
 }
 
 export interface Order {
     id: string;
-    date: string;
-    customer: string;
-    total: number;
-    status: OrderStatus;
-    items: OrderItem[];
+    userId: string;
+    items: Array<{
+        productId: string;
+        quantity: number;
+        price: number;
+    }>;
+    totalAmount: number;
+    status: string;
+    createdAt: string;
+    updatedAt: string;
 }
 
-let cachedProducts: Product[] = [];
-let cachedOrders: Order[] = [];
+export interface Address {
+    id: string;
+    street: string;
+    city: string;
+    postalCode: string;
+    country: string;
+}
 
-const saveProductsToLocalStorage = (products: Product[]) => {
-    if (typeof window !== 'undefined') {
-        console.log('Saving products to localStorage:', products);
-        localStorage.setItem('products', JSON.stringify(products));
+export interface DashboardStats {
+    totalUsers: number;
+    totalProducts: number;
+    totalOrders: number;
+    totalRevenue: number;
+}
+
+export interface TopProduct {
+    id: string;
+    name: string;
+    totalSold: number;
+}
+
+export interface WeeklySales {
+    date: string;
+    total: number;
+}
+
+export interface User {
+    id: string;
+    name: string;
+    email: string;
+    isAdmin: boolean;
+    avatarUrl?: string;
+    address?: string;
+}
+
+export interface Category {
+    id: number;
+    name: string;
+}
+
+class Api {
+    private instance: AxiosInstance;
+
+    constructor() {
+        this.instance = axios.create({
+            baseURL: API_URL,
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        this.setupInterceptors();
     }
-};
 
-const getProductsFromLocalStorage = (): Product[] => {
-    if (typeof window !== 'undefined') {
-        const storedProducts = localStorage.getItem('products');
-        console.log('Stored products from localStorage:', storedProducts);
-        if (storedProducts) {
-            try {
-                const parsedProducts = JSON.parse(storedProducts);
-                console.log('Parsed products:', parsedProducts);
-                return Array.isArray(parsedProducts) ? parsedProducts : [];
-            } catch (error) {
-                console.error('Error parsing stored products:', error);
+    private setupInterceptors(): void {
+        this.instance.interceptors.request.use(
+            (config: AxiosRequestConfig) => {
+                const token = localStorage.getItem('token');
+                if (token && config.headers) {
+                    config.headers.Authorization = `Bearer ${token}`;
+                }
+                return config;
+            },
+            (error: AxiosError) => Promise.reject(error)
+        );
+
+        this.instance.interceptors.response.use(
+            (response) => response,
+            async (error: AxiosError) => {
+                const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
+                if (error.response?.status === 401 && !originalRequest._retry) {
+                    originalRequest._retry = true;
+                    try {
+                        const refreshToken = localStorage.getItem('refreshToken');
+                        const response = await axios.post(`${API_URL}/auth/refresh`, { refreshToken });
+                        const { token } = response.data;
+                        localStorage.setItem('token', token);
+                        if (originalRequest.headers) {
+                            originalRequest.headers.Authorization = `Bearer ${token}`;
+                        }
+                        return this.instance(originalRequest);
+                    } catch (refreshError) {
+                        localStorage.removeItem('token');
+                        localStorage.removeItem('refreshToken');
+                        window.location.href = '/login';
+                        return Promise.reject(refreshError);
+                    }
+                }
+                return Promise.reject(error);
             }
+        );
+    }
+
+    private handleError(error: unknown, customMessage: string): void {
+        console.error(customMessage, error);
+        if (error instanceof AxiosError) {
+            const errorMessage = error.response?.data?.message || error.message;
+            toast({
+                title: "Error",
+                description: `${customMessage}: ${errorMessage}`,
+                variant: "destructive",
+            });
+        } else {
+            toast({
+                title: "Error",
+                description: customMessage,
+                variant: "destructive",
+            });
         }
     }
-    console.log('No products found in localStorage or not in browser environment');
-    return [];
-};
 
-const getImagePath = (imagePath: string): string => {
+    async fetchProducts(params: Record<string, string | number> = {}): Promise<{ products: Product[], total: number }> {
+        try {
+            const stringParams = Object.fromEntries(
+                Object.entries(params).map(([key, value]) => [key, String(value)])
+            );
+            console.log('Fetching products with params:', stringParams);
+            const response = await this.instance.get('/products', { params: stringParams });
+            const products = response.data.data.map((product: any) => ({
+                ...product,
+                category: product.category_id || null
+            }));
+            return {
+                products,
+                total: response.data.pagination.totalItems
+            };
+        } catch (error) {
+            this.handleError(error, 'Error fetching products');
+            return { products: [], total: 0 };
+        }
+    }
+
+    async getProductById(id: string): Promise<Product | null> {
+        try {
+            const response = await this.instance.get(`/products/${id}`);
+            return response.data;
+        } catch (error) {
+            this.handleError(error, `Error fetching product with ID ${id}`);
+            return null;
+        }
+    }
+
+    async createProduct(productData: Omit<Product, 'id'>): Promise<Product | null> {
+        try {
+            let imagesToUpload = productData.images.filter(img => img instanceof File) as File[];
+            let imageUrls = productData.images.filter(img => typeof img === 'string');
+
+            if (imagesToUpload.length > 0) {
+                const uploadedImageUrls = await this.uploadImages(imagesToUpload);
+                imageUrls = [...imageUrls, ...uploadedImageUrls];
+            }
+
+            const dataToSend = {
+                ...productData,
+                images: imageUrls,
+                category_id: productData.category,
+                store_type: productData.storeType
+            };
+            delete dataToSend.category;
+            delete dataToSend.storeType;
+
+            const response = await this.instance.post('/products', dataToSend);
+            const createdProduct = {
+                ...response.data,
+                category: response.data.category_id,
+            };
+            delete createdProduct.category_id;
+            return createdProduct;
+        } catch (error) {
+            this.handleError(error, 'Error creating product');
+            return null;
+        }
+    }
+
+    async updateProduct(id: string, productData: Partial<Product>): Promise<Product | null> {
+        try {
+            console.log(`Tentative de mise à jour du produit avec l'ID: ${id}`);
+            console.log('Données du produit:', productData);
+
+            let imagesToUpload = productData.images?.filter(img => img instanceof Blob || img instanceof File) || [];
+            let imageUrls = productData.images?.filter(img => typeof img === 'string') || [];
+
+            if (imagesToUpload.length > 0) {
+                const uploadedImageUrls = await this.uploadImages(imagesToUpload);
+                imageUrls = [...imageUrls, ...uploadedImageUrls];
+            }
+
+            const dataToSend = { ...productData, images: imageUrls };
+
+            // Convertir category en category_id si nécessaire
+            if (dataToSend.category !== undefined) {
+                dataToSend.category_id = dataToSend.category;
+                delete dataToSend.category;
+            }
+
+            // Convertir storeType en store_type si nécessaire
+            if (dataToSend.storeType !== undefined) {
+                dataToSend.store_type = dataToSend.storeType;
+                delete dataToSend.storeType;
+            }
+
+            // Supprimer les champs undefined ou null
+            Object.keys(dataToSend).forEach(key =>
+                (dataToSend[key] === undefined || dataToSend[key] === null) && delete dataToSend[key]
+            );
+
+            console.log('Données envoyées au serveur:', dataToSend);
+
+            const response = await this.instance.put(`/products/${id}`, dataToSend);
+
+            console.log('Réponse de mise à jour:', response.data);
+
+            // Convertir category_id en category dans la réponse
+            const updatedProduct = {
+                ...response.data,
+                category: response.data.category_id,
+            };
+            delete updatedProduct.category_id;
+
+            return updatedProduct;
+        } catch (error) {
+            this.handleError(error, `Error updating product with ID ${id}`);
+            return null;
+        }
+    }
+
+    async deleteProduct(id: string): Promise<boolean> {
+        try {
+            await this.instance.delete(`/products/${id}`);
+            return true;
+        } catch (error) {
+            this.handleError(error, `Error deleting product with ID ${id}`);
+            return false;
+        }
+    }
+
+    async fetchOrders(): Promise<Order[]> {
+        try {
+            const response = await this.instance.get('/orders');
+            return response.data;
+        } catch (error) {
+            this.handleError(error, 'Error fetching orders');
+            return [];
+        }
+    }
+
+    async getOrderById(id: string): Promise<Order | null> {
+        try {
+            const response = await this.instance.get(`/orders/${id}`);
+            return response.data;
+        } catch (error) {
+            this.handleError(error, `Error fetching order with ID ${id}`);
+            return null;
+        }
+    }
+
+    async fetchDashboardStats(): Promise<DashboardStats> {
+        try {
+            const response = await this.instance.get('/admin/stats');
+            const stats = response.data;
+            return {
+                totalRevenue: typeof stats.totalRevenue === 'number' ? stats.totalRevenue : 0,
+                totalOrders: typeof stats.totalOrders === 'number' ? stats.totalOrders : 0,
+                totalProducts: typeof stats.totalProducts === 'number' ? stats.totalProducts : 0,
+                totalUsers: typeof stats.totalUsers === 'number' ? stats.totalUsers : 0
+            };
+        } catch (error) {
+            this.handleError(error, 'Error fetching dashboard stats');
+            return {
+                totalRevenue: 0,
+                totalOrders: 0,
+                totalProducts: 0,
+                totalUsers: 0
+            };
+        }
+    }
+
+    async fetchRecentOrders(): Promise<Order[]> {
+        try {
+            const response = await this.instance.get('/admin/recent-orders');
+            return Array.isArray(response.data) ? response.data.map(order => ({
+                id: order.id || '',
+                userId: order.userId || '',
+                items: order.items || [],
+                totalAmount: typeof order.totalAmount === 'number' ? order.totalAmount : 0,
+                status: order.status || '',
+                createdAt: order.createdAt || '',
+                updatedAt: order.updatedAt || ''
+            })) : [];
+        } catch (error) {
+            this.handleError(error, 'Error fetching recent orders');
+            return [];
+        }
+    }
+
+    async fetchTopProducts(): Promise<TopProduct[]> {
+        try {
+            const response = await this.instance.get('/admin/top-products');
+            return Array.isArray(response.data) ? response.data : [];
+        } catch (error) {
+            this.handleError(error, 'Error fetching top products');
+            return [];
+        }
+    }
+
+    async fetchWeeklySales(): Promise<WeeklySales[]> {
+        try {
+            const response = await this.instance.get('/admin/weekly-sales');
+            return Array.isArray(response.data) ? response.data : [];
+        } catch (error) {
+            this.handleError(error, 'Error fetching weekly sales');
+            return [];
+        }
+    }
+
+    async updateProductStock(
+        productId: string,
+        quantity: number,
+        variant: { size: string; color: string }
+    ): Promise<boolean> {
+        try {
+            await this.instance.put(`/products/${productId}/stock`, { quantity, variant });
+            return true;
+        } catch (error) {
+            this.handleError(error, 'Error updating product stock');
+            return false;
+        }
+    }
+
+    async changePassword(currentPassword: string, newPassword: string): Promise<boolean> {
+        try {
+            const response = await this.instance.post('/auth/change-password', { currentPassword, newPassword });
+            return response.data.success;
+        } catch (error) {
+            this.handleError(error, 'Error changing password');
+            return false;
+        }
+    }
+
+    async fetchAddresses(): Promise<Address[]> {
+        try {
+            const response = await this.instance.get('/user/addresses');
+            return Array.isArray(response.data) ? response.data : [];
+        } catch (error) {
+            this.handleError(error, 'Error fetching addresses');
+            return [];
+        }
+    }
+
+    async updateUserInfo(userInfo: Partial<User>): Promise<User | null> {
+        try {
+            const response = await this.instance.put('/user/profile', userInfo);
+            return response.data;
+        } catch (error) {
+            this.handleError(error, 'Error updating user info');
+            return null;
+        }
+    }
+
+    async login(email: string, password: string): Promise<{ user: User; token: string } | null> {
+        try {
+            const response = await this.instance.post('/auth/login', { email, password });
+            const { user, token } = response.data;
+            localStorage.setItem('token', token);
+            return { user, token };
+        } catch (error) {
+            this.handleError(error, 'Error during login');
+            return null;
+        }
+    }
+
+    async register(userData: { name: string; email: string; password: string }): Promise<User | null> {
+        try {
+            const response = await this.instance.post('/auth/register', userData);
+            return response.data;
+        } catch (error) {
+            this.handleError(error, 'Error during registration');
+            return null;
+        }
+    }
+
+    async logout(): Promise<void> {
+        localStorage.removeItem('token');
+        localStorage.removeItem('refreshToken');
+    }
+
+    async fetchUserProfile(): Promise<User | null> {
+        try {
+            const response = await this.instance.get('/user/profile');
+            return response.data;
+        } catch (error) {
+            this.handleError(error, 'Error fetching user profile');
+            return null;
+        }
+    }
+
+    async addToCart(productId: string, quantity: number): Promise<boolean> {
+        try {
+            await this.instance.post('/cart/add', { productId, quantity });
+            return true;
+        } catch (error) {
+            this.handleError(error, 'Error adding product to cart');
+            return false;
+        }
+    }
+
+    async removeFromCart(productId: string): Promise<boolean> {
+        try {
+            await this.instance.delete(`/cart/remove/${productId}`);
+            return true;
+        } catch (error) {
+            this.handleError(error, 'Error removing product from cart');
+            return false;
+        }
+    }
+
+    async fetchCart(): Promise<{ items: Array<{ product: Product; quantity: number }>; total: number } | null> {
+        try {
+            const response = await this.instance.get('/cart');
+            return response.data;
+        } catch (error) {
+            this.handleError(error, 'Error fetching cart');
+            return null;
+        }
+    }
+
+    async createOrder(orderData: { addressId: string; paymentMethod: string }): Promise<Order | null> {
+        try {
+            const response = await this.instance.post('/orders', orderData);
+            return response.data;
+        } catch (error) {
+            this.handleError(error, 'Error creating order');
+            return null;
+        }
+    }
+
+    async addAddress(addressData: Omit<Address, 'id'>): Promise<Address | null> {
+        try {
+            const response = await this.instance.post('/user/addresses', addressData);
+            return response.data;
+        } catch (error) {
+            this.handleError(error, 'Error adding address');
+            return null;
+        }
+    }
+
+    async updateAddress(id: string, addressData: Partial<Address>): Promise<Address | null> {
+        try {
+            const response = await this.instance.put(`/user/addresses/${id}`, addressData);
+            return response.data;
+        } catch (error) {
+            this.handleError(error, 'Error updating address');
+            return null;
+        }
+    }
+
+    async deleteAddress(id: string): Promise<boolean> {
+        try {
+            await this.instance.delete(`/user/addresses/${id}`);
+            return true;
+        } catch (error) {
+            this.handleError(error, 'Error deleting address');
+            return false;
+        }
+    }
+
+    async searchProducts(query: string): Promise<Product[]> {
+        try {
+            const response = await this.instance.get('/products/search', { params: { q: query } });
+            return response.data;
+        } catch (error) {
+            this.handleError(error, 'Error searching products');
+            return [];
+        }
+    }
+
+    async addReview(productId: string, reviewData: { rating: number; comment: string }): Promise<boolean> {
+        try {
+            await this.instance.post(`/products/${productId}/reviews`, reviewData);
+            return true;
+        } catch (error) {
+            this.handleError(error, 'Error adding review');
+            return false;
+        }
+    }
+
+    async fetchProductReviews(productId: string): Promise<{ id: number; rating: number; comment: string; userName: string; date: string }[]> {
+        try {
+            const response = await this.instance.get(`/products/${productId}/reviews`);
+            return response.data;
+        } catch (error) {
+            this.handleError(error, 'Error fetching product reviews');
+            return [];
+        }
+    }
+
+    async fetchCategories(): Promise<Category[]> {
+        console.log('Attempting to fetch categories');
+        try {
+            // Try fetching from /categories first
+            console.log('Trying to fetch from /categories endpoint');
+            const response = await this.instance.get('/categories');
+            console.log('Categories fetched successfully:', response.data);
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching from /categories:', error);
+            if (axios.isAxiosError(error) && error.response?.status === 404) {
+                // If /categories is not found, try fetching from /products
+                console.log('Categories endpoint not found, attempting to fetch from products');
+                try {
+                    const productsResponse = await this.instance.get('/products');
+                    const products: Product[] = productsResponse.data.data;
+
+                    // Extract unique categories from products
+                    const categoriesSet = new Set(products.map(p => p.category).filter(c => c !== null && c !== undefined));
+                    const categories: Category[] = Array.from(categoriesSet).map(categoryName => ({ id: categoryName, name: categoryName }));
+
+                    console.log('Categories extracted from products:', categories);
+                    return categories;
+                } catch (productsError) {
+                    console.error('Error fetching products for category extraction:', productsError);
+                    throw productsError;
+                }
+            }
+            console.error('Unhandled error in fetchCategories:', error);
+            throw error;
+        }
+    }
+
+    async getCategoryById(id: number): Promise<Category | null> {
+        try {
+            const response = await this.instance.get(`/categories/${id}`);
+            return response.data;
+        } catch (error) {
+            this.handleError(error, `Error fetching category with ID ${id}`);
+            return null;
+        }
+    }
+
+    async createCategory(name: string): Promise<Category | null> {
+        try {
+            const response = await this.instance.post('/categories', { name });
+            return response.data;
+        } catch (error) {
+            this.handleError(error, 'Error creating category');
+            return null;
+        }
+    }
+
+    async updateCategory(id: number, name: string): Promise<Category | null> {
+        try {
+            const response = await this.instance.put(`/categories/${id}`, { name });
+            return response.data;
+        } catch (error) {
+            this.handleError(error, `Error updating category with ID ${id}`);
+            return null;
+        }
+    }
+
+    async deleteCategory(id: number): Promise<boolean> {
+        try {
+            await this.instance.delete(`/categories/${id}`);
+            return true;
+        } catch (error) {
+            this.handleError(error, `Error deleting category with ID ${id}`);
+            return false;
+        }
+    }
+
+    async uploadImages(files: (File | Blob)[]): Promise<string[]> {
+        const formData = new FormData();
+        files.forEach((file, index) => {
+            const fileName = file instanceof File ? file.name : `image${index}.jpg`;
+            formData.append('images', file, fileName);
+        });
+
+        try {
+            const response = await this.instance.post('/upload', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+
+            console.log('Upload response:', response.data);
+
+            if (response.data && response.data.urls && Array.isArray(response.data.urls)) {
+                return response.data.urls;
+            } else {
+                console.error('Unexpected response format:', response.data);
+                throw new Error('Unexpected response format from server');
+            }
+        } catch (error) {
+            console.error('Error uploading images:', error);
+            throw error;
+        }
+    }
+
+}
+
+export const api = new Api();
+
+// Export individual methods for backwards compatibility
+export const fetchProducts = api.fetchProducts.bind(api);
+export const getProductById = api.getProductById.bind(api);
+export const createProduct = api.createProduct.bind(api);
+export const updateProduct = api.updateProduct.bind(api);
+export const deleteProduct = api.deleteProduct.bind(api);
+export const fetchOrders = api.fetchOrders.bind(api);
+export const getOrderById = api.getOrderById.bind(api);
+export const fetchDashboardStats = api.fetchDashboardStats.bind(api);
+export const fetchRecentOrders = api.fetchRecentOrders.bind(api);
+export const fetchTopProducts = api.fetchTopProducts.bind(api);
+export const fetchWeeklySales = api.fetchWeeklySales.bind(api);
+export const updateProductStock = api.updateProductStock.bind(api);
+export const changePassword = api.changePassword.bind(api);
+export const fetchAddresses = api.fetchAddresses.bind(api);
+export const updateUserInfo = api.updateUserInfo.bind(api);
+export const login = api.login.bind(api);
+export const register = api.register.bind(api);
+export const logout = api.logout.bind(api);
+export const fetchUserProfile = api.fetchUserProfile.bind(api);
+export const addToCart = api.addToCart.bind(api);
+export const removeFromCart = api.removeFromCart.bind(api);
+export const fetchCart = api.fetchCart.bind(api);
+export const createOrder = api.createOrder.bind(api);
+export const addAddress = api.addAddress.bind(api);
+export const updateAddress = api.updateAddress.bind(api);
+export const deleteAddress = api.deleteAddress.bind(api);
+export const searchProducts = api.searchProducts.bind(api);
+export const addReview = api.addReview.bind(api);
+export const fetchProductReviews = api.fetchProductReviews.bind(api);
+export const fetchCategories = api.fetchCategories.bind(api);
+export const getCategoryById = api.getCategoryById.bind(api);
+export const createCategory = api.createCategory.bind(api);
+export const updateCategory = api.updateCategory.bind(api);
+export const deleteCategory = api.deleteCategory.bind(api);
+export const uploadImages = api.uploadImages.bind(api);
+
+export const getImagePath = (imagePath: string): string => {
     if (!imagePath || imagePath.length === 0) {
         return '/placeholder.png';
     }
     if (imagePath.startsWith('http') || imagePath.startsWith('data:')) {
         return imagePath;
     }
-    // Supprimez les doubles slashes et assurez-vous qu'il n'y a qu'un seul slash au début
-    return imagePath.startsWith('/uploads') || imagePath === '/placeholder.png' ? imagePath : `/uploads/${imagePath}`;
+    return imagePath.startsWith('/uploads') || imagePath === '/placeholder.png'
+        ? imagePath
+        : `/uploads/${imagePath}`;
 };
-
-const initializeProducts = (): Product[] => {
-    return [
-        {
-            id: uuidv4(),
-            name: "T-shirt basique adulte",
-            description: "Un t-shirt confortable pour tous les jours",
-            price: 19.99,
-            category: "Vêtements",
-            brand: "Reboul",
-            images: ["/uploads/tshirt-blanc.jpg", "/uploads/tshirt-blanc-dos.jpg"],
-            variants: [
-                { size: "S", color: "Blanc", stock: 10 },
-                { size: "M", color: "Blanc", stock: 15 },
-                { size: "L", color: "Blanc", stock: 20 },
-            ],
-            tags: ["basique", "confort"],
-            reviews: [],
-            questions: [],
-            faqs: [],
-            sizeChart: [],
-            storeType: 'adult',
-            featured: true,
-            colors: ["Blanc"]
-        },
-        {
-            id: uuidv4(),
-            name: "Jean slim adulte",
-            description: "Un jean slim confortable et élégant",
-            price: 49.99,
-            category: "Vêtements",
-            brand: "Reboul",
-            images: ["/uploads/jean-slim-bleu.jpg"],
-            variants: [
-                { size: "38", color: "Bleu", stock: 8 },
-                { size: "40", color: "Bleu", stock: 12 },
-                { size: "42", color: "Bleu", stock: 10 },
-            ],
-            tags: ["jean", "slim", "élégant"],
-            reviews: [],
-            questions: [],
-            faqs: [],
-            sizeChart: [],
-            storeType: 'adult',
-            featured: true,
-            colors: ["Bleu"]
-        },
-        {
-            id: uuidv4(),
-            name: "T-shirt enfant fun",
-            description: "Un t-shirt coloré et amusant pour les enfants",
-            price: 14.99,
-            category: "Vêtements",
-            brand: "Les Minots de Reboul",
-            images: ["/uploads/tshirt-enfant-multicolore.jpg"],
-            variants: [
-                { size: "4 ans", color: "Multicolore", stock: 10 },
-                { size: "6 ans", color: "Multicolore", stock: 15 },
-                { size: "8 ans", color: "Multicolore", stock: 20 },
-            ],
-            tags: ["fun", "coloré"],
-            reviews: [],
-            questions: [],
-            faqs: [],
-            sizeChart: [],
-            storeType: 'kids',
-            featured: true,
-            colors: ["Multicolore"]
-        }
-    ];
-};
-
-const validateProduct = (product: any): product is Product => {
-    const requiredFields = ['name', 'price', 'description', 'category', 'brand', 'storeType'];
-    const missingFields = requiredFields.filter(field => !product[field]);
-
-    if (missingFields.length > 0) {
-        console.warn(`Product is missing required fields: ${missingFields.join(', ')}`, product);
-
-        missingFields.forEach(field => {
-            switch (field) {
-                case 'name':
-                case 'description':
-                case 'category':
-                case 'brand':
-                    product[field] = 'Uncategorized';
-                    break;
-                case 'price':
-                    product[field] = 0;
-                    break;
-                case 'storeType':
-                    product[field] = 'adult';
-                    break;
-            }
-        });
-    }
-
-    product.id = product.id || uuidv4();
-    product.images = Array.isArray(product.images)
-        ? product.images.map(getImagePath).filter(img => img !== '/placeholder.png')
-        : [];
-
-    if (product.images.length === 0) {
-        product.images = ['/placeholder.png'];
-    }
-    product.variants = Array.isArray(product.variants) ? product.variants : [];
-    product.tags = Array.isArray(product.tags) ? product.tags.filter(tag => typeof tag === 'string') : [];
-    product.reviews = Array.isArray(product.reviews) ? product.reviews : [];
-    product.questions = Array.isArray(product.questions) ? product.questions : [];
-    product.faqs = Array.isArray(product.faqs) ? product.faqs : [];
-    product.sizeChart = Array.isArray(product.sizeChart) ? product.sizeChart : [];
-    product.featured = Boolean(product.featured);
-    product.colors = Array.isArray(product.colors) ? product.colors : [];
-
-    return true;
-};
-
-export async function fetchProducts(params: Record<string, string>): Promise<{ products: Product[], total: number }> {
-    console.log("API: Fetching products with params:", params);
-
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    if (cachedProducts.length === 0) {
-        cachedProducts = getProductsFromLocalStorage();
-        if (cachedProducts.length === 0) {
-            console.log("API: No products found, initializing products");
-            cachedProducts = initializeProducts();
-            saveProductsToLocalStorage(cachedProducts);
-        }
-    }
-
-    console.log("Contenu initial de cachedProducts:", JSON.stringify(cachedProducts, null, 2));
-
-    cachedProducts = cachedProducts.filter(product => {
-        if (!validateProduct(product)) {
-            console.error(`Invalid product detected:`, product);
-            return false;
-        }
-        return true;
-    });
-
-    console.log("cachedProducts après nettoyage:", JSON.stringify(cachedProducts, null, 2));
-
-    let filteredProducts = [...cachedProducts];
-
-    if (params.storeType) {
-        filteredProducts = filteredProducts.filter(p => p.storeType === params.storeType);
-        console.log(`Products after filtering by storeType '${params.storeType}':`, filteredProducts);
-    }
-
-    if (params.categories && params.categories !== '') {
-        const categories = params.categories.split(',');
-        filteredProducts = filteredProducts.filter(p => categories.includes(p.category));
-        console.log(`API: Filtered by categories ${params.categories}:`, filteredProducts);
-    }
-
-    if (params.featured === 'true') {
-        filteredProducts = filteredProducts.filter(p => p.featured === true);
-        console.log(`API: Filtered featured products:`, filteredProducts);
-    }
-
-    if (params.sort) {
-        switch (params.sort) {
-            case 'price-asc':
-                filteredProducts.sort((a, b) => a.price - b.price);
-                break;
-            case 'price-desc':
-                filteredProducts.sort((a, b) => b.price - a.price);
-                break;
-            default:
-                filteredProducts.sort((a, b) => a.name.localeCompare(b.name));
-        }
-    }
-
-    const page = parseInt(params.page) || 1;
-    const limit = parseInt(params.limit) || 12;
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit;
-    const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
-
-    console.log("API: Final filtered and paginated products:", paginatedProducts);
-
-    return {
-        products: paginatedProducts,
-        total: filteredProducts.length
-    };
-}
-
-export async function getProductById(id: string): Promise<Product | null> {
-    console.log("Fetching product with id:", id);
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    if (cachedProducts.length === 0) {
-        cachedProducts = getProductsFromLocalStorage();
-        if (cachedProducts.length === 0) {
-            cachedProducts = initializeProducts();
-        }
-    }
-
-    const product = cachedProducts.find(p => p.id === id);
-
-    if (product && validateProduct(product)) {
-        console.log("Fetched product:", product);
-        return product;
-    } else {
-        console.log("Product not found or invalid");
-        return null;
-    }
-}
-
-export async function createProduct(newProduct: Omit<Product, 'id'>): Promise<Product> {
-    console.log("API: Creating new product:", newProduct);
-
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    if (cachedProducts.length === 0) {
-        cachedProducts = getProductsFromLocalStorage();
-        if (cachedProducts.length === 0) {
-            cachedProducts = initializeProducts();
-        }
-    }
-
-    const productWithId: Product = {
-        id: uuidv4(),
-        ...newProduct,
-    };
-
-    if (validateProduct(productWithId)) {
-        cachedProducts.push(productWithId);
-        saveProductsToLocalStorage(cachedProducts);
-        console.log("API: New product created:", productWithId);
-        return productWithId;
-    } else {
-        console.error("Invalid product data:", productWithId);
-        throw new Error("Invalid product data: failed validation");
-    }
-}
-
-export async function updateProduct(id: string, updatedProduct: Partial<Product>): Promise<Product> {
-    console.log("API: Updating product with id:", id, "Updated data:", updatedProduct);
-
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    if (cachedProducts.length === 0) {
-        cachedProducts = getProductsFromLocalStorage();
-        if (cachedProducts.length === 0) {
-            cachedProducts = initializeProducts();
-        }
-    }
-
-    const index = cachedProducts.findIndex(p => p.id === id);
-    if (index === -1) {
-        throw new Error("Product not found");
-    }
-
-    const currentProduct = cachedProducts[index];
-    const updatedProductFull: Product = {
-        ...currentProduct,
-        ...updatedProduct,
-        id,
-        name: (updatedProduct.name || currentProduct.name).trim(),
-        description: (updatedProduct.description || currentProduct.description).trim(),
-        price: Math.max(0, updatedProduct.price || currentProduct.price),
-        category: (updatedProduct.category || currentProduct.category).trim(),
-        brand: (updatedProduct.brand || currentProduct.brand).trim(),
-        images: (updatedProduct.images || currentProduct.images || []).map(getImagePath),
-        variants: updatedProduct.variants || currentProduct.variants || [],
-        tags: updatedProduct.tags || currentProduct.tags || [],
-        reviews: updatedProduct.reviews || currentProduct.reviews || [],
-        questions: updatedProduct.questions || currentProduct.questions || [],
-        faqs: updatedProduct.faqs || currentProduct.faqs || [],
-        sizeChart: updatedProduct.sizeChart || currentProduct.sizeChart || [],
-        storeType: updatedProduct.storeType || currentProduct.storeType || 'adult',
-        featured: updatedProduct.featured !== undefined ? updatedProduct.featured : currentProduct.featured,
-        colors: updatedProduct.colors || currentProduct.colors || []
-    };
-
-    if (validateProduct(updatedProductFull)) {
-        cachedProducts[index] = updatedProductFull;
-        saveProductsToLocalStorage(cachedProducts);
-        console.log("API: Product updated:", updatedProductFull);
-        return updatedProductFull;
-    } else {
-        console.error("Invalid product data:", updatedProductFull);
-        throw new Error("Invalid product data after update");
-    }
-}
-
-export async function deleteProduct(id: string): Promise<void> {
-    console.log("API: Deleting product with id:", id);
-
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    if (cachedProducts.length === 0) {
-        cachedProducts = getProductsFromLocalStorage();
-        if (cachedProducts.length === 0) {
-            cachedProducts = initializeProducts();
-        }
-    }
-
-    const index = cachedProducts.findIndex(p => p.id === id);
-    if (index === -1) {
-        throw new Error("Product not found");
-    }
-
-    cachedProducts.splice(index, 1);
-    saveProductsToLocalStorage(cachedProducts);
-
-    console.log("API: Product deleted");
-}
-
-export async function fetchOrders(): Promise<Order[]> {
-    console.log("API: Fetching orders");
-
-    if (cachedOrders.length === 0) {
-        // Simuler un délai de réseau
-        await new Promise(resolve => setTimeout(resolve, 500));
-
-        // Initialiser avec des données factices si le cache est vide
-        cachedOrders = [
-            { id: '1', customer: 'John Doe', total: 99.99, status: 'delivered', date: new Date().toISOString(), items: [] },
-            { id: '2', customer: 'Jane Smith', total: 149.99, status: 'processing', date: new Date().toISOString(), items: [] },
-            { id: '3', customer: 'Bob Johnson', total: 199.99, status: 'pending', date: new Date().toISOString(), items: [] },
-        ];
-    }
-
-    console.log("API: Fetched orders:", cachedOrders);
-    return cachedOrders;
-}
-
-export async function createOrder(newOrder: Order): Promise<Order> {
-    console.log("API: Creating new order:", newOrder);
-
-    // Simuler un délai de réseau
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    cachedOrders.unshift(newOrder);
-    console.log("API: New order created:", newOrder);
-    return newOrder;
-}
-
-export async function updateOrderStatus(orderId: string, status: OrderStatus): Promise<Order | null> {
-    console.log(`API: Updating order ${orderId} status to ${status}`);
-
-    // Simuler un délai de réseau
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    const orderIndex = cachedOrders.findIndex(order => order.id === orderId);
-    if (orderIndex === -1) {
-        console.log(`API: Order ${orderId} not found`);
-        return null;
-    }
-
-    cachedOrders[orderIndex].status = status;
-    console.log("API: Order updated:", cachedOrders[orderIndex]);
-    return cachedOrders[orderIndex];
-}
-
-export async function updateProductStock(productId: string, quantity: number, variant: { size: string, color: string }): Promise<void> {
-    console.log(`API: Updating stock for product ${productId}`);
-
-    // Simuler un délai de réseau
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    const product = cachedProducts.find(p => p.id === productId);
-    if (!product) {
-        throw new Error(`Product not found: ${productId}`);
-    }
-
-    const variantIndex = product.variants.findIndex(v => v.size === variant.size && v.color === variant.color);
-    if (variantIndex === -1) {
-        throw new Error(`Variant not found for product: ${productId}`);
-    }
-
-    if (product.variants[variantIndex].stock < quantity) {
-        throw new Error(`Insufficient stock for product: ${productId}`);
-    }
-
-    product.variants[variantIndex].stock -= quantity;
-    console.log(`Updated stock for product ${productId}, new stock: ${product.variants[variantIndex].stock}`);
-}
-
-export async function updateUserInfo(userInfo: UserInfo): Promise<UserInfo> {
-    console.log("API: Updating user info:", userInfo);
-    await new Promise(resolve => setTimeout(resolve, 500));
-    return userInfo;
-}
-
-export interface Address {
-    id: string;
-    name: string;
-    street: string;
-    city: string;
-    postalCode: string;
-    country: string;
-    isDefault: boolean;
-}
-
-let cachedAddresses: Address[] = [
-    {
-        id: '1',
-        name: 'Domicile',
-        street: '123 Rue de la République',
-        city: 'Marseille',
-        postalCode: '13001',
-        country: 'France',
-        isDefault: true
-    },
-    {
-        id: '2',
-        name: 'Bureau',
-        street: '45 Avenue des Champs-Élysées',
-        city: 'Paris',
-        postalCode: '75008',
-        country: 'France',
-        isDefault: false
-    }
-];
-
-export async function fetchAddresses(): Promise<Address[]> {
-    console.log("API: Fetching addresses");
-    await new Promise(resolve => setTimeout(resolve, 500));
-    return cachedAddresses;
-}
-
-export async function addAddress(address: Omit<Address, 'id'>): Promise<Address> {
-    console.log("API: Adding new address", address);
-    await new Promise(resolve => setTimeout(resolve, 500));
-    const newAddress: Address = { ...address, id: Date.now().toString() };
-    cachedAddresses.push(newAddress);
-    return newAddress;
-}
-
-export async function updateAddress(id: string, address: Partial<Address>): Promise<Address> {
-    console.log("API: Updating address", id, address);
-    await new Promise(resolve => setTimeout(resolve, 500));
-    const index = cachedAddresses.findIndex(a => a.id === id);
-    if (index === -1) throw new Error("Address not found");
-    cachedAddresses[index] = { ...cachedAddresses[index], ...address };
-    return cachedAddresses[index];
-}
-
-export async function deleteAddress(id: string): Promise<void> {
-    console.log("API: Deleting address", id);
-    await new Promise(resolve => setTimeout(resolve, 500));
-    const index = cachedAddresses.findIndex(a => a.id === id);
-    if (index === -1) throw new Error("Address not found");
-    cachedAddresses.splice(index, 1);
-}
-
-export async function setDefaultAddress(id: string): Promise<Address[]> {
-    console.log("API: Setting default address", id);
-    await new Promise(resolve => setTimeout(resolve, 500));
-    cachedAddresses = cachedAddresses.map(address => ({
-        ...address,
-        isDefault: address.id === id
-    }));
-    return cachedAddresses;
-}
-
-export async function changePassword(currentPassword: string, newPassword: string): Promise<{ success: boolean, message: string }> {
-    console.log("API: Changing password");
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    // Ici, vous feriez normalement une vérification du mot de passe actuel
-    // et mettriez à jour le nouveau mot de passe dans la base de données
-    if (currentPassword === "password123") {
-        return { success: true, message: "Mot de passe changé avec succès" };
-    } else {
-        return { success: false, message: "Le mot de passe actuel est incorrect" };
-    }
-}
-
-export async function logout(): Promise<void> {
-    console.log("API: Logging out user");
-    await new Promise(resolve => setTimeout(resolve, 500));
-    // Ici, vous feriez normalement une requête à votre backend pour invalider la session
-    console.log("API: User logged out successfully");
-}
 

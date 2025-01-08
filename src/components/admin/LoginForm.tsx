@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { ExclamationTriangleIcon } from '@radix-ui/react-icons'
 import { useToast } from "@/components/ui/use-toast"
@@ -19,25 +19,25 @@ export function LoginForm() {
     const { toast } = useToast()
     const { login, isLoading } = useAuth()
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
         setError(null)
 
         try {
-            if (email === 'admin@reboul.com' && password === 'password123') {
-                // Authentification réussie
-                await login(email, password) // Utiliser la fonction login du contexte
-                localStorage.setItem('adminToken', 'fake-jwt-token')
+            const { user } = await login(email, password)
+
+            if (user && user.isAdmin) {
                 toast({
                     title: "Connexion réussie",
                     description: "Bienvenue dans l'interface d'administration.",
                 })
                 router.push('/admin/dashboard')
             } else {
-                throw new Error('Identifiants invalides')
+                throw new Error('Accès non autorisé')
             }
         } catch (err) {
-            setError('Identifiants invalides')
+            console.error('Erreur de connexion:', err)
+            setError('Identifiants invalides ou accès non autorisé')
             toast({
                 title: "Erreur de connexion",
                 description: "Veuillez vérifier vos identifiants et réessayer.",
@@ -47,10 +47,12 @@ export function LoginForm() {
     }
 
     return (
-        <Card className="w-full max-w-md mx-auto">
+        <Card>
             <CardHeader>
                 <CardTitle>Connexion Administrateur</CardTitle>
-                <CardDescription>Accédez au panneau d'administration de Reboul Store</CardDescription>
+                <CardDescription>
+                    Accédez au panneau d'administration de Reboul Store
+                </CardDescription>
             </CardHeader>
             <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -81,18 +83,15 @@ export function LoginForm() {
                             <AlertDescription>{error}</AlertDescription>
                         </Alert>
                     )}
+                    <Button
+                        type="submit"
+                        className="w-full"
+                        disabled={isLoading}
+                    >
+                        {isLoading ? 'Connexion en cours...' : 'Se connecter'}
+                    </Button>
                 </form>
             </CardContent>
-            <CardFooter>
-                <Button
-                    type="submit"
-                    className="w-full"
-                    onClick={handleSubmit}
-                    disabled={isLoading}
-                >
-                    {isLoading ? 'Connexion en cours...' : 'Se connecter'}
-                </Button>
-            </CardFooter>
         </Card>
     )
 }

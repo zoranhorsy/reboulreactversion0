@@ -1,251 +1,423 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { useAuth } from '@/app/contexts/AuthContext'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
-import { fetchDashboardStats, fetchRecentOrders, fetchTopProducts, fetchWeeklySales, DashboardStats, Order, Product, SalesData } from '@/app/api/admin/api'
-import { useNotifications } from '@/hooks/useNotifications'
+import { fetchDashboardStats, fetchRecentOrders, fetchTopProducts, fetchWeeklySales } from '@/lib/api'
+import { useToast } from "@/components/ui/use-toast"
+import { Loader2, BarChart2, Package, ShoppingCart, Settings, Home, Users, LogOut } from 'lucide-react'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import {
+    Sidebar,
+    SidebarContent,
+    SidebarHeader,
+    SidebarMenu,
+    SidebarMenuItem,
+    SidebarMenuButton,
+    SidebarProvider,
+    SidebarTrigger,
+} from "@/components/ui/sidebar"
+
+// Définition des types
+interface DashboardStats {
+    totalRevenue: number | null;
+    totalOrders: number | null;
+    totalProducts: number | null;
+    totalUsers: number | null;
+}
+
+interface Order {
+    id: string;
+    totalAmount: number | null;
+    status: string;
+    createdAt: string;
+}
+
+interface TopProduct {
+    id: string;
+    name: string;
+    totalSold: number;
+}
+
+interface WeeklySales {
+    date: string;
+    total: number;
+}
+
+// Fonction utilitaire pour nettoyer les données
+const cleanData = <T extends Record<string, any>>(data: T | null | undefined, defaultValue: T): T => {
+    if (!data) return defaultValue;
+
+    return Object.keys(defaultValue).reduce((acc, key) => {
+        if (typeof defaultValue[key] === 'number') {
+            const value = data[key];
+            acc[key] = typeof value === 'number' && !isNaN(value) ? value : null;
+        } else {
+            acc[key] = data[key] ?? defaultValue[key];
+        }
+        return acc;
+    }, {} as T);
+};
 
 export function AdminDashboard() {
     const router = useRouter()
-    const { user, logout, isLoading: authLoading } = useAuth()
+    const { user, logout } = useAuth()
     const [stats, setStats] = useState<DashboardStats | null>(null)
     const [recentOrders, setRecentOrders] = useState<Order[]>([])
-    const [topProducts, setTopProducts] = useState<Product[]>([])
-    const [salesData, setSalesData] = useState<SalesData[]>([])
+    const [topProducts, setTopProducts] = useState<TopProduct[]>([])
+    const [salesData, setSalesData] = useState<WeeklySales[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
-    const { addNotification } = useNotifications()
-
-    useEffect(() => {
-        const checkAuth = async () => {
-            if (!authLoading && !user) {
-                router.replace('/admin/login')
-            }
-        }
-        checkAuth()
-    }, [user, authLoading, router])
+    const { toast } = useToast()
 
     useEffect(() => {
         const fetchDashboardData = async () => {
+            console.log('Fetching dashboard data...');
+            console.log('User:', user);
+            if (!user || !user.isAdmin) {
+                router.push('/admin/login')
+                return
+            }
+
             setIsLoading(true)
             setError(null)
             try {
+                console.log('Fetching data from API...');
                 const [statsData, ordersData, productsData, salesData] = await Promise.all([
-                    fetchDashboardStats(),
-                    fetchRecentOrders(),
-                    fetchTopProducts(),
-                    fetchWeeklySales()
-                ])
-                setStats(statsData)
-                setRecentOrders(ordersData)
-                setTopProducts(productsData)
-                setSalesData(salesData)
+                    fetchDashboardStats().catch(error => {
+                        console.error('Error fetching stats:', error);
+                        return null;
+                    }),
+                    fetchRecentOrders().catch(error => {
+                        console.error('Error fetching orders:', error);
+                        return [];
+                    }),
+                    fetchTopProducts().catch(error => {
+                        console.error('Error fetching top products:', error);
+                        return [];
+                    }),
+                    fetchWeeklySales().catch(error => {
+                        console.error('Error fetching weekly sales:', error);
+                        return [];
+                    })
+                ]);
 
-                // Ajouter des notifications d'exemple
-                addNotification("Nouvelle commande reçue : #1234", "info")
-                addNotification("Stock faible pour le produit XYZ", "warning")
-                addNotification("Erreur de paiement pour la commande #5678", "error")
-            } catch (err) {
+                console.log('Raw stats data:', statsData);
+                console.log('Raw orders data:', ordersData);
+                console.log('Raw products data:', productsData);
+                console.log('Raw sales data:', salesData);
+
+                const cleanedStats = cleanData(statsData, {
+                    totalRevenue: null,
+                    totalOrders: null,
+                    totalProducts: null,
+                    totalUsers: null
+                });
+
+                const cleanedOrders = (ordersData || []).map(order => cleanData(order, {
+                    id: '',
+                    totalAmount: null,
+                    status: '',
+                    createdAt: new Date().toISOString()
+                }));
+
+                console.log('Cleaned stats data:', JSON.stringify(cleanedStats, null, 2));
+                console.log('Cleaned orders data:', JSON.stringify(cleanedOrders, null, 2));
+
+                const cleanedProducts = (productsData || []).map(product => cleanData(product, {
+                    id: '',
+                    name: '',
+                    totalSold: 0
+                }));
+
+                const cleanedSalesData = (salesData || []).map(sale => cleanData(sale, {
+                    date: '',
+                    total: 0
+                }));
+
+                setStats(cleanedStats)
+                setRecentOrders(cleanedOrders)
+                setTopProducts(cleanedProducts)
+                setSalesData(cleanedSalesData)
+
+            } catch (err: any) {
                 console.error('Error fetching dashboard data:', err)
-                setError('Une erreur est survenue lors du chargement des données. Veuillez réessayer.')
+                setError('Une erreur est survenue lors du chargement des données.')
+                toast({
+                    title: "Erreur",
+                    description: "Impossible de charger les données du tableau de bord.",
+                    variant: "destructive",
+                })
             } finally {
                 setIsLoading(false)
             }
         }
 
-        if (user) {
-            fetchDashboardData()
-        }
-    }, [user, addNotification])
+        fetchDashboardData()
+    }, [user, router, toast])
 
-    const handleLogout = () => {
-        logout()
-        router.replace('/admin/login')
-    }
-
-    if (authLoading || isLoading) {
-        return <div className="flex justify-center items-center h-screen">Chargement...</div>
+    if (isLoading) {
+        return (
+            <div className="flex justify-center items-center h-screen">
+                <Loader2 className="mr-2 h-16 w-16 animate-spin" />
+                <span className="text-xl font-semibold">Chargement du tableau de bord...</span>
+            </div>
+        )
     }
 
     if (error) {
-        return <div className="text-red-500 text-center">{error}</div>
+        return (
+            <div className="flex flex-col items-center justify-center h-screen">
+                <p className="text-red-500 text-xl mb-4">{error}</p>
+                <Button onClick={() => router.reload()}>Réessayer</Button>
+            </div>
+        )
     }
 
-    if (!user || !stats) {
-        return null
+    if (!stats) {
+        return (
+            <div className="flex flex-col items-center justify-center h-screen">
+                <p className="text-xl mb-4">Aucune donnée disponible pour le tableau de bord.</p>
+                <Button onClick={() => router.reload()}>Rafraîchir</Button>
+            </div>
+        )
     }
+
+    const navigationItems = [
+        {
+            href: '/admin/dashboard',
+            icon: <Home className="h-5 w-5" />,
+            title: 'Tableau de bord',
+            isActive: true
+        },
+        {
+            href: '/admin/products',
+            icon: <Package className="h-5 w-5" />,
+            title: 'Produits'
+        },
+        {
+            href: '/admin/orders',
+            icon: <ShoppingCart className="h-5 w-5" />,
+            title: 'Commandes'
+        },
+        {
+            href: '/admin/users',
+            icon: <Users className="h-5 w-5" />,
+            title: 'Utilisateurs'
+        },
+        {
+            href: '/admin/stats',
+            icon: <BarChart2 className="h-5 w-5" />,
+            title: 'Statistiques'
+        },
+        {
+            href: '/admin/settings',
+            icon: <Settings className="h-5 w-5" />,
+            title: 'Paramètres'
+        }
+    ]
 
     return (
-        <div className="container mx-auto px-4 py-8">
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-3xl font-bold">Tableau de bord administrateur</h1>
-                <Button onClick={handleLogout}>Se déconnecter</Button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Ventes Totales</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-3xl font-bold">{stats.totalSales.toLocaleString()} €</p>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Commandes</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-3xl font-bold">{stats.totalOrders}</p>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Produits</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-3xl font-bold">{stats.totalProducts}</p>
-                    </CardContent>
-                </Card>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Ventes de la semaine</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="h-[300px]">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={salesData}>
-                                    <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis dataKey="name" />
-                                    <YAxis />
-                                    <Tooltip />
-                                    <Bar dataKey="sales" fill="#8884d8" />
-                                </BarChart>
-                            </ResponsiveContainer>
+        <SidebarProvider>
+            <div className="flex min-h-screen">
+                <Sidebar>
+                    <SidebarHeader>
+                        <div className="flex items-center gap-2 p-4">
+                            <Package className="h-6 w-6" />
+                            <span className="font-semibold text-lg">Reboul Store</span>
                         </div>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader>
-                        <CardTitle>KPIs</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-4">
-                            <div>
-                                <p className="text-sm text-gray-500">Valeur moyenne des commandes</p>
-                                <p className="text-2xl font-bold">{stats.averageOrderValue.toFixed(2)} €</p>
-                            </div>
-                            <div>
-                                <p className="text-sm text-gray-500">Taux de conversion</p>
-                                <p className="text-2xl font-bold">{stats.conversionRate.toFixed(2)}%</p>
-                            </div>
+                    </SidebarHeader>
+                    <SidebarContent>
+                        <SidebarMenu>
+                            {navigationItems.map((item) => (
+                                <SidebarMenuItem key={item.href}>
+                                    <SidebarMenuButton asChild isActive={item.isActive}>
+                                        <Link href={item.href} className="flex items-center gap-2">
+                                            {item.icon}
+                                            <span>{item.title}</span>
+                                        </Link>
+                                    </SidebarMenuButton>
+                                </SidebarMenuItem>
+                            ))}
+                            <SidebarMenuItem>
+                                <SidebarMenuButton
+                                    onClick={() => {
+                                        logout()
+                                        router.replace('/admin/login')
+                                    }}
+                                    className="text-red-500 hover:text-red-600"
+                                >
+                                    <LogOut className="h-5 w-5" />
+                                    <span>Se déconnecter</span>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        </SidebarMenu>
+                    </SidebarContent>
+                </Sidebar>
+
+                <main className="flex-1 overflow-auto">
+                    <div className="border-b">
+                        <div className="flex h-16 items-center gap-4 px-4">
+                            <SidebarTrigger />
+                            <h1 className="text-xl font-semibold">Tableau de bord administrateur</h1>
                         </div>
-                    </CardContent>
-                </Card>
-            </div>
+                    </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Dernières commandes</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>ID</TableHead>
-                                    <TableHead>Client</TableHead>
-                                    <TableHead>Total</TableHead>
-                                    <TableHead>Statut</TableHead>
-                                    <TableHead>Date</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {recentOrders.map((order) => (
-                                    <TableRow key={order.id}>
-                                        <TableCell>{order.id}</TableCell>
-                                        <TableCell>{order.customer}</TableCell>
-                                        <TableCell>{order.total.toFixed(2)} €</TableCell>
-                                        <TableCell>{order.status}</TableCell>
-                                        <TableCell>{order.date}</TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Produits les plus vendus</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Produit</TableHead>
-                                    <TableHead>Prix</TableHead>
-                                    <TableHead>Stock</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {topProducts.map((product) => (
-                                    <TableRow key={product.id}>
-                                        <TableCell>{product.name}</TableCell>
-                                        <TableCell>{product.price.toFixed(2)} €</TableCell>
-                                        <TableCell>{product.variants.reduce((total, variant) => total + variant.stock, 0)}</TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </CardContent>
-                </Card>
-            </div>
+                    <div className="p-6 space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Ventes Totales</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <p className="text-3xl font-bold">
+                                        {stats.totalRevenue != null
+                                            ? `${stats.totalRevenue.toLocaleString()} €`
+                                            : 'N/A'}
+                                    </p>
+                                </CardContent>
+                            </Card>
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Commandes</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <p className="text-3xl font-bold">
+                                        {stats.totalOrders != null ? stats.totalOrders.toLocaleString() : 'N/A'}
+                                    </p>
+                                </CardContent>
+                            </Card>
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Produits</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <p className="text-3xl font-bold">
+                                        {stats.totalProducts != null ? stats.totalProducts.toLocaleString() : 'N/A'}
+                                    </p>
+                                </CardContent>
+                            </Card>
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Utilisateurs</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <p className="text-3xl font-bold">
+                                        {stats.totalUsers != null ? stats.totalUsers.toLocaleString() : 'N/A'}
+                                    </p>
+                                </CardContent>
+                            </Card>
+                        </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Gestion des produits</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="mb-4">Gérez votre catalogue de produits</p>
-                        <Link href="/admin/products">
-                            <Button>Accéder aux produits</Button>
-                        </Link>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Gestion des commandes</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="mb-4">Suivez et gérez les commandes</p>
-                        <Link href="/admin/orders">
-                            <Button>Accéder aux commandes</Button>
-                        </Link>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Statistiques détaillées</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="mb-4">Consultez les statistiques avancées</p>
-                        <Link href="/admin/stats">
-                            <Button>Voir les statistiques</Button>
-                        </Link>
-                    </CardContent>
-                </Card>
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Ventes hebdomadaires</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="h-[300px]">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <LineChart data={salesData}>
+                                            <CartesianGrid strokeDasharray="3 3" />
+                                            <XAxis dataKey="date" />
+                                            <YAxis />
+                                            <Tooltip />
+                                            <Line
+                                                type="monotone"
+                                                dataKey="total"
+                                                stroke="hsl(var(--primary))"
+                                                strokeWidth={2}
+                                            />
+                                        </LineChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Dernières commandes</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>ID</TableHead>
+                                                <TableHead>Total</TableHead>
+                                                <TableHead>Statut</TableHead>
+                                                <TableHead>Date</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {recentOrders.length > 0 ? (
+                                                recentOrders.map((order) => (
+                                                    <TableRow key={order.id}>
+                                                        <TableCell>{order.id}</TableCell>
+                                                        <TableCell>
+                                                            {order.totalAmount != null
+                                                                ? `${order.totalAmount.toFixed(2)} €`
+                                                                : 'N/A'}
+                                                        </TableCell>
+                                                        <TableCell>{order.status || 'N/A'}</TableCell>
+                                                        <TableCell>
+                                                            {order.createdAt
+                                                                ? new Date(order.createdAt).toLocaleDateString()
+                                                                : 'N/A'}
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))
+                                            ) : (
+                                                <TableRow>
+                                                    <TableCell colSpan={4} className="text-center">
+                                                        Aucune commande récente
+                                                    </TableCell>
+                                                </TableRow>
+                                            )}
+                                        </TableBody>
+                                    </Table>
+                                </CardContent>
+                            </Card>
+
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Produits les plus vendus</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Produit</TableHead>
+                                                <TableHead>Total vendu</TableHead><TableHead>Total vendu</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {topProducts.length > 0 ? (
+                                                topProducts.map((product) => (
+                                                    <TableRow key={product.id}>
+                                                        <TableCell>{product.name}</TableCell>
+                                                        <TableCell>{product.totalSold}</TableCell>
+                                                    </TableRow>
+                                                ))
+                                            ) : (
+                                                <TableRow>
+                                                    <TableCell colSpan={2} className="text-center">
+                                                        Aucun produit populaire
+                                                    </TableCell>
+                                                </TableRow>
+                                            )}
+                                        </TableBody>
+                                    </Table>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    </div>
+                </main>
             </div>
-        </div>
+        </SidebarProvider>
     )
 }
 

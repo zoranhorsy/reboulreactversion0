@@ -1,39 +1,54 @@
-import React from 'react'
-import { motion } from 'framer-motion'
-import { ProductCard } from '@/components/products/ProductCard'
-import { Product } from '@/lib/api'
-import { SocialShare } from "@/components/SocialShare"
+import React from 'react';
+import { useProducts } from '@/hooks/useProducts';
+import { ProductCard } from '@/components/products/ProductCard';
+import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
 
-type ProductListProps = {
-    products: Product[]
-}
+export function ProductList() {
+    const {
+        products,
+        isLoading,
+        error,
+        page,
+        limit,
+        totalProducts,
+        nextPage,
+        prevPage,
+    } = useProducts();
 
-export function ProductList({ products }: ProductListProps) {
+    if (isLoading) {
+        return (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {[...Array(limit)].map((_, index) => (
+                    <Skeleton key={index} className="h-[300px] w-full" />
+                ))}
+            </div>
+        );
+    }
+
+    if (error) {
+        return <div className="text-red-500">{error}</div>;
+    }
+
     return (
-        <div className="space-y-6">
-            {products.map((product, index) => (
-                <motion.div
-                    key={product.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: index * 0.1 }}
-                    className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-4 sm:space-y-0 sm:space-x-4 p-4 bg-card rounded-lg shadow-md"
-                >
-                    <div className="w-full sm:w-2/3 md:w-3/4">
-                        <ProductCard product={product} compact={true} />
-                    </div>
-                    <div className="flex flex-col space-y-2 w-full sm:w-1/3 md:w-1/4">
-                        <div className="text-xs text-muted-foreground mb-2">
-                            {product.stock > 10 ? 'En stock' :
-                                product.stock > 5 ? 'Stock limité' :
-                                    product.stock > 0 ? 'Dernières pièces' : 'Rupture de stock'}
-                            : {product.stock} disponible{product.stock > 1 ? 's' : ''}
-                        </div>
-                        <SocialShare url={`https://reboul-store.com/produit/${product.id}`} title={product.name} />
-                    </div>
-                </motion.div>
-            ))}
+        <div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {products.map((product) => (
+                    <ProductCard key={product.id} product={product} />
+                ))}
+            </div>
+            <div className="mt-4 flex justify-between items-center">
+                <Button onClick={prevPage} disabled={page === 1}>
+                    Previous Page
+                </Button>
+                <span>
+                    Page {page} of {Math.ceil(totalProducts / limit)}
+                </span>
+                <Button onClick={nextPage} disabled={page * limit >= totalProducts}>
+                    Next Page
+                </Button>
+            </div>
         </div>
-    )
+    );
 }
 

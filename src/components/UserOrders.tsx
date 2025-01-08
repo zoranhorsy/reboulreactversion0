@@ -1,74 +1,75 @@
-'use client'
-
-import { useState, useEffect } from 'react'
-import { fetchOrders, Order } from '@/lib/api'
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import React, { useState, useEffect } from 'react';
+import { api, Order } from '@/lib/api';
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { toast } from "@/components/ui/use-toast"
+import { useToast } from "@/components/ui/use-toast"
 
 export function UserOrders() {
-    const [orders, setOrders] = useState<Order[]>([])
-    const [loading, setLoading] = useState(true)
+    const [orders, setOrders] = useState<Order[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const { toast } = useToast();
 
     useEffect(() => {
-        loadOrders()
-    }, [])
+        loadOrders();
+    }, []);
 
     const loadOrders = async () => {
+        setIsLoading(true);
         try {
-            setLoading(true)
-            const fetchedOrders = await fetchOrders()
-            setOrders(fetchedOrders)
+            const fetchedOrders = await api.fetchOrders();
+            setOrders(fetchedOrders);
         } catch (error) {
-            console.error('Failed to load orders:', error)
+            console.error('Failed to load orders:', error);
             toast({
                 title: "Erreur",
                 description: "Impossible de charger les commandes.",
                 variant: "destructive",
-            })
+            });
         } finally {
-            setLoading(false)
+            setIsLoading(false);
         }
-    }
+    };
 
-    if (loading) {
-        return <div>Chargement des commandes...</div>
+    const handleViewDetails = async (orderId: string) => {
+        try {
+            const orderDetails = await api.getOrderById(orderId);
+            // Handle displaying order details (e.g., open a modal or navigate to a details page)
+            console.log('Order details:', orderDetails);
+        } catch (error) {
+            console.error('Failed to fetch order details:', error);
+            toast({
+                title: "Erreur",
+                description: "Impossible de charger les détails de la commande.",
+                variant: "destructive",
+            });
+        }
+    };
+
+    if (isLoading) {
+        return <div>Chargement des commandes...</div>;
     }
 
     return (
-        <div className="space-y-6">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Vos commandes</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    {orders.length === 0 ? (
-                        <p>Vous n'avez pas encore passé de commande.</p>
-                    ) : (
-                        orders.map((order) => (
-                            <div key={order.id} className="mb-4 p-4 border rounded-lg">
-                                <p><strong>Commande #{order.id}</strong></p>
-                                <p>Date : {new Date(order.date).toLocaleDateString()}</p>
-                                <p>Total : {order.total.toFixed(2)} €</p>
-                                <p>Statut : {order.status}</p>
-                                <details>
-                                    <summary className="cursor-pointer text-blue-600 hover:text-blue-800">
-                                        Voir les détails
-                                    </summary>
-                                    <ul className="mt-2 list-disc list-inside">
-                                        {order.items.map((item, index) => (
-                                            <li key={index}>
-                                                {item.name} - Quantité : {item.quantity} - Prix : {item.price.toFixed(2)} €
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </details>
-                            </div>
-                        ))
-                    )}
-                </CardContent>
-            </Card>
+        <div className="space-y-4">
+            <h2 className="text-2xl font-bold">Vos commandes</h2>
+            {orders.length > 0 ? (
+                orders.map((order) => (
+                    <Card key={order.id}>
+                        <CardContent className="p-4">
+                            <p>Commande #{order.id}</p>
+                            <p>Date: {new Date(order.createdAt).toLocaleDateString()}</p>
+                            <p>Total: {order.totalAmount.toFixed(2)} €</p>
+                            <p>Statut: {order.status}</p>
+                            <Button onClick={() => handleViewDetails(order.id)} className="mt-2">
+                                Voir les détails
+                            </Button>
+                        </CardContent>
+                    </Card>
+                ))
+            ) : (
+                <p>Vous n'avez pas encore de commandes.</p>
+            )}
         </div>
-    )
+    );
 }
 

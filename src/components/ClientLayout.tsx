@@ -1,29 +1,37 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { usePathname, useSearchParams } from 'next/navigation'
-import { Loader } from '@/components/ui/Loader'
+import { useEffect, useState } from 'react'
 
 export function ClientLayout({ children }: { children: React.ReactNode }) {
-    const [loading, setLoading] = useState(false)
-    const pathname = usePathname()
-    const searchParams = useSearchParams()
+    const [documentId, setDocumentId] = useState<string | null>(null)
 
     useEffect(() => {
-        const handleRouteChange = () => {
-            setLoading(true)
-            // Simulate a delay to show the loading indicator
-            setTimeout(() => setLoading(false), 500)
+        // Récupérer l'ID du document et le style depuis le body
+        const bodyElement = document.body
+        const bodyDocumentId = bodyElement.getAttribute('data-demoway-document-id')
+        const bodyStyle = bodyElement.getAttribute('style')
+
+        if (bodyDocumentId) {
+            setDocumentId(bodyDocumentId)
         }
 
-        handleRouteChange() // Initial load
-    }, [pathname, searchParams])
+        // Appliquer l'ID du document et le style au body côté client
+        if (bodyDocumentId) {
+            bodyElement.setAttribute('data-demoway-document-id', bodyDocumentId)
+        }
+        if (bodyStyle) {
+            bodyElement.setAttribute('style', bodyStyle)
+        } else {
+            bodyElement.removeAttribute('style')
+        }
 
-    return (
-        <>
-            {loading && <Loader />}
-            {children}
-        </>
-    )
+        // Nettoyage
+        return () => {
+            bodyElement.removeAttribute('data-demoway-document-id')
+            bodyElement.removeAttribute('style')
+        }
+    }, [])
+
+    return <>{children}</>
 }
 

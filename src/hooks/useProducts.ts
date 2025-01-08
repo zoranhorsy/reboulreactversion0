@@ -1,62 +1,64 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
-import { Product, fetchProducts } from '@/lib/api'
+import { useState, useEffect, useCallback } from 'react';
+import { api, Product } from '@/lib/api';
+import { useToast } from "@/components/ui/use-toast"
 
-interface UseProductsReturn {
-    products: Product[] | null
-    isLoading: boolean
-    error: Error | null
-    total: number
-}
+export function useProducts(initialPage = 1, initialLimit = 10) {
+    const [products, setProducts] = useState<Product[]>([]);
+    const [totalProducts, setTotalProducts] = useState(0);
+    const [page, setPage] = useState(initialPage);
+    const [limit, setLimit] = useState(initialLimit);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const { toast } = useToast();
 
-export function useProducts(params: Record<string, string> = {}): UseProductsReturn {
-    const [products, setProducts] = useState<Product[] | null>(null)
-    const [total, setTotal] = useState<number>(0)
-    const [isLoading, setIsLoading] = useState<boolean>(true)
-    const [error, setError] = useState<Error | null>(null)
-    const prevParamsRef = useRef<string>('')
-
-    const loadProducts = useCallback(async () => {
-        const paramsString = JSON.stringify(params)
-        if (paramsString === prevParamsRef.current && products !== null) {
-            return
-        }
-        prevParamsRef.current = paramsString
-
-        console.log("useProducts: Loading products with params:", params)
+    const loadProducts = useCallback(async (currentPage: number, currentLimit: number) => {
+        setIsLoading(true);
+        setError(null);
         try {
-            setIsLoading(true)
-            const { products: fetchedProducts, total } = await fetchProducts(params)
-            console.log("useProducts: Fetched products:", JSON.stringify(fetchedProducts, null, 2))
-
-            if (!Array.isArray(fetchedProducts)) {
-                throw new Error('Fetched products is not an array')
-            }
-
-            // Validate each product
-            const validatedProducts = fetchedProducts.map((product, index) => {
-                if (typeof product !== 'object' || product === null) {
-                    console.error(`Invalid product at index ${index}:`, product)
-                    return null
-                }
-                return product
-            }).filter((product): product is Product => product !== null)
-
-            setProducts(validatedProducts)
-            setTotal(total)
-            setError(null)
+            console.log('Loading products with page:', currentPage, 'and limit:', currentLimit); // Add this log
+            const { products, total } = await api.fetchProducts({ page: currentPage, limit: currentLimit });
+            setProducts(products);
+            setTotalProducts(total);
         } catch (err) {
-            console.error('useProducts: Error fetching products:', err)
-            setError(err instanceof Error ? err : new Error('An error occurred while fetching products'))
-            setProducts(null)
+            console.error('Error fetching products:', err);
+            setError(err instanceof Error ? err.message : 'Failed to fetch products. Please try again.');
+            toast({
+                title: "Error",
+                description: err instanceof Error ? err.message : "Failed to fetch products. Please try again.",
+                variant: "destructive",
+            });
         } finally {
-            setIsLoading(false)
+            setIsLoading(false);
         }
-    }, [params])
+    }, [toast]);
 
     useEffect(() => {
-        loadProducts()
-    }, [loadProducts])
+        loadProducts(page, limit);
+    }, [page, limit, loadProducts]);
 
-    return { products, isLoading, error, total }
+    const nextPage = useCallback(() => {
+        if (page * limit < totalProducts) {
+            setPage(prevPage => prevPage + 1);
+        }
+    }, [page, limit, totalProducts]);
+
+    const prevPage = useCallback(() => {
+        if (page > 1) {
+            setPage(prevPage => prevPage - 1);
+        }
+    }, [page]);
+
+    return {
+        products,
+        totalProducts,
+        isLoading,
+        error,
+        page,
+        limit,
+        nextPage,
+        prevPage,
+        setPage,
+        setLimit,
+    };
 }
 

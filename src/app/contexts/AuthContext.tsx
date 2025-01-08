@@ -1,20 +1,21 @@
 'use client'
 
 import React, { createContext, useContext, useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { toast } from "@/components/ui/use-toast"
+import axios from 'axios'
 
 interface User {
+    id: string;
     email: string;
-    name?: string;
-    role: 'user' | 'admin';
+    username: string;
+    isAdmin: boolean;
 }
 
 interface AuthContextType {
     user: User | null;
-    login: (email: string, password: string) => Promise<void>;
-    register: (name: string, email: string, password: string) => Promise<void>;
+    login: (email: string, password: string) => Promise<{ user: User, token: string }>;
     logout: () => void;
-    updateUser: (userData: Partial<User>) => Promise<void>;
     isLoading: boolean;
 }
 
@@ -28,89 +29,80 @@ export const useAuth = () => {
     return context
 }
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null)
     const [isLoading, setIsLoading] = useState(true)
+    const router = useRouter()
 
     useEffect(() => {
         const checkAuth = async () => {
-            const token = localStorage.getItem('adminToken');
+            const token = localStorage.getItem('token');
             if (token) {
                 try {
-                    // Simuler une vérification de token
-                    const email = localStorage.getItem('userEmail');
-                    const name = localStorage.getItem('userName');
-                    if (email === 'admin@reboul.com') {
-                        setUser({ email, name: name || undefined, role: 'admin' });
-                    } else if (email) {
-                        setUser({ email, name: name || undefined, role: 'user' });
+                    const response = await axios.get(`${API_URL}/auth/me`, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    const userData: User = {
+                        id: response.data.id,
+                        email: response.data.email,
+                        username: response.data.username,
+                        isAdmin: response.data.is_admin
+                    };
+                    setUser(userData);
+                    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+                    if (window.location.pathname === '/admin/login') {
+                        router.push('/admin/dashboard');
                     }
                 } catch (error) {
                     console.error('Error verifying token:', error);
-                    localStorage.removeItem('adminToken');
-                    localStorage.removeItem('userEmail');
-                    localStorage.removeItem('userName');
+                    localStorage.removeItem('token');
+                    delete axios.defaults.headers.common['Authorization'];
+                    setUser(null);
+                    router.push('/admin/login');
+                }
+            } else {
+                setUser(null);
+                if (window.location.pathname.startsWith('/admin') && window.location.pathname !== '/admin/login') {
+                    router.push('/admin/login');
                 }
             }
             setIsLoading(false)
         }
 
         checkAuth()
-    }, [])
+    }, [router])
 
     const login = async (email: string, password: string) => {
         try {
-            // Simuler une requête d'authentification
-            if (email === 'admin@reboul.com' && password === 'password123') {
-                const user = { email, role: 'admin' as const };
-                setUser(user);
-                localStorage.setItem('adminToken', 'fake-jwt-token');
-                localStorage.setItem('userEmail', email);
-                toast({
-                    title: "Connexion réussie",
-                    description: `Bienvenue, ${user.email}!`,
-                });
-            } else if (email === 'user@reboul.com' && password === 'password123') {
-                const user = { email, role: 'user' as const };
-                setUser(user);
-                localStorage.setItem('adminToken', 'fake-jwt-token');
-                localStorage.setItem('userEmail', email);
-                toast({
-                    title: "Connexion réussie",
-                    description: `Bienvenue, ${user.email}!`,
-                });
-            } else {
-                throw new Error('Invalid credentials');
+            const response = await axios.post(`${API_URL}/auth/login`, { email, password });
+            const { token, user } = response.data;
+
+            if (!token || !user) {
+                throw new Error('Invalid response from server');
             }
+
+            const userData: User = {
+                id: user.id,
+                email: user.email,
+                username: user.username,
+                isAdmin: user.is_admin
+            };
+
+            setUser(userData);
+            localStorage.setItem('token', token);
+            axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+            // Set a cookie for server-side auth checks
+            document.cookie = `auth-token=${token}; path=/; max-age=86400; SameSite=Strict; Secure`;
+
+            return { user: userData, token };
         } catch (error) {
             console.error('Login error:', error);
             toast({
                 title: "Erreur de connexion",
-                description: "Identifiants invalides. Veuillez réessayer.",
-                variant: "destructive",
-            });
-            throw error;
-        }
-    }
-
-    const register = async (name: string, email: string, password: string) => {
-        try {
-            // Simuler une requête d'inscription
-            // Dans une vraie application, vous enverriez ces données à votre API
-            const newUser = { email, name, role: 'user' as const };
-            setUser(newUser);
-            localStorage.setItem('adminToken', 'fake-jwt-token');
-            localStorage.setItem('userEmail', email);
-            localStorage.setItem('userName', name);
-            toast({
-                title: "Inscription réussie",
-                description: `Bienvenue, ${newUser.name}!`,
-            });
-        } catch (error) {
-            console.error('Register error:', error);
-            toast({
-                title: "Erreur d'inscription",
-                description: "Une erreur est survenue lors de l'inscription. Veuillez réessayer.",
+                description: "Vérifiez vos identifiants et réessayez.",
                 variant: "destructive",
             });
             throw error;
@@ -119,41 +111,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const logout = () => {
         setUser(null)
-        localStorage.removeItem('adminToken')
-        localStorage.removeItem('userEmail')
-        localStorage.removeItem('userName')
-        toast({
-            title: "Déconnexion",
-            description: "Vous avez été déconnecté avec succès.",
-        })
-    }
-
-    const updateUser = async (userData: Partial<User>) => {
-        try {
-            // Ici, vous devriez faire une requête à votre API pour mettre à jour les informations de l'utilisateur
-            // Pour l'exemple, nous allons simuler cette requête
-            const updatedUser = { ...user, ...userData };
-            setUser(updatedUser as User);
-            if (updatedUser.name) {
-                localStorage.setItem('userName', updatedUser.name);
-            }
-            toast({
-                title: "Profil mis à jour",
-                description: "Vos informations ont été mises à jour avec succès.",
-            })
-        } catch (error) {
-            console.error('Update user error:', error)
-            toast({
-                title: "Erreur de mise à jour",
-                description: "Impossible de mettre à jour vos informations. Veuillez réessayer.",
-                variant: "destructive",
-            })
-            throw error
-        }
+        localStorage.removeItem('token')
+        delete axios.defaults.headers.common['Authorization'];
+        document.cookie = "auth-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        router.push('/admin/login');
     }
 
     return (
-        <AuthContext.Provider value={{ user, login, register, logout, updateUser, isLoading }}>
+        <AuthContext.Provider value={{ user, login, logout, isLoading }}>
             {children}
         </AuthContext.Provider>
     )

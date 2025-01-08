@@ -8,7 +8,7 @@ import { GeistSans } from 'geist/font'
 import GsapInitializer from '@/components/GsapInitializer'
 import { Dock } from '@/components/Dock'
 import { AuthProvider } from '@/app/contexts/AuthContext'
-import { ClientLayout } from '@/components/ClientLayout'
+import { DynamicBodyAttributes } from '@/components/DynamicBodyAttributes'
 import { Loader } from '@/components/ui/Loader'
 
 export const metadata: Metadata = {
@@ -26,14 +26,14 @@ export default function RootLayout({
 }) {
     return (
         <html lang="fr" className={GeistSans.className}>
-        <body className="bg-background text-foreground">
-        <ClientLayout>
+        <body>
+        <DynamicBodyAttributes>
             <AuthProvider>
                 <WishlistProvider>
                     <CartProvider>
                         <Loader />
                         <GsapInitializer />
-                        <main className="container mx-auto px-4 py-8 mb-32">
+                        <main className="container mx-auto">
                             {children}
                         </main>
                         <Dock />
@@ -42,8 +42,9 @@ export default function RootLayout({
                     </CartProvider>
                 </WishlistProvider>
             </AuthProvider>
-        </ClientLayout>
+        </DynamicBodyAttributes>
         </body>
         </html>
     )
 }
+

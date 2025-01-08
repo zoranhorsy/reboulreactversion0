@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { processReturn, Order } from '@/app/api/admin/orders'
 import { useToast } from "@/components/ui/use-toast"
+import { processReturn, Order } from '@/lib/api'
 
 interface ReturnFormProps {
     order: Order;

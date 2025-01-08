@@ -44,6 +44,8 @@ export default function UserProfile() {
                 avatarUrl: user.avatarUrl || ""
             })
         }
+        console.log('User object in UserProfile:', user);
+        console.log('Is admin in UserProfile:', user?.isAdmin);
     }, [user])
 
     const handleInfoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -101,6 +103,10 @@ export default function UserProfile() {
         }
     }
 
+    // Log user information for debugging
+    console.log('User object:', user);
+    console.log('Is admin:', user?.isAdmin);
+
     return (
         <div className="container mx-auto px-4 py-16">
             <Card className="max-w-4xl mx-auto">
@@ -115,7 +121,7 @@ export default function UserProfile() {
                             <TabsTrigger value="addresses">Adresses</TabsTrigger>
                             <TabsTrigger value="reviews">Avis</TabsTrigger>
                             <TabsTrigger value="settings">Paramètres</TabsTrigger>
-                            {user?.role === 'admin' && (
+                            {user?.isAdmin && (
                                 <TabsTrigger value="admin">Admin</TabsTrigger>
                             )}
                         </TabsList>
@@ -223,7 +229,7 @@ export default function UserProfile() {
                                 </Button>
                             </div>
                         </TabsContent>
-                        {user?.role === 'admin' && (
+                        {user?.isAdmin && (
                             <TabsContent value="admin">
                                 <AdminDashboard />
                             </TabsContent>

@@ -29,14 +29,18 @@ export function Hero({ title, subtitle, imageUrl, overlayColor = 'rgba(0, 0, 0, 
     return (
         <div className="relative h-[60vh] min-h-[400px] w-full overflow-hidden">
             <div className={`absolute inset-0 ${parallax ? 'parallax-bg' : ''}`}>
-                <Image
-                    src={imageUrl}
-                    alt={title}
-                    layout="fill"
-                    objectFit="cover"
-                    quality={100}
-                    priority
-                />
+                {imageUrl ? (
+                    <Image
+                        src={imageUrl}
+                        alt={title}
+                        layout="fill"
+                        objectFit="cover"
+                        quality={100}
+                        priority
+                    />
+                ) : (
+                    <div className="w-full h-full bg-gray-300" />
+                )}
             </div>
             <div
                 className="absolute inset-0 flex items-center justify-center"

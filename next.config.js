@@ -13,14 +13,23 @@ const nextConfig = {
     experimental: { appDir: true },
     images: {
         domains: ['localhost'],
+        unoptimized: true,
         remotePatterns: [
             {
                 protocol: 'https',
                 hostname: '**',
             },
+            {
+                protocol: 'http',
+                hostname: 'localhost',
+                port: '3000'
+            },
+            {
+                protocol: 'http',
+                hostname: 'localhost',
+                port: '5000'
+            }
         ],
-        dangerouslyAllowSVG: true,
-        contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
     },
     webpack(config) {
         config.module.rules.push({
