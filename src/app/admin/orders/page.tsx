@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Search, ChevronDown, ChevronUp, Download, Printer } from 'lucide-react'
-import { DatePicker } from "@/components/ui/date-picker"
+import { DatePicker, DateRange } from "@/components/ui/date-picker"
 import { CSVLink } from "react-csv"
 import { jsPDF } from "jspdf"
 import autoTable from 'jspdf-autotable'
@@ -25,9 +25,9 @@ interface SortConfig {
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([])
   const [searchTerm, setSearchTerm] = useState('')
-  const [dateRange, setDateRange] = useState<{ from: Date | null; to: Date | null }>({
-    from: null,
-    to: null,
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: undefined,
+    to: undefined,
   })
   const [sortConfig, setSortConfig] = useState<SortConfig>({
     key: 'createdAt',
@@ -69,8 +69,8 @@ export default function OrdersPage() {
       order.userId.toLowerCase().includes(searchTerm.toLowerCase())
 
     const matchesDateRange =
-      !dateRange.from ||
-      !dateRange.to ||
+      !dateRange?.from ||
+      !dateRange?.to ||
       (new Date(order.createdAt) >= dateRange.from &&
         new Date(order.createdAt) <= dateRange.to)
 
@@ -147,7 +147,7 @@ export default function OrdersPage() {
             </div>
             <DatePicker
               selected={dateRange}
-              onSelect={setDateRange}
+              onSelect={(newDateRange: DateRange | undefined) => setDateRange(newDateRange)}
               locale={fr}
               showTime={false}
             />
