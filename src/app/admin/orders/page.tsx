@@ -10,10 +10,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Search, ChevronDown, ChevronUp, Download, Printer } from 'lucide-react'
 import { DatePicker } from "@/components/ui/date-picker"
 import { CSVLink } from "react-csv"
-import { jsPDF } from "jspdf"
 import "jspdf-autotable"
 import { ReturnForm } from '@/components/admin/ReturnForm'
 import { fetchOrders, type Order } from '@/lib/api'
+import { jsPDF } from "jspdf"
+import autoTable from 'jspdf-autotable' // Ajout de cet import
+
+
 
 type SortDirection = 'ascending' | 'descending';
 
