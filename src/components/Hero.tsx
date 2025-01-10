@@ -1,64 +1,32 @@
+'use client'
+
 import Image from 'next/image'
-import { useAnime } from '@/hooks/useAnime'
 
-interface HeroProps {
-    title: string
-    subtitle: string
-    imageUrl: string
-    overlayColor?: string
-    parallax?: boolean
-}
-
-export function Hero({ title, subtitle, imageUrl, overlayColor = 'rgba(0, 0, 0, 0.5)', parallax = false }: HeroProps) {
-    const titleRef = useAnime({
-        opacity: [0, 1],
-        translateY: [-20, 0],
-        duration: 1000,
-        easing: 'easeOutExpo',
-        delay: 300
-    })
-
-    const subtitleRef = useAnime({
-        opacity: [0, 1],
-        translateY: [20, 0],
-        duration: 1000,
-        easing: 'easeOutExpo',
-        delay: 600
-    })
-
+export function Hero() {
     return (
-        <div className="relative h-[60vh] min-h-[400px] w-full overflow-hidden">
-            <div className={`absolute inset-0 ${parallax ? 'parallax-bg' : ''}`}>
-                {imageUrl ? (
+        <div className="relative min-h-[60vh] w-full bg-white flex items-center justify-end px-4 sm:px-6 lg:px-8">
+            <div className="relative flex flex-col items-end space-y-4 sm:space-y-6 md:space-y-8">
+                <div className="w-full max-w-[400px] md:max-w-[500px] lg:max-w-[600px]">
                     <Image
-                        src={imageUrl}
-                        alt={title}
-                        layout="fill"
-                        objectFit="cover"
-                        quality={100}
+                        src="/typo_b.png"
+                        alt="REBOUL"
+                        width={600}
+                        height={150}
                         priority
+                        className="w-full h-auto"
+                        unoptimized
                     />
-                ) : (
-                    <div className="w-full h-full bg-gray-300" />
-                )}
-            </div>
-            <div
-                className="absolute inset-0 flex items-center justify-center"
-                style={{ backgroundColor: overlayColor }}
-            >
-                <div className="text-center text-white max-w-3xl px-4">
-                    <h1
-                        ref={titleRef}
-                        className="text-5xl font-bold mb-4 opacity-0"
-                    >
-                        {title}
-                    </h1>
-                    <p
-                        ref={subtitleRef}
-                        className="text-xl opacity-0"
-                    >
-                        {subtitle}
-                    </p>
+                </div>
+                <div className="w-full max-w-[200px] md:max-w-[250px] lg:max-w-[300px]">
+                    <Image
+                        src="/SINCE 1872_.png"
+                        alt="SINCE 1872"
+                        width={300}
+                        height={75}
+                        priority
+                        className="w-full h-auto"
+                        unoptimized
+                    />
                 </div>
             </div>
         </div>

@@ -51,7 +51,7 @@ export function LoginForm() {
             <CardHeader>
                 <CardTitle>Connexion Administrateur</CardTitle>
                 <CardDescription>
-                    Accédez au panneau d'administration de Reboul Store
+                    Accédez au panneau d&apos;administration de Reboul Store
                 </CardDescription>
             </CardHeader>
             <CardContent>

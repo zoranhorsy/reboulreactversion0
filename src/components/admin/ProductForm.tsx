@@ -32,7 +32,6 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     setNewProduct,
     categories
 }) => {
-    const [uploadedImages, setUploadedImages] = useState<string[]>(product.images || []);
     const [isUploading, setIsUploading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
     const [brands, setBrands] = useState<Brand[]>([]);
@@ -83,7 +82,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         handleChange("images", updatedImages);
     };
 
-    const handleChange = useCallback((field: string, value: any) => {
+    const handleChange = useCallback((field: keyof Product, value: Product[keyof Product]) => {
         if (isEditing) {
             setEditingProduct((prev) => prev ? ({ ...prev, [field]: value }) : null);
         } else {
@@ -91,13 +90,13 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         }
     }, [isEditing, setEditingProduct, setNewProduct]);
 
-    const handleArrayChange = useCallback((field: string, index: number, value: any) => {
+    const handleArrayChange = useCallback((field: keyof Product, index: number, value: unknown) => {
         if (isEditing) {
             setEditingProduct((prev) => {
                 if (!prev) return null;
                 const updatedArray = Array.isArray(prev[field]) ? [...prev[field]] : [];
                 if (field === "tags") {
-                    updatedArray[index] = value;
+                    updatedArray[index] = value as string;
                 } else {
                     updatedArray[index] = { ...updatedArray[index], ...value };
                 }
@@ -107,7 +106,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
             setNewProduct((prev) => {
                 const updatedArray = Array.isArray(prev[field]) ? [...prev[field]] : [];
                 if (field === "tags") {
-                    updatedArray[index] = value;
+                    updatedArray[index] = value as string;
                 } else {
                     updatedArray[index] = { ...updatedArray[index], ...value };
                 }
@@ -116,7 +115,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         }
     }, [isEditing, setEditingProduct, setNewProduct]);
 
-    const handleAddArrayItem = useCallback((field: string, item: any) => {
+    const handleAddArrayItem = useCallback((field: keyof Product, item: unknown) => {
         if (isEditing) {
             setEditingProduct((prev) => {
                 if (!prev) return null;
@@ -133,16 +132,12 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         }
     }, [isEditing, setEditingProduct, setNewProduct]);
 
-    const handleRemoveArrayItem = useCallback((field: string, index: number) => {
-        handleChange(field, (prev: any[]) => prev.filter((_, i) => i !== index));
+    const handleRemoveArrayItem = useCallback((field: keyof Product, index: number) => {
+        handleChange(field, (prev: unknown[]) => prev.filter((_, i) => i !== index));
     }, [handleChange]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        const dataToSubmit = {
-            ...product,
-            storeType: product.storeType,
-        };
         onSubmit(e);
     }
 

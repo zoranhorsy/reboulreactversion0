@@ -11,7 +11,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useCart } from '@/app/contexts/CartContext'
-import { useToast } from "@/components/ui/use-toast"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -34,7 +33,6 @@ export default function CheckoutPage() {
     })
     const { items: cartItems, total } = useCart()
     const router = useRouter()
-    const { toast } = useToast()
     const [activeTab, setActiveTab] = useState("shipping")
 
     useEffect(() => {

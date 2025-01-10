@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Search, SlidersHorizontal, X } from 'lucide-react'
+import { Search } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -9,8 +9,8 @@ import { Slider } from "@/components/ui/slider"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from "@/components/ui/sheet"
 import { Badge } from "@/components/ui/badge"
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 
 type FiltersProps = {
     searchTerm: string;
@@ -36,188 +36,210 @@ type FiltersProps = {
 }
 
 export function Filters({
-                            searchTerm,
-                            setSearchTerm,
-                            sortBy,
-                            setSortBy,
-                            filterBrand,
-                            setFilterBrand,
-                            filterCategories,
-                            setFilterCategories,
-                            filterTags,
-                            setFilterTags,
-                            priceRange,
-                            setPriceRange,
-                            filterColor,
-                            setFilterColor,
-                            categories,
-                            allTags,
-                            allColors,
-                            allBrands,
-                            isOpen,
-                            setIsOpen
-                        }: FiltersProps) {
+    searchTerm,
+    setSearchTerm,
+    sortBy,
+    setSortBy,
+    filterBrand,
+    setFilterBrand,
+    filterCategories,
+    setFilterCategories,
+    filterTags,
+    setFilterTags,
+    priceRange,
+    setPriceRange,
+    filterColor,
+    setFilterColor,
+    categories,
+    allTags,
+    allColors,
+    allBrands,
+    isOpen,
+    setIsOpen
+}: FiltersProps) {
     const [activeFiltersCount, setActiveFiltersCount] = useState(0)
 
     useEffect(() => {
-        const count =
-            (filterBrand !== 'all' ? 1 : 0) +
-            filterCategories.length +
-            filterTags.length +
-            (filterColor !== 'all' ? 1 : 0) +
-            (priceRange[0] !== 0 || priceRange[1] !== 1000 ? 1 : 0);
-        setActiveFiltersCount(count);
-    }, [filterBrand, filterCategories, filterTags, filterColor, priceRange]);
+        let count = 0
+        if (filterBrand) count++
+        if (filterCategories.length > 0) count++
+        if (filterTags.length > 0) count++
+        if (filterColor) count++
+        if (priceRange[0] !== 0 || priceRange[1] !== 1000) count++
+        setActiveFiltersCount(count)
+    }, [filterBrand, filterCategories, filterTags, filterColor, priceRange])
 
     const resetFilters = () => {
-        setSearchTerm('')
-        setSortBy('name')
-        setFilterBrand('all')
+        setFilterBrand('')
         setFilterCategories([])
         setFilterTags([])
+        setFilterColor('')
         setPriceRange([0, 1000])
-        setFilterColor('all')
     }
 
-    return (
+    const FiltersContent = () => (
         <div className="space-y-6">
-            <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
-                <Input
-                    type="text"
-                    placeholder="Rechercher un produit..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 pr-4 py-2 w-full"
-                />
+            <div>
+                <h3 className="text-lg font-semibold mb-2">Recherche</h3>
+                <div className="relative">
+                    <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                    <Input
+                        type="text"
+                        placeholder="Rechercher un produit..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10"
+                    />
+                </div>
             </div>
 
-            <div className="space-y-2">
-                <h3 className="text-base font-semibold">Trier par</h3>
-                <Select value={sortBy} onValueChange={(value) => setSortBy(value as 'price' | 'name')}>
-                    <SelectTrigger id="sort-by" className="w-full">
-                        <SelectValue placeholder="Trier par" />
+            <div>
+                <h3 className="text-lg font-semibold mb-2">Trier par</h3>
+                <Select value={sortBy} onValueChange={(value: 'price' | 'name') => setSortBy(value)}>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Sélectionner un tri" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="name">Nom</SelectItem>
                         <SelectItem value="price">Prix</SelectItem>
-                    </SelectContent>
-                </Select>
-            </div>
-
-            <div className="space-y-2">
-                <h3 className="text-base font-semibold">Marque</h3>
-                <Select value={filterBrand} onValueChange={setFilterBrand}>
-                    <SelectTrigger id="brand-filter" className="w-full">
-                        <SelectValue placeholder="Toutes les marques" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">Toutes</SelectItem>
-                        {allBrands.map((brand) => (
-                            <SelectItem key={brand} value={brand}>{brand}</SelectItem>
-                        ))}
+                        <SelectItem value="name">Nom</SelectItem>
                     </SelectContent>
                 </Select>
             </div>
 
             <Accordion type="single" collapsible className="w-full">
+                <AccordionItem value="brand">
+                    <AccordionTrigger>Marque</AccordionTrigger>
+                    <AccordionContent>
+                        <Select value={filterBrand} onValueChange={setFilterBrand}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Sélectionner une marque" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {allBrands.map((brand) => (
+                                    <SelectItem key={brand} value={brand}>
+                                        {brand}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </AccordionContent>
+                </AccordionItem>
+
                 <AccordionItem value="categories">
                     <AccordionTrigger>Catégories</AccordionTrigger>
                     <AccordionContent>
-                        <div className="space-y-2">
-                            {categories.map((category) => (
-                                <div key={category} className="flex items-center space-x-2">
-                                    <Checkbox
-                                        id={category}
-                                        checked={filterCategories.includes(category)}
-                                        onCheckedChange={(checked) => {
-                                            setFilterCategories(
-                                                checked
-                                                    ? [...filterCategories, category]
-                                                    : filterCategories.filter((c) => c !== category)
-                                            )
-                                        }}
-                                    />
-                                    <Label htmlFor={category}>{category}</Label>
-                                </div>
-                            ))}
-                        </div>
+                        {categories.map((category) => (
+                            <div key={category} className="flex items-center space-x-2">
+                                <Checkbox
+                                    id={category}
+                                    checked={filterCategories.includes(category)}
+                                    onCheckedChange={(checked) => {
+                                        if (checked) {
+                                            setFilterCategories([...filterCategories, category])
+                                        } else {
+                                            setFilterCategories(filterCategories.filter((c) => c !== category))
+                                        }
+                                    }}
+                                />
+                                <Label htmlFor={category}>{category}</Label>
+                            </div>
+                        ))}
                     </AccordionContent>
                 </AccordionItem>
 
                 <AccordionItem value="tags">
                     <AccordionTrigger>Tags</AccordionTrigger>
                     <AccordionContent>
-                        <div className="flex flex-wrap gap-2">
-                            {allTags.map((tag) => (
-                                <Badge
-                                    key={tag}
-                                    variant={filterTags.includes(tag) ? "default" : "outline"}
-                                    className="cursor-pointer"
-                                    onClick={() => {
-                                        setFilterTags(
-                                            filterTags.includes(tag)
-                                                ? filterTags.filter((t) => t !== tag)
-                                                : [...filterTags, tag]
-                                        )
+                        {allTags.map((tag) => (
+                            <div key={tag} className="flex items-center space-x-2">
+                                <Checkbox
+                                    id={tag}
+                                    checked={filterTags.includes(tag)}
+                                    onCheckedChange={(checked) => {
+                                        if (checked) {
+                                            setFilterTags([...filterTags, tag])
+                                        } else {
+                                            setFilterTags(filterTags.filter((t) => t !== tag))
+                                        }
                                     }}
-                                >
-                                    {tag}
-                                </Badge>
-                            ))}
+                                />
+                                <Label htmlFor={tag}>{tag}</Label>
+                            </div>
+                        ))}
+                    </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="price">
+                    <AccordionTrigger>Prix</AccordionTrigger>
+                    <AccordionContent>
+                        <Slider
+                            min={0}
+                            max={1000}
+                            step={10}
+                            value={priceRange}
+                            onValueChange={setPriceRange}
+                        />
+                        <div className="flex justify-between mt-2">
+                            <span>{priceRange[0]}€</span>
+                            <span>{priceRange[1]}€</span>
                         </div>
+                    </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="color">
+                    <AccordionTrigger>Couleur</AccordionTrigger>
+                    <AccordionContent>
+                        <Select value={filterColor} onValueChange={setFilterColor}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Sélectionner une couleur" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {allColors.map((color) => (
+                                    <SelectItem key={color} value={color}>
+                                        {color}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </AccordionContent>
                 </AccordionItem>
             </Accordion>
 
-            <div className="space-y-2">
-                <h3 className="text-base font-semibold">Couleur</h3>
-                <div className="flex flex-wrap gap-2">
-                    <Button
-                        key="all"
-                        onClick={() => setFilterColor('all')}
-                        variant={filterColor === 'all' ? "default" : "outline"}
-                        size="sm"
-                    >
-                        Toutes
-                    </Button>
-                    {allColors.map((color) => (
-                        <Button
-                            key={color}
-                            onClick={() => setFilterColor(color)}
-                            variant={filterColor === color ? "default" : "outline"}
-                            size="sm"
-                            className="w-8 h-8 p-0 rounded-full"
-                            style={{ backgroundColor: color }}
-                            title={color}
-                        >
-                            <span className="sr-only">{color}</span>
-                        </Button>
-                    ))}
-                </div>
+            <div className="flex justify-between items-center">
+                <Button variant="outline" onClick={resetFilters}>
+                    Réinitialiser les filtres
+                </Button>
+                <Badge variant="secondary">{activeFiltersCount} filtres actifs</Badge>
             </div>
-
-            <div className="space-y-2">
-                <h3 className="text-base font-semibold">Gamme de prix</h3>
-                <Slider
-                    id="price-range"
-                    min={0}
-                    max={1000}
-                    step={10}
-                    value={priceRange}
-                    onValueChange={setPriceRange}
-                    className="my-4"
-                />
-                <div className="flex justify-between mt-2 text-sm font-medium">
-                    <span>{priceRange[0]}€</span>
-                    <span>{priceRange[1]}€</span>
-                </div>
-            </div>
-
-            <Button className="w-full" onClick={resetFilters}>
-                Réinitialiser les filtres
-            </Button>
         </div>
     )
+
+    return (
+        <>
+            <div className="hidden md:block">
+                <FiltersContent />
+            </div>
+            <Sheet open={isOpen} onOpenChange={setIsOpen}>
+                <SheetTrigger asChild>
+                    <Button variant="outline" className="md:hidden">
+                        Filtres
+                        {activeFiltersCount > 0 && (
+                            <Badge variant="secondary" className="ml-2">
+                                {activeFiltersCount}
+                            </Badge>
+                        )}
+                    </Button>
+                </SheetTrigger>
+                <SheetContent side="left">
+                    <SheetHeader>
+                        <SheetTitle>Filtres</SheetTitle>
+                    </SheetHeader>
+                    <FiltersContent />
+                </SheetContent>
+            </Sheet>
+        </>
+    )
 }
+
+export default Filters
 

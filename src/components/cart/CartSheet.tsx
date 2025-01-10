@@ -16,14 +16,14 @@ interface CartSheetProps {
 }
 
 export function CartSheet({ children, isOpen, onOpenChange }: CartSheetProps) {
-    const { items: cartItems, total, removeItem, updateQuantity, clearCart } = useCart()
+    const { items: cartItems, removeItem, updateQuantity, clearCart } = useCart()
     const [discount, setDiscount] = useState(0)
     const [promoCode, setPromoCode] = useState('')
     const { toast } = useToast()
 
     const subtotal = cartItems.reduce((total, item) => total + item.price * item.quantity, 0)
     const shippingCost = subtotal > 100 ? 0 : 5.99
-    const totalSavings = discount + (subtotal > 100 ? 5.99 : 0)
+    const _totalSavings = discount + (subtotal > 100 ? 5.99 : 0)
     const finalTotal = subtotal - discount + shippingCost
 
     const applyPromoCode = useCallback(() => {
@@ -129,4 +129,3 @@ export function CartSheet({ children, isOpen, onOpenChange }: CartSheetProps) {
         </Sheet>
     )
 }
-

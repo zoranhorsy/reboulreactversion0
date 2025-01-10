@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 
 export function BodyWrapper({ children }: { children: React.ReactNode }) {
-    const [documentId, setDocumentId] = useState<string | null>(null)
+    const [_documentId, setDocumentId] = useState<string | null>(null)
 
     useEffect(() => {
         // Générer un ID unique pour le document

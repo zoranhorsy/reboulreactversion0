@@ -1,112 +1,89 @@
-import Link from 'next/link'
+'use client'
+
 import { motion } from 'framer-motion'
-import styled from 'styled-components'
+import Link from 'next/link'
+import Image from 'next/image'
+import styles from './StoreSelector.module.css'
 
 const stores = [
-    { name: 'Adulte', href: '/adulte', image: '/images/adult-store.jpg' },
-    { name: 'Enfant', href: '/minots', image: '/images/kids-store.jpg' },
-    { name: 'Sneakers', href: '/sneakers', image: '/images/sneakers-store.jpg' },
+    {
+        name: 'Adulte',
+        href: '/adulte',
+        icon: '/Calque 3.png'
+    },
+    {
+        name: 'Enfant',
+        href: '/minots',
+        icon: '/Calque 7.png'
+    },
+    {
+        name: 'Sneakers',
+        href: '/sneakers',
+        icon: '/Calque 6.png'
+    },
 ]
-
-const StyledWrapper = styled.div`
-  .card {
-    position: relative;
-    width: 300px;
-    height: 200px;
-    background-color: #f2f2f2;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    perspective: 1000px;
-    box-shadow: 0 0 0 5px #ffffff80;
-    transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  }
-
-  .card img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  }
-
-  .card:hover {
-    transform: scale(1.05);
-    box-shadow: 0 8px 16px rgba(255, 255, 255, 0.2);
-  }
-
-  .card__content {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    padding: 20px;
-    box-sizing: border-box;
-    background-color: rgba(0, 0, 0, 0.7);
-    transform: rotateX(-90deg);
-    transform-origin: bottom;
-    transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .card:hover .card__content {
-    transform: rotateX(0deg);
-  }
-
-  .card__title {
-    margin: 0;
-    font-size: 24px;
-    color: #fff;
-    font-weight: 700;
-    text-align: center;
-  }
-
-  .card:hover img {
-    transform: scale(1.2);
-  }
-`
 
 export function StoreSelector() {
     return (
-        <section className="bg-gradient-to-b from-white to-gray-100 py-24 sm:py-32">
-            <div className="mx-auto max-w-7xl px-6 lg:px-8">
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6 }}
-                    className="mx-auto max-w-2xl text-center mb-16"
-                >
-                    <h2 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">
-                        Explorez nos univers
+        <section className={`py-16 sm:py-24 ${styles.storeSelector}`}>
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="relative">
+                    {/* Title */}
+                    <h2 className={`text-2xl sm:text-3xl font-light mb-12 tracking-wider ${styles.title}`}>
+                        01 CATÉGORIES
                     </h2>
-                    <p className="mt-4 text-lg leading-8 text-gray-600">
-                        Plongez dans nos collections uniques, conçues pour tous les styles et tous les âges.
-                    </p>
-                </motion.div>
-                <div className="mx-auto grid max-w-6xl grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 justify-items-center">
-                    {stores.map((store, index) => (
-                        <motion.div
-                            key={store.name}
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ duration: 0.5, delay: index * 0.1 }}
-                        >
-                            <StyledWrapper>
-                                <Link href={store.href} passHref>
-                                    <div className="card">
-                                        <img src={store.image} alt={`${store.name} store`} />
-                                        <div className="card__content">
-                                            <p className="card__title">{store.name}</p>
-                                        </div>
-                                    </div>
+
+                    {/* Cards Grid */}
+                    <div className="relative flex flex-col sm:flex-row gap-6 sm:gap-8 items-center justify-center">
+                        {/* Navigation Arrow - Left */}
+                        <button className="hidden sm:block absolute left-0 transform -translate-x-12">
+                            <Image
+                                src="/Calque 1.png"
+                                alt="Previous"
+                                width={24}
+                                height={24}
+                                className="opacity-50 hover:opacity-100 transition-opacity"
+                            />
+                        </button>
+
+                        {/* Store Cards */}
+                        {stores.map((store, index) => (
+                            <motion.div
+                                key={store.name}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{
+                                    duration: 0.5,
+                                    delay: index * 0.1
+                                }}
+                                className="w-full sm:w-[300px]"
+                            >
+                                <Link
+                                    href={store.href}
+                                    className="block bg-white rounded-3xl shadow-lg hover:shadow-xl transition-shadow duration-300 p-8 aspect-[4/5] flex items-center justify-center"
+                                >
+                                    <Image
+                                        src={store.icon}
+                                        alt={store.name}
+                                        width={80}
+                                        height={80}
+                                        className="w-20 h-20 object-contain"
+                                    />
                                 </Link>
-                            </StyledWrapper>
-                        </motion.div>
-                    ))}
+                            </motion.div>
+                        ))}
+
+                        {/* Navigation Arrow - Right */}
+                        <button className="hidden sm:block absolute right-0 transform translate-x-12 rotate-180">
+                            <Image
+                                src="/Calque 1.png"
+                                alt="Next"
+                                width={24}
+                                height={24}
+                                className="opacity-50 hover:opacity-100 transition-opacity"
+                            />
+                        </button>
+                    </div>
                 </div>
             </div>
         </section>

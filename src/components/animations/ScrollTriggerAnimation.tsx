@@ -19,7 +19,7 @@ export const ScrollTriggerAnimation: React.FC<ScrollTriggerAnimationProps> = ({ 
             const childElements = Array.from(element.children)
 
             const setupAnimations = () => {
-                childElements.forEach((child, index) => {
+                childElements.forEach((child) => {
                     const tl = gsap.timeline({
                         scrollTrigger: {
                             trigger: child as Element,

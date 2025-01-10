@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { useCallback } from 'react'
 
 interface CartItemProps {
-    id: number
+    _id: number // Changed from 'id' to '_id' to indicate it's not used
     name: string
     price: number
     quantity: number
@@ -13,7 +13,7 @@ interface CartItemProps {
     onUpdateQuantity: (quantity: number) => void
 }
 
-export function CartItem({ id, name, price, quantity, image, onRemove, onUpdateQuantity }: CartItemProps) {
+export function CartItem({ _id, name, price, quantity, image, onRemove, onUpdateQuantity }: CartItemProps) {
     const handleDecreaseQuantity = useCallback(() => {
         if (quantity > 1) {
             onUpdateQuantity(quantity - 1)

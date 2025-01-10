@@ -25,7 +25,7 @@ export function BrandManager() {
     try {
       const fetchedBrands = await api.fetchBrands()
       setBrands(fetchedBrands)
-    } catch (error) {
+    } catch {
       toast({
         title: "Erreur",
         description: "Impossible de charger les marques. Veuillez réessayer.",
@@ -44,7 +44,7 @@ export function BrandManager() {
         title: "Succès",
         description: "La marque a été ajoutée avec succès.",
       })
-    } catch (error) {
+    } catch {
       toast({
         title: "Erreur",
         description: "Impossible d'ajouter la marque. Veuillez réessayer.",
@@ -63,7 +63,7 @@ export function BrandManager() {
         title: "Succès",
         description: "La marque a été mise à jour avec succès.",
       })
-    } catch (error) {
+    } catch {
       toast({
         title: "Erreur",
         description: "Impossible de mettre à jour la marque. Veuillez réessayer.",
@@ -81,7 +81,7 @@ export function BrandManager() {
           title: "Succès",
           description: "La marque a été supprimée avec succès.",
         })
-      } catch (error) {
+      } catch {
         toast({
           title: "Erreur",
           description: "Impossible de supprimer la marque. Veuillez réessayer.",
@@ -133,4 +133,3 @@ export function BrandManager() {
     </div>
   )
 }
-

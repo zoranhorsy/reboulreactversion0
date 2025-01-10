@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -18,7 +18,7 @@ import { BrandManager } from '@/components/admin/BrandManager'
 import { CategoryManager } from '@/components/admin/CategoryManager'
 
 export default function AdminProductsPage() {
-  const { user } = useAuth();
+  const { user: _user } = useAuth();
   const [products, setProducts] = useState<Product[]>([])
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([])
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
@@ -51,23 +51,7 @@ export default function AdminProductsPage() {
   const [itemsPerPage] = useState(10)
   const [activeStoreType, setActiveStoreType] = useState<'all' | 'adult' | 'kids' | 'sneakers'>('all');
 
-  useEffect(() => {
-      loadProducts()
-      loadCategories();
-  }, [currentPage])
-
-  useEffect(() => {
-      const filtered = products.filter(product =>
-          (product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-              product.description.toLowerCase().includes(searchTerm.toLowerCase())) &&
-          (activeStoreType === 'all' ||
-           product.storeType === activeStoreType ||
-           product.store_type === activeStoreType)
-      );
-      setFilteredProducts(filtered);
-  }, [searchTerm, products, activeStoreType]);
-
-  const loadProducts = async () => {
+  const loadProducts = useCallback(async () => {
       setIsLoading(true);
       try {
           const response = await api.fetchProducts({ page: currentPage, limit: itemsPerPage });
@@ -94,13 +78,33 @@ export default function AdminProductsPage() {
       } finally {
           setIsLoading(false);
       }
-  };
+  }, [currentPage, itemsPerPage, activeStoreType]);
+
+  useEffect(() => {
+      loadProducts()
+      loadCategories();
+  }, [currentPage, loadProducts])
+
+  const filteredProductsMemo = useMemo(() => {
+      return products.filter(product =>
+          (product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              product.description.toLowerCase().includes(searchTerm.toLowerCase())) &&
+          (activeStoreType === 'all' ||
+           product.storeType === activeStoreType ||
+           product.store_type === activeStoreType)
+      );
+  }, [searchTerm, products, activeStoreType]);
+
+  useEffect(() => {
+      setFilteredProducts(filteredProductsMemo);
+  }, [filteredProductsMemo]);
 
   const loadCategories = async () => {
       try {
           const fetchedCategories = await api.fetchCategories();
           setCategories(fetchedCategories);
       } catch (error) {
+          console.error("Erreur lors du chargement des catégories:", error);
           toast({
               title: "Avertissement",
               description: "Impossible de charger les catégories. Utilisation des catégories par défaut.",
@@ -142,6 +146,7 @@ export default function AdminProductsPage() {
               setIsDialogOpen(false)
           }
       } catch (error) {
+          console.error("Erreur lors de l'ajout du produit:", error);
           toast({
               title: "Erreur",
               description: "Impossible d'ajouter le produit.",
@@ -238,6 +243,7 @@ export default function AdminProductsPage() {
                   })
               }
           } catch (error) {
+              console.error("Erreur lors de la suppression du produit:", error);
               toast({
                   title: "Erreur",
                   description: "Une erreur est survenue lors de la suppression du produit.",
@@ -370,7 +376,9 @@ export default function AdminProductsPage() {
                           <TabsContent value="sneakers">
                               <Card>
                                   <CardHeader>
-                                      <CardTitle>Sneakers</CardTitle>
+                                      <CardTitle>
+                                          Sneakers
+                                      </CardTitle>
                                   </CardHeader>
                                   <CardContent>
                                       <div className="overflow-x-auto">

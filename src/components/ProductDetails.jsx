@@ -125,7 +125,7 @@ export function ProductDetails({ product, onAddToCart }) {
               ))}
             </ul>
           ) : (
-            <p>Aucune caractéristique spécifique n'est disponible pour ce produit.</p>
+            <p>Aucune caractéristique spécifique n&apos;est disponible pour ce produit.</p>
           )}
         </CardContent>
       </Card>
@@ -160,3 +160,4 @@ ProductDetails.propTypes = {
   }).isRequired,
   onAddToCart: PropTypes.func.isRequired,
 }
+

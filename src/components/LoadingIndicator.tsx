@@ -10,14 +10,29 @@ export function LoadingIndicator() {
     const searchParams = useSearchParams()
 
     useEffect(() => {
-        const handleStart = () => setLoading(true)
-        const handleComplete = () => setLoading(false)
+        const handleRouteChange = () => {
+            setLoading(true)
+        }
 
-        handleComplete() // Initial load
+        const handleRouteComplete = () => {
+            setLoading(false)
+        }
+
+        // Simulating route change events
+        window.addEventListener('routeChangeStart', handleRouteChange)
+        window.addEventListener('routeChangeComplete', handleRouteComplete)
+        window.addEventListener('routeChangeError', handleRouteComplete)
 
         return () => {
-            // Cleanup if needed
+            window.removeEventListener('routeChangeStart', handleRouteChange)
+            window.removeEventListener('routeChangeComplete', handleRouteComplete)
+            window.removeEventListener('routeChangeError', handleRouteComplete)
         }
+    }, [])
+
+    // Reset loading state when pathname or searchParams change
+    useEffect(() => {
+        setLoading(false)
     }, [pathname, searchParams])
 
     if (!loading) return null

@@ -32,12 +32,12 @@ export default function AdminPage() {
     if (!user.isAdmin) {
         return (
             <div className="flex flex-col items-center justify-center h-screen">
-                <p className="text-xl mb-4">Vous n'êtes pas autorisé à accéder à cette page.</p>
+                <p className="text-xl mb-4">Vous n&apos;êtes pas autorisé à accéder à cette page.</p>
                 <button
                     onClick={() => router.push('/')}
                     className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
                 >
-                    Retour à l'accueil
+                    Retour à l&apos;accueil
                 </button>
             </div>
         )

@@ -1,0 +1,24 @@
+@font-face {
+  font-family: 'Kernel';
+  src: url('/fonts/KernelRegular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'KernelOblique';
+  src: url('/fonts/KernelLight.ttf') format('truetype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+.storeSelector {
+  font-family: 'Kernel', sans-serif;
+}
+
+.title {
+  font-family: 'KernelOblique', sans-serif;
+}
+

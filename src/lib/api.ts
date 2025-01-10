@@ -710,3 +710,4 @@ export const getImagePath = (imagePath: string): string => {
   return api.formatImageUrl(imagePath);
 };
 
+

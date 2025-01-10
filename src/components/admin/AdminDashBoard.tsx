@@ -49,7 +49,7 @@ interface WeeklySales {
 }
 
 // Fonction utilitaire pour nettoyer les données
-const cleanData = <T extends Record<string, any>>(data: T | null | undefined, defaultValue: T): T => {
+const cleanData = <T extends Record<string, unknown>>(data: T | null | undefined, defaultValue: T): T => {
     if (!data) return defaultValue;
 
     return Object.keys(defaultValue).reduce((acc, key) => {
@@ -144,7 +144,7 @@ export function AdminDashboard() {
                 setTopProducts(cleanedProducts)
                 setSalesData(cleanedSalesData)
 
-            } catch (err: any) {
+            } catch (err: unknown) {
                 console.error('Error fetching dashboard data:', err)
                 setError('Une erreur est survenue lors du chargement des données.')
                 toast({
@@ -391,8 +391,9 @@ export function AdminDashboard() {
                                         <TableHeader>
                                             <TableRow>
                                                 <TableHead>Produit</TableHead>
-                                                <TableHead>Total vendu</TableHead><TableHead>Total vendu</TableHead>
+                                                <TableHead>Total vendu</TableHead>
                                             </TableRow>
+
                                         </TableHeader>
                                         <TableBody>
                                             {topProducts.length > 0 ? (

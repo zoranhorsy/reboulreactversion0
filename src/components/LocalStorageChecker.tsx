@@ -2,6 +2,20 @@
 
 import { useEffect } from 'react'
 
+interface Product {
+    id: string;
+    name: string;
+    price: number;
+    category: string;
+    brand: string;
+    variants?: unknown[];
+    tags?: string[];
+    reviews?: unknown[];
+    questions?: unknown[];
+    faqs?: unknown[];
+    sizeChart?: unknown[];
+}
+
 export function LocalStorageChecker() {
     useEffect(() => {
         const checkLocalStorage = () => {
@@ -10,9 +24,9 @@ export function LocalStorageChecker() {
 
             if (productsJson) {
                 try {
-                    const products = JSON.parse(productsJson)
+                    const products: Product[] = JSON.parse(productsJson)
                     console.log('Nombre de produits dans le localStorage:', products.length)
-                    products.forEach((product: any, index: number) => {
+                    products.forEach((product: Product, index: number) => {
                         console.log(`\nProduit ${index + 1}:`)
                         console.log('ID:', product.id)
                         console.log('Nom:', product.name)

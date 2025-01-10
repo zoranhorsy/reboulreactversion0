@@ -1,0 +1,12 @@
+@font-face {
+    font-family: 'Kernel';
+    src: url('/fonts/KernelRegular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+.title {
+    font-family: 'Kernel', sans-serif;
+}
+

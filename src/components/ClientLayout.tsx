@@ -3,32 +3,24 @@
 import { useEffect, useState } from 'react'
 
 export function ClientLayout({ children }: { children: React.ReactNode }) {
-    const [documentId, setDocumentId] = useState<string | null>(null)
+    const [_documentId, setDocumentId] = useState<string | null>(null)
 
     useEffect(() => {
-        // Récupérer l'ID du document et le style depuis le body
-        const bodyElement = document.body
-        const bodyDocumentId = bodyElement.getAttribute('data-demoway-document-id')
-        const bodyStyle = bodyElement.getAttribute('style')
+        // Générer un ID unique pour le document
+        const newDocumentId = `doc-${Math.random().toString(36).substr(2, 9)}`
+        setDocumentId(newDocumentId)
 
-        if (bodyDocumentId) {
-            setDocumentId(bodyDocumentId)
-        }
+        // Appliquer l'ID du document au body
+        document.body.setAttribute('data-demoway-document-id', newDocumentId)
 
-        // Appliquer l'ID du document et le style au body côté client
-        if (bodyDocumentId) {
-            bodyElement.setAttribute('data-demoway-document-id', bodyDocumentId)
-        }
-        if (bodyStyle) {
-            bodyElement.setAttribute('style', bodyStyle)
-        } else {
-            bodyElement.removeAttribute('style')
+        // Supprimer l'attribut style s'il est vide
+        if (document.body.getAttribute('style') === '') {
+            document.body.removeAttribute('style')
         }
 
         // Nettoyage
         return () => {
-            bodyElement.removeAttribute('data-demoway-document-id')
-            bodyElement.removeAttribute('style')
+            document.body.removeAttribute('data-demoway-document-id')
         }
     }, [])
 

@@ -2,7 +2,7 @@
 
 import { useProducts } from '@/hooks/useProducts'
 import { FeaturedProductCard } from '@/components/products/FeaturedProductCard'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
@@ -17,17 +17,17 @@ export function FeaturedCarousel({ storeType }: FeaturedCarouselProps) {
     const [autoScrollEnabled, setAutoScrollEnabled] = useState(true)
     const autoScrollIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
-    const nextProduct = () => {
+    const nextProduct = useCallback(() => {
         if (products) {
             setCurrentIndex((prevIndex) => (prevIndex + 1) % products.length)
         }
-    }
+    }, [products])
 
-    const prevProduct = () => {
+    const prevProduct = useCallback(() => {
         if (products) {
             setCurrentIndex((prevIndex) => (prevIndex - 1 + products.length) % products.length)
         }
-    }
+    }, [products])
 
     useEffect(() => {
         if (autoScrollEnabled && products && products.length > 0) {
@@ -41,7 +41,7 @@ export function FeaturedCarousel({ storeType }: FeaturedCarouselProps) {
                 clearInterval(autoScrollIntervalRef.current)
             }
         }
-    }, [autoScrollEnabled, products])
+    }, [autoScrollEnabled, products, nextProduct])
 
     useEffect(() => {
         console.log('FeaturedCarousel products:', products)

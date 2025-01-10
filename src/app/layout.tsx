@@ -6,6 +6,7 @@ import { WishlistProvider } from '@/app/contexts/WishlistContext'
 import { GeistSans } from 'geist/font'
 import { AuthProvider } from '@/app/contexts/AuthContext'
 import { Dock } from '@/components/Dock'
+import './fonts.css'
 
 export default function RootLayout({ children }) {
     return (

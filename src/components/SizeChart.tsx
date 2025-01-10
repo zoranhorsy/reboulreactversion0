@@ -21,7 +21,7 @@ export function SizeChart({ sizeChart }: SizeChartProps) {
                     <CardTitle className="text-lg font-semibold">Guide des tailles</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <p>Aucune information de taille n'est disponible pour ce produit.</p>
+                    <p>Aucune information de taille n&apos;est disponible pour ce produit.</p>
                 </CardContent>
             </Card>
         );
@@ -36,16 +36,16 @@ export function SizeChart({ sizeChart }: SizeChartProps) {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Taille</TableHead>
-                            <TableHead>Poitrine</TableHead>
-                            <TableHead>Taille</TableHead>
-                            <TableHead>Hanches</TableHead>
+                            <TableHead className="w-[100px]">Taille</TableHead>
+                            <TableHead>Poitrine (cm)</TableHead>
+                            <TableHead>Taille (cm)</TableHead>
+                            <TableHead>Hanches (cm)</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {sizeChart.map((item, index) => (
-                            <TableRow key={index}>
-                                <TableCell>{item.size}</TableCell>
+                            <TableRow key={item.size || index}>
+                                <TableCell className="font-medium">{item.size}</TableCell>
                                 <TableCell>{item.chest}</TableCell>
                                 <TableCell>{item.waist}</TableCell>
                                 <TableCell>{item.hips}</TableCell>

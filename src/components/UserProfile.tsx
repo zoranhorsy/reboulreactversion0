@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { User, Package, CreditCard, LogOut, Bell, Camera, Settings } from 'lucide-react'
+import { LogOut, Camera } from 'lucide-react'
+import Image from 'next/image'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -10,11 +11,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/components/ui/use-toast"
 import { UserReviews } from '@/components/UserReviews'
-import { LoyaltyPoints } from '@/components/LoyaltyPoints'
 import { ShippingAddresses } from '@/components/ShippingAddresses'
 import { UserOrders } from '@/components/UserOrders'
 import { ChangePassword } from '@/components/ChangePassword'
-import { AdminSection } from '@/components/AdminSection'
 import { useAuth } from '@/app/contexts/AuthContext'
 import { updateUserInfo, UserInfo } from '@/lib/api'
 import { AdminDashboard } from '@/components/admin/AdminDashboard'
@@ -130,7 +129,7 @@ export default function UserProfile() {
                                 <div className="flex items-center space-x-4">
                                     <div className="w-20 h-20 rounded-full overflow-hidden">
                                         {userInfo.avatarUrl ? (
-                                            <img src={userInfo.avatarUrl} alt={userInfo.name} className="w-full h-full object-cover" />
+                                            <Image src={userInfo.avatarUrl} alt={userInfo.name} width={80} height={80} className="object-cover" />
                                         ) : (
                                             <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500 text-2xl">
                                                 {userInfo.name?.charAt(0)}
@@ -139,7 +138,7 @@ export default function UserProfile() {
                                     </div>
                                     <Label htmlFor="avatar-upload" className="cursor-pointer">
                                         <Camera className="h-6 w-6" />
-                                        <span className="sr-only">Changer l'avatar</span>
+                                        <span className="sr-only">Changer l&apos;avatar</span>
                                     </Label>
                                     <Input
                                         id="avatar-upload"

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { api, Order } from '@/lib/api';
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -9,11 +9,7 @@ export function UserOrders() {
     const [isLoading, setIsLoading] = useState(true);
     const { toast } = useToast();
 
-    useEffect(() => {
-        loadOrders();
-    }, []);
-
-    const loadOrders = async () => {
+    const loadOrders = useCallback(async () => {
         setIsLoading(true);
         try {
             const fetchedOrders = await api.fetchOrders();
@@ -28,7 +24,11 @@ export function UserOrders() {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [toast]);
+
+    useEffect(() => {
+        loadOrders();
+    }, [loadOrders]);
 
     const handleViewDetails = async (orderId: string) => {
         try {
@@ -67,7 +67,7 @@ export function UserOrders() {
                     </Card>
                 ))
             ) : (
-                <p>Vous n'avez pas encore de commandes.</p>
+                <p>Vous n&apos;avez pas encore de commandes.</p>
             )}
         </div>
     );

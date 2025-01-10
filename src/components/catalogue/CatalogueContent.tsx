@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Loader, Grid, List, SlidersHorizontal } from 'lucide-react'
+import { Grid, List, SlidersHorizontal } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -13,37 +13,65 @@ import { ProductList } from '@/components/catalogue/ProductList'
 import { ScrollTriggerAnimation } from '@/components/animations/ScrollTriggerAnimation'
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { FilterSummary } from './FilterSummary'
-import { useProducts } from '@/hooks/useProducts'
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Product, Category, Brand } from '@/lib/api' // Updated import statement
+import { useRouter, useSearchParams } from 'next/navigation'
 
-export function CatalogueContent() {
+interface CatalogueContentProps {
+  initialProducts: Product[]
+  total: number
+  categories: Category[]
+  brands: Brand[]
+  currentPage: number
+  searchParams: { [key: string]: string | string[] | undefined }
+}
+
+export function CatalogueContent({
+  initialProducts,
+  total,
+  categories,
+  brands,
+  currentPage: initialPage,
+  searchParams: _searchParams
+}: CatalogueContentProps) {
+    const router = useRouter()
+    const searchParamsHook = useSearchParams()
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
     const [isFilterOpen, setIsFilterOpen] = useState(false)
-    const [currentPage, setCurrentPage] = useState(1)
-    const [sortBy, setSortBy] = useState<string>('name')
-    const [filterBrand, setFilterBrand] = useState<string>('all')
-    const [filterCategories, setFilterCategories] = useState<string[]>([])
-    const [filterTags, setFilterTags] = useState<string[]>([])
-    const [searchTerm, setSearchTerm] = useState('')
-    const [priceRange, setPriceRange] = useState([0, 1000])
-    const [filterColor, setFilterColor] = useState<string>('all')
+    const [currentPage, setCurrentPage] = useState(initialPage)
+    const [sortBy, setSortBy] = useState<string>(searchParamsHook.get('sort') || 'name')
+    const [filterBrand, setFilterBrand] = useState<string>(searchParamsHook.get('brand') || 'all')
+    const [filterCategories, setFilterCategories] = useState<string[]>(
+      searchParamsHook.get('categories')?.split(',') || []
+    )
+    const [filterTags, setFilterTags] = useState<string[]>(
+      searchParamsHook.get('tags')?.split(',') || []
+    )
+    const [searchTerm, setSearchTerm] = useState(searchParamsHook.get('search') || '')
+    const [priceRange, setPriceRange] = useState([
+      Number(searchParamsHook.get('minPrice')) || 0,
+      Number(searchParamsHook.get('maxPrice')) || 1000
+    ])
+    const [filterColor, setFilterColor] = useState<string>(searchParamsHook.get('color') || 'all')
+
+    const [products] = useState<Product[]>(initialProducts)
 
     const productsPerPage = 12
 
-    const params = {
-        page: currentPage.toString(),
-        limit: productsPerPage.toString(),
-        sort: sortBy,
-        ...(filterBrand !== 'all' && { brand: filterBrand }),
-        ...(filterCategories.length > 0 && { categories: filterCategories.join(',') }),
-        ...(filterTags.length > 0 && { tags: filterTags.join(',') }),
-        ...(searchTerm && { search: searchTerm }),
-        minPrice: priceRange[0].toString(),
-        maxPrice: priceRange[1].toString(),
-        ...(filterColor !== 'all' && { color: filterColor }),
-    }
+    useEffect(() => {
+      const params = new URLSearchParams(searchParamsHook)
+      params.set('page', currentPage.toString())
+      params.set('sort', sortBy)
+      if (filterBrand !== 'all') params.set('brand', filterBrand)
+      if (filterCategories.length > 0) params.set('categories', filterCategories.join(','))
+      if (filterTags.length > 0) params.set('tags', filterTags.join(','))
+      if (searchTerm) params.set('search', searchTerm)
+      params.set('minPrice', priceRange[0].toString())
+      params.set('maxPrice', priceRange[1].toString())
+      if (filterColor !== 'all') params.set('color', filterColor)
 
-    const { products, isLoading, error, total } = useProducts(params)
+      router.push(`/catalogue?${params.toString()}`, { scroll: false })
+    }, [currentPage, sortBy, filterBrand, filterCategories, filterTags, searchTerm, priceRange, filterColor, router, searchParamsHook])
 
     const resetFilters = () => {
         setSortBy('name')
@@ -60,9 +88,7 @@ export function CatalogueContent() {
         product.variants ? product.variants.map(variant => variant.color) : []
     ) || []))
 
-    useEffect(() => {
-        console.log('Current products:', products)
-    }, [products])
+    const allTags = Array.from(new Set(products?.flatMap(product => product.tags || []) || []))
 
     return (
         <ScrollTriggerAnimation>
@@ -97,10 +123,10 @@ export function CatalogueContent() {
                             setPriceRange={setPriceRange}
                             filterColor={filterColor}
                             setFilterColor={setFilterColor}
-                            categories={[]} // You'll need to fetch these separately
-                            allTags={[]} // You'll need to fetch these separately
+                            categories={categories}
+                            allTags={allTags}
                             allColors={allColors}
-                            allBrands={[]} // You'll need to fetch these separately
+                            allBrands={brands}
                             isOpen={isFilterOpen}
                             setIsOpen={setIsFilterOpen}
                         />
@@ -129,10 +155,10 @@ export function CatalogueContent() {
                                     setPriceRange={setPriceRange}
                                     filterColor={filterColor}
                                     setFilterColor={setFilterColor}
-                                    categories={[]} // You'll need to fetch these separately
-                                    allTags={[]} // You'll need to fetch these separately
+                                    categories={categories}
+                                    allTags={allTags}
                                     allColors={allColors}
-                                    allBrands={[]} // You'll need to fetch these separately
+                                    allBrands={brands}
                                     isOpen={isFilterOpen}
                                     setIsOpen={setIsFilterOpen}
                                 />
@@ -186,18 +212,7 @@ export function CatalogueContent() {
                         }
                         resetFilters={resetFilters}
                     />
-                    {isLoading ? (
-                        <div className="flex justify-center items-center h-64">
-                            <Loader className="h-8 w-8 animate-spin" />
-                        </div>
-                    ) : error ? (
-                        <Alert variant="destructive">
-                            <AlertTitle>Erreur</AlertTitle>
-                            <AlertDescription>
-                                Une erreur s'est produite lors du chargement des produits. Veuillez réessayer plus tard.
-                            </AlertDescription>
-                        </Alert>
-                    ) : products && products.length > 0 ? (
+                    {products.length > 0 ? (
                         <AnimatePresence mode="wait">
                             <motion.div
                                 key={viewMode}
@@ -217,11 +232,11 @@ export function CatalogueContent() {
                         <Alert>
                             <AlertTitle>Aucun produit trouvé</AlertTitle>
                             <AlertDescription>
-                                Aucun produit ne correspond à vos critères de recherche. Essayez d'ajuster vos filtres.
+                                Aucun produit ne correspond à vos critères de recherche. Essayez d&apos;ajuster vos filtres.
                             </AlertDescription>
                         </Alert>
                     )}
-                    {products && products.length > 0 && (
+                    {products.length > 0 && (
                         <Pagination className="mt-8">
                             <PaginationContent>
                                 <PaginationItem>

@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react'
 import { Hero } from '@/components/Hero'
 import { AnimatedBrands } from '@/components/AnimatedBrands'
 import { FeaturedProducts } from '@/components/FeaturedProducts'
-import { AboutSection } from '@/components/AboutSection'
 import { StoreSelector } from "@/components/StoreSelector"
 
 export function HomeContent() {
@@ -19,32 +18,28 @@ export function HomeContent() {
     }
 
     return (
-        <div className="space-y-16">
-            <section className="animate-section font-light">
+        <div className="space-y-32">
+            <section className="animate-section font-light pt-8">
                 <Hero />
             </section>
 
             <section className="animate-section font-light">
-                <StoreSelector />
+                <div className="container mx-auto px-4">
+                    <StoreSelector />
+                </div>
             </section>
 
-            <section className="animate-section bg-gray-100">
-                <div className="container mx-auto">
-                    <h2 className="text-3xl font-light mb-12 text-center text-black">
-                        Nos marques phares
-                    </h2>
+            <section className="animate-section">
+                <div className="container mx-auto px-4">
                     <AnimatedBrands />
                 </div>
             </section>
 
             <section className="animate-section">
-                <FeaturedProducts />
-            </section>
-
-            <section className="animate-section">
-                <AboutSection />
+                <div className="container mx-auto px-4">
+                    <FeaturedProducts />
+                </div>
             </section>
         </div>
     )
 }
-

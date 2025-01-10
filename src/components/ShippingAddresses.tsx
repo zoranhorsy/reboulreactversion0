@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { fetchAddresses, addAddress, updateAddress, deleteAddress, Address } from '@/lib/api'
+import { fetchAddresses, Address } from '@/lib/api'
 import { useToast } from "@/components/ui/use-toast"
 
 export function ShippingAddresses() {
@@ -11,11 +11,7 @@ export function ShippingAddresses() {
     const [isLoading, setIsLoading] = useState(true)
     const { toast } = useToast()
 
-    useEffect(() => {
-        loadAddresses()
-    }, [])
-
-    const loadAddresses = async () => {
+    const loadAddresses = useCallback(async () => {
         setIsLoading(true)
         try {
             const fetchedAddresses = await fetchAddresses()
@@ -30,9 +26,26 @@ export function ShippingAddresses() {
         } finally {
             setIsLoading(false)
         }
+    }, [toast])
+
+    useEffect(() => {
+        loadAddresses()
+    }, [loadAddresses])
+
+    const handleAddAddress = () => {
+        // Implémentation à venir
+        console.log("Ajouter une adresse")
     }
 
-    // ... rest of the component code
+    const handleUpdateAddress = (addressId: string) => {
+        // Implémentation à venir
+        console.log("Modifier l'adresse", addressId)
+    }
+
+    const handleDeleteAddress = (addressId: string) => {
+        // Implémentation à venir
+        console.log("Supprimer l'adresse", addressId)
+    }
 
     return (
         <div className="space-y-4">
@@ -47,8 +60,19 @@ export function ShippingAddresses() {
                             <p>{address.city}, {address.postalCode}</p>
                             <p>{address.country}</p>
                             <div className="mt-2">
-                                <Button variant="outline" className="mr-2">Modifier</Button>
-                                <Button variant="destructive">Supprimer</Button>
+                                <Button
+                                    variant="outline"
+                                    className="mr-2"
+                                    onClick={() => handleUpdateAddress(address.id)}
+                                >
+                                    Modifier
+                                </Button>
+                                <Button
+                                    variant="destructive"
+                                    onClick={() => handleDeleteAddress(address.id)}
+                                >
+                                    Supprimer
+                                </Button>
                             </div>
                         </CardContent>
                     </Card>
@@ -56,7 +80,7 @@ export function ShippingAddresses() {
             ) : (
                 <p>Aucune adresse enregistrée.</p>
             )}
-            <Button>Ajouter une nouvelle adresse</Button>
+            <Button onClick={handleAddAddress}>Ajouter une nouvelle adresse</Button>
         </div>
     )
 }
