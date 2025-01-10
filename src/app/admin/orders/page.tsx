@@ -14,17 +14,13 @@ import { jsPDF } from "jspdf"
 import autoTable from 'jspdf-autotable'
 import { ReturnForm } from '@/components/admin/ReturnForm'
 import { fetchOrders, type Order } from '@/lib/api'
+import { DateRangeType } from '@/types/date-picker'
 
 type SortDirection = 'ascending' | 'descending';
 
 interface SortConfig {
   key: keyof Order;
   direction: SortDirection;
-}
-
-interface DateRange {
-  from: Date | undefined;
-  to: Date | undefined;
 }
 
 type CSVData = {
@@ -38,10 +34,7 @@ type CSVData = {
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([])
   const [searchTerm, setSearchTerm] = useState('')
-  const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
-    from: undefined,
-    to: undefined,
-  })
+  const [dateRange, setDateRange] = useState<DateRangeType | undefined>(undefined)
   const [sortConfig, setSortConfig] = useState<SortConfig>({
     key: 'createdAt',
     direction: 'descending',
@@ -160,15 +153,13 @@ export default function OrdersPage() {
                 className="flex-1"
               />
             </div>
-            <div>
-              <DatePicker
-                mode="range"
-                selected={dateRange}
-                onSelect={setDateRange}
-                numberOfMonths={2}
-                locale={fr}
-              />
-            </div>
+            <DatePicker
+              mode="range"
+              selected={dateRange}
+              onSelect={setDateRange}
+              numberOfMonths={2}
+              locale={fr}
+            />
           </CardContent>
         </Card>
         <Card>
