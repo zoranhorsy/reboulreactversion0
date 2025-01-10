@@ -85,6 +85,11 @@ export interface Brand {
   name: string;
 }
 
+export interface ReturnRequest {
+  orderId: string;
+  reason: string;
+}
+
 class Api {
   private instance: AxiosInstance;
 
@@ -652,6 +657,16 @@ class Api {
       }
   }
 
+  async processReturn(orderId: string, reason: string): Promise<Order> {
+      try {
+          const response = await this.instance.post(`/orders/${orderId}/return`, { reason });
+          return response.data;
+      } catch (error) {
+          this.handleError(error, 'Error processing return');
+          throw error;
+      }
+  }
+
   private formatImageUrl(url: string): string {
       if (url.startsWith('http')) return url;
       const cleanUrl = url.startsWith('/uploads') ? url.slice(8) : url;
@@ -699,6 +714,7 @@ export const fetchBrands = api.fetchBrands.bind(api);
 export const createBrand = api.createBrand.bind(api);
 export const updateBrand = api.updateBrand.bind(api);
 export const deleteBrand = api.deleteBrand.bind(api);
+export const processReturn = api.processReturn.bind(api);
 
 export const getImagePath = (imagePath: string): string => {
   if (!imagePath || imagePath.length === 0) {
@@ -709,5 +725,4 @@ export const getImagePath = (imagePath: string): string => {
   }
   return api.formatImageUrl(imagePath);
 };
-
 
