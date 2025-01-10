@@ -1,5 +1,5 @@
 declare module 'react-csv' {
-  import { ComponentType } from 'react';
+  import { ComponentType, ReactNode } from 'react';
 
   export interface CSVData {
     [key: string]: string | number | boolean | null;
@@ -14,6 +14,7 @@ declare module 'react-csv' {
     className?: string;
     style?: React.CSSProperties;
     onClick?: () => void;
+    children?: ReactNode;
   }
 
   export const CSVLink: ComponentType<CSVProps>;

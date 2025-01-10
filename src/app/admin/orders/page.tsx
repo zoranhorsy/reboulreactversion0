@@ -10,13 +10,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Search, ChevronDown, ChevronUp, Download, Printer } from 'lucide-react'
 import { DatePicker } from "@/components/ui/date-picker"
 import { CSVLink } from "react-csv"
-import "jspdf-autotable"
+import { jsPDF } from "jspdf"
+import autoTable from 'jspdf-autotable'
 import { ReturnForm } from '@/components/admin/ReturnForm'
 import { fetchOrders, type Order } from '@/lib/api'
-import { jsPDF } from "jspdf"
-import autoTable from 'jspdf-autotable' // Ajout de cet import
-
-
 
 type SortDirection = 'ascending' | 'descending';
 
@@ -101,7 +98,7 @@ export default function OrdersPage() {
 
   const handleExportPDF = () => {
     const doc = new jsPDF()
-    doc.autoTable({
+    autoTable(doc, {
       head: [['ID', 'User ID', 'Total Amount', 'Status', 'Created At']],
       body: sortedOrders.map(order => [
         order.id,
