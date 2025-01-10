@@ -1,8 +1,12 @@
 declare module 'react-csv' {
   import { ComponentType } from 'react';
 
+  export interface CSVData {
+    [key: string]: string | number | boolean | null;
+  }
+
   export interface CSVProps {
-    data: any[];
+    data: CSVData[];
     headers?: Array<{ label: string; key: string }>;
     filename?: string;
     separator?: string;
@@ -15,4 +19,3 @@ declare module 'react-csv' {
   export const CSVLink: ComponentType<CSVProps>;
   export const CSVDownload: ComponentType<CSVProps>;
 }
-
