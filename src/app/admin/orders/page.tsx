@@ -8,12 +8,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Search, ChevronDown, ChevronUp, Download, Printer } from 'lucide-react'
-import { DatePicker, DateRange } from "@/components/ui/date-picker"
+import { DatePicker } from "@/components/ui/date-picker"
 import { CSVLink } from "react-csv"
 import { jsPDF } from "jspdf"
 import autoTable from 'jspdf-autotable'
 import { ReturnForm } from '@/components/admin/ReturnForm'
 import { fetchOrders, type Order } from '@/lib/api'
+import type { DateRange } from '@/types/date'
 
 type SortDirection = 'ascending' | 'descending';
 
@@ -22,10 +23,18 @@ interface SortConfig {
   direction: SortDirection;
 }
 
+type CSVData = {
+  ID: string;
+  'User ID': string;
+  'Total Amount': number;
+  Status: string;
+  'Created At': string;
+};
+
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([])
   const [searchTerm, setSearchTerm] = useState('')
-  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+  const [dateRange, setDateRange] = useState<DateRange>({
     from: undefined,
     to: undefined,
   })
@@ -78,17 +87,19 @@ export default function OrdersPage() {
   })
 
   const sortedOrders = [...filteredOrders].sort((a, b) => {
-    const aValue = a[sortConfig.key]
-    const bValue = b[sortConfig.key]
+    if (!(sortConfig.key in a) || !(sortConfig.key in b)) return 0;
 
-    if (aValue === undefined || bValue === undefined) return 0
+    const aValue = a[sortConfig.key];
+    const bValue = b[sortConfig.key];
 
-    if (aValue < bValue) return sortConfig.direction === 'ascending' ? -1 : 1
-    if (aValue > bValue) return sortConfig.direction === 'ascending' ? 1 : -1
-    return 0
+    if (aValue === undefined || bValue === undefined) return 0;
+
+    if (aValue < bValue) return sortConfig.direction === 'ascending' ? -1 : 1;
+    if (aValue > bValue) return sortConfig.direction === 'ascending' ? 1 : -1;
+    return 0;
   })
 
-  const csvData = sortedOrders.map(order => ({
+  const csvData: CSVData[] = sortedOrders.map(order => ({
     ID: order.id,
     'User ID': order.userId,
     'Total Amount': order.totalAmount,
@@ -147,7 +158,7 @@ export default function OrdersPage() {
             </div>
             <DatePicker
               selected={dateRange}
-              onSelect={(newDateRange: DateRange | undefined) => setDateRange(newDateRange)}
+              onSelect={setDateRange}
               locale={fr}
               showTime={false}
             />
@@ -243,4 +254,3 @@ export default function OrdersPage() {
     </div>
   )
 }
-
