@@ -168,7 +168,7 @@ class Api {
           );
           console.log('Fetching products with params:', stringParams);
           const response = await this.instance.get('/products', { params: stringParams });
-          const products = response.data.data.map((product: any) => ({
+          const products = response.data.data.map((product: Product) => ({
               ...product,
               category: product.category_id || null
           }));
@@ -194,30 +194,46 @@ class Api {
 
   async createProduct(productData: Omit<Product, 'id'>): Promise<Product | null> {
       try {
-          let imagesToUpload = productData.images.filter(img => img instanceof File) as File[];
-          let imageUrls = productData.images.filter(img => typeof img === 'string');
+          const imagesToUpload = productData.images.filter(img => img instanceof File) as File[];
+          const imageUrls = productData.images.filter(img => typeof img === 'string');
 
           if (imagesToUpload.length > 0) {
               const uploadedImageUrls = await this.uploadImages(imagesToUpload);
-              imageUrls = [...imageUrls, ...uploadedImageUrls];
+              const newImageUrls = [...imageUrls, ...uploadedImageUrls];
+              const dataToSend = {
+                  ...productData,
+                  images: newImageUrls,
+                  category_id: productData.category,
+                  store_type: productData.storeType
+              };
+              delete dataToSend.category;
+              delete dataToSend.storeType;
+
+              const response = await this.instance.post('/products', dataToSend);
+              const createdProduct = {
+                  ...response.data,
+                  category: response.data.category_id,
+              };
+              delete createdProduct.category_id;
+              return createdProduct;
+          } else {
+              const dataToSend = {
+                  ...productData,
+                  images: imageUrls,
+                  category_id: productData.category,
+                  store_type: productData.storeType
+              };
+              delete dataToSend.category;
+              delete dataToSend.storeType;
+
+              const response = await this.instance.post('/products', dataToSend);
+              const createdProduct = {
+                  ...response.data,
+                  category: response.data.category_id,
+              };
+              delete createdProduct.category_id;
+              return createdProduct;
           }
-
-          const dataToSend = {
-              ...productData,
-              images: imageUrls,
-              category_id: productData.category,
-              store_type: productData.storeType
-          };
-          delete dataToSend.category;
-          delete dataToSend.storeType;
-
-          const response = await this.instance.post('/products', dataToSend);
-          const createdProduct = {
-              ...response.data,
-              category: response.data.category_id,
-          };
-          delete createdProduct.category_id;
-          return createdProduct;
       } catch (error) {
           this.handleError(error, 'Error creating product');
           return null;
@@ -229,43 +245,72 @@ class Api {
           console.log(`Tentative de mise à jour du produit avec l'ID: ${id}`);
           console.log('Données du produit:', productData);
 
-          let imagesToUpload = productData.images?.filter(img => img instanceof Blob || img instanceof File) || [];
-          let imageUrls = productData.images?.filter(img => typeof img === 'string') || [];
+          const imagesToUpload = productData.images?.filter(img => img instanceof Blob || img instanceof File) || [];
+          const imageUrls = productData.images?.filter(img => typeof img === 'string') || [];
 
           if (imagesToUpload.length > 0) {
               const uploadedImageUrls = await this.uploadImages(imagesToUpload);
-              imageUrls = [...imageUrls, ...uploadedImageUrls];
+              const newImageUrls = [...imageUrls, ...uploadedImageUrls];
+              const dataToSend = { ...productData, images: newImageUrls, store_type: productData.storeType };
+
+              if (dataToSend.category !== undefined) {
+                  dataToSend.category_id = dataToSend.category;
+                  delete dataToSend.category;
+              }
+
+              if (dataToSend.storeType !== undefined) {
+                  dataToSend.store_type = dataToSend.storeType;
+                  delete dataToSend.storeType;
+              }
+
+              Object.keys(dataToSend).forEach(key =>
+                  (dataToSend[key] === undefined || dataToSend[key] === null) && delete dataToSend[key]
+              );
+
+              console.log('Données envoyées au serveur:', dataToSend);
+
+              const response = await this.instance.put(`/products/${id}`, dataToSend);
+
+              console.log('Réponse de mise à jour:', response.data);
+
+              const updatedProduct = {
+                  ...response.data,
+                  category: response.data.category_id,
+              };
+              delete updatedProduct.category_id;
+
+              return updatedProduct;
+          } else {
+              const dataToSend = { ...productData, images: imageUrls, store_type: productData.storeType };
+
+              if (dataToSend.category !== undefined) {
+                  dataToSend.category_id = dataToSend.category;
+                  delete dataToSend.category;
+              }
+
+              if (dataToSend.storeType !== undefined) {
+                  dataToSend.store_type = dataToSend.storeType;
+                  delete dataToSend.storeType;
+              }
+
+              Object.keys(dataToSend).forEach(key =>
+                  (dataToSend[key] === undefined || dataToSend[key] === null) && delete dataToSend[key]
+              );
+
+              console.log('Données envoyées au serveur:', dataToSend);
+
+              const response = await this.instance.put(`/products/${id}`, dataToSend);
+
+              console.log('Réponse de mise à jour:', response.data);
+
+              const updatedProduct = {
+                  ...response.data,
+                  category: response.data.category_id,
+              };
+              delete updatedProduct.category_id;
+
+              return updatedProduct;
           }
-
-          const dataToSend = { ...productData, images: imageUrls, store_type: productData.storeType };
-
-          if (dataToSend.category !== undefined) {
-              dataToSend.category_id = dataToSend.category;
-              delete dataToSend.category;
-          }
-
-          if (dataToSend.storeType !== undefined) {
-              dataToSend.store_type = dataToSend.storeType;
-              delete dataToSend.storeType;
-          }
-
-          Object.keys(dataToSend).forEach(key =>
-              (dataToSend[key] === undefined || dataToSend[key] === null) && delete dataToSend[key]
-          );
-
-          console.log('Données envoyées au serveur:', dataToSend);
-
-          const response = await this.instance.put(`/products/${id}`, dataToSend);
-
-          console.log('Réponse de mise à jour:', response.data);
-
-          const updatedProduct = {
-              ...response.data,
-              category: response.data.category_id,
-          };
-          delete updatedProduct.category_id;
-
-          return updatedProduct;
       } catch (error) {
           this.handleError(error, `Error updating product with ID ${id}`);
           return null;
