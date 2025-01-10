@@ -13,7 +13,7 @@ export default function AdminLayout({
     return (
         <div className="admin-layout">
             <header className="admin-header">
-                <h1>Panneau d'administration Reboul Store</h1>
+                <h1>Panneau administration Reboul Store</h1>
             </header>
             <main className="admin-main">
                 {children}

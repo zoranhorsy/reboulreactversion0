@@ -1,35 +1,40 @@
-import Image from 'next/image';
-import { Button } from "@/components/ui/button"
-import { X } from 'lucide-react';
+import Image from 'next/image'
+import { X } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { getImagePath } from '@/lib/api'
 
 interface ImagePreviewProps {
-    images: string[];
-    onRemove: (index: number) => void;
+    images: string[]
+    onRemove: (index: number) => void
 }
 
-export function ImagePreview({ images, onRemove }: ImagePreviewProps) {
+export const ImagePreview: React.FC<ImagePreviewProps> = ({ images, onRemove }) => {
     return (
-        <div className="flex flex-wrap gap-2 mt-2">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
             {images.map((image, index) => (
-                <div key={index} className="relative">
+                <div key={index} className="relative group aspect-square">
                     <Image
-                        src={image}
-                        alt={`Image ${index + 1}`}
-                        width={100}
-                        height={100}
-                        className="rounded-md object-cover"
+                        src={getImagePath(image)}
+                        alt={`Preview ${index + 1}`}
+                        fill
+                        className="rounded-lg object-cover"
+                        onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = '/placeholder.png';
+                        }}
+                        unoptimized // Add this to bypass Image Optimization for external URLs
                     />
                     <Button
                         variant="destructive"
                         size="icon"
-                        className="absolute top-0 right-0 rounded-full w-6 h-6 p-1"
+                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
                         onClick={() => onRemove(index)}
                     >
-                        <X className="w-4 h-4" />
+                        <X className="h-4 w-4" />
                     </Button>
                 </div>
             ))}
         </div>
     );
-}
+};
 

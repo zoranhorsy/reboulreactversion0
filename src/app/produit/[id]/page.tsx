@@ -3,22 +3,23 @@
 import { useState, useEffect } from 'react'
 import { useParams, notFound } from 'next/navigation'
 import { useToast } from "@/components/ui/use-toast"
-import { getProductById, Product } from '@/lib/api'
+import { getProductById } from '@/lib/api'
 import { ProductDetails } from '@/components/ProductDetails'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
-///import { ErrorDisplay } from '@/components/ErrorDisplay'
+import { ErrorDisplay } from '@/components/ErrorDisplay'
 import { useCart } from '@/app/contexts/CartContext'
+import { Breadcrumb } from '@/components/Breadcrumb'
 
 export default function ProductPage() {
-    const { id } = useParams() as { id: string }
-    const [product, setProduct] = useState<Product | null>(null)
+    const { id } = useParams()
+    const [product, setProduct] = useState(null)
     const [isLoading, setIsLoading] = useState(true)
-    const [error, setError] = useState<string | null>(null)
+    const [error, setError] = useState(null)
     const { toast } = useToast()
     const { addItem } = useCart()
 
     useEffect(() => {
-        const fetchProduct = async () => {
+        const fetchProductData = async () => {
             setIsLoading(true)
             setError(null)
             try {
@@ -42,24 +43,24 @@ export default function ProductPage() {
         }
 
         if (id) {
-            fetchProduct()
+            fetchProductData()
         }
     }, [id, toast])
 
-    const handleAddToCart = (selectedColor: string, selectedSize: string) => {
+    const handleAddToCart = (selectedColor, selectedSize, quantity) => {
         if (product) {
             addItem({
                 id: product.id,
                 name: product.name,
                 price: product.price,
-                quantity: 1,
+                quantity: quantity,
                 image: product.images[0] || '/placeholder.svg',
                 color: selectedColor,
                 size: selectedSize,
             })
             toast({
-                title: "Added to cart",
-                description: `${product.name} (${selectedColor}, ${selectedSize}) has been added to your cart.`,
+                title: "Ajouté au panier",
+                description: `${quantity} x ${product.name} (${selectedColor}, ${selectedSize}) a été ajouté à votre panier.`,
             })
         }
     }
@@ -78,6 +79,13 @@ export default function ProductPage() {
 
     return (
         <div className="container mx-auto px-4 py-8">
+            <Breadcrumb
+                items={[
+                    { label: 'Accueil', href: '/' },
+                    { label: product.category, href: `/categorie/${product.category}` },
+                    { label: product.name, href: '#' },
+                ]}
+            />
             <ProductDetails
                 product={product}
                 onAddToCart={handleAddToCart}

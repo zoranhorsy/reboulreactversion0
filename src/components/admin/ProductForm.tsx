@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -9,10 +9,10 @@ import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ImagePreview } from '@/components/ImagePreview'
 import { VariantManager } from '@/components/admin/VariantManager'
-import { Product, Category } from '@/lib/api'
+import { Product, Category, api, Brand } from '@/lib/api'
 import { toast } from "@/components/ui/use-toast"
+import { Loader2 } from 'lucide-react'
 
-const brands = ['Brand A', 'Brand B', 'Brand C', 'Reboul'];
 const colors = ['Red', 'Blue', 'Green', 'Yellow', 'Black', 'White'];
 
 interface ProductFormProps {
@@ -25,41 +25,61 @@ interface ProductFormProps {
 }
 
 export const ProductForm: React.FC<ProductFormProps> = ({
-                                                            product,
-                                                            isEditing,
-                                                            onSubmit,
-                                                            setEditingProduct,
-                                                            setNewProduct,
-                                                            categories
-                                                        }) => {
+    product,
+    isEditing,
+    onSubmit,
+    setEditingProduct,
+    setNewProduct,
+    categories
+}) => {
     const [uploadedImages, setUploadedImages] = useState<string[]>(product.images || []);
+    const [isUploading, setIsUploading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState(0);
+    const [brands, setBrands] = useState<Brand[]>([]);
+
+    useEffect(() => {
+        const loadBrands = async () => {
+            const fetchedBrands = await api.fetchBrands();
+            setBrands(fetchedBrands);
+        };
+        loadBrands();
+    }, []);
 
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
         if (files.length > 0) {
+            setIsUploading(true);
+            setUploadProgress(0);
             try {
-                const newImagePaths = files.map(file => URL.createObjectURL(file));
-                const updatedImages = [...uploadedImages, ...newImagePaths];
-                setUploadedImages(updatedImages);
+                // Upload directly to server
+                const uploadedUrls = await api.uploadImages(files);
+
+                // Update the product with the new permanent URLs
+                const updatedImages = [...(product.images || []), ...uploadedUrls];
                 handleChange("images", updatedImages);
+
                 toast({
                     title: "Succès",
-                    description: "Les images ont été uploadées avec succès.",
+                    description: `${files.length} image(s) uploadée(s) avec succès.`,
                 });
+
+                setUploadProgress(100);
             } catch (error) {
                 console.error('Erreur lors de l\'upload des images:', error);
                 toast({
                     title: "Erreur",
-                    description: error instanceof Error ? error.message : "Impossible d'uploader les images. Veuillez réessayer.",
+                    description: "Impossible d'uploader les images. Veuillez réessayer.",
                     variant: "destructive",
                 });
+            } finally {
+                setIsUploading(false);
             }
         }
     };
 
-    const handleRemoveImage = (index: number) => {
-        const updatedImages = uploadedImages.filter((_, i) => i !== index);
-        setUploadedImages(updatedImages);
+    const handleRemoveImage = async (index: number) => {
+        const updatedImages = [...product.images];
+        updatedImages.splice(index, 1);
         handleChange("images", updatedImages);
     };
 
@@ -117,8 +137,17 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         handleChange(field, (prev: any[]) => prev.filter((_, i) => i !== index));
     }, [handleChange]);
 
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        const dataToSubmit = {
+            ...product,
+            storeType: product.storeType,
+        };
+        onSubmit(e);
+    }
+
     return (
-        <form onSubmit={onSubmit} className="space-y-8" id="productForm">
+        <form onSubmit={handleSubmit} className="space-y-8" id="productForm">
             <div className="grid grid-cols-2 gap-4">
                 <div>
                     <Label htmlFor="name">Nom du produit</Label>
@@ -182,8 +211,8 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                         </SelectTrigger>
                         <SelectContent>
                             {brands.map((brand) => (
-                                <SelectItem key={brand} value={brand}>
-                                    {brand}
+                                <SelectItem key={brand.id} value={brand.name}>
+                                    {brand.name}
                                 </SelectItem>
                             ))}
                         </SelectContent>
@@ -191,16 +220,30 @@ export const ProductForm: React.FC<ProductFormProps> = ({
                 </div>
             </div>
 
-            <div>
+            <div className="space-y-4">
                 <Label htmlFor="images">Images du produit</Label>
-                <Input
-                    id="images"
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    onChange={handleImageUpload}
-                />
-                <ImagePreview images={uploadedImages} onRemove={handleRemoveImage} />
+                <div className="grid gap-4">
+                    <Input
+                        id="images"
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={handleImageUpload}
+                        disabled={isUploading}
+                    />
+                    {isUploading && (
+                        <div className="flex items-center gap-2">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span className="text-sm text-muted-foreground">
+                                Upload en cours... {uploadProgress}%
+                            </span>
+                        </div>
+                    )}
+                    <ImagePreview
+                        images={product.images || []}
+                        onRemove={handleRemoveImage}
+                    />
+                </div>
             </div>
 
             <div>
@@ -419,4 +462,6 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         </form>
     );
 };
+
+export default ProductForm;
 

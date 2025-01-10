@@ -1,27 +1,21 @@
 import React from 'react'
+import PropTypes from 'prop-types'
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
-interface SizeSelectorProps {
-    availableSizes: string[]
-    selectedSize: string
-    onSizeChange: (size: string) => void
-    sizeStock: Record<string, number>
-}
-
-export function SizeSelector({ availableSizes, selectedSize, onSizeChange, sizeStock }: SizeSelectorProps) {
+export function SizeSelector({ availableSizes, selectedSize, onSizeChange, sizeStock }) {
     return (
-        <div>
-            <Label htmlFor="size-selector" className="text-sm font-medium mb-2 block">Taille</Label>
+        <div className="space-y-2">
+            <Label htmlFor="size-select">Size</Label>
             <RadioGroup
-                id="size-selector"
+                id="size-select"
                 value={selectedSize}
                 onValueChange={onSizeChange}
                 className="flex flex-wrap gap-2"
             >
                 {availableSizes.map((size) => {
-                    const isOutOfStock = sizeStock[size] === 0;
+                    const isOutOfStock = sizeStock && sizeStock[size] === 0;
                     return (
                         <TooltipProvider key={size}>
                             <Tooltip>
@@ -30,35 +24,38 @@ export function SizeSelector({ availableSizes, selectedSize, onSizeChange, sizeS
                                         <RadioGroupItem
                                             value={size}
                                             id={`size-${size}`}
-                                            className="peer sr-only"
                                             disabled={isOutOfStock}
+                                            className="peer sr-only"
                                         />
                                         <Label
                                             htmlFor={`size-${size}`}
-                                            className={`flex items-center justify-center px-3 py-2 text-sm font-medium border rounded-md cursor-pointer 
-                                                ${isOutOfStock
-                                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                                : 'peer-checked:bg-primary peer-checked:text-primary-foreground hover:bg-muted'}
-                                                relative`}
+                                            className={`flex h-9 w-9 items-center justify-center rounded-md border border-gray-200 text-sm font-medium transition-colors hover:bg-gray-100 peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary peer-data-[state=checked]:text-primary-foreground ${
+                                                isOutOfStock ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+                                            }`}
                                         >
                                             {size}
-                                            {isOutOfStock && (
-                                                <span className="absolute inset-0 flex items-center justify-center">
-                                                    <span className="w-full h-0.5 bg-gray-400 rotate-45 transform origin-center"></span>
-                                                </span>
-                                            )}
                                         </Label>
                                     </div>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                    {isOutOfStock ? 'Rupture de stock' : `En stock: ${sizeStock[size]}`}
+                                    {isOutOfStock ? 'Out of stock' : `${sizeStock ? sizeStock[size] : 'Unknown'} in stock`}
                                 </TooltipContent>
                             </Tooltip>
                         </TooltipProvider>
-                    );
+                    )
                 })}
             </RadioGroup>
         </div>
     )
 }
 
+SizeSelector.propTypes = {
+    availableSizes: PropTypes.arrayOf(PropTypes.string).isRequired,
+    selectedSize: PropTypes.string.isRequired,
+    onSizeChange: PropTypes.func.isRequired,
+    sizeStock: PropTypes.objectOf(PropTypes.number),
+}
+
+SizeSelector.defaultProps = {
+    sizeStock: null,
+}

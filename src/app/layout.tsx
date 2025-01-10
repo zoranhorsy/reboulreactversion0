@@ -3,47 +3,27 @@ import { Toaster } from "@/components/ui/toaster"
 import Footer from '@/components/Footer'
 import { CartProvider } from '@/app/contexts/CartContext'
 import { WishlistProvider } from '@/app/contexts/WishlistContext'
-import { Metadata } from 'next'
 import { GeistSans } from 'geist/font'
-import GsapInitializer from '@/components/GsapInitializer'
-import { Dock } from '@/components/Dock'
 import { AuthProvider } from '@/app/contexts/AuthContext'
-import { DynamicBodyAttributes } from '@/components/DynamicBodyAttributes'
-import { Loader } from '@/components/ui/Loader'
+import { Dock } from '@/components/Dock'
 
-export const metadata: Metadata = {
-    title: 'Reboul Store - Vêtements Premium à Marseille',
-    description: 'Boutique de vêtements premium à Marseille, spécialisée dans Stone Island, CP Company et plus encore.',
-    icons: {
-        icon: '/logo_black.png',
-    },
-}
-
-export default function RootLayout({
-                                       children,
-                                   }: {
-    children: React.ReactNode
-}) {
+export default function RootLayout({ children }) {
     return (
         <html lang="fr" className={GeistSans.className}>
-        <body>
-        <DynamicBodyAttributes>
-            <AuthProvider>
-                <WishlistProvider>
-                    <CartProvider>
-                        <Loader />
-                        <GsapInitializer />
-                        <main className="container mx-auto">
-                            {children}
-                        </main>
-                        <Dock />
-                        <Footer />
-                        <Toaster />
-                    </CartProvider>
-                </WishlistProvider>
-            </AuthProvider>
-        </DynamicBodyAttributes>
-        </body>
+            <body className="flex flex-col min-h-screen">
+                <AuthProvider>
+                    <WishlistProvider>
+                        <CartProvider>
+                            <main className="container mx-auto flex-grow">
+                                {children}
+                            </main>
+                            <Footer />
+                            <Dock />
+                            <Toaster />
+                        </CartProvider>
+                    </WishlistProvider>
+                </AuthProvider>
+            </body>
         </html>
     )
 }

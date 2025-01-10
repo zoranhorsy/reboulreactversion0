@@ -7,7 +7,7 @@ export function useProducts(initialPage = 1, initialLimit = 10) {
     const [totalProducts, setTotalProducts] = useState(0);
     const [page, setPage] = useState(initialPage);
     const [limit, setLimit] = useState(initialLimit);
-    const [isLoading, setIsLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const { toast } = useToast();
 
@@ -15,7 +15,7 @@ export function useProducts(initialPage = 1, initialLimit = 10) {
         setIsLoading(true);
         setError(null);
         try {
-            console.log('Loading products with page:', currentPage, 'and limit:', currentLimit); // Add this log
+            console.log('Loading products with page:', currentPage, 'and limit:', currentLimit);
             const { products, total } = await api.fetchProducts({ page: currentPage, limit: currentLimit });
             setProducts(products);
             setTotalProducts(total);

@@ -1,38 +1,23 @@
-import React from 'react';
-import { useProducts } from '@/hooks/useProducts';
-import { ProductCard } from '@/components/products/ProductCard';
+'use client'
+
+import React, { useState, useEffect } from 'react'
+import { useProducts } from '@/hooks/useProducts'
+import { ProductCard } from '@/components/products/ProductCard'
 
 export function FeaturedProducts() {
-    const { products, isLoading, error } = useProducts(1, 4); // Fetch 4 featured products
+    const [isClient, setIsClient] = useState(false)
+    const { products, isLoading, error } = useProducts(1, 4)
 
-    console.log('FeaturedProducts render:', { products, isLoading, error });
+    useEffect(() => {
+        setIsClient(true)
+    }, [])
 
-    if (isLoading) {
-        return (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-                {[...Array(4)].map((_, index) => (
-                    <div key={index} className="h-[350px] w-full rounded-lg bg-gray-200 animate-pulse" />
-                ))}
-            </div>
-        );
+    if (!isClient) {
+        return <div>Loading featured products...</div>
     }
 
-    if (error) {
-        return (
-            <div className="text-red-500 text-center py-8">
-                <p className="text-lg font-semibold">Erreur lors du chargement des produits en vedette</p>
-                <p className="text-sm mt-2">{error}</p>
-            </div>
-        );
-    }
-
-    if (!Array.isArray(products) || products.length === 0) {
-        return (
-            <div className="text-gray-500 text-center py-8">
-                <p className="text-lg font-semibold">Aucun produit en vedette disponible</p>
-            </div>
-        );
-    }
+    if (isLoading) return <div>Chargement des produits...</div>
+    if (error) return <div>Erreur lors du chargement des produits</div>
 
     return (
         <div className="space-y-8">
@@ -43,6 +28,6 @@ export function FeaturedProducts() {
                 ))}
             </div>
         </div>
-    );
+    )
 }
 
