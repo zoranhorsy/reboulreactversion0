@@ -1,113 +1,111 @@
-'use client'
-
-import { useEffect, useRef, useMemo } from 'react'
-import { ProductGrid } from '@/components/catalogue/ProductGrid'
+import type { Metadata } from "next"
+import { Suspense } from "react"
+import ClientOnly from "@/components/ClientOnly"
+import { Loader } from "@/components/ui/Loader"
+import { LocalStorageChecker } from "@/components/LocalStorageChecker"
+import { fetchProducts, fetchCategories, fetchBrands } from "@/lib/api"
 import { Hero } from '@/components/Hero'
-import { Separator } from "@/components/ui/separator"
-import anime from 'animejs'
-import { FeaturedCarousel } from '@/components/FeaturedCarousel'
-import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { AdulteContent } from "@/components/adulte/AdulteContent"
 
-export default function AdultePage() {
-    const pageRef = useRef<HTMLDivElement>(null)
+type SearchParams = { [key: string]: string | string[] | undefined }
 
-    const animationConfig = useMemo(() => ({
-        title: {
-            opacity: [0, 1],
-            translateY: [20, 0],
-            duration: 1000,
-            easing: 'easeOutExpo',
-            delay: 300
+interface AdultePageProps {
+  searchParams: SearchParams
+}
+
+export async function generateMetadata({ searchParams }: AdultePageProps): Promise<Metadata> {
+  const category = searchParams.categories as string | undefined
+  const brand = searchParams.brand as string | undefined
+  const search = searchParams.search as string | undefined
+
+  let title = "Collection Adulte - Reboul Store"
+  let description = "Découvrez notre sélection de vêtements premium pour adultes chez Reboul Store."
+
+  if (category) {
+    title = `${category} - Collection Adulte Reboul Store`
+    description = `Explorez notre collection de ${category} pour adultes chez Reboul Store.`
+  } else if (brand) {
+    title = `${brand} - Collection Adulte Reboul Store`
+    description = `Découvrez les produits ${brand} pour adultes disponibles chez Reboul Store.`
+  } else if (search) {
+    title = `Résultats pour "${search}" - Collection Adulte Reboul Store`
+    description = `Explorez les résultats de recherche pour "${search}" dans notre collection adulte Reboul Store.`
+  }
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "website",
+      url: "https://reboul-store.com/adulte",
+      images: [
+        {
+          url: "https://reboul-store.com/og-image.jpg",
+          width: 1200,
+          height: 630,
+          alt: "Reboul Store Collection Adulte",
         },
-        separator: {
-            width: ['0%', '100%'],
-            duration: 1000,
-            easing: 'easeInOutQuad',
-            delay: 600
-        }
-    }), [])
+      ],
+    },
+  }
+}
 
-    const titleRef = useRef<HTMLHeadingElement>(null)
-    const separatorRef = useRef<HTMLDivElement>(null)
+export default async function AdultePage({ searchParams }: AdultePageProps) {
+  const page = Number(searchParams.page) || 1
+  const limit = 12
+  const categoryId = searchParams.categories ? Number(searchParams.categories) || undefined : undefined
+  const brandId = searchParams.brand ? Number(searchParams.brand) || undefined : undefined
+  const search = searchParams.search as string | undefined
 
-    useEffect(() => {
-        window.scrollTo(0, 0)
+  // Préparer les paramètres de requête en forçant store_type: "adult"
+  const queryParams = {
+    page,
+    limit,
+    store_type: "adult", // Toujours forcer le type de magasin à "adult"
+    ...(categoryId !== undefined && { category_id: categoryId.toString() }),
+    ...(brandId !== undefined && { brand: brandId.toString() }),
+    ...(search && { search }),
+  }
 
-        const parallaxAnimation = anime({
-            targets: '.parallax-bg',
-            translateY: ['0%', '30%'],
-            easing: 'linear',
-            duration: 1000,
-            autoplay: false
-        })
+  // Fetch all data in parallel with forced store_type parameter
+  const [productsData, allCategories, allBrands] = await Promise.all([
+    fetchProducts(queryParams),
+    fetchCategories(),
+    fetchBrands(),
+  ])
 
-        const handleScroll = () => {
-            const scrollPercent = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)
-            parallaxAnimation.seek(parallaxAnimation.duration * scrollPercent)
-        }
+  // Filter categories and brands that are available in adult store products
+  const adultProductCategoryIds = new Set(productsData.products.map(p => p.category_id))
+  const adultProductBrands = new Set(productsData.products.map(p => p.brand))
 
-        window.addEventListener('scroll', handleScroll)
+  const categories = allCategories.filter(cat => adultProductCategoryIds.has(cat.id))
+  const brands = allBrands.filter(brand => adultProductBrands.has(brand.name))
 
-        if (pageRef.current) {
-            anime({
-                targets: pageRef.current,
-                opacity: [0, 1],
-                duration: 1000,
-                easing: 'easeOutQuad'
-            })
-        }
-
-        if (titleRef.current) {
-            anime({
-                targets: titleRef.current,
-                ...animationConfig.title
-            })
-        }
-
-        if (separatorRef.current) {
-            anime({
-                targets: separatorRef.current,
-                ...animationConfig.separator
-            })
-        }
-
-        return () => {
-            window.removeEventListener('scroll', handleScroll)
-        }
-    }, [animationConfig])
-
-    return (
-        <div ref={pageRef} className="space-y-8 sm:space-y-16 opacity-0">
-            <Hero
-                title="Collection Adulte"
-                subtitle="Découvrez notre sélection élégante et confortable pour hommes et femmes"
-                imageUrl="/images/hero-adult.jpg"
-                overlayColor="rgba(0, 0, 0, 0.4)"
-                parallax
-            />
-            <section className="container mx-auto px-4 sm:px-6 lg:px-8">
-                <h2 ref={titleRef} className="text-2xl sm:text-3xl md:text-4xl font-light mb-4 text-center opacity-0">Notre Collection</h2>
-                <Separator ref={separatorRef} className="mb-8" />
-
-                <div className="space-y-12">
-                    <div>
-                        <h3 className="text-xl sm:text-2xl md:text-3xl font-light mb-4">Produits en vedette</h3>
-                        <div className="h-[300px] sm:h-[400px] md:h-[500px] bg-transparent rounded-lg overflow-hidden">
-                            <ErrorBoundary fallback={<p>Erreur dans FeaturedCarousel</p>}>
-                                <FeaturedCarousel storeType="adult" />
-                            </ErrorBoundary>
-                        </div>
-                    </div>
-
-                    <div>
-                        <h3 className="text-xl sm:text-2xl md:text-3xl font-light mb-4">Tous nos produits</h3>
-                        <ErrorBoundary fallback={<p>Erreur dans ProductGrid</p>}>
-                            <ProductGrid storeType="adult" />
-                        </ErrorBoundary>
-                    </div>
-                </div>
-            </section>
-        </div>
-    )
+  return (
+    <div className="space-y-8">
+      <Hero
+        title="Collection Adulte"
+        subtitle="Découvrez notre sélection élégante et confortable pour hommes et femmes"
+        imageUrl="/images/hero-adult.jpg"
+        overlayColor="rgba(0, 0, 0, 0.4)"
+        parallax
+      />
+      <ClientOnly>
+        <Suspense fallback={<Loader />}>
+          <LocalStorageChecker />
+          <AdulteContent
+            initialProducts={productsData.products}
+            total={productsData.total}
+            categories={categories}
+            brands={brands}
+            _currentPage={page}
+            searchParams={searchParams}
+          />
+        </Suspense>
+      </ClientOnly>
+    </div>
+  )
 }
 

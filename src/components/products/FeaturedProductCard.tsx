@@ -28,11 +28,11 @@ export function FeaturedProductCard({ product }: FeaturedProductCardProps) {
         try {
             console.log('Creating CartItem from product:', product)
             const cartItem: CartItem = {
-                id: product.id,
+                id: String(product.id),
                 name: product.name,
                 price: product.price,
                 quantity: 1,
-                image: Array.isArray(product.images) && product.images.length > 0
+                image: Array.isArray(product.images) && product.images.length > 0 && typeof product.images[0] === 'string'
                     ? product.images[0]
                     : '/placeholder.svg'
             }
@@ -60,7 +60,7 @@ export function FeaturedProductCard({ product }: FeaturedProductCardProps) {
             <div className="flex flex-col md:flex-row h-full">
                 <div className="relative w-full md:w-1/2 pt-[75%] md:pt-0">
                     <Image
-                        src={Array.isArray(product.images) && product.images.length > 0
+                        src={Array.isArray(product.images) && product.images.length > 0 && typeof product.images[0] === 'string'
                             ? product.images[0]
                             : '/placeholder.svg'}
                         alt={product.name}

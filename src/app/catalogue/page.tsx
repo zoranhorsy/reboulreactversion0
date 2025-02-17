@@ -1,10 +1,10 @@
-import type { Metadata } from 'next'
-import { Suspense } from 'react'
-import ClientOnly from '@/components/ClientOnly'
-import { CatalogueContent } from '@/components/catalogue/CatalogueContent'
-import { Loader } from '@/components/ui/Loader'
+import type { Metadata } from "next"
+import { Suspense } from "react"
+import ClientOnly from "@/components/ClientOnly"
+import { CatalogueContent } from "@/components/catalogue/CatalogueContent"
+import { Loader } from "@/components/ui/Loader"
 import { LocalStorageChecker } from "@/components/LocalStorageChecker"
-import { fetchProducts, fetchCategories, fetchBrands } from '@/lib/api'
+import { api } from "@/lib/api"
 
 type SearchParams = { [key: string]: string | string[] | undefined }
 
@@ -37,31 +37,57 @@ export async function generateMetadata({ searchParams }: CataloguePageProps): Pr
     openGraph: {
       title,
       description,
-      type: 'website',
-      url: 'https://reboul-store.com/catalogue',
+      type: "website",
+      url: "https://reboul-store.com/catalogue",
       images: [
         {
-          url: 'https://reboul-store.com/og-image.jpg',
+          url: "https://reboul-store.com/og-image.jpg",
           width: 1200,
           height: 630,
-          alt: 'Reboul Store Catalogue',
+          alt: "Reboul Store Catalogue",
         },
       ],
     },
   }
 }
 
-export default async function CataloguePage({ searchParams }: CataloguePageProps) {
-  const page = Number(searchParams.page) || 1
-  const limit = 12
-  const categoryId = searchParams.categories ? Number(searchParams.categories) : undefined
-  const brandId = searchParams.brand ? Number(searchParams.brand) : undefined
-  const search = searchParams.search as string | undefined
+export default async function CataloguePage({
+  searchParams,
+}: {
+  searchParams: SearchParams
+}) {
+  const ensureString = (value: string | string[] | undefined): string => {
+    if (Array.isArray(value)) return value[0] || ""
+    if (value === undefined) return ""
+    return value
+  }
+
+  const queryParams: Record<string, string> = {
+    page: ensureString(searchParams.page) || "1",
+    limit: ensureString(searchParams.limit) || "12",
+    category_id: ensureString(searchParams.category_id),
+    brand: ensureString(searchParams.brand),
+    search: ensureString(searchParams.search),
+    sort: ensureString(searchParams.sort),
+    color: ensureString(searchParams.color),
+    size: ensureString(searchParams.size),
+    minPrice: ensureString(searchParams.minPrice) || "0",
+    maxPrice: ensureString(searchParams.maxPrice) || "10000",
+    store_type: ensureString(searchParams.store_type),
+    featured: ensureString(searchParams.featured) || "false"
+  }
+
+  // Nettoyer les paramètres vides
+  Object.keys(queryParams).forEach(key => {
+    if (!queryParams[key]) {
+      delete queryParams[key]
+    }
+  })
 
   const [productsData, categories, brands] = await Promise.all([
-    fetchProducts({ page, limit, categoryId, brandId, search }),
-    fetchCategories(),
-    fetchBrands()
+    api.fetchProducts(queryParams),
+    api.fetchCategories(),
+    api.fetchBrands(),
   ])
 
   return (
@@ -70,11 +96,9 @@ export default async function CataloguePage({ searchParams }: CataloguePageProps
         <LocalStorageChecker />
         <CatalogueContent
           initialProducts={productsData.products}
+          initialCategories={categories}
+          initialBrands={brands}
           total={productsData.total}
-          categories={categories}
-          brands={brands}
-          currentPage={page}
-          searchParams={searchParams}
         />
       </Suspense>
     </ClientOnly>

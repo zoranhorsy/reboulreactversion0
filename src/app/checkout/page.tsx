@@ -31,24 +31,24 @@ export default function CheckoutPage() {
     const { register, handleSubmit, formState: { errors } } = useForm<ShippingFormData>({
         resolver: zodResolver(shippingSchema)
     })
-    const { items: cartItems, total } = useCart()
+    const { items, total } = useCart()
     const router = useRouter()
     const [activeTab, setActiveTab] = useState("shipping")
 
     useEffect(() => {
-        console.log('CheckoutPage mounted, cartItems:', cartItems);
-        if (!cartItems || cartItems.length === 0) {
+        console.log('CheckoutPage mounted, items:', items);
+        if (items.length === 0) {
             console.log('Cart is empty, redirecting to /');
             router.push('/')
         }
-    }, [cartItems, router])
+    }, [items, router])
 
     const onSubmitShipping = (data: ShippingFormData) => {
         console.log('Shipping data submitted:', data);
         setActiveTab("payment")
     }
 
-    if (!cartItems || cartItems.length === 0) {
+    if (items.length === 0) {
         console.log('Cart is empty, rendering null and redirecting to /');
         return null
     }
@@ -141,7 +141,7 @@ export default function CheckoutPage() {
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
-                                {cartItems.map((item) => (
+                                {items.map((item) => (
                                     <div key={item.id} className="flex justify-between items-center py-2">
                                         <span>{item.name} x {item.quantity}</span>
                                         <span>{(item.price * item.quantity).toFixed(2)} €</span>

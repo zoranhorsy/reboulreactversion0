@@ -119,5 +119,28 @@ router.delete('/:id',
         }
     });
 
+router.put('/users/:id/password', authMiddleware, async (req, res, next) => {
+    if (!req.user.is_admin) {
+        return next(new AppError('Accès non autorisé', 403));
+    }
+
+    const { id } = req.params;
+    const { newPassword } = req.body;
+
+    try {
+        // Hasher le nouveau mot de passe
+        const saltRounds = 10;
+        const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
+
+        // Mettre à jour le mot de passe dans la base de données
+        await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [hashedPassword, id]);
+
+        res.json({ message: 'Mot de passe mis à jour avec succès' });
+    } catch (err) {
+        console.error('Erreur lors de la mise à jour du mot de passe:', err);
+        next(new AppError('Erreur lors de la mise à jour du mot de passe', 500));
+    }
+});
+
 module.exports = router;
 

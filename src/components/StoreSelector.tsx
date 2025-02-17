@@ -29,7 +29,7 @@ export function StoreSelector() {
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="relative">
                     {/* Title */}
-                    <h2 className={`text-2xl sm:text-3xl font-light mb-12 tracking-wider ${styles.title}`}>
+                    <h2 className={`text-1xl sm:text-3xl font-light mb-12 tracking-wider ${styles.title}`}>
                         01 CATÉGORIES
                     </h2>
 
@@ -41,7 +41,7 @@ export function StoreSelector() {
                                 src="/Calque 1.png"
                                 alt="Previous"
                                 width={24}
-                                height={24}
+                                height={14}
                                 className="opacity-50 hover:opacity-100 transition-opacity"
                             />
                         </button>

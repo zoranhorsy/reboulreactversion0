@@ -24,8 +24,8 @@ export default function Login() {
         setIsLoading(true)
         try {
             console.log('Tentative de connexion avec:', { email, password: '********' })
-            const { user, token } = await login(email, password)
-            console.log('Résultat de la connexion:', { user, token })
+            const { user } = await login(email, password)
+            console.log('Connexion réussie pour:', user.email)
             toast({
                 title: "Connexion réussie",
                 description: `Bienvenue ${user.username} sur votre compte Reboul Store.`,
@@ -35,7 +35,7 @@ export default function Login() {
             console.error("Erreur de connexion:", error)
             toast({
                 title: "Erreur de connexion",
-                description: error instanceof Error ? error.message : "Une erreur inattendue s'est produite.",
+                description: error instanceof Error ? error.message : "Une erreur inattendue s'est produite. Veuillez réessayer.",
                 variant: "destructive",
             })
         } finally {
@@ -60,6 +60,8 @@ export default function Login() {
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
                                 className="w-full"
+                                placeholder="votre@email.com"
+                                disabled={isLoading}
                             />
                         </div>
                         <div>
@@ -72,13 +74,17 @@ export default function Login() {
                                     onChange={(e) => setPassword(e.target.value)}
                                     required
                                     className="w-full pr-10"
+                                    placeholder="Votre mot de passe"
+                                    disabled={isLoading}
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
                                     className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                                    disabled={isLoading}
                                 >
                                     {showPassword ? <EyeOff className="h-5 w-5 text-gray-400" /> : <Eye className="h-5 w-5 text-gray-400" />}
+                                    <span className="sr-only">{showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}</span>
                                 </button>
                             </div>
                         </div>

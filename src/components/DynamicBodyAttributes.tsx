@@ -2,7 +2,11 @@
 
 import { useEffect, useState } from 'react'
 
-export default function DynamicBodyAttributes() {
+interface DynamicBodyAttributesProps {
+    children?: React.ReactNode
+}
+
+export default function DynamicBodyAttributes({ children }: DynamicBodyAttributesProps) {
     const [documentId, setDocumentId] = useState('')
 
     useEffect(() => {
@@ -10,6 +14,10 @@ export default function DynamicBodyAttributes() {
         setDocumentId(newDocumentId)
     }, [])
 
-    return <div data-demoway-document-id={documentId} />
+    return (
+        <div data-demoway-document-id={documentId}>
+            {children}
+        </div>
+    )
 }
 

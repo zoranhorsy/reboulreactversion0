@@ -1,273 +1,191 @@
-'use client'
+"use client"
 
-import { useState, useEffect } from 'react'
-import { Grid, List, SlidersHorizontal } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { useState, useCallback, useEffect } from "react"
+import { useRouter, useSearchParams, usePathname } from "next/navigation"
+import { SlidersHorizontal } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination"
-import { ScrollToTopButton } from "@/components/ScrollToTopButton"
-import { Filters } from '@/components/catalogue/Filters'
-import { ProductGrid } from '@/components/catalogue/ProductGrid'
-import { ProductList } from '@/components/catalogue/ProductList'
-import { ScrollTriggerAnimation } from '@/components/animations/ScrollTriggerAnimation'
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { FilterSummary } from './FilterSummary'
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Product, Category, Brand } from '@/lib/api' // Updated import statement
-import { useRouter, useSearchParams } from 'next/navigation'
+import { FilterComponent } from "@/components/catalogue/Filters"
+import { ProductGrid } from "@/components/catalogue/ProductGrid"
+import { api } from "@/lib/api"
+import type { Product } from "@/lib/types/product"
+import type { Category } from "@/lib/types/category"
+import type { Brand } from "@/lib/types/brand"
+import { type FilterState, type FilterChangeHandler } from '@/lib/types/filters'
 
 interface CatalogueContentProps {
   initialProducts: Product[]
   total: number
-  categories: Category[]
-  brands: Brand[]
-  currentPage: number
-  searchParams: { [key: string]: string | string[] | undefined }
+  initialCategories: Category[]
+  initialBrands: Brand[]
 }
 
 export function CatalogueContent({
   initialProducts,
   total,
-  categories,
-  brands,
-  currentPage: initialPage,
-  searchParams: _searchParams
+  initialCategories,
+  initialBrands,
 }: CatalogueContentProps) {
-    const router = useRouter()
-    const searchParamsHook = useSearchParams()
-    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
-    const [isFilterOpen, setIsFilterOpen] = useState(false)
-    const [currentPage, setCurrentPage] = useState(initialPage)
-    const [sortBy, setSortBy] = useState<string>(searchParamsHook.get('sort') || 'name')
-    const [filterBrand, setFilterBrand] = useState<string>(searchParamsHook.get('brand') || 'all')
-    const [filterCategories, setFilterCategories] = useState<string[]>(
-      searchParamsHook.get('categories')?.split(',') || []
-    )
-    const [filterTags, setFilterTags] = useState<string[]>(
-      searchParamsHook.get('tags')?.split(',') || []
-    )
-    const [searchTerm, setSearchTerm] = useState(searchParamsHook.get('search') || '')
-    const [priceRange, setPriceRange] = useState([
-      Number(searchParamsHook.get('minPrice')) || 0,
-      Number(searchParamsHook.get('maxPrice')) || 1000
-    ])
-    const [filterColor, setFilterColor] = useState<string>(searchParamsHook.get('color') || 'all')
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const pathname = usePathname()
+  const [isFilterOpen, setIsFilterOpen] = useState(false)
+  const [products, setProducts] = useState<Product[]>(initialProducts)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [categories] = useState<Category[]>(initialCategories)
+  const [brands] = useState<Brand[]>(initialBrands)
+  const [colors, setColors] = useState<string[]>([])
+  const [sizes, setSizes] = useState<string[]>([])
+  const [totalItems, setTotalItems] = useState(total)
+  const limitParam = searchParams.get('limit') || '12'
+  const [totalPages, setTotalPages] = useState(Math.ceil(total / Number(limitParam)))
 
-    const [products] = useState<Product[]>(initialProducts)
+  // Initialiser les filtres à partir des searchParams
+  const defaultFilters: FilterState = {
+    page: searchParams.get('page') || '1',
+    limit: limitParam,
+    category_id: searchParams.get('category_id') || '',
+    brand: searchParams.get('brand') || '',
+    search: searchParams.get('search') || '',
+    sort: searchParams.get('sort') || '',
+    color: searchParams.get('color') || '',
+    size: searchParams.get('size') || '',
+    minPrice: searchParams.get('minPrice') || '',
+    maxPrice: searchParams.get('maxPrice') || '',
+    store_type: searchParams.get('store_type') || '',
+    featured: searchParams.get('featured') || ''
+  }
 
-    const productsPerPage = 12
+  const [filters, setFilters] = useState<FilterState>(defaultFilters)
 
-    useEffect(() => {
-      const params = new URLSearchParams(searchParamsHook)
-      params.set('page', currentPage.toString())
-      params.set('sort', sortBy)
-      if (filterBrand !== 'all') params.set('brand', filterBrand)
-      if (filterCategories.length > 0) params.set('categories', filterCategories.join(','))
-      if (filterTags.length > 0) params.set('tags', filterTags.join(','))
-      if (searchTerm) params.set('search', searchTerm)
-      params.set('minPrice', priceRange[0].toString())
-      params.set('maxPrice', priceRange[1].toString())
-      if (filterColor !== 'all') params.set('color', filterColor)
+  // Fonction unique pour mettre à jour les filtres et l'URL
+  const handleFilterChange: FilterChangeHandler = useCallback((newFilters) => {
+    setFilters(prev => {
+      const updated = { ...prev, ...newFilters }
+      if ('page' in newFilters === false && Object.keys(newFilters).length > 0) {
+        updated.page = '1' // Réinitialiser la page lors d'un changement de filtre
+      }
+      
+      const queryString = new URLSearchParams()
+      Object.entries(updated).forEach(([key, value]) => {
+        if (value) queryString.set(key, value)
+      })
+      
+      router.push(`${pathname}?${queryString.toString()}`)
+      return updated
+    })
+  }, [router, pathname])
 
-      router.push(`/catalogue?${params.toString()}`, { scroll: false })
-    }, [currentPage, sortBy, filterBrand, filterCategories, filterTags, searchTerm, priceRange, filterColor, router, searchParamsHook])
+  // Fonction pour extraire les variantes uniques
+  const extractVariants = useCallback((productList: Product[]) => {
+    const uniqueColors = new Set<string>()
+    const uniqueSizes = new Set<string>()
+    
+    productList.forEach((product) => {
+      if (Array.isArray(product.variants)) {
+        product.variants.forEach((variant) => {
+          if (variant.color) uniqueColors.add(variant.color.toLowerCase())
+          if (variant.size) uniqueSizes.add(variant.size)
+        })
+      }
+    })
 
-    const resetFilters = () => {
-        setSortBy('name')
-        setFilterBrand('all')
-        setFilterCategories([])
-        setFilterTags([])
-        setSearchTerm('')
-        setPriceRange([0, 1000])
-        setFilterColor('all')
-        setCurrentPage(1)
+    return {
+      colors: Array.from(uniqueColors).sort(),
+      sizes: Array.from(uniqueSizes).sort()
     }
+  }, [])
 
-    const allColors = Array.from(new Set(products?.flatMap(product =>
-        product.variants ? product.variants.map(variant => variant.color) : []
-    ) || []))
+  // Charger les produits
+  const loadProducts = useCallback(async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      
+      const queryParams: Record<string, string> = {}
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value) queryParams[key] = value
+      })
 
-    const allTags = Array.from(new Set(products?.flatMap(product => product.tags || []) || []))
+      const result = await api.fetchProducts(queryParams)
+      setProducts(result.products)
+      setTotalItems(result.total)
+      setTotalPages(Math.ceil(result.total / Number(filters.limit)))
 
-    return (
-        <ScrollTriggerAnimation>
-            <motion.h1
-                className="text-3xl font-bold mb-8 text-center"
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-            >
-                Catalogue Reboul
-            </motion.h1>
-            <div className="flex flex-col lg:flex-row gap-8">
-                <motion.div
-                    className="lg:w-1/4"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.5, delay: 0.2 }}
-                >
-                    <div className="hidden lg:block sticky top-4">
-                        <Filters
-                            searchTerm={searchTerm}
-                            setSearchTerm={setSearchTerm}
-                            sortBy={sortBy}
-                            setSortBy={setSortBy}
-                            filterBrand={filterBrand}
-                            setFilterBrand={setFilterBrand}
-                            filterCategories={filterCategories}
-                            setFilterCategories={setFilterCategories}
-                            filterTags={filterTags}
-                            setFilterTags={setFilterTags}
-                            priceRange={priceRange}
-                            setPriceRange={setPriceRange}
-                            filterColor={filterColor}
-                            setFilterColor={setFilterColor}
-                            categories={categories}
-                            allTags={allTags}
-                            allColors={allColors}
-                            allBrands={brands}
-                            isOpen={isFilterOpen}
-                            setIsOpen={setIsFilterOpen}
-                        />
-                    </div>
-                    <div className="lg:hidden">
-                        <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
-                            <SheetTrigger asChild>
-                                <Button variant="outline" className="w-full mb-4">
-                                    <SlidersHorizontal className="mr-2 h-4 w-4" />
-                                    Filtres
-                                </Button>
-                            </SheetTrigger>
-                            <SheetContent side="left" className="w-[300px] sm:w-[400px]">
-                                <Filters
-                                    searchTerm={searchTerm}
-                                    setSearchTerm={setSearchTerm}
-                                    sortBy={sortBy}
-                                    setSortBy={setSortBy}
-                                    filterBrand={filterBrand}
-                                    setFilterBrand={setFilterBrand}
-                                    filterCategories={filterCategories}
-                                    setFilterCategories={setFilterCategories}
-                                    filterTags={filterTags}
-                                    setFilterTags={setFilterTags}
-                                    priceRange={priceRange}
-                                    setPriceRange={setPriceRange}
-                                    filterColor={filterColor}
-                                    setFilterColor={setFilterColor}
-                                    categories={categories}
-                                    allTags={allTags}
-                                    allColors={allColors}
-                                    allBrands={brands}
-                                    isOpen={isFilterOpen}
-                                    setIsOpen={setIsFilterOpen}
-                                />
-                            </SheetContent>
-                        </Sheet>
-                    </div>
-                </motion.div>
-                <motion.div
-                    className="lg:w-3/4"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.5, delay: 0.4 }}
-                >
-                    <div className="flex justify-between items-center mb-4">
-                        <div className="flex items-center space-x-2">
-                            <Button
-                                variant={viewMode === 'grid' ? 'default' : 'outline'}
-                                size="icon"
-                                onClick={() => setViewMode('grid')}
-                            >
-                                <Grid className="h-4 w-4" />
-                            </Button>
-                            <Button
-                                variant={viewMode === 'list' ? 'default' : 'outline'}
-                                size="icon"
-                                onClick={() => setViewMode('list')}
-                            >
-                                <List className="h-4 w-4" />
-                            </Button>
-                        </div>
-                        <Select value={sortBy} onValueChange={setSortBy}>
-                            <SelectTrigger className="w-[180px]">
-                                <SelectValue placeholder="Trier par" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="name">Nom</SelectItem>
-                                <SelectItem value="price-asc">Prix croissant</SelectItem>
-                                <SelectItem value="price-desc">Prix décroissant</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <FilterSummary
-                        totalProducts={total}
-                        activeFiltersCount={
-                            (filterBrand !== 'all' ? 1 : 0) +
-                            filterCategories.length +
-                            filterTags.length +
-                            (filterColor !== 'all' ? 1 : 0) +
-                            (searchTerm ? 1 : 0) +
-                            ((priceRange[0] !== 0 || priceRange[1] !== 1000) ? 1 : 0)
-                        }
-                        resetFilters={resetFilters}
-                    />
-                    {products.length > 0 ? (
-                        <AnimatePresence mode="wait">
-                            <motion.div
-                                key={viewMode}
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                transition={{ duration: 0.3 }}
-                            >
-                                {viewMode === 'grid' ? (
-                                    <ProductGrid products={products} />
-                                ) : (
-                                    <ProductList products={products} />
-                                )}
-                            </motion.div>
-                        </AnimatePresence>
-                    ) : (
-                        <Alert>
-                            <AlertTitle>Aucun produit trouvé</AlertTitle>
-                            <AlertDescription>
-                                Aucun produit ne correspond à vos critères de recherche. Essayez d&apos;ajuster vos filtres.
-                            </AlertDescription>
-                        </Alert>
-                    )}
-                    {products.length > 0 && (
-                        <Pagination className="mt-8">
-                            <PaginationContent>
-                                <PaginationItem>
-                                    <PaginationPrevious
-                                        onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                                        disabled={currentPage === 1}
-                                    />
-                                </PaginationItem>
-                                {Array.from({ length: Math.ceil(total / productsPerPage) }).map((_, index) => (
-                                    <PaginationItem key={index}>
-                                        <PaginationLink
-                                            onClick={() => setCurrentPage(index + 1)}
-                                            isActive={currentPage === index + 1}
-                                        >
-                                            {index + 1}
-                                        </PaginationLink>
-                                    </PaginationItem>
-                                ))}
-                                <PaginationItem>
-                                    <PaginationNext
-                                        onClick={() => setCurrentPage((prev) => Math.min(prev + 1, Math.ceil(total / productsPerPage)))}
-                                        disabled={currentPage === Math.ceil(total / productsPerPage)}
-                                    />
-                                </PaginationItem>
-                            </PaginationContent>
-                        </Pagination>
-                    )}
-                </motion.div>
-            </div>
-            <ScrollToTopButton />
-        </ScrollTriggerAnimation>
-    )
+      const { colors: newColors, sizes: newSizes } = extractVariants(result.products)
+      setColors(newColors)
+      setSizes(newSizes)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur lors du chargement des produits")
+    } finally {
+      setLoading(false)
+    }
+  }, [filters, extractVariants])
+
+  // Effet pour charger les produits lors des changements de filtres
+  useEffect(() => {
+    loadProducts()
+  }, [loadProducts])
+
+  // Gérer le changement de page
+  const handlePageChange = useCallback(
+    (newPage: number) => {
+      handleFilterChange({ page: newPage.toString() })
+    },
+    [handleFilterChange]
+  )
+
+  return (
+    <div className="flex flex-col lg:flex-row gap-8 p-4">
+      <aside className="lg:w-[280px]">
+        <div className="hidden lg:block">
+          <FilterComponent
+            filters={filters}
+            categories={categories}
+            brands={brands}
+            colors={colors}
+            sizes={sizes}
+            storeTypes={["adult", "kids", "sneakers"]}
+            onFilterChange={handleFilterChange}
+          />
+        </div>
+        <div className="lg:hidden">
+          <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+            <SheetTrigger asChild>
+              <Button variant="outline" className="w-full mb-4">
+                <SlidersHorizontal className="mr-2 h-4 w-4" />
+                Filtres
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left">
+              <FilterComponent
+                filters={filters}
+                categories={categories}
+                brands={brands}
+                colors={colors}
+                sizes={sizes}
+                storeTypes={["adult", "kids", "sneakers"]}
+                onFilterChange={handleFilterChange}
+              />
+            </SheetContent>
+          </Sheet>
+        </div>
+      </aside>
+      <main className="lg:flex-1">
+        <ProductGrid
+          products={products}
+          isLoading={loading}
+          error={error}
+          page={Number.parseInt(filters.page)}
+          limit={Number.parseInt(filters.limit)}
+          totalProducts={totalItems}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+          _onFilterChange={handleFilterChange}
+        />
+      </main>
+    </div>
+  )
 }
 

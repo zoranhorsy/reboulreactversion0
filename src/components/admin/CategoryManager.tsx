@@ -12,7 +12,11 @@ interface Category {
   name: string;
 }
 
-export function CategoryManager() {
+interface CategoryManagerProps {
+  onCategoryChange?: () => Promise<void>;
+}
+
+export function CategoryManager({ onCategoryChange }: CategoryManagerProps) {
   const [categories, setCategories] = useState<Category[]>([])
   const [newCategoryName, setNewCategoryName] = useState('')
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
@@ -50,6 +54,7 @@ export function CategoryManager() {
         title: "Succès",
         description: "La catégorie a été ajoutée avec succès.",
       })
+      if (onCategoryChange) await onCategoryChange()
     } catch (error) {
       console.error('Error adding category:', error)
       toast({
@@ -74,6 +79,7 @@ export function CategoryManager() {
         title: "Succès",
         description: "La catégorie a été mise à jour avec succès.",
       })
+      if (onCategoryChange) await onCategoryChange()
     } catch (error) {
       console.error('Error updating category:', error)
       toast({

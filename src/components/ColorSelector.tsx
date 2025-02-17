@@ -1,111 +1,78 @@
-'use client'
-
-import React, { useState, useRef, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Check, ChevronDown } from 'lucide-react'
-import { productColors, getColorValue } from '@/config/productColors'
-
 interface ColorSelectorProps {
-    availableColors: string[]
-    selectedColor: string
-    onColorChange: (color: string) => void
+  selectedColor: string
+  onColorChange: (color: string) => void
+  variants: { size: string; color: string; stock: number }[]
 }
 
-export function ColorSelector({ availableColors, selectedColor, onColorChange }: ColorSelectorProps) {
-    const [isOpen, setIsOpen] = useState(false)
-    const [searchTerm, setSearchTerm] = useState('')
-    const dropdownRef = useRef<HTMLDivElement | null>(null)
+export function ColorSelector({ selectedColor, onColorChange, variants }: ColorSelectorProps) {
+  const availableColors = Array.from(new Set(variants.map((v) => v.color)))
 
-    const filteredColors = productColors
-        .filter(color => availableColors.includes(color.name))
-        .filter(color => color.name.toLowerCase().includes(searchTerm.toLowerCase()))
+  const getColorHex = (colorName: string) => {
+    const colorMap: { [key: string]: string } = {
+      Blanc: "#FFFFFF",
+      Noir: "#000000",
+      Rouge: "#FF0000",
+      Bleu: "#0000FF",
+      Vert: "#008000",
+      Jaune: "#FFFF00",
+      Orange: "#FFA500",
+      Violet: "#800080",
+      Rose: "#FFC0CB",
+      Gris: "#808080",
+      Marron: "#A52A2A",
+      Beige: "#F5F5DC",
+      Turquoise: "#40E0D0",
+      Corail: "#FF7F50",
+      Indigo: "#4B0082",
+    }
+    return colorMap[colorName] || colorName
+  }
 
-    useEffect(() => {
-        function handleClickOutside(event: MouseEvent) {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-                setIsOpen(false)
-            }
-        }
+  const getColorLabel = (colorName: string) => {
+    return colorName.toUpperCase()
+  }
 
-        document.addEventListener('mousedown', handleClickOutside)
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside)
-        }
-    }, [])
+  const getTextColor = (bgColor: string) => {
+    const hex = bgColor.replace("#", "")
+    const r = Number.parseInt(hex.substr(0, 2), 16)
+    const g = Number.parseInt(hex.substr(2, 2), 16)
+    const b = Number.parseInt(hex.substr(4, 2), 16)
 
-    return (
-        <div className="relative" ref={dropdownRef}>
-            <motion.button
-                onClick={() => setIsOpen(!isOpen)}
-                className="w-full flex items-center justify-between px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-            >
-                <div className="flex items-center">
-                    <motion.div
-                        className="w-6 h-6 rounded-full mr-2 border border-gray-300"
-                        style={{ backgroundColor: getColorValue(selectedColor) }}
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                    />
-                    {selectedColor}
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+
+    return luminance > 0.5 ? "text-black" : "text-white"
+  }
+
+  return (
+    <div>
+      <div className="flex gap-[2px]">
+        {availableColors.map((color) => {
+          const isWhite = color.toLowerCase() === "blanc" || color.toLowerCase() === "white"
+          const hexColor = getColorHex(color)
+
+          return (
+            <div key={color} className="group">
+              <button onClick={() => onColorChange(color)} className="relative w-8 h-8">
+                <div
+                  className={`w-full h-full ${
+                    isWhite ? "border border-gray-300" : ""
+                  } ${selectedColor === color ? "ring-1 ring-black" : ""}`}
+                  style={{ backgroundColor: hexColor }}
+                />
+                <div
+                  className="absolute bottom-full left-0 w-8 h-0 group-hover:h-5 transition-all duration-200 ease-out overflow-hidden"
+                  style={{ backgroundColor: hexColor }}
+                >
+                  <div className={`text-[8px] ${getTextColor(hexColor)} text-center py-[2px] px-[1px] leading-tight`}>
+                    {getColorLabel(color)}
+                  </div>
                 </div>
-                <ChevronDown className="ml-2 h-4 w-4" />
-            </motion.button>
-
-            <AnimatePresence>
-                {isOpen && (
-                    <motion.div
-                        className="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm"
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.2 }}
-                    >
-                        <input
-                            type="text"
-                            className="block w-full px-4 py-2 text-gray-800 border-b border-gray-200 focus:ring-0 focus:border-blue-300"
-                            placeholder="Rechercher une couleur..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                        {filteredColors.map((color) => (
-                            <motion.button
-                                key={color.name}
-                                className={`flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 ${
-                                    selectedColor === color.name ? 'bg-gray-100' : ''
-                                }`}
-                                onClick={() => {
-                                    onColorChange(color.name)
-                                    setIsOpen(false)
-                                }}
-                                whileHover={{ backgroundColor: "#f3f4f6" }}
-                                whileTap={{ scale: 0.98 }}
-                            >
-                                <motion.div
-                                    className="w-6 h-6 rounded-full mr-2 border border-gray-300"
-                                    style={{ backgroundColor: color.value }}
-                                    initial={{ scale: 0 }}
-                                    animate={{ scale: 1 }}
-                                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                                />
-                                {color.name}
-                                {selectedColor === color.name && (
-                                    <motion.div
-                                        initial={{ scale: 0 }}
-                                        animate={{ scale: 1 }}
-                                        transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                                    >
-                                        <Check className="ml-auto h-4 w-4 text-green-500" />
-                                    </motion.div>
-                                )}
-                            </motion.button>
-                        ))}
-                    </motion.div>
-                )}
-            </AnimatePresence>
-        </div>
-    )
+              </button>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
 }
 

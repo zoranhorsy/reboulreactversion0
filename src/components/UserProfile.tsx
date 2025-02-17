@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { LogOut, Camera } from 'lucide-react'
-import Image from 'next/image'
+import { LogOut } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -20,13 +19,12 @@ import { AdminDashboard } from '@/components/admin/AdminDashboard'
 
 export default function UserProfile() {
     const router = useRouter()
-    const { user, logout, updateUser } = useAuth()
+    const { user, logout } = useAuth()
     const { toast } = useToast()
     const [userInfo, setUserInfo] = useState<UserInfo>({
-        name: user?.name || "",
-        email: user?.email || "",
-        address: "",
-        avatarUrl: user?.avatarUrl || ""
+        id: parseInt(user?.id || "0", 10),
+        name: user?.username || "",
+        email: user?.email || ""
     })
     const [updating, setUpdating] = useState(false)
     const [notifications, setNotifications] = useState({
@@ -37,14 +35,11 @@ export default function UserProfile() {
     useEffect(() => {
         if (user) {
             setUserInfo({
-                name: user.name || "",
-                email: user.email || "",
-                address: user.address || "",
-                avatarUrl: user.avatarUrl || ""
+                id: parseInt(user.id || "0", 10),
+                name: user.username || "",
+                email: user.email || ""
             })
         }
-        console.log('User object in UserProfile:', user);
-        console.log('Is admin in UserProfile:', user?.isAdmin);
     }, [user])
 
     const handleInfoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -55,12 +50,22 @@ export default function UserProfile() {
         e.preventDefault()
         setUpdating(true)
         try {
-            const updatedInfo = await updateUserInfo(userInfo)
-            await updateUser(updatedInfo)
-            toast({
-                title: "Profil mis à jour",
-                description: "Vos informations ont été mises à jour avec succès.",
+            const updatedInfo = await updateUserInfo({
+                id: String(userInfo.id),
+                name: userInfo.name,
+                email: userInfo.email
             })
+            if (updatedInfo) {
+                setUserInfo({
+                    id: parseInt(updatedInfo.id || "0", 10),
+                    name: updatedInfo.name || "",
+                    email: updatedInfo.email || ""
+                })
+                toast({
+                    title: "Profil mis à jour",
+                    description: "Vos informations ont été mises à jour avec succès.",
+                })
+            }
         } catch (err) {
             console.error(err)
             toast({
@@ -83,21 +88,6 @@ export default function UserProfile() {
                 title: "Erreur",
                 description: "Une erreur est survenue lors de la déconnexion.",
                 variant: "destructive",
-            })
-        }
-    }
-
-    const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0]
-        if (file) {
-            // Ici, vous implémenteriez la logique pour télécharger l'image
-            // et obtenir l'URL de l'image téléchargée
-            // Pour cet exemple, nous allons simplement simuler cela
-            const fakeUploadedUrl = URL.createObjectURL(file)
-            setUserInfo({ ...userInfo, avatarUrl: fakeUploadedUrl })
-            toast({
-                title: "Avatar mis à jour",
-                description: "Votre avatar a été mis à jour avec succès.",
             })
         }
     }
@@ -128,25 +118,10 @@ export default function UserProfile() {
                             <form onSubmit={handleSubmit} className="space-y-4">
                                 <div className="flex items-center space-x-4">
                                     <div className="w-20 h-20 rounded-full overflow-hidden">
-                                        {userInfo.avatarUrl ? (
-                                            <Image src={userInfo.avatarUrl} alt={userInfo.name} width={80} height={80} className="object-cover" />
-                                        ) : (
-                                            <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500 text-2xl">
-                                                {userInfo.name?.charAt(0)}
-                                            </div>
-                                        )}
+                                        <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500 text-2xl">
+                                            {userInfo.name?.charAt(0)}
+                                        </div>
                                     </div>
-                                    <Label htmlFor="avatar-upload" className="cursor-pointer">
-                                        <Camera className="h-6 w-6" />
-                                        <span className="sr-only">Changer l&apos;avatar</span>
-                                    </Label>
-                                    <Input
-                                        id="avatar-upload"
-                                        type="file"
-                                        accept="image/*"
-                                        className="hidden"
-                                        onChange={handleAvatarChange}
-                                    />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="name">Nom complet</Label>
@@ -155,10 +130,6 @@ export default function UserProfile() {
                                 <div className="space-y-2">
                                     <Label htmlFor="email">Email</Label>
                                     <Input id="email" name="email" type="email" value={userInfo.email} onChange={handleInfoChange} />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="address">Adresse</Label>
-                                    <Input id="address" name="address" value={userInfo.address} onChange={handleInfoChange} />
                                 </div>
                                 <Button type="submit" disabled={updating}>
                                     {updating ? 'Mise à jour...' : 'Mettre à jour'}

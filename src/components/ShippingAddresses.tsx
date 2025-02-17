@@ -57,7 +57,7 @@ export function ShippingAddresses() {
                     <Card key={address.id}>
                         <CardContent className="p-4">
                             <p>{address.street}</p>
-                            <p>{address.city}, {address.postalCode}</p>
+                            <p>{address.city}, {address.postal_code}</p>
                             <p>{address.country}</p>
                             <div className="mt-2">
                                 <Button

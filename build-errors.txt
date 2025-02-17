@@ -1,0 +1,25 @@
+
+> reboul-store@0.1.0 build
+> next build
+
+  ▲ Next.js 14.2.23
+  - Environments: .env.local
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+
+ ⚠ The Next.js plugin was not detected in your ESLint configuration. See https://nextjs.org/docs/basic-features/eslint#migrating-existing-config
+Failed to compile.
+
+./src/components/admin/ProductForm.tsx:242:26
+Type error: 'formData.colors' is possibly 'undefined'.
+
+[0m [90m 240 |[39m               [33m<[39m[33mCheckbox[39m[0m
+[0m [90m 241 |[39m                 id[33m=[39m{[32m`color-${color}`[39m}[0m
+[0m[31m[1m>[22m[39m[90m 242 |[39m                 checked[33m=[39m{formData[33m.[39mcolors[33m.[39mincludes(color)}[0m
+[0m [90m     |[39m                          [31m[1m^[22m[39m[0m
+[0m [90m 243 |[39m                 onCheckedChange[33m=[39m{(checked) [33m=>[39m {[0m
+[0m [90m 244 |[39m                   [36mif[39m (checked) {[0m
+[0m [90m 245 |[39m                     handleChange([32m"colors"[39m[33m,[39m [[33m...[39mformData[33m.[39mcolors[33m,[39m color])[0m
+Static worker exited with code: 1 and signal: null

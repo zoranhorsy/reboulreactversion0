@@ -22,7 +22,7 @@ export function useCart() {
 
     const removeFromCart = useCallback((productId: number) => {
         setCart(prevCart => {
-            const updatedCart = prevCart.filter(item => item.id !== productId)
+            const updatedCart = prevCart.filter(item => String(item.id) !== String(productId))
             localStorage.setItem('cart', JSON.stringify(updatedCart))
             return updatedCart
         })

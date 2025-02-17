@@ -2,7 +2,44 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
 
-const CartContext = createContext(undefined)
+export interface CartItem {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+  image: string;
+  variant?: {
+    size?: string;
+    color?: string;
+  };
+}
+
+export interface OrderDetails {
+  id: string;
+  date: string;
+  customer: {
+    name: string;
+    email: string;
+  };
+  total: number;
+  status: string;
+  items: CartItem[];
+}
+
+interface CartContextType {
+  items: CartItem[];
+  addItem: (item: CartItem) => void;
+  removeItem: (id: string) => void;
+  updateQuantity: (id: string, quantity: number) => void;
+  clearCart: () => void;
+  total: number;
+  lastOrder: OrderDetails | null;
+  setLastOrder: (order: OrderDetails) => void;
+  clearLastOrder: () => void;
+  itemCount: number;
+}
+
+const CartContext = createContext<CartContextType | undefined>(undefined)
 
 export const useCart = () => {
     const context = useContext(CartContext)
@@ -12,9 +49,9 @@ export const useCart = () => {
     return context
 }
 
-export const CartProvider = ({ children }) => {
-    const [items, setItems] = useState([])
-    const [lastOrder, setLastOrder] = useState(null)
+export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    const [items, setItems] = useState<CartItem[]>([])
+    const [lastOrder, setLastOrder] = useState<OrderDetails | null>(null)
     const [isInitialized, setIsInitialized] = useState(false)
 
     useEffect(() => {
@@ -41,7 +78,7 @@ export const CartProvider = ({ children }) => {
         }
     }, [lastOrder, isInitialized])
 
-    const addItem = useCallback((item) => {
+    const addItem = useCallback((item: CartItem) => {
         setItems((prevItems) => {
             const existingItem = prevItems.find((i) => i.id === item.id)
             if (existingItem) {
@@ -53,11 +90,11 @@ export const CartProvider = ({ children }) => {
         })
     }, [])
 
-    const removeItem = useCallback((id) => {
+    const removeItem = useCallback((id: string) => {
         setItems((prevItems) => prevItems.filter((item) => item.id !== id))
     }, [])
 
-    const updateQuantity = useCallback((id, quantity) => {
+    const updateQuantity = useCallback((id: string, quantity: number) => {
         setItems((prevItems) =>
             prevItems.map((item) =>
                 item.id === id ? { ...item, quantity: Math.max(0, quantity) } : item
@@ -73,7 +110,7 @@ export const CartProvider = ({ children }) => {
     const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
     const itemCount = items.reduce((sum, item) => sum + item.quantity, 0)
 
-    const setLastOrderWithStorage = useCallback((order) => {
+    const setLastOrderWithStorage = useCallback((order: OrderDetails) => {
         setLastOrder(order)
         localStorage.setItem('lastOrder', JSON.stringify(order))
     }, [])
@@ -83,7 +120,7 @@ export const CartProvider = ({ children }) => {
         localStorage.removeItem('lastOrder')
     }, [])
 
-    const contextValue = {
+    const contextValue: CartContextType = {
         items,
         addItem,
         removeItem,

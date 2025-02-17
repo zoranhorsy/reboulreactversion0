@@ -47,7 +47,7 @@ export const handleSort = (
     setFilteredProducts(
         activeStoreType === 'all'
             ? sortedProducts
-            : sortedProducts.filter(product => product.storeType === activeStoreType)
+            : sortedProducts.filter(product => product.store_type === activeStoreType)
     );
 };
 

@@ -1,17 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState } from 'react'
 import Image from 'next/image'
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import {
-    Carousel,
-    CarouselContent,
-    CarouselItem,
-    CarouselNext,
-    CarouselPrevious,
-} from "@/components/ui/carousel"
-import { motion, AnimatePresence } from 'framer-motion'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 interface ProductGalleryProps {
     images: string[]
@@ -19,66 +10,75 @@ interface ProductGalleryProps {
 }
 
 export function ProductGallery({ images, productName }: ProductGalleryProps) {
-    const [currentIndex, setCurrentIndex] = useState(0)
+    const [currentImage, setCurrentImage] = useState(0)
+
+    const handlePrevious = () => {
+        setCurrentImage((prev) => (prev > 0 ? prev - 1 : images.length - 1))
+    }
+
+    const handleNext = () => {
+        setCurrentImage((prev) => (prev < images.length - 1 ? prev + 1 : 0))
+    }
 
     return (
-        <div className="space-y-4 w-full max-w-2xl mx-auto">
-            <Card>
-                <CardContent className="p-0">
-                    <Carousel className="w-full">
-                        <CarouselContent>
-                            <AnimatePresence mode="wait">
-                                {images.map((image, index) => (
-                                    <CarouselItem key={index}>
-                                        <motion.div
-                                            className="relative aspect-square"
-                                            initial={{ opacity: 0 }}
-                                            animate={{ opacity: 1 }}
-                                            exit={{ opacity: 0 }}
-                                            transition={{ duration: 0.5 }}
-                                        >
-                                            <Image
-                                                src={image}
-                                                alt={`${productName} - Image ${index + 1}`}
-                                                fill
-                                                className="object-cover rounded-lg"
-                                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                                            />
-                                        </motion.div>
-                                    </CarouselItem>
-                                ))}
-                            </AnimatePresence>
-                        </CarouselContent>
-                        <CarouselPrevious />
-                        <CarouselNext />
-                    </Carousel>
-                </CardContent>
-            </Card>
-            <div className="flex space-x-2 overflow-x-auto pb-2 scrollbar-hide">
-                {images.map((image, index) => (
-                    <motion.div
-                        key={index}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                    >
-                        <Button
-                            variant="outline"
-                            className={`flex-shrink-0 w-16 h-16 p-0 overflow-hidden ${
-                                index === currentIndex ? 'ring-2 ring-primary' : ''
-                            }`}
-                            onClick={() => setCurrentIndex(index)}
+        <div className="w-full space-y-2">
+            {/* Image principale */}
+            <div className="relative rounded-lg overflow-hidden bg-[#F5F5F5]">
+                <div className="relative aspect-[3/2] w-full">
+                    <Image
+                        src={images[currentImage]}
+                        alt={`${productName} - Vue principale`}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 800px"
+                        priority
+                        quality={95}
+                    />
+
+                    {/* Boutons de navigation */}
+                    {images.length > 1 && (
+                        <>
+                            <button
+                                onClick={handlePrevious}
+                                className="absolute left-4 top-1/2 -translate-y-1/2 bg-white rounded-full p-2 shadow hover:bg-gray-50 transition-colors"
+                                aria-label="Image précédente"
+                            >
+                                <ChevronLeft className="w-5 h-5" />
+                            </button>
+                            <button
+                                onClick={handleNext}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 bg-white rounded-full p-2 shadow hover:bg-gray-50 transition-colors"
+                                aria-label="Image suivante"
+                            >
+                                <ChevronRight className="w-5 h-5" />
+                            </button>
+                        </>
+                    )}
+                </div>
+            </div>
+
+            {/* Miniatures */}
+            {images.length > 1 && (
+                <div className="grid grid-flow-col auto-cols-fr gap-2 max-w-full overflow-x-auto">
+                    {images.map((image, index) => (
+                        <button
+                            key={index}
+                            className={`relative aspect-square w-20 rounded-lg overflow-hidden bg-[#F5F5F5] cursor-pointer
+                                ${currentImage === index ? 'ring-2 ring-black' : 'hover:ring-1 hover:ring-gray-300'}
+                                transition-all duration-200`}
+                            onClick={() => setCurrentImage(index)}
                         >
                             <Image
                                 src={image}
-                                alt={`${productName} - Thumbnail ${index + 1}`}
-                                width={64}
-                                height={64}
-                                className="object-cover w-full h-full"
+                                alt={`${productName} - Miniature ${index + 1}`}
+                                fill
+                                className="object-cover"
+                                sizes="80px"
                             />
-                        </Button>
-                    </motion.div>
-                ))}
-            </div>
+                        </button>
+                    ))}
+                </div>
+            )}
         </div>
     )
 }

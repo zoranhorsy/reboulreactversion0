@@ -1,88 +1,111 @@
-'use client'
-
-import { useEffect, useRef } from 'react'
-import { ProductGrid } from '@/components/catalogue/ProductGrid'
+import type { Metadata } from "next"
+import { Suspense } from "react"
+import ClientOnly from "@/components/ClientOnly"
+import { Loader } from "@/components/ui/Loader"
+import { LocalStorageChecker } from "@/components/LocalStorageChecker"
+import { fetchProducts, fetchCategories, fetchBrands } from "@/lib/api"
 import { Hero } from '@/components/Hero'
-import { Separator } from "@/components/ui/separator"
-import { useAnime } from '@/hooks/useAnime'
-import anime from 'animejs'
-import { FeaturedCarousel } from '@/components/FeaturedCarousel'
+import { MinotsContent } from "@/components/minots/MinotsContent"
 
-export default function MinotsPage() {
-    const pageRef = useRef(null)
-    const titleRef = useAnime({
-        opacity: [0, 1],
-        translateY: [20, 0],
-        duration: 1000,
-        easing: 'easeOutExpo',
-        delay: 300
-    })
+type SearchParams = { [key: string]: string | string[] | undefined }
 
-    const separatorRef = useAnime({
-        width: ['0%', '100%'],
-        duration: 1000,
-        easing: 'easeInOutQuad',
-        delay: 600
-    })
+interface MinotsPageProps {
+  searchParams: SearchParams
+}
 
-    useEffect(() => {
-        window.scrollTo(0, 0)
+export async function generateMetadata({ searchParams }: MinotsPageProps): Promise<Metadata> {
+  const category = searchParams.categories as string | undefined
+  const brand = searchParams.brand as string | undefined
+  const search = searchParams.search as string | undefined
 
-        const parallaxAnimation = anime({
-            targets: '.parallax-bg',
-            translateY: ['0%', '30%'],
-            easing: 'linear',
-            duration: 1000,
-            autoplay: false
-        })
+  let title = "Collection Minots - Reboul Store"
+  let description = "Découvrez notre sélection de vêtements premium pour enfants chez Reboul Store."
 
-        const handleScroll = () => {
-            const scrollPercent = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)
-            parallaxAnimation.seek(parallaxAnimation.duration * scrollPercent)
-        }
+  if (category) {
+    title = `${category} - Collection Minots Reboul Store`
+    description = `Explorez notre collection de ${category} pour enfants chez Reboul Store.`
+  } else if (brand) {
+    title = `${brand} - Collection Minots Reboul Store`
+    description = `Découvrez les produits ${brand} pour enfants disponibles chez Reboul Store.`
+  } else if (search) {
+    title = `Résultats pour "${search}" - Collection Minots Reboul Store`
+    description = `Explorez les résultats de recherche pour "${search}" dans notre collection minots Reboul Store.`
+  }
 
-        window.addEventListener('scroll', handleScroll)
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "website",
+      url: "https://reboul-store.com/minots",
+      images: [
+        {
+          url: "https://reboul-store.com/og-image.jpg",
+          width: 1200,
+          height: 630,
+          alt: "Reboul Store Collection Minots",
+        },
+      ],
+    },
+  }
+}
 
-        anime({
-            targets: pageRef.current,
-            opacity: [0, 1],
-            duration: 1000,
-            easing: 'easeOutQuad'
-        })
+export default async function MinotsPage({ searchParams }: MinotsPageProps) {
+  const page = Number(searchParams.page) || 1
+  const limit = 12
+  const categoryId = searchParams.categories ? Number(searchParams.categories) || undefined : undefined
+  const brandId = searchParams.brand ? Number(searchParams.brand) || undefined : undefined
+  const search = searchParams.search as string | undefined
 
-        return () => {
-            window.removeEventListener('scroll', handleScroll)
-        }
-    }, [])
+  // Préparer les paramètres de requête en forçant store_type: "kids"
+  const queryParams = {
+    page,
+    limit,
+    store_type: "kids", // Toujours forcer le type de magasin à "kids"
+    ...(categoryId !== undefined && { category_id: categoryId.toString() }),
+    ...(brandId !== undefined && { brand: brandId.toString() }),
+    ...(search && { search }),
+  }
 
-    return (
-        <div ref={pageRef} className="space-y-8 sm:space-y-16 opacity-0">
-            <Hero
-                title="Les Minots de Reboul"
-                subtitle="Des vêtements adorables et confortables pour vos petits aventuriers"
-                imageUrl="/images/hero-kids.jpg"
-                overlayColor="rgba(0, 0, 0, 0.3)"
-                parallax
-            />
-            <section className="container mx-auto px-4 sm:px-6 lg:px-8">
-                <h2 ref={titleRef} className="text-2xl sm:text-3xl font-light mb-4 text-center opacity-0">Notre Collection Enfants</h2>
-                <Separator ref={separatorRef} className="mb-8" />
+  // Fetch all data in parallel with forced store_type parameter
+  const [productsData, allCategories, allBrands] = await Promise.all([
+    fetchProducts(queryParams),
+    fetchCategories(),
+    fetchBrands(),
+  ])
 
-                <div className="space-y-12">
-                    <div>
-                        <h3 className="text-xl sm:text-2xl font-light mb-4">Produits en vedette</h3>
-                        <div className="h-[300px] sm:h-[400px] bg-gray-100 rounded-lg overflow-hidden">
-                            <FeaturedCarousel storeType="kids" />
-                        </div>
-                    </div>
+  // Filter categories and brands that are available in kids store products
+  const kidsProductCategoryIds = new Set(productsData.products.map(p => p.category_id))
+  const kidsProductBrandIds = new Set(productsData.products.map(p => p.brand_id))
 
-                    <div>
-                        <h3 className="text-xl sm:text-2xl font-light mb-4">Tous nos produits</h3>
-                        <ProductGrid storeType="kids" />
-                    </div>
-                </div>
-            </section>
-        </div>
-    )
+  const categories = allCategories.filter(cat => kidsProductCategoryIds.has(cat.id))
+  const brands = allBrands.filter(brand => kidsProductBrandIds.has(brand.id))
+
+  return (
+    <div className="space-y-8">
+      <Hero
+        title="Collection Minots"
+        subtitle="Découvrez notre sélection tendance et confortable pour les enfants"
+        imageUrl="/images/hero-kids.jpg"
+        overlayColor="rgba(0, 0, 0, 0.4)"
+        parallax
+      />
+      <ClientOnly>
+        <Suspense fallback={<Loader />}>
+          <LocalStorageChecker />
+          <MinotsContent
+            initialProducts={productsData.products}
+            total={productsData.total}
+            categories={categories}
+            brands={brands}
+            _currentPage={page}
+            searchParams={searchParams}
+          />
+        </Suspense>
+      </ClientOnly>
+    </div>
+  )
 }
 

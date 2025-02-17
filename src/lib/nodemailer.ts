@@ -24,7 +24,7 @@ interface OrderDetails {
     items: OrderItem[];
     total: number;
     trackingNumber?: string;
-    language?: string;
+    language?: 'fr' | 'en';
 }
 
 interface RecommendedProduct {
@@ -102,6 +102,8 @@ const translations = {
     },
 };
 
+type TranslationKey = keyof typeof translations;
+
 export async function sendConfirmationEmail(orderDetails: OrderDetails) {
     console.log('SMTP Configuration:', {
         host: process.env.SMTP_HOST,
@@ -111,7 +113,7 @@ export async function sendConfirmationEmail(orderDetails: OrderDetails) {
     });
 
     const logoUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/images/logo_black.png`;
-    const lang = orderDetails.language && orderDetails.language in translations ? orderDetails.language : 'fr';
+    const lang = (orderDetails.language && orderDetails.language in translations ? orderDetails.language : 'fr') as TranslationKey;
     const t = translations[lang];
 
     try {

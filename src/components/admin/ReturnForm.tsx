@@ -22,7 +22,7 @@ export function ReturnForm({ order, onReturnProcessed }: ReturnFormProps) {
         setIsSubmitting(true)
 
         try {
-            const updatedOrder = await processReturn(order.id, returnReason)
+            const updatedOrder = await processReturn(order.id.toString(), returnReason)
             onReturnProcessed(updatedOrder)
             toast({
                 title: "Retour traité",

@@ -1,64 +1,70 @@
-import { useState, useEffect, useCallback } from 'react';
-import { api, Product } from '@/lib/api';
-import { useToast } from "@/components/ui/use-toast"
+import { useState, useEffect } from 'react';
+import { api, type Product } from '@/lib/api';
 
-export function useProducts(initialPage = 1, initialLimit = 10) {
+interface UseProductsParams {
+    featured?: boolean;
+    category?: string;
+    brand?: string;
+    store_type?: 'adult' | 'kids' | 'sneakers';
+}
+
+export function useProducts(initialPage = 1, initialLimit = 10, params: UseProductsParams = {}) {
     const [products, setProducts] = useState<Product[]>([]);
-    const [totalProducts, setTotalProducts] = useState(0);
-    const [page, setPage] = useState(initialPage);
-    const [limit, setLimit] = useState(initialLimit);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const { toast } = useToast();
-
-    const loadProducts = useCallback(async (currentPage: number, currentLimit: number) => {
-        setIsLoading(true);
-        setError(null);
-        try {
-            console.log('Loading products with page:', currentPage, 'and limit:', currentLimit);
-            const { products, total } = await api.fetchProducts({ page: currentPage, limit: currentLimit });
-            setProducts(products);
-            setTotalProducts(total);
-        } catch (err) {
-            console.error('Error fetching products:', err);
-            setError(err instanceof Error ? err.message : 'Failed to fetch products. Please try again.');
-            toast({
-                title: "Error",
-                description: err instanceof Error ? err.message : "Failed to fetch products. Please try again.",
-                variant: "destructive",
-            });
-        } finally {
-            setIsLoading(false);
-        }
-    }, [toast]);
+    const [page, setPage] = useState(initialPage);
+    const [limit] = useState(initialLimit);
+    const [totalProducts, setTotalProducts] = useState(0);
 
     useEffect(() => {
-        loadProducts(page, limit);
-    }, [page, limit, loadProducts]);
+        const fetchProducts = async () => {
+            try {
+                setIsLoading(true);
+                const { featured, ...restParams } = params;
+                const response = await api.fetchProducts({ 
+                    page: page.toString(), 
+                    limit: limit.toString(),
+                    ...(featured !== undefined ? { featured: featured.toString() } : {}),
+                    ...restParams 
+                });
+                setProducts(response.products);
+                setTotalProducts(response.total);
+                setError(null);
+            } catch (err) {
+                console.error('Error fetching products:', err);
+                setError(err instanceof Error ? err.message : 'An error occurred while fetching products');
+                setProducts([]);
+                setTotalProducts(0);
+            } finally {
+                setIsLoading(false);
+            }
+        };
 
-    const nextPage = useCallback(() => {
-        if (page * limit < totalProducts) {
-            setPage(prevPage => prevPage + 1);
+        fetchProducts();
+    }, [page, limit, params]);
+
+    const nextPage = () => {
+        const totalPages = Math.ceil(totalProducts / limit);
+        if (page < totalPages) {
+            setPage(page + 1);
         }
-    }, [page, limit, totalProducts]);
+    };
 
-    const prevPage = useCallback(() => {
+    const prevPage = () => {
         if (page > 1) {
-            setPage(prevPage => prevPage - 1);
+            setPage(page - 1);
         }
-    }, [page]);
+    };
 
     return {
         products,
-        totalProducts,
         isLoading,
         error,
         page,
         limit,
+        totalProducts,
         nextPage,
-        prevPage,
-        setPage,
-        setLimit,
+        prevPage
     };
 }
 

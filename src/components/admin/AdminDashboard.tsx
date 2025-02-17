@@ -7,60 +7,33 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { useAuth } from '@/app/contexts/AuthContext'
-import { fetchDashboardStats, fetchRecentOrders, fetchTopProducts, fetchWeeklySales } from '@/lib/api'
+import { fetchDashboardStats, fetchRecentOrders, fetchTopProducts, fetchWeeklySales, DashboardStats, Order, TopProduct, WeeklySales } from '@/lib/api'
 import { useToast } from "@/components/ui/use-toast"
 import { Loader2, BarChart2, Package, ShoppingCart, Settings, Home, Users, LogOut } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
-import {
-    Sidebar,
-    SidebarContent,
-    SidebarHeader,
-    SidebarMenu,
-    SidebarMenuItem,
-    SidebarMenuButton,
-    SidebarProvider,
-    SidebarTrigger,
-} from "@/components/ui/sidebar"
 
-// Définition des types
-interface DashboardStats {
-    totalRevenue: number | null;
-    totalOrders: number | null;
-    totalProducts: number | null;
-    totalUsers: number | null;
-}
+// Importez chaque composant de la barre latérale individuellement
+import { Sidebar } from "@/components/ui/sidebar"
+import { SidebarContent } from "@/components/ui/sidebar"
+import { SidebarHeader } from "@/components/ui/sidebar"
+import { SidebarMenu } from "@/components/ui/sidebar"
+import { SidebarMenuItem } from "@/components/ui/sidebar"
+import { SidebarMenuButton } from "@/components/ui/sidebar"
+import { SidebarProvider } from "@/components/ui/sidebar"
+import { SidebarTrigger } from "@/components/ui/sidebar"
 
-interface Order {
-    id: string;
-    totalAmount: number | null;
-    status: string;
-    createdAt: string;
-}
-
-interface TopProduct {
-    id: string;
-    name: string;
-    totalSold: number;
-}
-
-interface WeeklySales {
-    date: string;
-    total: number;
-}
-
-// Fonction utilitaire pour nettoyer les données
-const cleanData = <T extends Record<string, unknown>>(data: T | null | undefined, defaultValue: T): T => {
+const cleanData = <T extends object, U extends T>(data: T | null | undefined, defaultValue: U): U => {
     if (!data) return defaultValue;
 
-    return Object.keys(defaultValue).reduce((acc, key) => {
+    return (Object.keys(defaultValue) as Array<keyof U>).reduce((acc, key) => {
+        const value = data[key as keyof T];
         if (typeof defaultValue[key] === 'number') {
-            const value = data[key];
-            acc[key] = typeof value === 'number' && !isNaN(value) ? value : null;
+            acc[key] = (typeof value === 'number' && !isNaN(value)) ? (value as U[keyof U]) : defaultValue[key];
         } else {
-            acc[key] = data[key] ?? defaultValue[key];
+            acc[key] = (value !== null && value !== undefined) ? (value as U[keyof U]) : defaultValue[key];
         }
         return acc;
-    }, {} as T);
+    }, { ...defaultValue });
 };
 
 export function AdminDashboard() {
@@ -111,30 +84,32 @@ export function AdminDashboard() {
                 console.log('Raw products data:', productsData);
                 console.log('Raw sales data:', salesData);
 
-                const cleanedStats = cleanData(statsData, {
-                    totalRevenue: null,
-                    totalOrders: null,
-                    totalProducts: null,
-                    totalUsers: null
+                const cleanedStats = cleanData<DashboardStats, DashboardStats>(statsData, {
+                    totalRevenue: 0,
+                    totalOrders: 0,
+                    totalProducts: 0,
+                    totalUsers: 0
                 });
 
-                const cleanedOrders = (ordersData || []).map(order => cleanData(order, {
-                    id: '',
-                    totalAmount: null,
-                    status: '',
-                    createdAt: new Date().toISOString()
+                const cleanedOrders = (ordersData || []).map(order => cleanData<Order, Order>(order, {
+                    id: 0,
+                    user_id: 0,
+                    total_amount: 0,
+                    status: 'pending',
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
                 }));
 
                 console.log('Cleaned stats data:', JSON.stringify(cleanedStats, null, 2));
                 console.log('Cleaned orders data:', JSON.stringify(cleanedOrders, null, 2));
 
-                const cleanedProducts = (productsData || []).map(product => cleanData(product, {
-                    id: '',
+                const cleanedProducts = (productsData || []).map(product => cleanData<TopProduct, TopProduct>(product, {
+                    id: 0, // Changed from '' to 0
                     name: '',
                     totalSold: 0
                 }));
 
-                const cleanedSalesData = (salesData || []).map(sale => cleanData(sale, {
+                const cleanedSalesData = (salesData || []).map(sale => cleanData<WeeklySales, WeeklySales>(sale, {
                     date: '',
                     total: 0
                 }));
@@ -173,7 +148,7 @@ export function AdminDashboard() {
         return (
             <div className="flex flex-col items-center justify-center h-screen">
                 <p className="text-red-500 text-xl mb-4">{error}</p>
-                <Button onClick={() => router.reload()}>Réessayer</Button>
+                <Button onClick={() => router.refresh()}>Réessayer</Button>
             </div>
         )
     }
@@ -182,7 +157,7 @@ export function AdminDashboard() {
         return (
             <div className="flex flex-col items-center justify-center h-screen">
                 <p className="text-xl mb-4">Aucune donnée disponible pour le tableau de bord.</p>
-                <Button onClick={() => router.reload()}>Rafraîchir</Button>
+                <Button onClick={() => router.refresh()}>Rafraîchir</Button>
             </div>
         )
     }
@@ -358,14 +333,14 @@ export function AdminDashboard() {
                                                     <TableRow key={order.id}>
                                                         <TableCell>{order.id}</TableCell>
                                                         <TableCell>
-                                                            {order.totalAmount != null
-                                                                ? `${order.totalAmount.toFixed(2)} €`
+                                                            {order.total_amount != null
+                                                                ? `${order.total_amount.toFixed(2)} €`
                                                                 : 'N/A'}
                                                         </TableCell>
                                                         <TableCell>{order.status || 'N/A'}</TableCell>
                                                         <TableCell>
-                                                            {order.createdAt
-                                                                ? new Date(order.createdAt).toLocaleDateString()
+                                                            {order.created_at
+                                                                ? new Date(order.created_at).toLocaleDateString()
                                                                 : 'N/A'}
                                                         </TableCell>
                                                     </TableRow>
@@ -385,7 +360,8 @@ export function AdminDashboard() {
                             <Card>
                                 <CardHeader>
                                     <CardTitle>Produits les plus vendus</CardTitle>
-                                </CardHeader>
+
+                </CardHeader>
                                 <CardContent>
                                     <Table>
                                         <TableHeader>
@@ -393,7 +369,6 @@ export function AdminDashboard() {
                                                 <TableHead>Produit</TableHead>
                                                 <TableHead>Total vendu</TableHead>
                                             </TableRow>
-
                                         </TableHeader>
                                         <TableBody>
                                             {topProducts.length > 0 ? (

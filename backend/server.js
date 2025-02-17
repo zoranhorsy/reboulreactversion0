@@ -31,7 +31,7 @@ app.use((req, res, next) => {
     next();
 });
 
-// Ajoutez ce middleware juste avant la ligne app.use('/uploads', express.static(...))
+// Middleware pour les logs d'accès aux images
 app.use('/uploads', (req, res, next) => {
     console.log(`Tentative d'accès à l'image: ${req.url}`);
     next();
@@ -61,12 +61,13 @@ app.use('/api/admin', adminRoutes);
 
 app.use('/api/upload', uploadRoutes);
 
-app.get('/', (req, res) => {
-    res.json({ message: 'Bienvenue sur l\'API de Reboul Store' });
-});
 
 const brandRoutes = require('./routes/brandRoutes');
 app.use('/api/brands', brandRoutes);
+
+app.get('/', (req, res) => {
+    res.json({ message: 'Bienvenue sur l\'API de Reboul Store' });
+});
 
 // Route de test pour les uploads
 app.get('/test-uploads', (req, res) => {
@@ -81,18 +82,29 @@ app.get('/test-uploads', (req, res) => {
 // Middleware de gestion des erreurs
 app.use(errorHandler);
 
-// Démarrage du serveur
-const PORT = process.env.PORT || 5001;
-app.listen(PORT, () => {
-    console.log(`Serveur démarré sur le port ${PORT}`);
-}).on('error', (err) => {
-    if (err.code === 'EADDRINUSE') {
-        console.log(`Le port ${PORT} est déjà utilisé. Tentative avec le port ${PORT + 1}`);
-        app.listen(PORT + 1, () => {
-            console.log(`Serveur démarré sur le port ${PORT + 1}`);
-        });
+// Fonction pour démarrer le serveur
+const startServer = (port) => {
+    app.listen(port, () => {
+        console.log(`Serveur démarré sur le port ${port}`);
+    }).on('error', (err) => {
+        if (err.code === 'EADDRINUSE') {
+            console.log(`Le port ${port} est déjà utilisé. Tentative avec le port ${port + 1}`);
+            startServer(port + 1);
+        } else {
+            console.error('Erreur lors du démarrage du serveur:', err);
+        }
+    });
+};
+
+// Vérification de la connexion à la base de données avant de démarrer le serveur
+pool.query('SELECT NOW()', (err) => {
+    if (err) {
+        console.error('Erreur de connexion à la base de données:', err);
+        process.exit(1);
     } else {
-        console.error('Erreur lors du démarrage du serveur:', err);
+        console.log('Connexion à la base de données réussie');
+        const PORT = process.env.PORT || 5001;
+        startServer(PORT);
     }
 });
 

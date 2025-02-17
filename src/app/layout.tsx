@@ -1,3 +1,4 @@
+import React from 'react';
 import '@/app/globals.css'
 import { Toaster } from "@/components/ui/toaster"
 import Footer from '@/components/Footer'
@@ -8,7 +9,7 @@ import { AuthProvider } from '@/app/contexts/AuthContext'
 import { Dock } from '@/components/Dock'
 import './fonts.css'
 
-export default function RootLayout({ children }) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
     return (
         <html lang="fr" className={GeistSans.className}>
             <body className="flex flex-col min-h-screen">

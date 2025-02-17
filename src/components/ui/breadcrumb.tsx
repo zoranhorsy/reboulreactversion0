@@ -32,25 +32,29 @@ const BreadcrumbItem = React.forwardRef<
     HTMLLIElement,
     React.ComponentPropsWithoutRef<"li">
 >(({ className, ...props }, ref) => {
-    const itemRef = React.useRef(null)
+    const itemRef = React.useRef<HTMLLIElement | null>(null)
 
     React.useEffect(() => {
-        anime({
-            targets: itemRef.current,
-            opacity: [0, 1],
-            translateY: [10, 0],
-            duration: 500,
-            easing: 'easeOutQuad',
-            delay: anime.stagger(100)
-        })
+        if (itemRef.current) {
+            anime({
+                targets: itemRef.current,
+                opacity: [0, 1],
+                translateY: [10, 0],
+                duration: 500,
+                easing: 'easeOutQuad',
+                delay: anime.stagger(100)
+            })
+        }
     }, [])
 
     return (
         <li
             ref={(node) => {
-                itemRef.current = node
-                if (typeof ref === 'function') ref(node)
-                else if (ref) ref.current = node
+                if (node) {
+                    itemRef.current = node
+                    if (typeof ref === 'function') ref(node)
+                    else if (ref) ref.current = node
+                }
             }}
             className={cn("inline-flex items-center gap-1.5", className)}
             {...props}

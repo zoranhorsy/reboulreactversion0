@@ -12,7 +12,7 @@ interface FeaturedCarouselProps {
 }
 
 export function FeaturedCarousel({ storeType }: FeaturedCarouselProps) {
-    const { products, isLoading, error } = useProducts({ featured: 'true', limit: '8', storeType })
+    const { products, isLoading, error } = useProducts(1, 8, { featured: true, store_type: storeType })
     const [currentIndex, setCurrentIndex] = useState(0)
     const [autoScrollEnabled, setAutoScrollEnabled] = useState(true)
     const autoScrollIntervalRef = useRef<NodeJS.Timeout | null>(null)

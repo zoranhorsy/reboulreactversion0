@@ -18,7 +18,7 @@ export function HomeContent() {
     }
 
     return (
-        <div className="space-y-32">
+        <div>
             <section className="animate-section font-light pt-8">
                 <Hero />
             </section>

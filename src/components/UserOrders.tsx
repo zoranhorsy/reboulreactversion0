@@ -12,8 +12,8 @@ export function UserOrders() {
     const loadOrders = useCallback(async () => {
         setIsLoading(true);
         try {
-            const fetchedOrders = await api.fetchOrders();
-            setOrders(fetchedOrders);
+            const response = await api.fetchOrders();
+            setOrders(response.data);
         } catch (error) {
             console.error('Failed to load orders:', error);
             toast({
@@ -57,10 +57,10 @@ export function UserOrders() {
                     <Card key={order.id}>
                         <CardContent className="p-4">
                             <p>Commande #{order.id}</p>
-                            <p>Date: {new Date(order.createdAt).toLocaleDateString()}</p>
-                            <p>Total: {order.totalAmount.toFixed(2)} €</p>
+                            <p>Date: {new Date(order.created_at).toLocaleDateString()}</p>
+                            <p>Total: {order.total_amount.toFixed(2)} €</p>
                             <p>Statut: {order.status}</p>
-                            <Button onClick={() => handleViewDetails(order.id)} className="mt-2">
+                            <Button onClick={() => handleViewDetails(String(order.id))} className="mt-2">
                                 Voir les détails
                             </Button>
                         </CardContent>

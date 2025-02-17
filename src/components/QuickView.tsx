@@ -14,6 +14,8 @@ type Product = {
     image: string
     description: string
     tags: string[]
+    stock: number
+    images?: string[]
 }
 
 type QuickViewProps = {
@@ -52,7 +54,16 @@ export function QuickView({ product }: QuickViewProps) {
                             ))}
                         </div>
                     </div>
-                    <AddToCartButton product={product} />
+                    <AddToCartButton
+                        productId={String(product.id)}
+                        name={product.name}
+                        price={product.price}
+                        image={Array.isArray(product.images) && product.images.length > 0 && typeof product.images[0] === 'string'
+                            ? product.images[0]
+                            : "/placeholder.svg"}
+                        disabled={!product.stock || product.stock <= 0}
+                        stock={product.stock}
+                    />
                 </div>
                 <button
                     className="absolute top-4 right-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
