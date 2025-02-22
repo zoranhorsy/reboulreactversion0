@@ -27,7 +27,7 @@ router.get(
     query("maxPrice").optional().isFloat({ min: 0 }).withMessage("Le prix maximum doit être un nombre positif"),
     query("color").optional().isString(),
     query("size").optional().isString(),
-    query("store_type").optional().isIn(["adult", "kids", "sneakers"]),
+    query("store_type").optional().isIn(["adult", "kids", "sneakers", "cpcompany"]),
     query("featured").optional().isBoolean(),
     query("search").optional().isString(),
     query("sort").optional().isIn(["name", "price"]).withMessage("Le tri doit être soit par nom, soit par prix"),
@@ -70,7 +70,7 @@ router.post(
     body("description").optional().isString(),
     body("category_id").optional().isInt(),
     body("brand").optional().isString(),
-    body("store_type").optional().isIn(["adult", "kids", "sneakers"]),
+    body("store_type").optional().isIn(["adult", "kids", "sneakers", "cpcompany"]),
   ],
   validateRequest,
   async (req, res, next) => {
@@ -95,7 +95,7 @@ router.put(
     body("description").optional().isString(),
     body("category_id").optional().isInt(),
     body("brand").optional().isString(),
-    body("store_type").optional().isIn(["adult", "kids", "sneakers"]),
+    body("store_type").optional().isIn(["adult", "kids", "sneakers", "cpcompany"]),
   ],
   validateRequest,
   async (req, res, next) => {

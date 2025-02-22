@@ -10,7 +10,7 @@ const productValidations = {
     query("maxPrice").optional().isFloat({ min: 0 }),
     query("color").optional().isString(),
     query("size").optional().isString(),
-    query("store_type").optional().isIn(["adult", "kids", "sneakers"]),
+    query("store_type").optional().isIn(["adult", "kids", "sneakers", "cpcompany"]),
     query("featured").optional().isBoolean(),
     query("search").optional().isString(),
     query("sort").optional().isIn(["name", "price"]),

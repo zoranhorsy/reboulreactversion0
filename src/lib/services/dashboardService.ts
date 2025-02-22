@@ -6,7 +6,7 @@ export class DashboardService {
 
   async fetchDashboardStats(): Promise<DashboardStats> {
     try {
-      const response = await this.instance.get("/admin/stats")
+      const response = await this.instance.get("/admin/dashboard/stats")
       return response.data
     } catch (error) {
       console.error("Error fetching dashboard stats:", error)
@@ -21,7 +21,7 @@ export class DashboardService {
 
   async fetchTopProducts(): Promise<TopProduct[]> {
     try {
-      const response = await this.instance.get("/admin/top-products")
+      const response = await this.instance.get("/admin/dashboard/top-products")
       return response.data
     } catch (error) {
       console.error("Error fetching top products:", error)
@@ -31,7 +31,7 @@ export class DashboardService {
 
   async fetchWeeklySales(): Promise<WeeklySales[]> {
     try {
-      const response = await this.instance.get("/admin/weekly-sales")
+      const response = await this.instance.get("/admin/dashboard/weekly-sales")
       return response.data
     } catch (error) {
       console.error("Error fetching weekly sales:", error)

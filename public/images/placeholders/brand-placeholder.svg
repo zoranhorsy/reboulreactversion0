@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="600" height="800" viewBox="0 0 600 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Fond avec dégradé -->
+    <rect width="600" height="800" fill="url(#gradient)"/>
+    
+    <!-- Motif de points -->
+    <pattern id="dots" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+        <circle cx="2" cy="2" r="1" fill="rgba(255,255,255,0.1)"/>
+    </pattern>
+    <rect width="600" height="800" fill="url(#dots)"/>
+    
+    <!-- Logo placeholder -->
+    <g transform="translate(200,300)">
+        <!-- Cercle extérieur -->
+        <circle cx="100" cy="100" r="80" stroke="rgba(255,255,255,0.2)" stroke-width="2" fill="none"/>
+        
+        <!-- Icône de marque stylisée -->
+        <path d="M70 100 L100 70 L130 100 L100 130 Z" 
+              stroke="rgba(255,255,255,0.3)" 
+              stroke-width="2" 
+              fill="none"/>
+        
+        <!-- Texte "BRAND" -->
+        <text x="100" y="200" 
+              font-family="Arial, sans-serif" 
+              font-size="24" 
+              fill="rgba(255,255,255,0.4)" 
+              text-anchor="middle">
+            BRAND
+        </text>
+    </g>
+    
+    <!-- Définition du dégradé -->
+    <defs>
+        <linearGradient id="gradient" x1="0" y1="0" x2="600" y2="800" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#1a1a1a"/>
+            <stop offset="100%" stop-color="#2a2a2a"/>
+        </linearGradient>
+    </defs>
+    
+    <!-- Overlay subtil -->
+    <rect width="600" height="800" fill="url(#overlay)"/>
+    <defs>
+        <linearGradient id="overlay" x1="0" y1="0" x2="0" y2="800" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="rgba(0,0,0,0)"/>
+            <stop offset="100%" stop-color="rgba(0,0,0,0.3)"/>
+        </linearGradient>
+    </defs>
+</svg> 

@@ -1,4 +1,12 @@
-import type { AppRouterInstance } from "next/dist/shared/lib/app-router-context"
+// Mock router type for testing
+interface MockRouter {
+  push: (path: string) => void;
+  back: () => void;
+  forward: () => void;
+  refresh: () => void;
+  replace: (path: string) => void;
+  prefetch: (path: string) => void;
+}
 
 process.emitWarning = () => {}
 
@@ -38,8 +46,13 @@ Object.defineProperty(window, "localStorage", {
 })
 
 // Mock router
-const mockRouter: Partial<AppRouterInstance> = {
+const mockRouter: MockRouter = {
   push: jest.fn(),
+  back: jest.fn(),
+  forward: jest.fn(),
+  refresh: jest.fn(),
+  replace: jest.fn(),
+  prefetch: jest.fn(),
 }
 
 // Mock du composant qui utilise useAuth
@@ -64,7 +77,7 @@ describe("AuthContext", () => {
 
   it("provides authentication context to child components", () => {
     render(
-      <AuthProvider router={mockRouter as AppRouterInstance}>
+      <AuthProvider router={mockRouter as MockRouter}>
         <TestComponent />
       </AuthProvider>,
     )
@@ -87,7 +100,7 @@ describe("AuthContext", () => {
     ;(axios.post as jest.Mock).mockResolvedValueOnce({ data: { user: mockUser, token: mockToken } })
 
     render(
-      <AuthProvider router={mockRouter as AppRouterInstance}>
+      <AuthProvider router={mockRouter as MockRouter}>
         <TestComponent />
       </AuthProvider>,
     )
@@ -110,7 +123,7 @@ describe("AuthContext", () => {
     ;(axios.post as jest.Mock).mockResolvedValueOnce({ data: { user: mockUser, token: mockToken } })
 
     render(
-      <AuthProvider router={mockRouter as AppRouterInstance}>
+      <AuthProvider router={mockRouter as MockRouter}>
         <TestComponent />
       </AuthProvider>,
     )
@@ -134,7 +147,7 @@ describe("AuthContext", () => {
     ;(axios.get as jest.Mock).mockResolvedValueOnce({ data: mockUser })
 
     render(
-      <AuthProvider router={mockRouter as AppRouterInstance}>
+      <AuthProvider router={mockRouter as MockRouter}>
         <TestComponent />
       </AuthProvider>,
     )
@@ -160,7 +173,7 @@ describe("AuthContext", () => {
     ;(axios.get as jest.Mock).mockResolvedValueOnce({ data: mockUser })
 
     render(
-      <AuthProvider router={mockRouter as AppRouterInstance}>
+      <AuthProvider router={mockRouter as MockRouter}>
         <TestComponent />
       </AuthProvider>,
     )
@@ -178,7 +191,7 @@ describe("AuthContext", () => {
     ;(axios.get as jest.Mock).mockRejectedValueOnce(new Error("Invalid token"))
 
     render(
-      <AuthProvider router={mockRouter as AppRouterInstance}>
+      <AuthProvider router={mockRouter as MockRouter}>
         <TestComponent />
       </AuthProvider>,
     )

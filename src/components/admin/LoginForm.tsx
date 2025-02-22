@@ -31,7 +31,7 @@ export function LoginForm() {
                     title: "Connexion réussie",
                     description: "Bienvenue dans l'interface d'administration.",
                 })
-                router.push('/admin/dashboard')
+                router.push('/admin')
             } else {
                 throw new Error('Accès non autorisé')
             }

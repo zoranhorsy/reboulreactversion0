@@ -12,6 +12,19 @@ import { Label } from "@/components/ui/label"
 
 type OrderStatus = "pending" | "processing" | "shipped" | "delivered" | "cancelled" | "returned"
 
+interface CheckoutFormProps {
+  shippingData: {
+    address: string
+    email: string
+    city: string
+    country: string
+    postalCode: string
+    firstName: string
+    lastName: string
+    phone: string
+  } | null
+}
+
 interface OrderItem {
   id: string
   name: string
@@ -39,7 +52,7 @@ interface Order {
   }
 }
 
-export function CheckoutForm() {
+export function CheckoutForm({ shippingData }: CheckoutFormProps) {
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const { items: cartItems, total, clearCart, setLastOrder } = useCart()
@@ -53,13 +66,13 @@ export function CheckoutForm() {
   })
 
   const [shippingAddress, setShippingAddress] = useState({
-    street: "",
-    city: "",
-    postalCode: "",
-    country: "",
+    street: shippingData?.address || "",
+    city: shippingData?.city || "",
+    postalCode: shippingData?.postalCode || "",
+    country: shippingData?.country || "",
   })
 
-  const [email, setEmail] = useState("")
+  const [email, setEmail] = useState(shippingData?.email || "")
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -122,8 +135,8 @@ export function CheckoutForm() {
       const orderDetails: Order = {
         id: `ORD-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
         date: new Date().toISOString(),
-        customer: "John Doe", // À remplacer par les informations réelles du client
-        email: email || "test@example.com", // Utiliser une adresse e-mail par défaut si non fournie
+        customer: shippingData ? `${shippingData.firstName} ${shippingData.lastName}` : "John Doe",
+        email: email || "test@example.com",
         total: total,
         status: "pending",
         items: cartItems.map((item) => ({

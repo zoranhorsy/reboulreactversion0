@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input"
 import { useToast } from "@/components/ui/use-toast"
 import { useAuth } from "@/app/contexts/AuthContext"
 import { Eye, EyeOff } from 'lucide-react'
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card"
+import { Label } from '@/components/ui/label'
 
 export default function Login() {
     const [email, setEmail] = useState('')
@@ -19,62 +20,63 @@ export default function Login() {
     const { toast } = useToast()
     const { login } = useAuth()
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
-        setIsLoading(true)
+        const formData = new FormData(e.currentTarget)
+        const email = formData.get('email') as string
+        const password = formData.get('password') as string
+
         try {
-            console.log('Tentative de connexion avec:', { email, password: '********' })
             const { user } = await login(email, password)
-            console.log('Connexion réussie pour:', user.email)
             toast({
-                title: "Connexion réussie",
-                description: `Bienvenue ${user.username} sur votre compte Reboul Store.`,
+                title: 'Connexion réussie',
+                description: 'Vous êtes maintenant connecté.',
             })
-            router.push('/profil')
+            // Rediriger vers l'admin si l'utilisateur est admin, sinon vers l'accueil
+            router.push(user.isAdmin ? '/admin' : '/')
         } catch (error) {
-            console.error("Erreur de connexion:", error)
             toast({
-                title: "Erreur de connexion",
-                description: error instanceof Error ? error.message : "Une erreur inattendue s'est produite. Veuillez réessayer.",
-                variant: "destructive",
+                title: 'Erreur',
+                description: 'Email ou mot de passe incorrect.',
+                variant: 'destructive',
             })
-        } finally {
-            setIsLoading(false)
         }
     }
 
     return (
-        <div className="container mx-auto px-4 py-8">
-            <Card className="max-w-md mx-auto">
+        <div className="container mx-auto flex items-center justify-center min-h-screen py-10">
+            <Card className="w-[400px]">
                 <CardHeader>
-                    <CardTitle className="text-3xl font-bold text-primary">Connexion</CardTitle>
+                    <CardTitle>Connexion</CardTitle>
+                    <CardDescription>
+                        Connectez-vous à votre compte pour accéder à votre espace personnel.
+                    </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        <div>
-                            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="email">Email</Label>
                             <Input
                                 id="email"
+                                name="email"
                                 type="email"
+                                placeholder="exemple@email.com"
+                                required
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                required
-                                className="w-full"
-                                placeholder="votre@email.com"
                                 disabled={isLoading}
                             />
                         </div>
-                        <div>
-                            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">Mot de passe</label>
+                        <div className="space-y-2">
+                            <Label htmlFor="password">Mot de passe</Label>
                             <div className="relative">
                                 <Input
                                     id="password"
+                                    name="password"
                                     type={showPassword ? "text" : "password"}
+                                    required
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    required
-                                    className="w-full pr-10"
-                                    placeholder="Votre mot de passe"
                                     disabled={isLoading}
                                 />
                                 <button

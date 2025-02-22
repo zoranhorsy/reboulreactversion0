@@ -1,118 +1,179 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { Product } from '@/lib/api'
-import { useCart, CartItem } from '@/app/contexts/CartContext'
+import { Card } from '@/components/ui/card'
+import { motion } from 'framer-motion'
+import { Heart, Star } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 interface FeaturedProductCardProps {
-    product: Product
+    product: {
+        id: string
+        name: string
+        price: number
+        images: (string | File | Blob)[]
+        description?: string
+        category?: string
+        tags?: string[]
+        brand?: string
+        rating?: number
+        reviews_count?: number
+        stock?: number
+        variants?: Array<{
+            size: string
+            color: string
+            stock: number
+        }>
+    }
+}
+
+const getImageUrl = (image: string | File | Blob): string => {
+    if (typeof image === 'string') {
+        if (image.startsWith('http')) return image
+        if (image.startsWith('/')) return image
+        return `/uploads/${image}`
+    }
+    return URL.createObjectURL(image)
 }
 
 export function FeaturedProductCard({ product }: FeaturedProductCardProps) {
-    const { addItem, items } = useCart()
-    const [isAdding, setIsAdding] = useState(false)
+    const formatPrice = (price: number) => {
+        return new Intl.NumberFormat('fr-FR', {
+            style: 'currency',
+            currency: 'EUR',
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        }).format(price)
+    }
 
-    useEffect(() => {
-        console.log('FeaturedProductCard mounted for product:', product)
-        console.log('Current cart items:', items)
-    }, [product, items])
-
-    const handleAddToCart = () => {
-        console.log('handleAddToCart called for product:', product)
-        setIsAdding(true)
-        try {
-            console.log('Creating CartItem from product:', product)
-            const cartItem: CartItem = {
-                id: String(product.id),
-                name: product.name,
-                price: product.price,
-                quantity: 1,
-                image: Array.isArray(product.images) && product.images.length > 0 && typeof product.images[0] === 'string'
-                    ? product.images[0]
-                    : '/placeholder.svg'
-            }
-            console.log('CartItem created:', cartItem)
-            console.log('Calling addItem function')
-            addItem(cartItem)
-            console.log('addItem function called successfully')
-        } catch (error) {
-            console.error('Error in handleAddToCart:', error)
-        } finally {
-            setIsAdding(false)
-            console.log('handleAddToCart completed, isAdding set to false')
+    const calculateStock = () => {
+        if (product.variants && product.variants.length > 0) {
+            return product.variants.reduce((total, variant) => total + variant.stock, 0)
         }
+        return product.stock || 0
     }
 
-    console.log('Rendering FeaturedProductCard for product:', product)
-
-    if (!product || typeof product !== 'object') {
-        console.error('Invalid product prop:', product)
-        return null
-    }
+    const totalStock = calculateStock()
 
     return (
-        <Card className="w-full h-full max-w-4xl mx-auto overflow-hidden">
-            <div className="flex flex-col md:flex-row h-full">
-                <div className="relative w-full md:w-1/2 pt-[75%] md:pt-0">
+        <Link href={`/produit/${product.id}`}>
+            <Card className="group relative overflow-hidden bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800
+                hover:border-primary/50 dark:hover:border-primary/50 transition-colors duration-300">
+                <div className="aspect-[3/4] relative overflow-hidden">
                     <Image
-                        src={Array.isArray(product.images) && product.images.length > 0 && typeof product.images[0] === 'string'
-                            ? product.images[0]
-                            : '/placeholder.svg'}
+                        src={Array.isArray(product.images) && product.images.length > 0 ? getImageUrl(product.images[0]) : '/placeholder.svg'}
                         alt={product.name}
                         fill
-                        className="object-cover"
-                        sizes="(max-width: 768px) 100vw, 50vw"
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
                         priority
                     />
-                    {product.category && (
-                        <Badge
-                            variant="secondary"
-                            className="absolute top-2 right-2 text-xs font-medium"
-                        >
-                            {String(product.category)}
-                        </Badge>
-                    )}
-                </div>
-                <CardContent className="flex flex-col justify-between p-6 md:w-1/2">
-                    <div className="space-y-4">
-                        <h3 className="text-2xl font-semibold line-clamp-2">{product.name}</h3>
-                        {product.description && (
-                            <p className="text-muted-foreground line-clamp-3">{product.description}</p>
-                        )}
-                        <p className="text-3xl font-bold">{typeof product.price === 'number' ? product.price.toFixed(2) : '0.00'} €</p>
-                        {Array.isArray(product.tags) && product.tags.length > 0 && (
-                            <div className="flex flex-wrap gap-2">
-                                {product.tags.map((tag, index) => (
-                                    <Badge key={index} variant="outline" className="text-xs">
-                                        {String(tag)}
-                                    </Badge>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                    <div className="flex flex-col sm:flex-row gap-4 mt-6">
-                        <Button asChild className="flex-1">
-                            <Link href={`/produit/${product.id}`} className="flex items-center justify-center w-full h-full">
-                                Voir détails
-                            </Link>
-                        </Button>
+                    <div className="absolute top-4 left-4 right-4 flex justify-between items-start gap-2">
+                        <div className="flex flex-col gap-2">
+                            {product.category && (
+                                <Badge
+                                    variant="secondary"
+                                    className="text-xs font-medium 
+                                        bg-white dark:bg-zinc-900
+                                        text-zinc-900 dark:text-white
+                                        border border-zinc-200 dark:border-zinc-800"
+                                >
+                                    {product.category}
+                                </Badge>
+                            )}
+                            {totalStock === 0 && (
+                                <Badge
+                                    variant="destructive"
+                                    className="text-xs font-medium"
+                                >
+                                    Rupture de stock
+                                </Badge>
+                            )}
+                        </div>
                         <Button
-                            variant="outline"
-                            className="flex-1 flex items-center justify-center"
-                            onClick={handleAddToCart}
-                            disabled={isAdding}
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 rounded-full bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm
+                                border border-zinc-200 dark:border-zinc-800
+                                text-zinc-900 dark:text-white
+                                opacity-0 group-hover:opacity-100 transition-opacity
+                                hover:scale-110 hover:bg-white dark:hover:bg-zinc-900"
+                            onClick={(e) => {
+                                e.preventDefault() // Empêche la navigation vers la page produit
+                                // Ajouter ici la logique pour les favoris
+                            }}
                         >
-                            {isAdding ? 'Ajout en cours...' : 'Ajouter au panier'}
+                            <Heart className="w-4 h-4" />
                         </Button>
                     </div>
-                </CardContent>
-            </div>
-        </Card>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent 
+                        opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <div className="absolute inset-0 flex flex-col justify-end p-6">
+                            <div className="space-y-4">
+                                {product.brand && (
+                                    <span className="block font-geist text-xs tracking-wider text-white/80 uppercase">
+                                        {product.brand}
+                                    </span>
+                                )}
+                                <h3 className="font-geist text-xl text-white font-medium 
+                                    transform translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 
+                                    transition-all duration-300">
+                                    {product.name}
+                                </h3>
+                                {product.description && (
+                                    <p className="font-geist text-sm text-white/80 line-clamp-2
+                                        transform translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 
+                                        transition-all duration-300 delay-100">
+                                        {product.description}
+                                    </p>
+                                )}
+                                <div className="flex items-center gap-4
+                                    transform translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 
+                                    transition-all duration-300 delay-200">
+                                    <div className="space-y-1">
+                                        <span className="font-geist text-lg text-white font-medium">
+                                            {formatPrice(product.price)}
+                                        </span>
+                                        {product.rating && (
+                                            <div className="flex items-center gap-1">
+                                                <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                                                <span className="text-sm text-white/80">
+                                                    {product.rating.toFixed(1)}
+                                                    {product.reviews_count && (
+                                                        <span className="text-white/60 text-xs ml-1">
+                                                            ({product.reviews_count})
+                                                        </span>
+                                                    )}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                                {product.tags && product.tags.length > 0 && (
+                                    <div className="flex flex-wrap gap-2
+                                        transform translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 
+                                        transition-all duration-300 delay-300">
+                                        {product.tags.map((tag, index) => (
+                                            <Badge
+                                                key={index}
+                                                variant="outline"
+                                                className="text-[10px] text-white/60 border-white/20"
+                                            >
+                                                {tag}
+                                            </Badge>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </Card>
+        </Link>
     )
 }
 

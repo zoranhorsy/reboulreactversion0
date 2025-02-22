@@ -4,6 +4,7 @@ const pool = require('../db');
 const { body, param, query, validationResult } = require('express-validator');
 const { AppError } = require('../middleware/errorHandler');
 const authMiddleware = require('../middleware/auth');
+const { sendOrderConfirmation } = require('../config/mailer');
 
 // Middleware de validation
 const validate = (validations) => {
@@ -24,8 +25,45 @@ const validate = (validations) => {
 const orderValidations = [
     body('items').isArray().withMessage('Les articles de la commande doivent être un tableau'),
     body('items.*.product_id').isInt({ min: 1 }).withMessage('L\'ID du produit doit être un nombre entier positif'),
-    body('items.*.quantity').isInt({ min: 1 }).withMessage('La quantité doit être un nombre entier positif')
+    body('items.*.quantity').isInt({ min: 1 }).withMessage('La quantité doit être un nombre entier positif'),
+    body('items.*.variant').isObject().withMessage('Les informations de variant sont requises'),
+    body('items.*.variant.size').isString().withMessage('La taille est requise'),
+    body('items.*.variant.color').isString().withMessage('La couleur est requise')
 ];
+
+// GET les commandes de l'utilisateur connecté
+router.get('/me', authMiddleware, async (req, res, next) => {
+    try {
+        const { rows } = await pool.query(
+            'SELECT o.*, json_agg(json_build_object(\'id\', oi.id, \'product_id\', oi.product_id, \'quantity\', oi.quantity, \'price\', oi.price)) as items FROM orders o LEFT JOIN order_items oi ON o.id = oi.order_id WHERE o.user_id = $1 GROUP BY o.id ORDER BY o.created_at DESC',
+            [req.user.id]
+        );
+        res.json(rows);
+    } catch (err) {
+        next(new AppError('Erreur lors de la récupération des commandes', 500));
+    }
+});
+
+// GET une commande spécifique (route protégée, admin ou utilisateur propriétaire)
+router.get('/:id',
+    authMiddleware,
+    param('id').isInt({ min: 1 }).withMessage('L\'ID de la commande doit être un nombre entier positif'),
+    validate([param('id')]),
+    async (req, res, next) => {
+        try {
+            const { rows } = await pool.query('SELECT * FROM orders WHERE id = $1', [req.params.id]);
+            if (rows.length === 0) {
+                return next(new AppError('Commande non trouvée', 404));
+            }
+            if (!req.user.isAdmin && req.user.id !== rows[0].user_id) {
+                return next(new AppError('Accès non autorisé', 403));
+            }
+            const orderItems = await pool.query('SELECT * FROM order_items WHERE order_id = $1', [req.params.id]);
+            res.json({ ...rows[0], items: orderItems.rows });
+        } catch (err) {
+            next(new AppError('Erreur lors de la récupération de la commande', 500));
+        }
+    });
 
 // GET toutes les commandes (route protégée, admin seulement)
 router.get('/',
@@ -69,75 +107,122 @@ router.get('/',
         }
     });
 
-// GET une commande spécifique (route protégée, admin ou utilisateur propriétaire)
-router.get('/:id',
-    authMiddleware,
-    param('id').isInt({ min: 1 }).withMessage('L\'ID de la commande doit être un nombre entier positif'),
-    validate([param('id')]),
-    async (req, res, next) => {
-        try {
-            const { rows } = await pool.query('SELECT * FROM orders WHERE id = $1', [req.params.id]);
-            if (rows.length === 0) {
-                return next(new AppError('Commande non trouvée', 404));
-            }
-            if (!req.user.isAdmin && req.user.userId !== rows[0].user_id) {
-                return next(new AppError('Accès non autorisé', 403));
-            }
-            const orderItems = await pool.query('SELECT * FROM order_items WHERE order_id = $1', [req.params.id]);
-            res.json({ ...rows[0], items: orderItems.rows });
-        } catch (err) {
-            next(new AppError('Erreur lors de la récupération de la commande', 500));
-        }
-    });
-
 // POST une nouvelle commande (route protégée)
 router.post('/',
     authMiddleware,
     validate(orderValidations),
     async (req, res, next) => {
-        const { items } = req.body;
-        const client = await pool.connect();
+        let client;
         try {
+            client = await pool.pool.connect();
+            const { items, shipping_info } = req.body;
+            let totalAmount = 0;
+
             await client.query('BEGIN');
 
-            let totalAmount = 0;
+            // Vérifier le stock et calculer le montant total
             for (const item of items) {
-                const { rows } = await client.query('SELECT price, stock FROM products WHERE id = $1', [item.product_id]);
+                // Verrouiller la ligne du produit pour éviter les conflits
+                const { rows } = await client.query(
+                    'SELECT price, variants FROM products WHERE id = $1 FOR UPDATE',
+                    [item.product_id]
+                );
+                
                 if (rows.length === 0) {
                     throw new AppError(`Produit avec l'ID ${item.product_id} non trouvé`, 404);
                 }
-                if (rows[0].stock < item.quantity) {
-                    throw new AppError(`Stock insuffisant pour le produit avec l'ID ${item.product_id}`, 400);
+
+                const product = rows[0];
+                
+                // Trouver le variant correspondant
+                const variant = product.variants.find(
+                    v => v.size === item.variant.size && v.color === item.variant.color
+                );
+
+                if (!variant) {
+                    throw new AppError(
+                        `Variant non trouvé pour le produit ${item.product_id} (taille: ${item.variant.size}, couleur: ${item.variant.color})`,
+                        404
+                    );
                 }
-                totalAmount += rows[0].price * item.quantity;
+
+                // Vérification du stock du variant
+                if (variant.stock < item.quantity) {
+                    throw new AppError(
+                        `Stock insuffisant pour le produit ${item.product_id} (${item.variant.color} - ${item.variant.size}). ` +
+                        `Stock disponible: ${variant.stock}, Quantité demandée: ${item.quantity}`,
+                        400
+                    );
+                }
+
+                // Mettre à jour le stock du variant
+                variant.stock -= item.quantity;
+
+                // Mettre à jour les variants dans la base de données
+                await client.query(
+                    'UPDATE products SET variants = $1 WHERE id = $2',
+                    [JSON.stringify(product.variants), item.product_id]
+                );
+
+                totalAmount += product.price * item.quantity;
             }
 
-            const { rows } = await client.query(
-                'INSERT INTO orders (user_id, total_amount) VALUES ($1, $2) RETURNING *',
-                [req.user.userId, totalAmount]
-            );
-            const orderId = rows[0].id;
+            // Générer un numéro de commande unique
+            const timestamp = Date.now();
+            const orderNumber = `ORD-${timestamp}`;
 
+            // Créer la commande
+            const orderResult = await client.query(
+                'INSERT INTO orders (user_id, total_amount, shipping_info, status, payment_status, order_number) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+                [req.user.id, totalAmount, shipping_info, 'pending', 'completed', orderNumber]
+            );
+            
+            const orderId = orderResult.rows[0].id;
+
+            // Créer les items de la commande avec les informations de variant
             for (const item of items) {
                 await client.query(
-                    'INSERT INTO order_items (order_id, product_id, quantity, price) VALUES ($1, $2, $3, (SELECT price FROM products WHERE id = $2))',
-                    [orderId, item.product_id, item.quantity]
-                );
-                await client.query(
-                    'UPDATE products SET stock = stock - $1 WHERE id = $2',
-                    [item.quantity, item.product_id]
+                    'INSERT INTO order_items (order_id, product_id, quantity, price, variant_info) VALUES ($1, $2, $3, (SELECT price FROM products WHERE id = $2), $4)',
+                    [orderId, item.product_id, item.quantity, JSON.stringify(item.variant)]
                 );
             }
 
             await client.query('COMMIT');
-            res.status(201).json(rows[0]);
+
+            // Récupérer la commande complète
+            const finalOrder = await client.query(
+                `SELECT o.*, 
+                        json_agg(json_build_object(
+                            'product_id', oi.product_id,
+                            'quantity', oi.quantity,
+                            'price', oi.price,
+                            'variant', oi.variant_info
+                        )) as items
+                 FROM orders o
+                 LEFT JOIN order_items oi ON o.id = oi.order_id
+                 WHERE o.id = $1
+                 GROUP BY o.id`,
+                [orderId]
+            );
+
+            // Envoyer l'email de confirmation
+            try {
+                await sendOrderConfirmation(finalOrder.rows[0]);
+                console.log('Email de confirmation envoyé avec succès');
+            } catch (emailError) {
+                console.error('Erreur lors de l\'envoi de l\'email de confirmation:', emailError);
+            }
+
+            res.status(201).json(finalOrder.rows[0]);
+
         } catch (err) {
-            await client.query('ROLLBACK');
+            if (client) await client.query('ROLLBACK');
             next(err);
         } finally {
-            client.release();
+            if (client) client.release();
         }
-    });
+    }
+);
 
 // PUT pour mettre à jour le statut d'une commande (route protégée, admin seulement)
 router.put('/:id/status',
@@ -172,27 +257,46 @@ router.delete('/:id',
     validate([param('id')]),
     async (req, res, next) => {
         const { id } = req.params;
-        const client = await pool.connect();
+        let client;
         try {
+            client = await pool.pool.connect();
             await client.query('BEGIN');
 
             const { rows } = await client.query('SELECT * FROM orders WHERE id = $1', [id]);
             if (rows.length === 0) {
                 throw new AppError('Commande non trouvée', 404);
             }
-            if (!req.user.isAdmin && req.user.userId !== rows[0].user_id) {
+            if (!req.user.isAdmin && req.user.id !== rows[0].user_id) {
                 throw new AppError('Accès non autorisé', 403);
             }
             if (rows[0].status !== 'pending') {
                 throw new AppError('Seules les commandes en attente peuvent être annulées', 400);
             }
 
-            const orderItems = await client.query('SELECT * FROM order_items WHERE order_id = $1', [id]);
+            // Récupérer les items de la commande avec leurs variants
+            const orderItems = await client.query(
+                'SELECT * FROM order_items WHERE order_id = $1',
+                [id]
+            );
+
+            // Restaurer les stocks des variants
             for (const item of orderItems.rows) {
-                await client.query(
-                    'UPDATE products SET stock = stock + $1 WHERE id = $2',
-                    [item.quantity, item.product_id]
+                const { rows: [product] } = await client.query(
+                    'SELECT variants FROM products WHERE id = $1 FOR UPDATE',
+                    [item.product_id]
                 );
+
+                const variant = product.variants.find(
+                    v => v.size === item.variant_info.size && v.color === item.variant_info.color
+                );
+
+                if (variant) {
+                    variant.stock += item.quantity;
+                    await client.query(
+                        'UPDATE products SET variants = $1 WHERE id = $2',
+                        [JSON.stringify(product.variants), item.product_id]
+                    );
+                }
             }
 
             await client.query('DELETE FROM order_items WHERE order_id = $1', [id]);
@@ -201,10 +305,10 @@ router.delete('/:id',
             await client.query('COMMIT');
             res.json({ message: 'Commande annulée avec succès' });
         } catch (err) {
-            await client.query('ROLLBACK');
+            if (client) await client.query('ROLLBACK');
             next(err);
         } finally {
-            client.release();
+            if (client) client.release();
         }
     });
 

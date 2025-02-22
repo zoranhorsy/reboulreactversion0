@@ -3,6 +3,7 @@ export interface Product {
   name: string
   description: string
   price: number
+  old_price?: number
   stock: number
   category_id: number
   category: string
@@ -11,16 +12,17 @@ export interface Product {
   image_url: string
   images: (string | File | Blob)[]
   image: string
-  variants: { size: string; color: string; stock: number }[]
+  variants: Variant[]
   tags: string[]
-  reviews: { id: number; rating: number; comment: string; userName: string; date: string }[]
-  questions: { id: number; question: string; answer?: string }[]
-  faqs: { question: string; answer: string }[]
-  size_chart: { size: string; chest: number; waist: number; hips: number }[]
-  store_type: "adult" | "kids" | "sneakers"
+  details: string[]
+  reviews: Review[]
+  questions: Question[]
+  faqs: FAQ[]
+  size_chart: SizeChart[]
+  store_type: "adult" | "kids" | "sneakers" | "cpcompany"
   featured: boolean
   colors: string[]
-  created_at?: string
+  created_at: string
   updated_at?: string
 }
 

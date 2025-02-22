@@ -16,16 +16,19 @@ export function useProducts(initialPage = 1, initialLimit = 10, params: UseProdu
     const [limit] = useState(initialLimit);
     const [totalProducts, setTotalProducts] = useState(0);
 
+    const { featured, category, brand, store_type } = params;
+
     useEffect(() => {
         const fetchProducts = async () => {
             try {
                 setIsLoading(true);
-                const { featured, ...restParams } = params;
                 const response = await api.fetchProducts({ 
                     page: page.toString(), 
                     limit: limit.toString(),
                     ...(featured !== undefined ? { featured: featured.toString() } : {}),
-                    ...restParams 
+                    ...(category ? { category } : {}),
+                    ...(brand ? { brand } : {}),
+                    ...(store_type ? { store_type } : {})
                 });
                 setProducts(response.products);
                 setTotalProducts(response.total);
@@ -41,7 +44,7 @@ export function useProducts(initialPage = 1, initialLimit = 10, params: UseProdu
         };
 
         fetchProducts();
-    }, [page, limit, params]);
+    }, [page, limit, featured, category, brand, store_type]);
 
     const nextPage = () => {
         const totalPages = Math.ceil(totalProducts / limit);

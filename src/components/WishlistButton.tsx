@@ -1,48 +1,47 @@
 'use client'
 
+import { Button } from '@/components/ui/button'
 import { Heart } from 'lucide-react'
-import { Button } from "@/components/ui/button"
-import { useWishlist } from '@/app/contexts/WishlistContext'
-import { useToast } from "@/components/ui/use-toast"
+import { useToast } from '@/components/ui/use-toast'
+import { useFavorites } from '@/app/contexts/FavoritesContext'
+import { type Product } from '@/lib/api'
 
-type WishlistButtonProps = {
-    product: {
-        id: number
-        name: string
-        price: number
-        image: string
-    }
+interface WishlistButtonProps {
+  product: Product
+  variant?: 'default' | 'ghost' | 'outline'
+  size?: 'default' | 'sm' | 'lg' | 'icon'
 }
 
-export function WishlistButton({ product }: WishlistButtonProps) {
-    const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist()
-    const { toast } = useToast()
+export function WishlistButton({ product, variant = 'ghost', size = 'icon' }: WishlistButtonProps) {
+  const { toast } = useToast()
+  const { addToFavorites, removeFromFavorites, isFavorite } = useFavorites()
+  const isProductFavorite = isFavorite(product.id)
 
-    const toggleWishlist = () => {
-        if (isInWishlist(product.id)) {
-            removeFromWishlist(product.id)
-            toast({
-                title: "Retiré de la liste de souhaits",
-                description: `${product.name} a été retiré de votre liste de souhaits.`,
-            })
-        } else {
-            addToWishlist(product)
-            toast({
-                title: "Ajouté à la liste de souhaits",
-                description: `${product.name} a été ajouté à votre liste de souhaits.`,
-            })
-        }
+  const handleClick = () => {
+    if (isProductFavorite) {
+      removeFromFavorites(product.id)
+      toast({
+        title: 'Produit retiré des favoris',
+        description: `${product.name} a été retiré de vos favoris.`
+      })
+    } else {
+      addToFavorites(product)
+      toast({
+        title: 'Produit ajouté aux favoris',
+        description: `${product.name} a été ajouté à vos favoris.`
+      })
     }
+  }
 
-    return (
-        <Button
-            variant="outline"
-            size="icon"
-            onClick={toggleWishlist}
-            aria-label={isInWishlist(product.id) ? "Retirer de la liste de souhaits" : "Ajouter à la liste de souhaits"}
-        >
-            <Heart className={`h-4 w-4 ${isInWishlist(product.id) ? 'fill-red-500 text-red-500' : ''}`} />
-        </Button>
-    )
+  return (
+    <Button
+      variant={variant}
+      size={size}
+      onClick={handleClick}
+      className={isProductFavorite ? 'text-red-500 hover:text-red-600' : ''}
+    >
+      <Heart className={`h-5 w-5 ${isProductFavorite ? 'fill-current' : ''}`} />
+    </Button>
+  )
 }
 

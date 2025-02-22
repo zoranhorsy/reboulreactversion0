@@ -1,103 +1,160 @@
 'use client'
 
-import React from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
+import { motion } from 'framer-motion'
+import { FeaturedProductCard } from './products/FeaturedProductCard'
+import { Button } from './ui/button'
+import { ChevronRight, Loader2 } from 'lucide-react'
 import Link from 'next/link'
-import { useProducts } from '@/hooks/useProducts'
-import styles from './FeaturedProducts.module.css'
+import { api, type Product } from '@/lib/api'
+import {
+    Carousel,
+    CarouselContent,
+    CarouselItem,
+    CarouselNext,
+    CarouselPrevious,
+} from "@/components/ui/carousel"
+import useEmblaCarousel from 'embla-carousel-react'
+import Autoplay from 'embla-carousel-autoplay'
 
 export function FeaturedProducts() {
-    const { products, isLoading } = useProducts(1, 6, { featured: true })
+    const [emblaRef] = useEmblaCarousel(
+        { 
+            loop: true,
+            align: 'start',
+            skipSnaps: false,
+            dragFree: false,
+        }, 
+        [
+            Autoplay({
+                delay: 4000,
+                stopOnInteraction: true,
+                stopOnMouseEnter: true,
+                playOnInit: true
+            })
+        ]
+    )
 
-    // État de chargement
+    const [products, setProducts] = useState<Product[]>([])
+    const [isLoading, setIsLoading] = useState(true)
+    const [error, setError] = useState<string | null>(null)
+
+    useEffect(() => {
+        const fetchFeaturedProducts = async () => {
+            try {
+                setIsLoading(true)
+                const response = await api.fetchProducts({ featured: "true", limit: "8" })
+                setProducts(response.products)
+            } catch (err) {
+                console.error('Erreur lors de la récupération des produits mis en avant:', err)
+                setError(err instanceof Error ? err.message : "Une erreur est survenue")
+            } finally {
+                setIsLoading(false)
+            }
+        }
+
+        fetchFeaturedProducts()
+    }, [])
+
     if (isLoading) {
         return (
-            <section className="py-20">
-                <div className="container mx-auto px-4">
-                    <h2 className={`text-2xl sm:text-3xl font-light mb-20 tracking-wider ${styles.title}`}>
-                        03 EN VEDETTE
-                    </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        {[1, 2, 3].map((i) => (
-                            <div key={i} className="animate-pulse">
-                                <div className="bg-gray-200 rounded-2xl h-[300px]" />
-                                <div className="mt-4 h-4 bg-gray-200 rounded w-3/4" />
-                                <div className="mt-2 h-4 bg-gray-200 rounded w-1/2" />
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </section>
+            <div className="flex justify-center items-center min-h-[400px]">
+                <Loader2 className="w-8 h-8 animate-spin" />
+            </div>
         )
     }
 
-    // Si pas de produits
-    if (!products?.length) {
+    if (error) {
         return (
-            <section className="py-20">
-                <div className="container mx-auto px-4">
-                    <h2 className={`text-2xl sm:text-3xl font-light mb-20 tracking-wider ${styles.title}`}>
-                        03 EN VEDETTE
-                    </h2>
-                    <div className="text-center text-gray-500">
-                        Aucun produit en vedette disponible
-                    </div>
-                </div>
-            </section>
+            <div className="text-center text-muted-foreground">
+                {error}
+            </div>
         )
     }
-
-    // Afficher les 3 premiers produits
-    const featuredProducts = products.slice(0, 3)
 
     return (
-        <section className="py-20">
-            <div className="container mx-auto px-4">
-                <h2 className={`text-2xl sm:text-3xl font-light mb-20 tracking-wider ${styles.title}`}>
-                    03 EN VEDETTE
-                </h2>
+        <section className="w-full relative">
+            <div className="container mx-auto">
+                <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6 }}
+                    className="text-center mb-16"
+                >
+                    <h2 className="font-geist text-4xl md:text-5xl font-light tracking-wide text-zinc-900 dark:text-white mb-4">
+                        PRODUITS PHARES
+                    </h2>
+                    <p className="font-geist text-lg text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto leading-relaxed">
+                        Découvrez notre sélection de produits exclusifs
+                    </p>
+                </motion.div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    {featuredProducts.map((product) => (
-                        <Link 
-                            key={product.id} 
-                            href={`/produit/${product.id}`}
-                            className="block group"
-                        >
-                            <div className="bg-white rounded-2xl shadow-sm group-hover:shadow-md transition-shadow duration-200">
-                                <div className="aspect-[4/3] relative bg-gray-100 rounded-t-2xl overflow-hidden">
-                                    {/* Image avec fallback */}
-                                    <img
-                                        src={product.image_url || '/placeholder.jpg'}
-                                        alt={product.name}
-                                        className="w-full h-full object-cover"
-                                        loading="lazy"
-                                        onError={(e) => {
-                                            const img = e.target as HTMLImageElement
-                                            img.src = '/placeholder.jpg'
-                                        }}
-                                    />
-                                </div>
-                                
-                                <div className="p-4">
-                                    {/* Infos produit */}
-                                    <div className="mb-2">
-                                        <h3 className="font-medium text-sm uppercase text-gray-900">
-                                            {product.brand}
-                                        </h3>
-                                        <p className="text-sm text-gray-600 mt-1">
-                                            {product.name}
-                                        </p>
-                                    </div>
-                                    
-                                    {/* Prix */}
-                                    <p className="text-sm font-medium text-gray-900">
-                                        {Number(product.price).toFixed(2)} €
-                                    </p>
-                                </div>
-                            </div>
-                        </Link>
-                    ))}
+                <div className="relative px-12">
+                    <Carousel
+                        ref={emblaRef}
+                        className="w-full"
+                    >
+                        <CarouselContent className="-ml-2 md:-ml-4">
+                            {products.map((product, index) => (
+                                <CarouselItem 
+                                    key={product.id} 
+                                    className="pl-2 md:pl-4 basis-full sm:basis-1/2 lg:basis-1/4"
+                                >
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 20 }}
+                                        whileInView={{ opacity: 1, y: 0 }}
+                                        viewport={{ once: true }}
+                                        transition={{ duration: 0.5, delay: index * 0.1 }}
+                                    >
+                                        <FeaturedProductCard product={product} />
+                                    </motion.div>
+                                </CarouselItem>
+                            ))}
+                        </CarouselContent>
+                        <CarouselPrevious 
+                            className="hidden md:flex -left-6 
+                                bg-white dark:bg-zinc-900/80 
+                                border border-zinc-200 dark:border-zinc-800
+                                text-zinc-900 dark:text-white
+                                hover:bg-zinc-100 hover:text-zinc-900
+                                dark:hover:bg-zinc-800 dark:hover:text-white" 
+                        />
+                        <CarouselNext 
+                            className="hidden md:flex -right-6 
+                                bg-white dark:bg-zinc-900/80 
+                                border border-zinc-200 dark:border-zinc-800
+                                text-zinc-900 dark:text-white
+                                hover:bg-zinc-100 hover:text-zinc-900
+                                dark:hover:bg-zinc-800 dark:hover:text-white" 
+                        />
+                    </Carousel>
                 </div>
+
+                <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5, delay: 0.6 }}
+                    className="flex justify-center mt-16"
+                >
+                    <Button 
+                        asChild
+                        variant="outline" 
+                        size="lg"
+                        className="font-geist text-xs tracking-[0.2em] uppercase font-light
+                            bg-transparent
+                            text-white
+                            border-white/20
+                            hover:bg-white/5 hover:text-white
+                            transition-all duration-300"
+                    >
+                        <Link href="/catalogue" className="flex items-center gap-2">
+                            Voir tout le catalogue
+                            <ChevronRight className="w-4 h-4" />
+                        </Link>
+                    </Button>
+                </motion.div>
             </div>
         </section>
     )

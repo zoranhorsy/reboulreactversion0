@@ -1,29 +1,21 @@
 import { Product } from '@/lib/api';
 
-export const constructImageUrl = (imagePath: string): string => {
-    if (!imagePath) {
-        return '/placeholder.png';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api'
+
+export function constructImageUrl(imageUrl: string): string {
+    if (!imageUrl) {
+        return '/placeholder.svg'
     }
 
-    // If it's already a complete URL (including blob URLs), return as is
-    if (imagePath.startsWith('http') ||
-        imagePath.startsWith('data:') ||
-        imagePath.startsWith('blob:')) {
-        return imagePath;
+    // Si c'est déjà une URL absolue ou une image placeholder
+    if (imageUrl.startsWith('http') || imageUrl.startsWith('/placeholder')) {
+        return imageUrl
     }
 
-    // If the path already includes '/uploads', don't add it again
-    if (imagePath.includes('/uploads')) {
-        return imagePath;
-    }
-
-    // Extract just the filename if it's a full path
-    const filename = imagePath.split('/').pop();
-
-    // Construct the URL with the API endpoint
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
-    return `${API_URL}/uploads/${filename}`;
-};
+    // Nettoyer l'URL relative et la convertir en URL absolue
+    const cleanPath = imageUrl.replace(/^\/uploads\//, '').replace(/^\//, '')
+    return `${API_URL}/uploads/${cleanPath}`
+}
 
 // Keep the existing handleSort function
 export const handleSort = (
@@ -40,8 +32,18 @@ export const handleSort = (
     }
     setSortConfig({ key, direction });
     const sortedProducts = [...products].sort((a, b) => {
-        if (a[key] < b[key]) return direction === 'ascending' ? -1 : 1;
-        if (a[key] > b[key]) return direction === 'ascending' ? 1 : -1;
+        const valueA = a[key];
+        const valueB = b[key];
+
+        // Si les deux valeurs sont undefined, on les considère égales
+        if (valueA === undefined && valueB === undefined) return 0;
+        // Si une seule valeur est undefined, on la met à la fin
+        if (valueA === undefined) return 1;
+        if (valueB === undefined) return -1;
+
+        // Comparaison des valeurs définies
+        if (valueA < valueB) return direction === 'ascending' ? -1 : 1;
+        if (valueA > valueB) return direction === 'ascending' ? 1 : -1;
         return 0;
     });
     setFilteredProducts(

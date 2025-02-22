@@ -1,11 +1,12 @@
 module.exports = {
-  testEnvironment: 'node',
-  verbose: true,
-  clearMocks: true,
-  resetMocks: true,
-  restoreMocks: true,
-  moduleDirectories: ['node_modules'],
-  moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/$1'
-  }
+    testEnvironment: 'node',
+    setupFiles: ['dotenv/config'],
+    testMatch: ['**/__tests__/**/*.test.js'],
+    verbose: true,
+    forceExit: true,
+    clearMocks: true,
+    resetMocks: true,
+    restoreMocks: true,
+    testTimeout: 30000,
+    setupFilesAfterEnv: ['./__tests__/setup.js']
 }; 

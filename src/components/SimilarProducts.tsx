@@ -1,142 +1,183 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
-import Link from "next/link"
-import Image from "next/image"
-import PropTypes from "prop-types"
-import { Heart, ChevronLeft, ChevronRight } from "lucide-react"
+import { motion } from "framer-motion"
+import { FeaturedProductCard } from "./products/FeaturedProductCard"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
+import { ChevronLeft, ChevronRight } from "lucide-react"
 import { fetchProducts, Product } from "@/lib/api"
 
-export function SimilarProducts({ currentProductId }: { currentProductId: string }) {
-  const [similarProducts, setSimilarProducts] = useState<Product[]>([])
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    const fetchSimilarProducts = async () => {
-      setIsLoading(true)
-      setError(null)
-      try {
-        const response = await fetchProducts()
-        console.log("API Response:", response)
-
-        if (!response || !response.products || response.products.length === 0) {
-          throw new Error("No products found")
-        }
-        const filteredProducts = response.products.filter((product) => product.id !== currentProductId)
-        const shuffled = filteredProducts.sort(() => 0.5 - Math.random())
-        setSimilarProducts(shuffled)
-      } catch (error) {
-        console.error("Error fetching similar products:", error)
-        setError("Failed to load similar products. Please try again later.")
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    fetchSimilarProducts()
-  }, [currentProductId])
-
-  const handlePrevious = () => {
-    setCurrentIndex((prevIndex) => {
-      const newIndex = prevIndex - 3
-      return newIndex < 0 ? Math.max(0, similarProducts.length - 3) : newIndex
-    })
-  }
-
-  const handleNext = () => {
-    setCurrentIndex((prevIndex) => {
-      const newIndex = prevIndex + 3
-      return newIndex >= similarProducts.length ? 0 : newIndex
-    })
-  }
-
-  if (isLoading) {
-    return <div>Loading similar products...</div>
-  }
-
-  if (error) {
-    return <div>Error: {error}</div>
-  }
-
-  if (similarProducts.length === 0) {
-    return <div>No similar products found.</div>
-  }
-
-  const visibleProducts = similarProducts.slice(currentIndex, currentIndex + 3)
-
-  return (
-    <div className="mt-16 relative">
-      <div className="flex items-center gap-4 mb-8">
-        <span className="text-xs font-bold">02</span>
-        <h2 className="text-sm font-bold">PRODUITS SIMILAIRES</h2>
-        <div className="flex-grow h-px bg-black" />
-      </div>
-
-      {/* Navigation Arrows */}
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={handlePrevious}
-        className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-12 text-gray-400 hover:text-gray-600 hover:bg-transparent"
-      >
-        <ChevronLeft className="h-8 w-8" />
-      </Button>
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={handleNext}
-        className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-12 text-gray-400 hover:text-gray-600 hover:bg-transparent"
-      >
-        <ChevronRight className="h-8 w-8" />
-      </Button>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {visibleProducts.map((product) => (
-          <Link key={product.id} href={`/produit/${product.id}`}>
-            <Card className="rounded-lg overflow-hidden border-none shadow-md hover:shadow-lg transition-shadow">
-              <CardContent className="p-0">
-                <div className="relative">
-                  <div className="aspect-square relative">
-                    <Image
-                      src={Array.isArray(product.images) && product.images.length > 0 && typeof product.images[0] === 'string'
-                        ? product.images[0]
-                        : "/placeholder.svg"}
-                      alt={product.name}
-                      fill
-                      className="object-cover bg-gray-50"
-                    />
-                  </div>
-                  <Button
-                    size="icon"
-                    variant="secondary"
-                    className="absolute top-4 right-4 bg-black hover:bg-black/90 rounded-none w-8 h-8"
-                  >
-                    <Heart className="h-4 w-4 text-white" />
-                  </Button>
-                </div>
-                <div className="p-4">
-                  <div className="space-y-2">
-                    <h3 className="text-sm font-bold uppercase tracking-wide">{product.brand || "BRAND"}</h3>
-                    <p className="text-sm uppercase">{product.name}</p>
-                    <div className="inline-block bg-black text-white px-3 py-1 text-sm">
-                      {product.price.toFixed(0)}€
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-        ))}
-      </div>
-    </div>
-  )
+interface SimilarProductsProps {
+    currentProductId: string
+    brandId?: string
+    categoryId?: string
 }
 
-SimilarProducts.propTypes = {
-  currentProductId: PropTypes.string.isRequired,
+export function SimilarProducts({ currentProductId, brandId, categoryId }: SimilarProductsProps) {
+    const [similarProducts, setSimilarProducts] = useState<Product[]>([])
+    const [currentPage, setCurrentPage] = useState(0)
+    const [isLoading, setIsLoading] = useState(true)
+    const [error, setError] = useState<string | null>(null)
+
+    const productsPerPage = 32
+    const totalPages = Math.ceil(similarProducts.length / productsPerPage)
+
+    useEffect(() => {
+        const fetchSimilarProducts = async () => {
+            setIsLoading(true)
+            setError(null)
+            try {
+                const response = await fetchProducts({
+                    ...(brandId && { brand_id: brandId }),
+                    ...(categoryId && { category_id: categoryId }),
+                    limit: "64"
+                })
+                if (!response || !response.products || response.products.length === 0) {
+                    throw new Error("No products found")
+                }
+                const filteredProducts = response.products
+                    .filter((product) => product.id !== currentProductId)
+                setSimilarProducts(filteredProducts)
+            } catch (error) {
+                console.error("Error fetching similar products:", error)
+                setError("Failed to load similar products")
+            } finally {
+                setIsLoading(false)
+            }
+        }
+
+        fetchSimilarProducts()
+    }, [currentProductId, brandId, categoryId])
+
+    const handlePrevious = () => {
+        setCurrentPage((prev) => (prev > 0 ? prev - 1 : totalPages - 1))
+    }
+
+    const handleNext = () => {
+        setCurrentPage((prev) => (prev < totalPages - 1 ? prev + 1 : 0))
+    }
+
+    if (isLoading) {
+        return (
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
+                {[...Array(8)].map((_, i) => (
+                    <div key={i} className="space-y-4 animate-pulse">
+                        <div className="relative aspect-[3/4] rounded-xl bg-accent/5" />
+                        <div className="space-y-2">
+                            <div className="h-4 w-24 bg-accent/5 rounded" />
+                            <div className="h-4 w-32 bg-accent/5 rounded" />
+                            <div className="h-4 w-20 bg-accent/5 rounded" />
+                        </div>
+                    </div>
+                ))}
+            </div>
+        )
+    }
+
+    if (error || similarProducts.length === 0) {
+        return null
+    }
+
+    const startIndex = currentPage * productsPerPage
+    const visibleProducts = similarProducts.slice(startIndex, startIndex + productsPerPage)
+
+    return (
+        <div className="relative">
+            {/* Navigation Arrows */}
+            {totalPages > 1 && (
+                <>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={handlePrevious}
+                        className="absolute -left-16 top-1/2 -translate-y-1/2 h-12 w-12 rounded-full 
+                            bg-background/80 backdrop-blur-sm border border-border/5 
+                            text-muted-foreground hover:text-primary hover:bg-accent/5 
+                            transition-colors opacity-0 lg:opacity-100"
+                    >
+                        <ChevronLeft className="h-5 w-5" />
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleNext}
+                        className="absolute -right-16 top-1/2 -translate-y-1/2 h-12 w-12 rounded-full 
+                            bg-background/80 backdrop-blur-sm border border-border/5 
+                            text-muted-foreground hover:text-primary hover:bg-accent/5 
+                            transition-colors opacity-0 lg:opacity-100"
+                    >
+                        <ChevronRight className="h-5 w-5" />
+                    </Button>
+                </>
+            )}
+
+            {/* Products Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 mb-4">
+                {visibleProducts.slice(0, 8).map((product, index) => (
+                    <motion.div
+                        key={product.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5, delay: index * 0.1 }}
+                    >
+                        <FeaturedProductCard product={product} />
+                    </motion.div>
+                ))}
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 mb-4">
+                {visibleProducts.slice(8, 16).map((product, index) => (
+                    <motion.div
+                        key={product.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5, delay: index * 0.1 }}
+                    >
+                        <FeaturedProductCard product={product} />
+                    </motion.div>
+                ))}
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 mb-4">
+                {visibleProducts.slice(16, 24).map((product, index) => (
+                    <motion.div
+                        key={product.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5, delay: index * 0.1 }}
+                    >
+                        <FeaturedProductCard product={product} />
+                    </motion.div>
+                ))}
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
+                {visibleProducts.slice(24, 32).map((product, index) => (
+                    <motion.div
+                        key={product.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5, delay: index * 0.1 }}
+                    >
+                        <FeaturedProductCard product={product} />
+                    </motion.div>
+                ))}
+            </div>
+
+            {/* Page Indicators */}
+            {totalPages > 1 && (
+                <div className="flex justify-center mt-8 gap-2">
+                    {[...Array(totalPages)].map((_, i) => (
+                        <button
+                            key={i}
+                            onClick={() => setCurrentPage(i)}
+                            className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                                i === currentPage 
+                                    ? 'bg-primary scale-125' 
+                                    : 'bg-border hover:bg-primary/50'
+                            }`}
+                        />
+                    ))}
+                </div>
+            )}
+        </div>
+    )
 }
 

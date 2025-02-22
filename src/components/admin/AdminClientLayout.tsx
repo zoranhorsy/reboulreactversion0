@@ -26,13 +26,13 @@ export function AdminClientLayout({ children, isAuthenticated }: AdminClientLayo
 
     useEffect(() => {
         if (mounted) {
-            if (!isAuthenticated && pathname !== '/admin/login') {
-                router.replace('/admin/login')
-            } else if (isAuthenticated && pathname === '/admin/login') {
-                router.replace('/admin')
+            if (!isAuthenticated) {
+                router.replace('/connexion')
+            } else if (user && !user.isAdmin) {
+                router.replace('/')
             }
         }
-    }, [mounted, isAuthenticated, pathname, router])
+    }, [mounted, isAuthenticated, user, router])
 
     // Attendre le montage du composant
     if (!mounted) {
@@ -46,13 +46,8 @@ export function AdminClientLayout({ children, isAuthenticated }: AdminClientLayo
         )
     }
 
-    // Afficher le contenu de la page de login si on est sur /admin/login
-    if (pathname === '/admin/login') {
-        return <>{children}</>
-    }
-
-    // Si non authentifié, ne rien afficher (la redirection sera gérée par l'effet)
-    if (!isAuthenticated) {
+    // Si non authentifié ou non admin, ne rien afficher (la redirection sera gérée par l'effet)
+    if (!isAuthenticated || !user?.isAdmin) {
         return null
     }
 
@@ -77,7 +72,7 @@ export function AdminClientLayout({ children, isAuthenticated }: AdminClientLayo
                     <Button
                         onClick={() => {
                             logout()
-                            router.replace('/admin/login')
+                            router.replace('/connexion')
                         }}
                         variant="outline"
                         className="w-full"

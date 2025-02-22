@@ -1,36 +1,56 @@
 const jwt = require('jsonwebtoken');
 const { AppError } = require('./errorHandler');
 
-const authMiddleware = (req, res, next) => {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) {
-        return next(new AppError('Aucun token fourni', 401));
-    }
-
-    const token = authHeader.split(' ')[1];
+module.exports = (req, res, next) => {
     try {
+        // Vérifier si le token est présent
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({
+                status: 'error',
+                message: 'Token d\'authentification manquant'
+            });
+        }
+
+        // Extraire et vérifier le token
+        const token = authHeader.split(' ')[1];
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        req.user = decoded;
 
-        // Add logging for debugging
-        console.log('Utilisateur authentifié:', {
-            userId: decoded.userId,
-            username: decoded.username,
-            isAdmin: decoded.isAdmin
-        });
+        // Ajouter l'utilisateur à la requête
+        req.user = {
+            id: decoded.id || decoded.userId,
+            email: decoded.email,
+            isAdmin: Boolean(decoded.isAdmin)
+        };
 
-        // Check for admin routes
-        if (req.originalUrl.startsWith('/admin') && !decoded.isAdmin) {
+        // Vérification des routes admin
+        if ((req.originalUrl.startsWith('/admin') || req.originalUrl.startsWith('/api/stats')) && !req.user.isAdmin) {
             console.log('Tentative d\'accès non autorisé à une route admin');
             return next(new AppError('Accès non autorisé', 403));
         }
 
         next();
-    } catch (err) {
-        console.error('Erreur de vérification du token:', err);
-        return next(new AppError('Token invalide', 401));
+    } catch (error) {
+        console.error('Erreur d\'authentification:', error);
+        
+        if (error.name === 'JsonWebTokenError') {
+            return res.status(401).json({
+                status: 'error',
+                message: 'Token invalide'
+            });
+        }
+        
+        if (error.name === 'TokenExpiredError') {
+            return res.status(401).json({
+                status: 'error',
+                message: 'Token expiré'
+            });
+        }
+
+        res.status(500).json({
+            status: 'error',
+            message: 'Erreur lors de l\'authentification'
+        });
     }
 };
-
-module.exports = authMiddleware;
 

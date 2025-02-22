@@ -1,0 +1,4 @@
+id,username,email,password_hash,first_name,last_name,is_admin,created_at,notification_settings
+1,zoran,zoran@reboul.com,$2b$10$UzLt9qVpmXa9vSRmhBs2O.MwEf3aC1oS..TY18g8lAzoE/SNXt6lG,zoran,"",t,2025-01-01 13:10:41.056359+01,"{""push"": true, ""email"": true, ""security"": true, ""marketing"": true}"
+3,jaab,jaab@reboul.com,$2b$10$lCQosEgj19A9w4S/a/hX9eKm/qXvEQPaQwfd8VUIlPguks98nCwUO,thomas,lorenzi,f,2025-01-02 11:09:26.046441+01,"{""push"": false, ""email"": true, ""security"": true, ""marketing"": false}"
+7,oklotso,zorhan@reboul.com,$2b$10$JnBnOku5qSMhBFjRsKJ9b.WT0p7GGG9hbw4tpkwuDc6MBetp6KI5a,,,f,2025-02-19 01:08:25.143518+01,"{""push"": false, ""email"": true, ""security"": true, ""marketing"": false}"

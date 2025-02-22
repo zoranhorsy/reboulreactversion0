@@ -5,8 +5,10 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
-import { Heart, Share2, Truck, RefreshCw, ShieldCheck, ShoppingBag } from 'lucide-react'
+import { Heart, Share2, Truck, RefreshCw, ShieldCheck, ShoppingBag, ChevronRight } from 'lucide-react'
 import { SimilarProducts } from '@/components/SimilarProducts'
+import { RecommendedProducts } from '@/components/RecommendedProducts'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import type { Product, Variant } from '@/lib/api'
 
 // Fonction utilitaire pour formater les prix
@@ -17,7 +19,7 @@ const formatPrice = (price: number): string => {
   }).format(price)
 }
 
-export interface ProductDetailsProps {
+interface ProductDetailsProps {
   product: Product
   selectedSize: string
   selectedColor: string
@@ -52,208 +54,221 @@ export function ProductDetails({
   onShare,
   isWishlist,
 }: ProductDetailsProps) {
-  // Convertir les images en URLs si nécessaire
-  const imageUrls = product.images.map(image => 
-    typeof image === 'string' ? image : URL.createObjectURL(image)
-  )
-
-  // Extraire les tailles et couleurs uniques des variants
-  const availableSizes = Array.from(new Set(product.variants?.map((v: Variant) => v.size) || []))
-  const availableColors = Array.from(new Set(product.variants?.map((v: Variant) => v.color) || []))
-
-  // Trouver la variante sélectionnée
-  const selectedVariant = product.variants?.find(
-    (v: Variant) => v.size === selectedSize && v.color === selectedColor
-  )
-
-  // Vérifier si la variante sélectionnée est en stock
-  const isInStock = checkProductStock(product, selectedSize, selectedColor)
-
-  // Obtenir le stock maximum pour la variante sélectionnée
-  const maxStock = selectedVariant?.stock || 1
+  const images = product.images || []
+  const variants = product.variants || []
+  const colors = Array.from(new Set(variants.map(v => v.color)))
+  const sizes = Array.from(new Set(variants.map(v => v.size)))
 
   return (
-    <div className="max-w-[2000px] mx-auto">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Colonne gauche - Galerie d'images */}
-        <div className="lg:h-full">
-          <ProductGallery images={imageUrls} productName={product.name} />
-        </div>
+    <div className="max-w-[1400px] mx-auto px-4">
+      {/* Section principale du produit */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-24">
+        {/* Galerie d'images */}
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          <ProductGallery images={images} productName={product.name} />
+        </motion.div>
 
-        {/* Colonne droite - Informations produit */}
-        <div className="flex flex-col space-y-4">
+        {/* Informations produit */}
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6 }}
+          className="space-y-8"
+        >
           {/* En-tête produit */}
-          <div className="space-y-2">
-            <div className="flex items-start justify-between">
-              <div className="space-y-1">
-                <h1 className="text-2xl lg:text-3xl font-bold">{product.name}</h1>
-                <p className="text-xl lg:text-2xl font-semibold text-primary">
-                  {formatPrice(product.price)}
-                </p>
-              </div>
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                className="p-2 rounded-full hover:bg-gray-100"
-                onClick={onShare}
-              >
-                <Share2 className="w-6 h-6 text-gray-600" />
-              </motion.button>
-            </div>
-
-            <Badge 
-              variant={isInStock ? "outline" : "destructive"} 
-              className={isInStock ? "bg-green-50" : ""}
-            >
-              {isInStock ? "En stock" : "Rupture de stock"}
-            </Badge>
-
-            <p className="text-gray-600 text-sm lg:text-base">
-              {product.description}
-            </p>
-          </div>
-
-          {/* Options de sélection */}
-          <div className="space-y-3 border-y py-3">
-            {/* Sélecteur de taille */}
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <label className="text-sm font-medium">Taille</label>
-                <button className="text-xs text-primary hover:underline">
-                  Guide des tailles
-                </button>
-              </div>
-              <Select value={selectedSize} onValueChange={onSizeChange}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Sélectionner une taille" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableSizes.map((size) => (
-                    <SelectItem key={size} value={size}>
-                      {size}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Sélecteur de couleur */}
-            <div className="space-y-3">
-              <label className="text-sm font-medium">Couleur</label>
-              <Select value={selectedColor} onValueChange={onColorChange}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Sélectionner une couleur" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableColors.map((color) => (
-                    <SelectItem key={color} value={color}>
-                      {color}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Quantité et Ajout au panier */}
-          <div className="flex flex-col space-y-2">
+          <div className="space-y-4">
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => quantity > 1 && onQuantityChange(quantity - 1)}
-                  disabled={quantity <= 1}
-                  className="h-12 w-12"
-                >
-                  -
-                </Button>
-                <Input
-                  type="number"
-                  min="1"
-                  max={maxStock}
-                  value={quantity}
-                  onChange={(e) => {
-                    const newValue = Number(e.target.value)
-                    if (newValue >= 1 && newValue <= maxStock) {
-                      onQuantityChange(newValue)
-                    }
-                  }}
-                  className="w-20 text-center h-12"
-                />
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => quantity < maxStock && onQuantityChange(quantity + 1)}
-                  disabled={quantity >= maxStock}
-                  className="h-12 w-12"
-                >
-                  +
-                </Button>
+              {product.brand && (
+                <Badge variant="outline" className="text-xs font-medium tracking-wider">
+                  {product.brand}
+                </Badge>
+              )}
+              {product.category && (
+                <Badge variant="outline" className="text-xs font-medium tracking-wider">
+                  {product.category}
+                </Badge>
+              )}
+            </div>
+            <h1 className="font-geist text-3xl font-light tracking-tight">{product.name}</h1>
+            <div className="flex items-baseline gap-4">
+              <span className="font-geist text-2xl">{formatPrice(product.price)}</span>
+              {product.old_price && (
+                <span className="font-geist text-lg text-muted-foreground line-through">
+                  {formatPrice(product.old_price)}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Sélecteurs et actions */}
+          <div className="space-y-6">
+            {/* Sélecteur de couleur */}
+            {colors.length > 0 && (
+              <div className="space-y-4">
+                <label className="font-geist text-sm font-medium">Couleur</label>
+                <div className="flex flex-wrap gap-2">
+                  {colors.map((color) => (
+                    <button
+                      key={color}
+                      onClick={() => onColorChange(color)}
+                      className={`w-8 h-8 rounded-full border-2 transition-all ${
+                        selectedColor === color
+                          ? 'border-primary ring-2 ring-primary/20'
+                          : 'border-border hover:border-primary/50'
+                      }`}
+                      style={{ backgroundColor: color }}
+                      title={color}
+                    />
+                  ))}
+                </div>
               </div>
-              <div className="flex gap-2 flex-1">
-                <Button
-                  className="flex-1 h-12 text-lg"
-                  size="lg"
-                  disabled={!selectedSize || !selectedColor || !isInStock}
-                  onClick={onAddToCart}
-                >
-                  <ShoppingBag className="mr-2 h-5 w-5" />
-                  Ajouter au panier
-                </Button>
+            )}
+
+            {/* Sélecteur de taille */}
+            {sizes.length > 0 && (
+              <div className="space-y-4">
+                <label className="font-geist text-sm font-medium">Taille</label>
+                <Select value={selectedSize} onValueChange={onSizeChange}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Sélectionner une taille" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {sizes.map((size) => (
+                      <SelectItem key={size} value={size}>
+                        {size}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Sélecteur de quantité */}
+            <div className="space-y-4">
+              <label className="font-geist text-sm font-medium">Quantité</label>
+              <Input
+                type="number"
+                min="1"
+                value={quantity}
+                onChange={(e) => onQuantityChange(parseInt(e.target.value, 10))}
+                className="w-24"
+              />
+            </div>
+
+            {/* Boutons d'action */}
+            <div className="flex flex-col gap-4">
+              <Button 
+                size="lg" 
+                className="w-full font-geist text-sm tracking-wider"
+                onClick={onAddToCart}
+              >
+                <ShoppingBag className="w-4 h-4 mr-2" />
+                Ajouter au panier
+              </Button>
+              <div className="flex gap-4">
                 <Button
                   variant="outline"
-                  size="icon"
-                  className="h-12 w-12"
+                  size="lg"
+                  className="flex-1 font-geist text-sm tracking-wider"
                   onClick={onToggleWishlist}
                 >
-                  <Heart className={isWishlist ? "fill-red-500 text-red-500" : ""} />
+                  <Heart className="w-4 h-4 mr-2" fill={isWishlist ? "currentColor" : "none"} />
+                  Favoris
+                </Button>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="flex-1 font-geist text-sm tracking-wider"
+                  onClick={onShare}
+                >
+                  <Share2 className="w-4 h-4 mr-2" />
+                  Partager
                 </Button>
               </div>
             </div>
-
-            {/* Message de stock */}
-            {selectedVariant && (
-              <p className="text-sm text-gray-600">
-                {selectedVariant.stock > 10
-                  ? "Stock disponible"
-                  : selectedVariant.stock > 0
-                  ? `Plus que ${selectedVariant.stock} en stock !`
-                  : "Rupture de stock"}
-              </p>
-            )}
           </div>
 
           {/* Avantages */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 py-2 border-t">
+          <div className="grid grid-cols-1 gap-4 py-6 border-t border-b">
             <div className="flex items-center gap-3">
-              <Truck className="w-6 h-6 text-gray-600 flex-shrink-0" />
+              <Truck className="w-5 h-5 text-muted-foreground" />
               <div>
-                <p className="font-medium">Livraison gratuite</p>
-                <p className="text-sm text-gray-600">À partir de 100€</p>
+                <p className="font-geist text-sm font-medium">Livraison gratuite</p>
+                <p className="font-geist text-xs text-muted-foreground">À partir de 100€</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <RefreshCw className="w-6 h-6 text-gray-600 flex-shrink-0" />
+              <RefreshCw className="w-5 h-5 text-muted-foreground" />
               <div>
-                <p className="font-medium">Retours gratuits</p>
-                <p className="text-sm text-gray-600">Sous 30 jours</p>
+                <p className="font-geist text-sm font-medium">Retours gratuits</p>
+                <p className="font-geist text-xs text-muted-foreground">Sous 30 jours</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <ShieldCheck className="w-6 h-6 text-gray-600 flex-shrink-0" />
+              <ShieldCheck className="w-5 h-5 text-muted-foreground" />
               <div>
-                <p className="font-medium">Garantie authentique</p>
-                <p className="text-sm text-gray-600">100% authentique</p>
+                <p className="font-geist text-sm font-medium">Garantie authentique</p>
+                <p className="font-geist text-xs text-muted-foreground">100% authentique</p>
               </div>
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
 
-      {/* Produits similaires - espacement minimal */}
-      <div className="mt-1">
+      {/* Onglets d'information */}
+      <div className="mb-24">
+        <Tabs defaultValue="description" className="w-full">
+          <TabsList className="w-full justify-start border-b rounded-none h-12 bg-transparent">
+            <TabsTrigger value="description" className="font-geist text-sm tracking-wider">
+              Description
+            </TabsTrigger>
+            <TabsTrigger value="details" className="font-geist text-sm tracking-wider">
+              Détails
+            </TabsTrigger>
+            <TabsTrigger value="delivery" className="font-geist text-sm tracking-wider">
+              Livraison
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="description" className="mt-8">
+            <div className="prose prose-zinc dark:prose-invert max-w-none">
+              <p className="font-geist text-base leading-relaxed">{product.description}</p>
+            </div>
+          </TabsContent>
+          <TabsContent value="details" className="mt-8">
+            <div className="prose prose-zinc dark:prose-invert max-w-none">
+              <ul className="font-geist text-base leading-relaxed space-y-2">
+                {product.details?.map((detail, index) => (
+                  <li key={index}>{detail}</li>
+                ))}
+              </ul>
+            </div>
+          </TabsContent>
+          <TabsContent value="delivery" className="mt-8">
+            <div className="prose prose-zinc dark:prose-invert max-w-none">
+              <div className="font-geist text-base leading-relaxed space-y-4">
+                <p>
+                  Livraison standard gratuite pour toute commande supérieure à 100€.
+                  Délai de livraison estimé : 2-4 jours ouvrés.
+                </p>
+                <p>
+                  Retours gratuits sous 30 jours à compter de la réception de votre commande.
+                </p>
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
+
+      {/* Produits similaires et recommandés */}
+      <div className="space-y-24">
         <SimilarProducts currentProductId={product.id} />
+        {product.category && (
+          <RecommendedProducts currentProductId={product.id} category={product.category} />
+        )}
       </div>
     </div>
   )

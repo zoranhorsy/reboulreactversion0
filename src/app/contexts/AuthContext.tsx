@@ -14,6 +14,8 @@ interface User {
   email: string
   username: string
   isAdmin: boolean
+  avatar_url?: string
+  phone?: string
 }
 
 interface AuthResponse {
@@ -26,6 +28,8 @@ interface AuthMeResponse {
   email: string
   username: string
   is_admin: boolean
+  avatar_url?: string
+  phone?: string
 }
 
 interface AuthContextType {
@@ -59,8 +63,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, router: pr
   const routerHook = useRouter()
   const router = propRouter || routerHook
 
+  const isAdminRoute = useCallback((path: string) => {
+    return path.startsWith('/admin') && path !== '/admin/connexion'
+  }, [])
+
   const checkAuth = useCallback(async () => {
     const token = localStorage.getItem("token")
+    const currentPath = window.location.pathname
+
     if (token) {
       try {
         const response = await axios.get<AuthMeResponse>(`${API_URL}/auth/me`, {
@@ -71,27 +81,55 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, router: pr
           email: response.data.email,
           username: response.data.username,
           isAdmin: response.data.is_admin,
+          avatar_url: response.data.avatar_url,
+          phone: response.data.phone,
         }
         setUser(userData)
         axios.defaults.headers.common["Authorization"] = `Bearer ${token}`
-        if (window.location.pathname === "/admin/login") {
-          router.push("/admin/dashboard")
+
+        // Si l'utilisateur est sur la page de connexion admin et qu'il est admin
+        if (currentPath === "/admin/connexion" && userData.isAdmin) {
+          router.push("/admin")
+        }
+        // Si l'utilisateur est sur une route admin mais n'est pas admin
+        else if (isAdminRoute(currentPath) && !userData.isAdmin) {
+          router.push("/")
+          toast({
+            title: "Accès refusé",
+            description: "Vous n'avez pas les droits d'accès à cette section.",
+            variant: "destructive",
+          })
         }
       } catch (error) {
         console.error("Error verifying token:", error)
         localStorage.removeItem("token")
         delete axios.defaults.headers.common["Authorization"]
         setUser(null)
-        router.push("/admin/login")
+        
+        // Rediriger vers connexion uniquement si on est sur une route admin
+        if (isAdminRoute(currentPath)) {
+          router.push("/connexion")
+          toast({
+            title: "Session expirée",
+            description: "Veuillez vous reconnecter.",
+            variant: "destructive",
+          })
+        }
       }
     } else {
       setUser(null)
-      if (window.location.pathname.startsWith("/admin") && window.location.pathname !== "/admin/login") {
-        router.push("/admin/login")
+      // Rediriger vers connexion uniquement si on est sur une route admin
+      if (isAdminRoute(currentPath)) {
+        router.push("/connexion")
+        toast({
+          title: "Authentification requise",
+          description: "Veuillez vous connecter pour accéder à cette section.",
+          variant: "destructive",
+        })
       }
     }
     setIsLoading(false)
-  }, [router])
+  }, [router, isAdminRoute])
 
   useEffect(() => {
     checkAuth()
@@ -111,13 +149,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, router: pr
         email: user.email,
         username: user.username,
         isAdmin: user.is_admin,
+        avatar_url: user.avatar_url,
+        phone: user.phone,
       }
 
       setUser(userData)
       localStorage.setItem("token", token)
       axios.defaults.headers.common["Authorization"] = `Bearer ${token}`
-
-      document.cookie = `auth-token=${token}; path=/; max-age=86400; SameSite=Strict; Secure`
 
       return { user: userData, token }
     } catch (error) {
@@ -146,13 +184,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, router: pr
   )
 
   const logout = useCallback(() => {
+    const currentPath = window.location.pathname
     setUser(null)
     localStorage.removeItem("token")
     delete axios.defaults.headers.common["Authorization"]
-    document.cookie = "auth-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"
-    router.push("/admin/login")
-  }, [router])
+    
+    // Rediriger vers la page d'accueil si on est sur une route admin
+    if (isAdminRoute(currentPath)) {
+      router.push("/")
+    }
+  }, [router, isAdminRoute])
 
   return <AuthContext.Provider value={{ user, login, logout, isLoading, register }}>{children}</AuthContext.Provider>
-}
-
+} 

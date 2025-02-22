@@ -1,0 +1,32 @@
+[
+  {
+    "id": "05ad382b-be15-4293-aa94-4e494192221f",
+    "name": "T-shirt classique",
+    "price": 19.99,
+    "description": "Un t-shirt confortable pour tous les jours",
+    "category": "Vêtements",
+    "brand": "Reboul",
+    "images": ["/uploads/1733685048794-Salomon XT Slate Product.jpg"],
+    "variants": [
+      { "size": "S", "color": "Blanc", "stock": 10 },
+      { "size": "M", "color": "Blanc", "stock": 15 },
+      { "size": "L", "color": "Blanc", "stock": 20 }
+    ],
+    "tags": ["t-shirt", "basique", "confort"],
+    "reviews": [
+      { "id": 1, "rating": 5, "comment": "Excellent t-shirt, très confortable !", "userName": "Jean D.", "date": "2023-05-15" }
+    ],
+    "questions": [
+      { "id": 1, "question": "Le t-shirt rétrécit-il au lavage ?", "answer": "Non, il est pré-rétréci pour garder sa forme." }
+    ],
+    "faqs": [
+      { "question": "Comment laver ce t-shirt ?", "answer": "Lavage en machine à 30°C, pas de sèche-linge." }
+    ],
+    "sizeChart": [
+      { "size": "S", "chest": 92, "waist": 76, "hips": 92 },
+      { "size": "M", "chest": 100, "waist": 84, "hips": 100 },
+      { "size": "L", "chest": 108, "waist": 92, "hips": 108 }
+    ]
+  }
+]
+

@@ -9,6 +9,7 @@ export interface Product {
   name: string
   description: string
   price: number
+  old_price?: number
   stock: number
   category_id: number
   category: string
@@ -19,13 +20,15 @@ export interface Product {
   image: string
   variants: Variant[]
   tags: string[]
+  details: string[]
   reviews: { id: number; rating: number; comment: string; userName: string; date: string }[]
   questions: { id: number; question: string; answer?: string }[]
   faqs: { question: string; answer: string }[]
   size_chart: { size: string; chest: number; waist: number; hips: number }[]
-  store_type: "adult" | "kids" | "sneakers"
+  store_type: "adult" | "kids" | "sneakers" | "cpcompany"
   featured: boolean
   colors: string[]
+  created_at: string
 }
 
 export interface Address {
@@ -49,6 +52,7 @@ export interface OrderItem {
   product_name: string
   quantity: number
   price: number
+  image_url?: string
 }
 
 export interface Order {
@@ -61,6 +65,7 @@ export interface Order {
   updated_at: string
   items?: OrderItem[]
   shipping_address?: Address
+  order_number: string
 }
 
 export interface DashboardStats {
@@ -85,9 +90,11 @@ export interface User {
   id: string
   name: string
   email: string
+  avatar_url?: string
+  created_at: string
   isAdmin: boolean
-  avatarUrl?: string
-  address?: string
+  status?: 'active' | 'suspended' | 'banned'
+  phone?: string
 }
 
 export interface Category {
@@ -99,6 +106,10 @@ export interface Category {
 export interface Brand {
   id: number
   name: string
+  image_url?: string
+  logo_light?: string
+  logo_dark?: string
+  description?: string
 }
 
 export interface ReturnRequest {
@@ -117,6 +128,85 @@ export interface ChangePasswordResponse {
   message: string
 }
 
+export interface UserReview {
+  id: string
+  productId: string
+  product_name: string
+  rating: number
+  comment: string
+  created_at: string
+  updated_at: string
+}
+
+export interface NotificationSettings {
+    email: boolean
+    push: boolean
+    marketing: boolean
+    security: boolean
+}
+
+interface UserUpdateData {
+  username: string;
+  email?: string;
+  password?: string;
+  first_name: string;
+  last_name: string;
+}
+
+export interface MonthlyStats {
+  month: string;
+  order_count: number;
+  revenue: number;
+  unique_customers: number;
+}
+
+export interface TopProductByCategory {
+  category_name: string;
+  product_name: string;
+  total_sold: number;
+  revenue: number;
+}
+
+export interface CustomerStats {
+  month: string;
+  new_users: number;
+  active_users: number;
+}
+
+export interface SalesStats {
+  date: string
+  amount: number
+  orders: number
+}
+
+export interface CategoryStats {
+  name: string
+  value: number
+}
+
+export interface BrandStats {
+  name: string
+  value: number
+}
+
+export interface CreateUserData {
+  username: string;
+  email: string;
+  password: string;
+  isAdmin?: boolean;
+}
+
+export interface Settings {
+  siteName: string;
+  siteDescription: string;
+  contactEmail: string;
+  enableRegistration: boolean;
+  enableCheckout: boolean;
+  maintenanceMode: boolean;
+  currency: string;
+  taxRate: number;
+}
+
 const getToken = () => {
   if (typeof window !== 'undefined') {
     return localStorage.getItem("token")
@@ -124,12 +214,28 @@ const getToken = () => {
   return null
 }
 
+export const getImagePath = (path: string): string => {
+  if (!path) return '/placeholder.png'
+  if (path.startsWith('http')) return path
+  return `${process.env.NEXT_PUBLIC_API_URL}${path}`
+}
+
 export class Api {
   private readonly client: AxiosInstance
+  private readonly isValidEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    return emailRegex.test(email)
+  }
+
+  private formatImageUrl(url: string | undefined): string {
+    if (!url) return ''
+    if (url.startsWith('http')) return url
+    return `${process.env.NEXT_PUBLIC_API_URL}${url}`
+  }
 
   constructor() {
     this.client = axios.create({
-      baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
+      baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api',
       headers: {
         'Content-Type': 'application/json',
       },
@@ -142,13 +248,33 @@ export class Api {
     this.client.interceptors.request.use(
       (config: InternalAxiosRequestConfig) => {
         const token = getToken()
+        console.log('Request URL:', config.url);
+        console.log('Token present:', !!token);
+        
         if (token) {
           config.headers = config.headers || {}
           config.headers.Authorization = `Bearer ${token}`
+          console.log('Authorization header set');
+        } else {
+          console.log('No token found');
         }
         return config
       },
       (error) => {
+        console.error('Request interceptor error:', error);
+        return Promise.reject(error)
+      }
+    )
+
+    this.client.interceptors.response.use(
+      (response) => response,
+      async (error) => {
+        console.error('Response error:', error.response?.status, error.response?.data);
+        if (error.response?.status === 401) {
+          console.log('Unauthorized, redirecting to login...');
+          localStorage.removeItem('token')
+          window.location.href = '/login'
+        }
         return Promise.reject(error)
       }
     )
@@ -174,21 +300,14 @@ export class Api {
 
   async fetchProducts(params: Record<string, string | number> = {}): Promise<{ products: Product[]; total: number }> {
     try {
-      console.log("=== DEBUG fetchProducts ===")
-      console.log("1. Paramètres bruts reçus:", params)
-
-      // Transformer category en category_id si présent
       const transformedParams = { ...params }
       if (transformedParams.category && transformedParams.category !== 'all') {
         transformedParams.category_id = transformedParams.category
         delete transformedParams.category
       }
 
-      console.log("2. Paramètres après transformation:", transformedParams)
-
       const activeParams = Object.entries(transformedParams).reduce(
         (acc, [key, value]) => {
-          // Ne pas filtrer store_type même s'il est "all"
           if (key === "store_type" || (value && value !== "all" && value !== "" && value !== "false")) {
             acc[key] = String(value)
           }
@@ -197,37 +316,60 @@ export class Api {
         {} as Record<string, string>,
       )
 
-      console.log("3. Paramètres actifs qui seront envoyés à l'API:", activeParams)
       const response = await this.client.get("/products", { params: activeParams })
-      console.log("4. Réponse brute de l'API:", response.data)
 
       if (!response.data || !Array.isArray(response.data.data)) {
-        console.error("Format de réponse API inattendu:", response.data)
         throw new Error("Format de réponse API inattendu")
       }
 
-      const products = response.data.data.map((product: Product) => ({
-        ...product,
-        category: product.category_id,
-        image_url: this.formatImageUrl(product.image_url),
-        images: Array.isArray(product.images) ? product.images.map((img) => this.formatImageUrl(img)) : [],
-      }))
+      const products = response.data.data.map((product: Product) => {
+        // Normalisation des données
+        const normalizedProduct = {
+          ...product,
+          price: this.normalizePrice(product.price),
+          category: product.category_id,
+          image_url: this.formatImageUrl(product.image_url),
+          images: Array.isArray(product.images) 
+            ? product.images.map((img) => typeof img === 'string' ? this.formatImageUrl(img) : img) 
+            : [],
+          variants: Array.isArray(product.variants) 
+            ? product.variants 
+            : [],
+          reviews: Array.isArray(product.reviews) 
+            ? product.reviews 
+            : [],
+          tags: Array.isArray(product.tags) 
+            ? product.tags 
+            : []
+        }
 
-      console.log("5. Produits transformés:", products)
-      console.log("6. Nombre total de produits:", response.data.pagination.totalItems)
-      console.log("=== FIN DEBUG fetchProducts ===")
+        // Vérification des types
+        if (typeof normalizedProduct.id !== 'string') {
+          normalizedProduct.id = String(normalizedProduct.id)
+        }
+
+        return normalizedProduct
+      })
 
       return {
         products,
-        total: response.data.pagination.totalItems,
+        total: response.data.pagination?.totalItems || products.length
       }
     } catch (error) {
-      console.error("Erreur détaillée dans fetchProducts:", error)
-      if (error instanceof Error) {
-        console.error("Message d'erreur:", error.message)
-      }
-      throw error
+      this.handleError(error, "Erreur lors de la récupération des produits")
+      return { products: [], total: 0 }
     }
+  }
+
+  private normalizePrice(price: any): number {
+    if (typeof price === 'number') {
+      return price
+    }
+    if (typeof price === 'string') {
+      const normalized = parseFloat(price.replace(/[^0-9.-]+/g, ''))
+      return isNaN(normalized) ? 0 : normalized
+    }
+    return 0
   }
 
   async getProductById(id: string): Promise<Product | null> {
@@ -428,7 +570,7 @@ export class Api {
 
   async fetchDashboardStats(): Promise<DashboardStats> {
     try {
-      const response = await this.client.get("/admin/stats")
+      const response = await this.client.get("/admin/dashboard/stats")
       return response.data
     } catch (error) {
       this.handleError(error, "Error fetching dashboard stats")
@@ -443,7 +585,7 @@ export class Api {
 
   async fetchRecentOrders(): Promise<Order[]> {
     try {
-      const response = await this.client.get("/admin/recent-orders")
+      const response = await this.client.get("/admin/dashboard/recent-orders")
       return response.data
     } catch (error) {
       this.handleError(error, "Error fetching recent orders")
@@ -453,7 +595,7 @@ export class Api {
 
   async fetchTopProducts(): Promise<TopProduct[]> {
     try {
-      const response = await this.client.get("/admin/top-products")
+      const response = await this.client.get("/admin/dashboard/top-products")
       return response.data
     } catch (error) {
       this.handleError(error, "Error fetching top products")
@@ -463,7 +605,7 @@ export class Api {
 
   async fetchWeeklySales(): Promise<WeeklySales[]> {
     try {
-      const response = await this.client.get("/admin/weekly-sales")
+      const response = await this.client.get("/admin/dashboard/weekly-sales")
       return response.data
     } catch (error) {
       this.handleError(error, "Error fetching weekly sales")
@@ -487,7 +629,7 @@ export class Api {
 
   async changePassword(currentPassword: string, newPassword: string): Promise<ChangePasswordResponse> {
     try {
-      const response = await this.client.post('/auth/change-password', {
+      const response = await this.client.put('/users/password', {
         currentPassword,
         newPassword,
       })
@@ -511,20 +653,75 @@ export class Api {
 
   async fetchAddresses(): Promise<Address[]> {
     try {
-      const response = await this.client.get("/user/addresses")
+      console.log('Fetching addresses...');
+      const token = getToken();
+      console.log('Auth token:', token ? 'Present' : 'Missing');
+      
+      const response = await this.client.get("/addresses")
+      console.log('Response:', response.data);
       return Array.isArray(response.data) ? response.data : []
     } catch (error) {
-      this.handleError(error, "Error fetching addresses")
+      this.handleError(error, "Erreur lors de la récupération des adresses")
       return []
     }
   }
 
   async updateUserInfo(userInfo: Partial<User>): Promise<User | null> {
     try {
-      const response = await this.client.put("/user/profile", userInfo)
-      return response.data
+      const { name, email, phone } = userInfo;
+      if (!name) {
+        throw new Error("Le nom est requis")
+      }
+
+      // Validation de l'email
+      if (email && !this.isValidEmail(email)) {
+        throw new Error("Format d'email invalide")
+      }
+
+      // Construction des données à envoyer
+      const userData: {
+        username: string;
+        email?: string;
+        phone?: string;
+        first_name: string;
+        last_name: string;
+      } = {
+        username: name,
+        email,
+        phone,
+        first_name: name.split(' ')[0],
+        last_name: name.split(' ')[1] || ''
+      }
+
+      // Suppression des champs undefined
+      if (userData.email === undefined) {
+        delete userData.email;
+      }
+      if (userData.phone === undefined) {
+        delete userData.phone;
+      }
+
+      const response = await this.client.put(`/users/${userInfo.id}`, userData)
+
+      return {
+        id: response.data.id,
+        name: response.data.username || response.data.name,
+        email: response.data.email,
+        phone: response.data.phone,
+        avatar_url: response.data.avatar_url,
+        created_at: response.data.created_at,
+        isAdmin: response.data.is_admin || false,
+        status: response.data.status
+      }
     } catch (error) {
-      this.handleError(error, "Error updating user info")
+      if (error instanceof AxiosError) {
+        const errorMessage = error.response?.data?.message || error.message
+        this.handleError(error, `Erreur: ${errorMessage}`)
+      } else if (error instanceof Error) {
+        this.handleError(error, error.message)
+      } else {
+        this.handleError(error, "Erreur lors de la mise à jour des informations utilisateur")
+      }
       return null
     }
   }
@@ -562,10 +759,36 @@ export class Api {
 
   async fetchUserProfile(): Promise<User | null> {
     try {
-      const response = await this.client.get("/user/profile")
-      return response.data
+      const token = getToken()
+      if (!token) {
+        throw new Error("Non authentifié")
+      }
+      
+      const base64Url = token.split('.')[1]
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+      }).join(''))
+      const { userId } = JSON.parse(jsonPayload)
+
+      const response = await this.client.get(`/users/${userId}`)
+      
+      return {
+        id: response.data.id,
+        name: response.data.username,
+        email: response.data.email,
+        avatar_url: response.data.avatar_url,
+        created_at: response.data.created_at,
+        isAdmin: response.data.is_admin || false,
+        status: response.data.status
+      }
     } catch (error) {
-      this.handleError(error, "Error fetching user profile")
+      if (error instanceof AxiosError && error.response?.status === 401) {
+        if (typeof window !== "undefined") {
+          window.location.href = '/login'
+        }
+      }
+      this.handleError(error, "Erreur lors de la récupération du profil utilisateur")
       return null
     }
   }
@@ -612,30 +835,30 @@ export class Api {
 
   async addAddress(addressData: Omit<Address, "id">): Promise<Address | null> {
     try {
-      const response = await this.client.post("/user/addresses", addressData)
+      const response = await this.client.post("/addresses", addressData)
       return response.data
     } catch (error) {
-      this.handleError(error, "Error adding address")
+      this.handleError(error, "Erreur lors de l'ajout de l'adresse")
       return null
     }
   }
 
   async updateAddress(id: string, addressData: Partial<Address>): Promise<Address | null> {
     try {
-      const response = await this.client.put(`/user/addresses/${id}`, addressData)
+      const response = await this.client.put(`/addresses/${id}`, addressData)
       return response.data
     } catch (error) {
-      this.handleError(error, "Error updating address")
+      this.handleError(error, "Erreur lors de la mise à jour de l'adresse")
       return null
     }
   }
 
   async deleteAddress(id: string): Promise<boolean> {
     try {
-      await this.client.delete(`/user/addresses/${id}`)
+      await this.client.delete(`/addresses/${id}`)
       return true
     } catch (error) {
-      this.handleError(error, "Error deleting address")
+      this.handleError(error, "Erreur lors de la suppression de l'adresse")
       return false
     }
   }
@@ -652,11 +875,21 @@ export class Api {
 
   async addReview(productId: string, reviewData: { rating: number; comment: string }): Promise<boolean> {
     try {
-      await this.client.post(`/products/${productId}/reviews`, reviewData)
-      return true
+      console.log('Adding review for product:', productId, reviewData);
+      const response = await this.client.post('/reviews', {
+        product_id: productId,
+        rating: reviewData.rating,
+        comment: reviewData.comment
+      });
+      console.log('Review added successfully:', response.data);
+      return true;
     } catch (error) {
-      this.handleError(error, "Error adding review")
-      return false
+      console.error('Error adding review:', error);
+      if (error instanceof AxiosError) {
+        console.error('Server response:', error.response?.data);
+      }
+      this.handleError(error, "Impossible d'ajouter votre avis");
+      return false;
     }
   }
 
@@ -722,9 +955,20 @@ export class Api {
     }
   }
 
-  async createBrand(name: string): Promise<Brand> {
+  async createBrand(data: { name: string; logo: File | null; description: string }): Promise<Brand> {
     try {
-      const response = await this.client.post("/brands", { name })
+      const formData = new FormData()
+      formData.append('name', data.name)
+      formData.append('description', data.description)
+      if (data.logo) {
+        formData.append('logo', data.logo)
+      }
+
+      const response = await this.client.post("/brands", formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      })
       return response.data
     } catch (error) {
       this.handleError(error, "Error creating brand")
@@ -732,9 +976,20 @@ export class Api {
     }
   }
 
-  async updateBrand(id: number, name: string): Promise<Brand> {
+  async updateBrand(id: number, data: { name: string; logo: File | null; description: string }): Promise<Brand> {
     try {
-      const response = await this.client.put(`/brands/${id}`, { name })
+      const formData = new FormData()
+      formData.append('name', data.name)
+      formData.append('description', data.description)
+      if (data.logo) {
+        formData.append('logo', data.logo)
+      }
+
+      const response = await this.client.put(`/brands/${id}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      })
       return response.data
     } catch (error) {
       this.handleError(error, "Error updating brand")
@@ -753,37 +1008,26 @@ export class Api {
   }
 
   async uploadImages(files: (File | Blob)[]): Promise<string[]> {
-    const formData = new FormData()
-    files.forEach((file, index) => {
-      const fileName = file instanceof File ? file.name : `image${index}.jpg`
-      formData.append("images", file, fileName)
-    })
-
     try {
-      const response = await this.client.post("/upload", formData, {
+      const formData = new FormData()
+      files.forEach((file, index) => {
+        formData.append(`images`, file)
+      })
+
+      const response = await this.client.post('/upload', formData, {
         headers: {
-          "Content-Type": "multipart/form-data",
+          'Content-Type': 'multipart/form-data',
         },
       })
 
-      console.log("Upload response:", response.data)
+      if (!response.data || !Array.isArray(response.data.urls)) {
+        throw new Error('Format de réponse inattendu pour l\'upload d\'images')
+      }
 
-      if (response.data && Array.isArray(response.data)) {
-        return response.data.map((url: string) => this.formatImageUrl(url))
-      } else if (response.data && response.data.urls && Array.isArray(response.data.urls)) {
-        return response.data.urls.map((url: string) => this.formatImageUrl(url))
-      } else if (response.data && typeof response.data === "string") {
-        return [this.formatImageUrl(response.data)]
-      } else {
-        console.error("Unexpected response format:", response.data)
-        throw new Error("Format de réponse inattendu du serveur")
-      }
+      return response.data.urls
     } catch (error) {
-      console.error("Error uploading images:", error)
-      if (error instanceof Error) {
-        throw new Error(`Erreur lors de l'upload des images: ${error.message}`)
-      }
-      throw new Error("Erreur lors de l'upload des images")
+      this.handleError(error, "Erreur lors de l'upload des images")
+      return []
     }
   }
 
@@ -797,27 +1041,465 @@ export class Api {
     }
   }
 
-  async deleteOrder(orderId: number): Promise<boolean> {
+  async deleteOrder(orderId: string): Promise<boolean> {
     try {
-      await this.client.delete(`/orders/${orderId}`)
-      return true
+      const response = await this.client.delete(`/orders/${orderId}`)
+      return response.status === 200
     } catch (error) {
-      this.handleError(error, `Error deleting order with ID ${orderId}`)
+      this.handleError(error, "Error deleting order")
       return false
     }
   }
 
-  formatImageUrl(url: string | File | Blob | null | undefined): string {
-    if (!url) return "/placeholder.png"
-    if (url instanceof File || url instanceof Blob) return URL.createObjectURL(url)
-    if (url.startsWith("http")) return url
-    const cleanUrl = url.startsWith("/uploads") ? url.slice(8) : url
-    return `${API_URL}/uploads${cleanUrl.startsWith("/") ? cleanUrl : `/${cleanUrl}`}`
+  async fetchNotificationSettings(): Promise<NotificationSettings> {
+    try {
+        const token = getToken();
+        if (!token) {
+            throw new Error('No token found');
+        }
+        
+        const response = await this.client.get("/users/notification-settings", {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        return response.data;
+    } catch (error) {
+        this.handleError(error, "Error fetching notification settings");
+        return {
+            email: false,
+            push: false,
+            marketing: false,
+            security: false,
+        };
+    }
+  }
+
+  async updateNotificationSettings(settings: NotificationSettings): Promise<boolean> {
+    try {
+      console.log('Updating notification settings:', settings);
+      const response = await this.client.put("/users/notification-settings", settings)
+      console.log('Update response:', response);
+      return response.status === 200
+    } catch (error) {
+      console.error('Update error details:', error);
+      if (error instanceof AxiosError) {
+        console.error('Server response:', error.response?.data);
+      }
+      this.handleError(error, "Error updating notification settings")
+      return false
+    }
+  }
+
+  async uploadUserAvatar(file: File): Promise<string> {
+    try {
+      const formData = new FormData()
+      formData.append("avatar", file)
+
+      const response = await this.client.post("/users/avatar", formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      })
+
+      if (!response.data || !Array.isArray(response.data.urls)) {
+        throw new Error("Error uploading user avatar")
+      }
+
+      return response.data.urls[0]
+    } catch (error) {
+      this.handleError(error, "Error uploading user avatar")
+      throw error
+    }
+  }
+
+  async deleteAccount(): Promise<boolean> {
+    try {
+      const response = await this.client.delete("/users")
+      return response.status === 200
+    } catch (error) {
+      this.handleError(error, "Error deleting account")
+      return false
+    }
+  }
+
+  async fetchUserOrders(): Promise<Order[]> {
+    try {
+      console.log('Fetching user orders...');
+      const token = getToken();
+      console.log('Auth token:', token ? 'Present' : 'Missing');
+      
+      const response = await this.client.get("/orders/me");
+      console.log('Orders response:', response.data);
+      
+      return Array.isArray(response.data) ? response.data : [];
+    } catch (error) {
+      console.error('Detailed error:', error);
+      if (error instanceof AxiosError) {
+        console.error('Server response:', error.response?.data);
+      }
+      this.handleError(error, "Error fetching user orders");
+      return [];
+    }
+  }
+
+  async fetchUserReviews(): Promise<UserReview[]> {
+    try {
+      console.log('Fetching user reviews...');
+      const token = getToken();
+      console.log('Auth token:', token ? 'Present' : 'Missing');
+      
+      const response = await this.client.get("/reviews");
+      console.log('Reviews response:', response.data);
+      
+      return Array.isArray(response.data) ? response.data : [];
+    } catch (error) {
+      console.error('Error fetching user reviews:', error);
+      if (error instanceof AxiosError) {
+        console.error('Server response:', error.response?.data);
+      }
+      this.handleError(error, "Error fetching user reviews");
+      return [];
+    }
+  }
+
+  async updateReview(reviewId: string, rating: number, comment: string): Promise<boolean> {
+    try {
+      const response = await this.client.put(`/reviews/${reviewId}`, { rating, comment })
+      return response.status === 200
+    } catch (error) {
+      this.handleError(error, "Error updating review")
+      return false
+    }
+  }
+
+  async deleteReview(reviewId: string): Promise<boolean> {
+    try {
+      const response = await this.client.delete(`/reviews/${reviewId}`)
+      return response.status === 200
+    } catch (error) {
+      this.handleError(error, "Error deleting review")
+      return false
+    }
+  }
+
+  async fetchUsers(): Promise<User[]> {
+    try {
+      const response = await this.client.get('/users')
+      return response.data.map((user: any) => ({
+        id: user.id,
+        name: user.username || user.name,
+        email: user.email,
+        isAdmin: user.is_admin,
+        created_at: user.created_at,
+        status: user.status
+      }))
+    } catch (error) {
+      this.handleError(error, 'Erreur lors de la récupération des utilisateurs')
+      return []
+    }
+  }
+
+  async updateUserRole(userId: string, isAdmin: boolean): Promise<boolean> {
+    try {
+      const response = await this.client.put(`/users/${userId}/role`, { is_admin: isAdmin })
+      return response.status === 200
+    } catch (error) {
+      this.handleError(error, "Erreur lors de la modification du rôle utilisateur")
+      return false
+    }
+  }
+
+  async fetchMonthlyStats(): Promise<MonthlyStats[]> {
+    try {
+        console.log('Fetching monthly stats...');
+        const response = await this.client.get('/stats/monthly-sales');
+        console.log('Monthly stats response:', response.data);
+        return Array.isArray(response.data) ? response.data : [];
+    } catch (error) {
+        console.error('Error fetching monthly stats:', error);
+        this.handleError(error, "Error fetching monthly statistics");
+        return [];
+    }
+  }
+
+  async fetchTopProductsByCategory(): Promise<TopProductByCategory[]> {
+    try {
+        console.log('Fetching top products by category...');
+        const response = await this.client.get('/stats/top-products-by-category');
+        console.log('Top products response:', response.data);
+        return Array.isArray(response.data) ? response.data : [];
+    } catch (error) {
+        console.error('Error fetching top products:', error);
+        this.handleError(error, "Error fetching top products");
+        return [];
+    }
+  }
+
+  async fetchCustomerStats(): Promise<CustomerStats[]> {
+    try {
+        console.log('Fetching customer stats...');
+        const response = await this.client.get('/stats/customer-stats');
+        console.log('Customer stats response:', response.data);
+        return Array.isArray(response.data) ? response.data : [];
+    } catch (error) {
+        console.error('Error fetching customer stats:', error);
+        this.handleError(error, "Error fetching customer statistics");
+        return [];
+    }
+  }
+
+  async fetchSalesStats(dateRange: { from: Date; to: Date }): Promise<SalesStats[]> {
+    try {
+      const response = await this.client.get('/stats/sales', {
+        params: {
+          from: dateRange.from.toISOString(),
+          to: dateRange.to.toISOString()
+        }
+      })
+      return response.data
+    } catch (error) {
+      this.handleError(error, "Erreur lors de la récupération des statistiques de ventes")
+      return []
+    }
+  }
+
+  async fetchCategoryStats(): Promise<CategoryStats[]> {
+    try {
+      const response = await this.client.get('/stats/categories')
+      return response.data
+    } catch (error) {
+      this.handleError(error, "Erreur lors de la récupération des statistiques par catégorie")
+      return []
+    }
+  }
+
+  async fetchBrandStats(): Promise<BrandStats[]> {
+    try {
+      const response = await this.client.get('/stats/brands')
+      return response.data
+    } catch (error) {
+      this.handleError(error, "Erreur lors de la récupération des statistiques par marque")
+      return []
+    }
+  }
+
+  async createUser(userData: CreateUserData): Promise<User | null> {
+    try {
+      if (!userData.username || !userData.email || !userData.password) {
+        throw new Error("Le nom, l'email et le mot de passe sont requis")
+      }
+
+      if (!this.isValidEmail(userData.email)) {
+        throw new Error("Format d'email invalide")
+      }
+
+      const response = await this.client.post("/admin/users", userData)
+      
+      return {
+        id: response.data.id,
+        name: response.data.username || response.data.name,
+        email: response.data.email,
+        isAdmin: response.data.isAdmin || false,
+        created_at: response.data.created_at,
+        avatar_url: response.data.avatar_url
+      }
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        const errorMessage = error.response?.data?.message || error.message
+        this.handleError(error, `Erreur: ${errorMessage}`)
+      } else if (error instanceof Error) {
+        this.handleError(error, error.message)
+      } else {
+        this.handleError(error, "Erreur lors de la création de l'utilisateur")
+      }
+      return null
+    }
+  }
+
+  async updateSettings(settings: Settings): Promise<Settings> {
+    try {
+      const response = await this.client.put('/admin/settings', settings);
+      return response.data;
+    } catch (error) {
+      this.handleError(error, "Erreur lors de la mise à jour des paramètres");
+      throw error;
+    }
+  }
+
+  async getFavorites(): Promise<Product[]> {
+    try {
+      console.log('Appel de getFavorites');
+      const token = getToken();
+      console.log('Token présent:', !!token);
+
+      if (!token) {
+        console.log('Pas de token, retour tableau vide');
+        return [];
+      }
+
+      const response = await this.client.get('/users/favorites', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      console.log('Réponse des favoris:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Erreur détaillée dans getFavorites:', error);
+      if (error instanceof AxiosError) {
+        console.error('Réponse du serveur:', error.response?.data);
+        // Si l'utilisateur n'est pas authentifié, retourner un tableau vide
+        if (error.response?.status === 401) {
+          return [];
+        }
+      }
+      this.handleError(error, "Erreur lors du chargement des favoris");
+      return [];
+    }
+  }
+
+  async addToFavorites(productId: number | string): Promise<void> {
+    try {
+      const token = getToken();
+      if (!token) {
+        throw new Error('Vous devez être connecté pour ajouter des favoris');
+      }
+
+      // Convertir l'ID en nombre si c'est une chaîne
+      const numericId = typeof productId === 'string' ? parseInt(productId, 10) : productId;
+      
+      // S'assurer que l'ID est valide
+      if (isNaN(numericId)) {
+        throw new Error('ID de produit invalide');
+      }
+
+      const response = await this.client.post('/users/favorites', { 
+        product_id: numericId
+      }, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.data) {
+        throw new Error('Réponse invalide du serveur');
+      }
+    } catch (error) {
+      console.error('Erreur détaillée lors de l\'ajout aux favoris:', error);
+      if (error instanceof AxiosError) {
+        console.error('Données de la réponse:', error.response?.data);
+      }
+      this.handleError(error, "Erreur lors de l'ajout aux favoris");
+      throw error;
+    }
+  }
+
+  async removeFromFavorites(productId: number | string): Promise<void> {
+    try {
+      const token = getToken();
+      if (!token) {
+        throw new Error('Vous devez être connecté pour gérer vos favoris');
+      }
+
+      await this.client.delete(`/users/favorites/${productId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+    } catch (error) {
+      this.handleError(error, "Erreur lors de la suppression des favoris");
+      throw error;
+    }
+  }
+
+  async fetchArchives() {
+    try {
+        console.log('Appel de fetchArchives');
+        const response = await this.client.get('/archives');
+        console.log('Réponse des archives:', response.data);
+        return response.data;
+    } catch (error) {
+        console.error('Erreur lors du chargement des archives:', error);
+        throw error;
+    }
+  }
+
+  async fetchSettings(): Promise<Settings> {
+    try {
+      const response = await this.client.get('/admin/settings')
+      return response.data
+    } catch (error) {
+      this.handleError(error, 'Erreur lors de la récupération des paramètres')
+      throw error
+    }
+  }
+
+  async deleteUser(userId: string): Promise<boolean> {
+    try {
+      const response = await this.client.delete(`/users/${userId}`)
+      return response.status === 200
+    } catch (error) {
+      this.handleError(error, "Erreur lors de la suppression de l'utilisateur")
+      return false
+    }
+  }
+
+  async updateUserStatus(userId: string, status: string): Promise<boolean> {
+    try {
+      const response = await this.client.put(`/users/${userId}/status`, { status })
+      return response.status === 200
+    } catch (error) {
+      this.handleError(error, "Erreur lors de la mise à jour du statut de l'utilisateur")
+      return false
+    }
+  }
+
+  async updateArchive(id: string, data: FormData): Promise<any> {
+    try {
+      const response = await this.client.put(`/archives/${id}`, data, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      })
+      return response.data
+    } catch (error) {
+      this.handleError(error, "Erreur lors de la mise à jour de l'archive")
+      throw error
+    }
+  }
+
+  async createArchive(data: FormData): Promise<any> {
+    try {
+      const response = await this.client.post('/archives', data, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      })
+      return response.data
+    } catch (error) {
+      this.handleError(error, "Erreur lors de la création de l'archive")
+      throw error
+    }
+  }
+
+  async deleteArchive(id: string): Promise<boolean> {
+    try {
+      const response = await this.client.delete(`/archives/${id}`)
+      return response.status === 200
+    } catch (error) {
+      this.handleError(error, "Erreur lors de la suppression de l'archive")
+      return false
+    }
   }
 }
 
 export const api = new Api()
 
+// Exports principaux
+export const fetchUserOrders = api.fetchUserOrders.bind(api)
+export const fetchUserAddresses = api.fetchAddresses.bind(api)
+export const createAddress = api.addAddress.bind(api)
+export const updateUserRole = api.updateUserRole.bind(api)
+
+// Autres exports
 export const fetchProducts = api.fetchProducts.bind(api)
 export const getProductById = api.getProductById.bind(api)
 export const createProduct = api.createProduct.bind(api)
@@ -859,18 +1541,26 @@ export const updateBrand = api.updateBrand.bind(api)
 export const deleteBrand = api.deleteBrand.bind(api)
 export const processReturn = api.processReturn.bind(api)
 export const deleteOrder = api.deleteOrder.bind(api)
+export const fetchNotificationSettings = api.fetchNotificationSettings.bind(api)
+export const updateNotificationSettings = api.updateNotificationSettings.bind(api)
+export const uploadUserAvatar = api.uploadUserAvatar.bind(api)
+export const deleteAccount = api.deleteAccount.bind(api)
+export const fetchUserReviews = api.fetchUserReviews.bind(api)
+export const updateReview = api.updateReview.bind(api)
+export const deleteReview = api.deleteReview.bind(api)
+export const fetchUsers = api.fetchUsers.bind(api)
+export const fetchMonthlyStats = api.fetchMonthlyStats.bind(api)
+export const fetchTopProductsByCategory = api.fetchTopProductsByCategory.bind(api)
+export const fetchCustomerStats = api.fetchCustomerStats.bind(api)
+export const fetchSalesStats = api.fetchSalesStats.bind(api)
+export const fetchCategoryStats = api.fetchCategoryStats.bind(api)
+export const fetchBrandStats = api.fetchBrandStats.bind(api)
+export const createUser = api.createUser.bind(api)
+export const updateSettings = api.updateSettings.bind(api)
 
-export const getImagePath = (imagePath: string | File | Blob): string => {
-  if (!imagePath) {
-    return "/placeholder.png"
-  }
-  if (imagePath instanceof File || imagePath instanceof Blob) {
-    return URL.createObjectURL(imagePath)
-  }
-  if (imagePath.startsWith("http")) {
-    return imagePath
-  }
-  const cleanUrl = imagePath.startsWith("/uploads") ? imagePath.slice(8) : imagePath
-  return `${API_URL}/uploads${cleanUrl.startsWith("/") ? cleanUrl : `/${cleanUrl}`}`
-}
+// Favoris
+export const getFavorites = api.getFavorites.bind(api)
+export const addToFavorites = api.addToFavorites.bind(api)
+export const removeFromFavorites = api.removeFromFavorites.bind(api)
 
+export const fetchArchives = api.fetchArchives.bind(api)

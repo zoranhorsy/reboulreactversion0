@@ -12,6 +12,7 @@ import type { Product } from "@/lib/types/product"
 import type { Category } from "@/lib/types/category"
 import type { Brand } from "@/lib/types/brand"
 import { type FilterState, type FilterChangeHandler } from '@/lib/types/filters'
+import { ActiveFilters } from "@/components/catalogue/ActiveFilters"
 
 interface CatalogueContentProps {
   initialProducts: Product[]
@@ -105,8 +106,14 @@ export function CatalogueContent({
       
       const queryParams: Record<string, string> = {}
       Object.entries(filters).forEach(([key, value]) => {
-        if (value) queryParams[key] = value
+        if (value && value.toString().trim() !== '') {
+          queryParams[key] = value
+        }
       })
+
+      // S'assurer que page et limit sont toujours présents
+      if (!queryParams.page) queryParams.page = '1'
+      if (!queryParams.limit) queryParams.limit = '12'
 
       const result = await api.fetchProducts(queryParams)
       setProducts(result.products)
@@ -137,28 +144,13 @@ export function CatalogueContent({
   )
 
   return (
-    <div className="flex flex-col lg:flex-row gap-8 p-4">
-      <aside className="lg:w-[280px]">
-        <div className="hidden lg:block">
-          <FilterComponent
-            filters={filters}
-            categories={categories}
-            brands={brands}
-            colors={colors}
-            sizes={sizes}
-            storeTypes={["adult", "kids", "sneakers"]}
-            onFilterChange={handleFilterChange}
-          />
-        </div>
-        <div className="lg:hidden">
-          <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
-            <SheetTrigger asChild>
-              <Button variant="outline" className="w-full mb-4">
-                <SlidersHorizontal className="mr-2 h-4 w-4" />
-                Filtres
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left">
+    <div className="min-h-screen bg-background w-full">
+      {/* Contenu principal */}
+      <div className="w-full">
+        <div className="flex flex-col lg:flex-row h-full">
+          {/* Sidebar des filtres */}
+          <aside className="lg:w-[280px] shrink-0 border-r border-border">
+            <div className="hidden lg:block sticky top-0 p-4">
               <FilterComponent
                 filters={filters}
                 categories={categories}
@@ -168,23 +160,61 @@ export function CatalogueContent({
                 storeTypes={["adult", "kids", "sneakers"]}
                 onFilterChange={handleFilterChange}
               />
-            </SheetContent>
-          </Sheet>
+            </div>
+            <div className="lg:hidden p-4">
+              <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="outline" className="w-full">
+                    <SlidersHorizontal className="mr-2 h-4 w-4" />
+                    Filtres
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="w-[300px] sm:w-[380px]">
+                  <div>
+                    <FilterComponent
+                      filters={filters}
+                      categories={categories}
+                      brands={brands}
+                      colors={colors}
+                      sizes={sizes}
+                      storeTypes={["adult", "kids", "sneakers"]}
+                      onFilterChange={(newFilters) => {
+                        handleFilterChange(newFilters)
+                        setIsFilterOpen(false)
+                      }}
+                    />
+                  </div>
+                </SheetContent>
+              </Sheet>
+            </div>
+          </aside>
+
+          {/* Grille de produits */}
+          <main className="flex-1 min-w-0 p-4">
+            <div className="mb-4">
+              <ActiveFilters
+                filters={filters}
+                categories={categories}
+                brands={brands}
+                onRemoveFilter={(key) => {
+                  handleFilterChange({ [key]: "" })
+                }}
+              />
+            </div>
+            <ProductGrid
+              products={products}
+              isLoading={loading}
+              error={error}
+              page={Number.parseInt(filters.page)}
+              limit={Number.parseInt(filters.limit)}
+              totalProducts={totalItems}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+              _onFilterChange={handleFilterChange}
+            />
+          </main>
         </div>
-      </aside>
-      <main className="lg:flex-1">
-        <ProductGrid
-          products={products}
-          isLoading={loading}
-          error={error}
-          page={Number.parseInt(filters.page)}
-          limit={Number.parseInt(filters.limit)}
-          totalProducts={totalItems}
-          totalPages={totalPages}
-          onPageChange={handlePageChange}
-          _onFilterChange={handleFilterChange}
-        />
-      </main>
+      </div>
     </div>
   )
 }

@@ -1,0 +1,13 @@
+<invoke name="run_terminal_cmd">
+<parameter name="command">mkdir -p public/brands</parameter>
+<parameter name="explanation">Création du dossier brands s'il n'existe pas</parameter>
+<parameter name="is_background">false</parameter>
+<parameter name="require_user_approval">true</parameter>
+</invoke>
+
+<invoke name="run_terminal_cmd">
+<parameter name="command">cp public/CP_2_b.png public/brands/light/cp-company.png && cp public/CP_2_b.png public/brands/dark/cp-company.png && cp public/STONE_ISLAND_2_b.png public/brands/light/stone-island.png && cp public/STONE_ISLAND_2_b.png public/brands/dark/stone-island.png && cp public/AUTRY_b.png public/brands/light/autry.png && cp public/AUTRY_b.png public/brands/dark/autry.png</parameter>
+<parameter name="explanation">Copie des logos des marques dans les dossiers light et dark</parameter>
+<parameter name="is_background">false</parameter>
+<parameter name="require_user_approval">true</parameter>
+</invoke> 

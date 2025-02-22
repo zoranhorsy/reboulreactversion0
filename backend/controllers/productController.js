@@ -119,8 +119,8 @@ class ProductController {
   }
 
   // Créer un nouveau produit
-  async createProduct(data, files) {
-    const insertFields = this._prepareProductData(data, files)
+  static async createProduct(data, files) {
+    const insertFields = ProductController._prepareProductData(data, files)
     
     const keys = Object.keys(insertFields)
     const values = Object.values(insertFields)
@@ -166,7 +166,7 @@ class ProductController {
   }
 
   // Supprimer un produit
-  async deleteProduct(id) {
+  static async deleteProduct(id) {
     // Vérifier si le produit est dans des commandes
     const { rows: orderCheck } = await pool.query(
       "SELECT EXISTS(SELECT 1 FROM order_items WHERE product_id = $1)",
@@ -190,7 +190,7 @@ class ProductController {
     const deleteResult = await pool.query("DELETE FROM products WHERE id = $1 RETURNING *", [id])
     
     // Supprimer les images associées
-    await this._deleteProductImages(rows[0])
+    await ProductController._deleteProductImages(rows[0])
 
     return deleteResult.rows[0]
   }

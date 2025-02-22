@@ -2,398 +2,194 @@
 
 import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { useAuth } from '@/app/contexts/AuthContext'
-import { fetchDashboardStats, fetchRecentOrders, fetchTopProducts, fetchWeeklySales, DashboardStats, Order, TopProduct, WeeklySales } from '@/lib/api'
 import { useToast } from "@/components/ui/use-toast"
-import { Loader2, BarChart2, Package, ShoppingCart, Settings, Home, Users, LogOut } from 'lucide-react'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { 
+    Loader2, 
+    AlertCircle,
+    RefreshCcw,
+    Package,
+    ShoppingCart,
+    Users
+} from 'lucide-react'
+import { Button } from "@/components/ui/button"
+import { Overview } from './Overview'
+import { RecentSales } from './RecentSales'
 
-// Importez chaque composant de la barre latérale individuellement
-import { Sidebar } from "@/components/ui/sidebar"
-import { SidebarContent } from "@/components/ui/sidebar"
-import { SidebarHeader } from "@/components/ui/sidebar"
-import { SidebarMenu } from "@/components/ui/sidebar"
-import { SidebarMenuItem } from "@/components/ui/sidebar"
-import { SidebarMenuButton } from "@/components/ui/sidebar"
-import { SidebarProvider } from "@/components/ui/sidebar"
-import { SidebarTrigger } from "@/components/ui/sidebar"
-
-const cleanData = <T extends object, U extends T>(data: T | null | undefined, defaultValue: U): U => {
-    if (!data) return defaultValue;
-
-    return (Object.keys(defaultValue) as Array<keyof U>).reduce((acc, key) => {
-        const value = data[key as keyof T];
-        if (typeof defaultValue[key] === 'number') {
-            acc[key] = (typeof value === 'number' && !isNaN(value)) ? (value as U[keyof U]) : defaultValue[key];
-        } else {
-            acc[key] = (value !== null && value !== undefined) ? (value as U[keyof U]) : defaultValue[key];
-        }
-        return acc;
-    }, { ...defaultValue });
-};
+interface DashboardStats {
+    totalRevenue: number
+    totalOrders: number
+    totalProducts: number
+    totalUsers: number
+    recentOrders: {
+        id: string
+        customer: string
+        total: number
+        date: string
+        status: string
+    }[]
+    weeklySales: {
+        date: string
+        total: number
+    }[]
+}
 
 export function AdminDashboard() {
     const router = useRouter()
-    const { user, logout } = useAuth()
+    const { user } = useAuth()
     const [stats, setStats] = useState<DashboardStats | null>(null)
-    const [recentOrders, setRecentOrders] = useState<Order[]>([])
-    const [topProducts, setTopProducts] = useState<TopProduct[]>([])
-    const [salesData, setSalesData] = useState<WeeklySales[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const { toast } = useToast()
 
     useEffect(() => {
-        const fetchDashboardData = async () => {
-            console.log('Fetching dashboard data...');
-            console.log('User:', user);
-            if (!user || !user.isAdmin) {
-                router.push('/admin/login')
+        const fetchData = async () => {
+            if (!user?.isAdmin) {
+                router.push('/connexion')
                 return
             }
 
             setIsLoading(true)
             setError(null)
+
             try {
-                console.log('Fetching data from API...');
-                const [statsData, ordersData, productsData, salesData] = await Promise.all([
-                    fetchDashboardStats().catch(error => {
-                        console.error('Error fetching stats:', error);
-                        return null;
-                    }),
-                    fetchRecentOrders().catch(error => {
-                        console.error('Error fetching orders:', error);
-                        return [];
-                    }),
-                    fetchTopProducts().catch(error => {
-                        console.error('Error fetching top products:', error);
-                        return [];
-                    }),
-                    fetchWeeklySales().catch(error => {
-                        console.error('Error fetching weekly sales:', error);
-                        return [];
-                    })
-                ]);
+                const token = localStorage.getItem('token')
+                if (!token) {
+                    throw new Error('Token non trouvé')
+                }
 
-                console.log('Raw stats data:', statsData);
-                console.log('Raw orders data:', ordersData);
-                console.log('Raw products data:', productsData);
-                console.log('Raw sales data:', salesData);
+                const response = await fetch('/api/admin/dashboard/stats', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                })
 
-                const cleanedStats = cleanData<DashboardStats, DashboardStats>(statsData, {
-                    totalRevenue: 0,
-                    totalOrders: 0,
-                    totalProducts: 0,
-                    totalUsers: 0
-                });
+                if (!response.ok) {
+                    throw new Error('Erreur lors de la récupération des données')
+                }
 
-                const cleanedOrders = (ordersData || []).map(order => cleanData<Order, Order>(order, {
-                    id: 0,
-                    user_id: 0,
-                    total_amount: 0,
-                    status: 'pending',
-                    created_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString(),
-                }));
-
-                console.log('Cleaned stats data:', JSON.stringify(cleanedStats, null, 2));
-                console.log('Cleaned orders data:', JSON.stringify(cleanedOrders, null, 2));
-
-                const cleanedProducts = (productsData || []).map(product => cleanData<TopProduct, TopProduct>(product, {
-                    id: 0, // Changed from '' to 0
-                    name: '',
-                    totalSold: 0
-                }));
-
-                const cleanedSalesData = (salesData || []).map(sale => cleanData<WeeklySales, WeeklySales>(sale, {
-                    date: '',
-                    total: 0
-                }));
-
-                setStats(cleanedStats)
-                setRecentOrders(cleanedOrders)
-                setTopProducts(cleanedProducts)
-                setSalesData(cleanedSalesData)
-
-            } catch (err: unknown) {
-                console.error('Error fetching dashboard data:', err)
+                const data = await response.json()
+                setStats(data)
+            } catch (error) {
+                console.error('Error fetching data:', error)
                 setError('Une erreur est survenue lors du chargement des données.')
                 toast({
                     title: "Erreur",
-                    description: "Impossible de charger les données du tableau de bord.",
-                    variant: "destructive",
+                    description: "Impossible de charger les données",
+                    variant: "destructive"
                 })
             } finally {
                 setIsLoading(false)
             }
         }
 
-        fetchDashboardData()
+        fetchData()
     }, [user, router, toast])
 
     if (isLoading) {
         return (
-            <div className="flex justify-center items-center h-screen">
-                <Loader2 className="mr-2 h-16 w-16 animate-spin" />
-                <span className="text-xl font-semibold">Chargement du tableau de bord...</span>
+            <div className="flex items-center justify-center h-96">
+                <div className="text-center space-y-4">
+                    <Loader2 className="h-12 w-12 animate-spin" />
+                    <p className="text-sm text-muted-foreground">Chargement des statistiques...</p>
+                </div>
             </div>
         )
     }
 
     if (error) {
         return (
-            <div className="flex flex-col items-center justify-center h-screen">
-                <p className="text-red-500 text-xl mb-4">{error}</p>
-                <Button onClick={() => router.refresh()}>Réessayer</Button>
+            <div className="flex flex-col items-center justify-center h-96">
+                <div className="text-center space-y-4">
+                    <AlertCircle className="h-12 w-12 text-destructive" />
+                    <p className="text-sm text-muted-foreground">{error}</p>
+                    <Button onClick={() => router.refresh()} variant="outline">
+                        <RefreshCcw className="mr-2 h-4 w-4" />
+                        Réessayer
+                    </Button>
+                </div>
             </div>
         )
     }
 
     if (!stats) {
         return (
-            <div className="flex flex-col items-center justify-center h-screen">
-                <p className="text-xl mb-4">Aucune donnée disponible pour le tableau de bord.</p>
-                <Button onClick={() => router.refresh()}>Rafraîchir</Button>
+            <div className="flex flex-col items-center justify-center h-96">
+                <div className="text-center space-y-4">
+                    <AlertCircle className="h-12 w-12 text-destructive" />
+                    <p className="text-sm text-muted-foreground">Aucune donnée n&apos;est disponible pour le moment.</p>
+                </div>
             </div>
         )
     }
 
-    const navigationItems = [
-        {
-            href: '/admin/dashboard',
-            icon: <Home className="h-5 w-5" />,
-            title: 'Tableau de bord',
-            isActive: true
-        },
-        {
-            href: '/admin/products',
-            icon: <Package className="h-5 w-5" />,
-            title: 'Produits'
-        },
-        {
-            href: '/admin/orders',
-            icon: <ShoppingCart className="h-5 w-5" />,
-            title: 'Commandes'
-        },
-        {
-            href: '/admin/users',
-            icon: <Users className="h-5 w-5" />,
-            title: 'Utilisateurs'
-        },
-        {
-            href: '/admin/stats',
-            icon: <BarChart2 className="h-5 w-5" />,
-            title: 'Statistiques'
-        },
-        {
-            href: '/admin/settings',
-            icon: <Settings className="h-5 w-5" />,
-            title: 'Paramètres'
-        }
-    ]
-
     return (
-        <SidebarProvider>
-            <div className="flex min-h-screen">
-                <Sidebar>
-                    <SidebarHeader>
-                        <div className="flex items-center gap-2 p-4">
-                            <Package className="h-6 w-6" />
-                            <span className="font-semibold text-lg">Reboul Store</span>
+        <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">
+                            Chiffre d&apos;affaires
+                        </CardTitle>
+                        <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">
+                            {stats.totalRevenue.toLocaleString('fr-FR', {
+                                style: 'currency',
+                                currency: 'EUR'
+                            })}
                         </div>
-                    </SidebarHeader>
-                    <SidebarContent>
-                        <SidebarMenu>
-                            {navigationItems.map((item) => (
-                                <SidebarMenuItem key={item.href}>
-                                    <SidebarMenuButton asChild isActive={item.isActive}>
-                                        <Link href={item.href} className="flex items-center gap-2">
-                                            {item.icon}
-                                            <span>{item.title}</span>
-                                        </Link>
-                                    </SidebarMenuButton>
-                                </SidebarMenuItem>
-                            ))}
-                            <SidebarMenuItem>
-                                <SidebarMenuButton
-                                    onClick={() => {
-                                        logout()
-                                        router.replace('/admin/login')
-                                    }}
-                                    className="text-red-500 hover:text-red-600"
-                                >
-                                    <LogOut className="h-5 w-5" />
-                                    <span>Se déconnecter</span>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                        </SidebarMenu>
-                    </SidebarContent>
-                </Sidebar>
+                    </CardContent>
+                </Card>
 
-                <main className="flex-1 overflow-auto">
-                    <div className="border-b">
-                        <div className="flex h-16 items-center gap-4 px-4">
-                            <SidebarTrigger />
-                            <h1 className="text-xl font-semibold">Tableau de bord administrateur</h1>
-                        </div>
-                    </div>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">
+                            Commandes
+                        </CardTitle>
+                        <Package className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{stats.totalOrders}</div>
+                    </CardContent>
+                </Card>
 
-                    <div className="p-6 space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Ventes Totales</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <p className="text-3xl font-bold">
-                                        {stats.totalRevenue != null
-                                            ? `${stats.totalRevenue.toLocaleString()} €`
-                                            : 'N/A'}
-                                    </p>
-                                </CardContent>
-                            </Card>
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Commandes</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <p className="text-3xl font-bold">
-                                        {stats.totalOrders != null ? stats.totalOrders.toLocaleString() : 'N/A'}
-                                    </p>
-                                </CardContent>
-                            </Card>
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Produits</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <p className="text-3xl font-bold">
-                                        {stats.totalProducts != null ? stats.totalProducts.toLocaleString() : 'N/A'}
-                                    </p>
-                                </CardContent>
-                            </Card>
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Utilisateurs</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <p className="text-3xl font-bold">
-                                        {stats.totalUsers != null ? stats.totalUsers.toLocaleString() : 'N/A'}
-                                    </p>
-                                </CardContent>
-                            </Card>
-                        </div>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">
+                            Produits
+                        </CardTitle>
+                        <Package className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{stats.totalProducts}</div>
+                    </CardContent>
+                </Card>
 
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Ventes hebdomadaires</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="h-[300px]">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <LineChart data={salesData}>
-                                            <CartesianGrid strokeDasharray="3 3" />
-                                            <XAxis dataKey="date" />
-                                            <YAxis />
-                                            <Tooltip />
-                                            <Line
-                                                type="monotone"
-                                                dataKey="total"
-                                                stroke="hsl(var(--primary))"
-                                                strokeWidth={2}
-                                            />
-                                        </LineChart>
-                                    </ResponsiveContainer>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Dernières commandes</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <Table>
-                                        <TableHeader>
-                                            <TableRow>
-                                                <TableHead>ID</TableHead>
-                                                <TableHead>Total</TableHead>
-                                                <TableHead>Statut</TableHead>
-                                                <TableHead>Date</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {recentOrders.length > 0 ? (
-                                                recentOrders.map((order) => (
-                                                    <TableRow key={order.id}>
-                                                        <TableCell>{order.id}</TableCell>
-                                                        <TableCell>
-                                                            {order.total_amount != null
-                                                                ? `${order.total_amount.toFixed(2)} €`
-                                                                : 'N/A'}
-                                                        </TableCell>
-                                                        <TableCell>{order.status || 'N/A'}</TableCell>
-                                                        <TableCell>
-                                                            {order.created_at
-                                                                ? new Date(order.created_at).toLocaleDateString()
-                                                                : 'N/A'}
-                                                        </TableCell>
-                                                    </TableRow>
-                                                ))
-                                            ) : (
-                                                <TableRow>
-                                                    <TableCell colSpan={4} className="text-center">
-                                                        Aucune commande récente
-                                                    </TableCell>
-                                                </TableRow>
-                                            )}
-                                        </TableBody>
-                                    </Table>
-                                </CardContent>
-                            </Card>
-
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Produits les plus vendus</CardTitle>
-
-                </CardHeader>
-                                <CardContent>
-                                    <Table>
-                                        <TableHeader>
-                                            <TableRow>
-                                                <TableHead>Produit</TableHead>
-                                                <TableHead>Total vendu</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {topProducts.length > 0 ? (
-                                                topProducts.map((product) => (
-                                                    <TableRow key={product.id}>
-                                                        <TableCell>{product.name}</TableCell>
-                                                        <TableCell>{product.totalSold}</TableCell>
-                                                    </TableRow>
-                                                ))
-                                            ) : (
-                                                <TableRow>
-                                                    <TableCell colSpan={2} className="text-center">
-                                                        Aucun produit populaire
-                                                    </TableCell>
-                                                </TableRow>
-                                            )}
-                                        </TableBody>
-                                    </Table>
-                                </CardContent>
-                            </Card>
-                        </div>
-                    </div>
-                </main>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">
+                            Utilisateurs
+                        </CardTitle>
+                        <Users className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{stats.totalUsers}</div>
+                    </CardContent>
+                </Card>
             </div>
-        </SidebarProvider>
+
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+                <Card className="col-span-4">
+                    <Overview data={stats.weeklySales} />
+                </Card>
+                <Card className="col-span-3">
+                    <RecentSales orders={stats.recentOrders} />
+                </Card>
+            </div>
+        </div>
     )
 }
 
