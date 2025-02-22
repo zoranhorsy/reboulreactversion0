@@ -2,8 +2,9 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
+const nodemailer = require('nodemailer');
 require('dotenv').config();
-const pool = require('./db');
+const db = require('./db');
 const { errorHandler } = require('./middleware/errorHandler');
 const uploadRoutes = require('./routes/upload');
 const adminRouter = require('./routes/admin');
@@ -18,12 +19,18 @@ if (!fs.existsSync(uploadsDir)){
     console.log('Dossier uploads existant:', uploadsDir);
 }
 
-// Middleware
-app.use(cors({
-    origin: '*', // Attention : à utiliser uniquement en développement
+// Configuration CORS
+const corsOptions = {
+    origin: process.env.NODE_ENV === 'production' 
+        ? ['https://reboul-store.vercel.app', 'https://www.reboul-store.vercel.app']
+        : '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization']
-}));
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true
+};
+
+// Middleware
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Ajout du middleware de logging
@@ -73,38 +80,103 @@ app.get('/api', (req, res) => {
     res.json({ message: 'Bienvenue sur l\'API de Reboul Store' });
 });
 
+// Route de test pour l'email
+app.post('/api/test-email', async (req, res) => {
+    try {
+        // Log des variables d'environnement (en masquant les valeurs sensibles)
+        console.log('Variables d\'environnement SMTP:', {
+            SMTP_HOST: process.env.SMTP_HOST,
+            SMTP_PORT: process.env.SMTP_PORT,
+            SMTP_USER: process.env.SMTP_USER,
+            SMTP_PASSWORD: process.env.SMTP_PASSWORD ? '***' : 'non défini'
+        });
+
+        // Tester l'envoi d'email
+        const info = await transporter.sendMail({
+            from: process.env.SMTP_USER,
+            to: req.body.to || process.env.SMTP_USER,
+            subject: 'Test Email - Reboul Store API',
+            text: 'Si vous recevez cet email, la configuration SMTP fonctionne correctement.',
+            html: '<h1>Test Email</h1><p>Si vous recevez cet email, la configuration SMTP fonctionne correctement.</p>'
+        });
+
+        console.log('Email de test envoyé:', info);
+        res.json({ success: true, messageId: info.messageId });
+    } catch (error) {
+        console.error('Erreur lors de l\'envoi de l\'email de test:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: error.message,
+            details: {
+                code: error.code,
+                command: error.command,
+                response: error.response,
+                responseCode: error.responseCode
+            }
+        });
+    }
+});
+
 // Middleware de gestion des erreurs
 app.use(errorHandler);
 
-// À la fin du fichier, avant les écouteurs de port
-module.exports = { app };
-
-// Fonction pour démarrer le serveur
-const startServer = (port) => {
-    app.listen(port, () => {
-        console.log(`Serveur démarré sur le port ${port}`);
-    }).on('error', (err) => {
-        if (err.code === 'EADDRINUSE') {
-            console.log(`Le port ${port} est déjà utilisé. Tentative avec le port ${port + 1}`);
-            startServer(port + 1);
-        } else {
-            console.error('Erreur lors du démarrage du serveur:', err);
-        }
-    });
+// Configuration SMTP pour Gmail
+const smtpConfig = {
+    host: process.env.SMTP_HOST || 'smtp.gmail.com',
+    port: parseInt(process.env.SMTP_PORT || '587'),
+    secure: false, // true pour 465, false pour 587
+    auth: {
+        user: process.env.SMTP_USER || 'horsydevservices@gmail.com',
+        pass: process.env.SMTP_PASSWORD // Doit être un mot de passe d'application Gmail
+    },
+    tls: {
+        rejectUnauthorized: false // Nécessaire en production
+    }
 };
 
-// Ne démarrer le serveur que si nous ne sommes pas en mode test
-if (process.env.NODE_ENV !== 'test') {
-    // Vérification de la connexion à la base de données avant de démarrer le serveur
-    pool.query('SELECT NOW()', (err) => {
-        if (err) {
-            console.error('Erreur de connexion à la base de données:', err);
-            process.exit(1);
-        } else {
-            console.log('Connexion à la base de données réussie');
-            const PORT = process.env.PORT || 5001;
-            startServer(PORT);
-        }
-    });
-}
+// Log de la configuration SMTP (en masquant le mot de passe)
+console.log('Configuration SMTP:', {
+    ...smtpConfig,
+    auth: {
+        ...smtpConfig.auth,
+        pass: '***'
+    }
+});
+
+// Créer le transporteur SMTP
+const transporter = nodemailer.createTransport(smtpConfig);
+
+// Vérifier la connexion SMTP
+transporter.verify(function(error, success) {
+    if (error) {
+        console.error('Erreur de configuration SMTP:', error);
+        console.error('Détails de l\'erreur:', {
+            code: error.code,
+            command: error.command,
+            response: error.response,
+            responseCode: error.responseCode
+        });
+    } else {
+        console.log('Serveur SMTP prêt à envoyer des emails');
+    }
+});
+
+// Rendre le transporteur disponible globalement
+app.set('emailTransporter', transporter);
+
+// Démarrage du serveur
+const PORT = process.env.PORT || 5001;
+
+// Test de connexion à la base de données avant de démarrer le serveur
+db.pool.query('SELECT NOW()', (err) => {
+    if (err) {
+        console.error('Erreur de connexion à la base de données:', err);
+        process.exit(1);
+    } else {
+        console.log('Connexion à la base de données réussie');
+        app.listen(PORT, () => {
+            console.log(`Serveur démarré sur le port ${PORT}`);
+        });
+    }
+});
 

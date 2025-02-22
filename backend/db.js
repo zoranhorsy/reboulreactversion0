@@ -2,28 +2,30 @@ const { Pool } = require('pg');
 require('dotenv').config();
 
 const pool = new Pool({
-    user: process.env.DB_USER,
-    host: process.env.DB_HOST,
-    database: process.env.DB_NAME,
-    password: process.env.DB_PASSWORD,
-    port: process.env.DB_PORT,
+    connectionString: process.env.DATABASE_URL || "postgresql://postgres:wuRWzXkTzKjXDFradojRvRtTDiSuOXos@nozomi.proxy.rlwy.net:14067/railway",
+    // Options de connexion
+    connectionTimeoutMillis: 10000,
+    idleTimeoutMillis: 30000,
+    max: 20,
+    // Désactiver SSL si non supporté
+    ssl: process.env.NODE_ENV === 'production' ? {
+        rejectUnauthorized: false
+    } : false
 });
 
+// Test de connexion initial
+pool.query('SELECT NOW()', (err) => {
+    if (err) {
+        console.error('Erreur de connexion à la base de données:', err);
+    } else {
+        console.log('Connexion à la base de données réussie');
+    }
+});
+
+// Gestion des erreurs de connexion
 pool.on('error', (err) => {
-    console.error('Erreur inattendue du pool de connexion', err);
+    console.error('Erreur inattendue du pool de connexion:', err);
 });
-
-// Ne pas faire la requête de test en environnement de test
-if (process.env.NODE_ENV !== 'test') {
-    // Test de connexion
-    pool.query('SELECT NOW()', (err, res) => {
-        if (err) {
-            console.error('Erreur de connexion à la base de données:', err);
-        } else {
-            console.log('Connexion à la base de données réussie');
-        }
-    });
-}
 
 module.exports = {
     query: (text, params) => pool.query(text, params),

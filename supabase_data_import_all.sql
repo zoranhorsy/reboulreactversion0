@@ -9,10 +9,10 @@ ALTER SEQUENCE orders_id_seq RESTART WITH 1;
 ALTER SEQUENCE order_items_id_seq RESTART WITH 1;
 
 -- Importer les utilisateurs
-INSERT INTO users (id, username, email, password_hash, first_name, last_name, is_admin, created_at, notification_settings)
+INSERT INTO users (id, username, email, password_hash, is_admin, created_at)
 VALUES 
-(1, 'zoran', 'zoran@reboul.com', '$2b$10$UzLt9qVpmXa9vSRmhBs2O.MwEf3aC1oS..TY18g8lAzoE/SNXt6lG', 'zoran', '', true, '2025-01-01 13:10:41.056359+01', '{"push": true, "email": true, "security": true, "marketing": true}'),
-(3, 'jaab', 'jaab@reboul.com', '$2b$10$lCQosEgj19A9w4S/a/hX9eKm/qXvEQPaQwfd8VUIlPguks98nCwUO', 'thomas', 'lorenzi', false, '2025-01-02 11:09:26.046441+01', '{"push": false, "email": true, "security": true, "marketing": false}');
+(1, 'zoran', 'zoran@reboul.com', '$2b$10$UzLt9qVpmXa9vSRmhBs2O.MwEf3aC1oS..TY18g8lAzoE/SNXt6lG', true, '2025-01-01 13:10:41.056359+01'),
+(3, 'jaab', 'jaab@reboul.com', '$2b$10$lCQosEgj19A9w4S/a/hX9eKm/qXvEQPaQwfd8VUIlPguks98nCwUO', false, '2025-01-02 11:09:26.046441+01');
 
 -- Importer toutes les catégories
 INSERT INTO categories (id, name, description) VALUES 
@@ -28,7 +28,8 @@ INSERT INTO categories (id, name, description) VALUES
 (20, 'Chaussures', 'Collection de chaussures'),
 (21, 'Sport', 'Équipement sportif');
 
--- Importer tous les produits INSERT INTO products (id, name, description, price, stock, category_id, image_url, brand, variants, store_type, featured)
+-- Importer tous les produits
+INSERT INTO products (id, name, description, price, stock, category_id, image_url, brand, variants, store_type, featured)
 VALUES
 (32, 'Nouveau T-shirt', 'Un t-shirt confortable et élégant', 29.99, 96, 8, NULL, 'C.P.COMPANY', '[{"size": "M", "color": "rouge", "stock": 50}, {"size": "L", "color": "bleu", "stock": 50}, {"size": "S", "color": "Noir", "stock": 10}, {"size": "XS", "color": "Vert", "stock": 15}]'::jsonb, 'cpcompany', false),
 (33, 'Nouveau T-shirt', 'Un t-shirt confortable et élégant', 29.99, 100, 2, 'http://localhost:5001/api/uploads/placeholder.png', NULL, '[{"size": "M", "color": "rouge", "stock": 50}, {"size": "L", "color": "bleu", "stock": 50}, {"size": "S", "color": "Noir", "stock": 50}]'::jsonb, 'adult', true),
