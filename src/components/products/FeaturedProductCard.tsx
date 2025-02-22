@@ -33,15 +33,29 @@ interface FeaturedProductCardProps {
 
 const getImageUrl = (image: string | File | Blob): string => {
     if (typeof image === 'string') {
-        if (image.startsWith('http')) return image;
+        // Log pour debugging
+        console.log('Image URL originale:', image);
         
-        if (image.startsWith('/')) {
-            return `${process.env.NEXT_PUBLIC_API_URL}${image}`;
+        // Si c'est déjà une URL complète
+        if (image.startsWith('http')) {
+            console.log('URL complète retournée:', image);
+            return image;
         }
         
-        return `${process.env.NEXT_PUBLIC_API_URL}/uploads/${image}`;
+        // Construire l'URL complète
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://reboul-store-api-production.up.railway.app';
+        const fullUrl = image.startsWith('/') 
+            ? `${baseUrl}${image}`
+            : `${baseUrl}/uploads/${image}`;
+            
+        console.log('URL complète construite:', fullUrl);
+        return fullUrl;
     }
-    return URL.createObjectURL(image);
+    
+    // Pour les fichiers/blobs
+    const objectUrl = URL.createObjectURL(image);
+    console.log('URL d\'objet créée:', objectUrl);
+    return objectUrl;
 }
 
 export function FeaturedProductCard({ product }: FeaturedProductCardProps) {
