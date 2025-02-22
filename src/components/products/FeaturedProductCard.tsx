@@ -33,11 +33,15 @@ interface FeaturedProductCardProps {
 
 const getImageUrl = (image: string | File | Blob): string => {
     if (typeof image === 'string') {
-        if (image.startsWith('http')) return image
-        if (image.startsWith('/')) return image
-        return `/uploads/${image}`
+        if (image.startsWith('http')) return image;
+        
+        if (image.startsWith('/')) {
+            return `${process.env.NEXT_PUBLIC_API_URL}${image}`;
+        }
+        
+        return `${process.env.NEXT_PUBLIC_API_URL}/uploads/${image}`;
     }
-    return URL.createObjectURL(image)
+    return URL.createObjectURL(image);
 }
 
 export function FeaturedProductCard({ product }: FeaturedProductCardProps) {

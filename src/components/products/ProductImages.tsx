@@ -36,11 +36,18 @@ const getValidImages = (product: Product): (string | File | Blob)[] => {
 
 const getImageUrl = (image: string | File | Blob): string => {
     if (typeof image === 'string') {
-        if (image.startsWith('http')) return image
-        if (image.startsWith('/')) return image
-        return `/uploads/${image}`
+        // Si c'est déjà une URL complète
+        if (image.startsWith('http')) return image;
+        
+        // Si c'est un chemin relatif
+        if (image.startsWith('/')) {
+            return `${process.env.NEXT_PUBLIC_API_URL}${image}`;
+        }
+        
+        // Si c'est juste un nom de fichier
+        return `${process.env.NEXT_PUBLIC_API_URL}/uploads/${image}`;
     }
-    return URL.createObjectURL(image)
+    return URL.createObjectURL(image);
 }
 
 export function ProductImages({ product, size = "lg" }: ProductImagesProps) {
