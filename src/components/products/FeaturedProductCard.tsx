@@ -44,9 +44,10 @@ const getImageUrl = (image: string | File | Blob): string => {
         
         // Construire l'URL complète
         const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://reboul-store-api-production.up.railway.app';
-        const fullUrl = image.startsWith('/') 
-            ? `${baseUrl}${image}`
-            : `${baseUrl}/uploads/${image}`;
+        
+        // Nettoyer le chemin d'image
+        const cleanPath = image.startsWith('/') ? image.slice(1) : image;
+        const fullUrl = `${baseUrl}/${cleanPath}`;
             
         console.log('URL complète construite:', fullUrl);
         return fullUrl;
