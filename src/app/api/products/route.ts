@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api"
+const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:5001/api"
 
 export async function GET(request: NextRequest) {
   try {
@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams
 
     // Construire l'URL du backend
-    const backendUrl = `${API_URL}/products?${searchParams.toString()}`
+    const backendUrl = `${BACKEND_URL}/products?${searchParams.toString()}`
 
     const response = await fetch(backendUrl)
 
