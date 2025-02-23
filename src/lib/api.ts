@@ -1438,7 +1438,7 @@ export class Api {
     async fetchArchives() {
         try {
             console.log('Appel de fetchArchives');
-            const response = await this.client.get('/archives');
+            const response = await this.client.get('/api/archives');
             console.log('Réponse des archives:', response.data);
             return response.data;
         } catch (error) {
