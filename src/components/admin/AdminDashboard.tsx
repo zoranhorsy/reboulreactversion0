@@ -63,10 +63,9 @@ export function AdminDashboard() {
                 const token = localStorage.getItem('token')
                 console.log('Token:', token ? `${token.substring(0, 10)}...` : 'No token')
                 
-                const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://reboul-store-api-production.up.railway.app'
-                console.log('API URL:', API_URL)
+                console.log('BACKEND_URL:', BACKEND_URL)
                 
-                const response = await fetch(`${API_URL}/admin/dashboard/stats`, {
+                const response = await fetch(`${BACKEND_URL}/admin/dashboard/stats`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
