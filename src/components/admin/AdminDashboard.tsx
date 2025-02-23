@@ -35,7 +35,7 @@ interface DashboardStats {
     }[]
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://reboul-store-api-production.up.railway.app';
+const API_URL = '/api/admin/dashboard/stats';
 
 export function AdminDashboard() {
     const router = useRouter()
@@ -61,23 +61,20 @@ export function AdminDashboard() {
                     throw new Error('Token non trouvé')
                 }
 
-                console.log('Tentative de récupération des stats depuis:', `${API_URL}/api/admin/dashboard/stats`)
-                console.log('Token:', token)
+                console.log('Tentative de récupération des stats depuis:', API_URL)
 
-                const response = await fetch(`${API_URL}/api/admin/dashboard/stats`, {
+                const response = await fetch(API_URL, {
                     method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json',
                         'Accept': 'application/json'
-                    },
-                    credentials: 'include'
+                    }
                 })
 
                 console.log('Réponse reçue:', {
                     status: response.status,
-                    statusText: response.statusText,
-                    headers: Object.fromEntries(response.headers.entries())
+                    statusText: response.statusText
                 })
 
                 if (!response.ok) {
