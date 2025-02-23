@@ -66,7 +66,7 @@ export function AdminDashboard() {
                 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://reboul-store-api-production.up.railway.app'
                 console.log('API URL:', API_URL)
                 
-                const response = await fetch(`${API_URL}/admin/dashboard/stats`, {
+                const response = await fetch(`${API_URL}/api/admin/dashboard/stats`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
