@@ -25,12 +25,31 @@ const archivesDir = path.join(publicDir, 'archives');
 });
 
 // Configuration CORS
+const allowedOrigins = [
+    'https://reboulreactversion0.vercel.app',
+    'https://reboul-store.vercel.app',
+    'http://localhost:3000'
+];
+
 const corsOptions = {
-    origin: [
-        'https://reboulreactversion0.vercel.app',
-        'https://reboul-store.vercel.app',
-        'http://localhost:3000'
-    ],
+    origin: function(origin, callback) {
+        console.log('Origin de la requête:', origin);
+        console.log('Origins autorisés:', allowedOrigins);
+        
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) {
+            console.log('Requête sans origin autorisée');
+            return callback(null, true);
+        }
+        
+        if (allowedOrigins.indexOf(origin) !== -1) {
+            console.log('Origin autorisé:', origin);
+            callback(null, true);
+        } else {
+            console.log('Origin refusé:', origin);
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH', 'HEAD'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
     exposedHeaders: ['Content-Range', 'X-Content-Range'],
@@ -44,12 +63,17 @@ app.use(cors(corsOptions));
 // Headers CORS supplémentaires pour plus de compatibilité
 app.use((req, res, next) => {
     const origin = req.headers.origin;
-    if (corsOptions.origin.includes(origin)) {
+    console.log('Middleware CORS - Origin:', origin);
+    
+    if (allowedOrigins.includes(origin)) {
+        console.log('Setting CORS headers for origin:', origin);
         res.header('Access-Control-Allow-Origin', origin);
+        res.header('Access-Control-Allow-Methods', corsOptions.methods.join(', '));
+        res.header('Access-Control-Allow-Headers', corsOptions.allowedHeaders.join(', '));
+        res.header('Access-Control-Allow-Credentials', 'true');
+    } else {
+        console.log('Origin not in allowed list:', origin);
     }
-    res.header('Access-Control-Allow-Methods', corsOptions.methods.join(', '));
-    res.header('Access-Control-Allow-Headers', corsOptions.allowedHeaders.join(', '));
-    res.header('Access-Control-Allow-Credentials', 'true');
     next();
 });
 
