@@ -7,17 +7,31 @@ export async function GET(request: NextRequest) {
     try {
         // Récupérer le token d'authentification
         const authHeader = request.headers.get('authorization')
-        console.log('API Route - Auth Header:', authHeader ? 'Present' : 'Missing')
+        console.log('API Route - Auth Header:', authHeader)
+        console.log('API Route - All Headers:', Object.fromEntries(request.headers.entries()))
         
+        if (!authHeader) {
+            console.error('API Route - No authorization header found')
+            return NextResponse.json(
+                { error: "No authorization header" },
+                { status: 401 }
+            )
+        }
+
         // Construire l'URL du backend
         const backendUrl = `${BACKEND_URL}/api/admin/dashboard/stats`
         console.log('API Route - Backend URL:', backendUrl)
 
         // Faire la requête au backend
-        console.log('API Route - Sending request to backend...')
+        console.log('API Route - Sending request to backend with headers:', {
+            'Authorization': authHeader,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        })
+
         const response = await fetch(backendUrl, {
             headers: {
-                'Authorization': authHeader || '',
+                'Authorization': authHeader,
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
             }
@@ -29,17 +43,18 @@ export async function GET(request: NextRequest) {
             headers: Object.fromEntries(response.headers.entries())
         })
 
+        const responseText = await response.text()
+        console.log('API Route - Raw response:', responseText)
+
         if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}))
-            console.error('API Route - Backend error:', {
-                status: response.status,
-                statusText: response.statusText,
-                data: errorData
-            })
-            throw new Error(errorData.error || `Backend responded with status: ${response.status}`)
+            console.error('API Route - Backend error response:', responseText)
+            return NextResponse.json(
+                { error: "Backend error", details: responseText },
+                { status: response.status }
+            )
         }
 
-        const data = await response.json()
+        const data = JSON.parse(responseText)
         console.log('API Route - Backend data received:', data)
 
         return NextResponse.json(data)

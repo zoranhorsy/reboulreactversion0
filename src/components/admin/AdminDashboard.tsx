@@ -66,7 +66,7 @@ export function AdminDashboard() {
                     throw new Error('Token non trouvé')
                 }
 
-                console.log('AdminDashboard - Token found, fetching stats...');
+                console.log('AdminDashboard - Token found:', token.substring(0, 20) + '...');
                 console.log('AdminDashboard - API URL:', API_URL);
 
                 const response = await fetch(API_URL, {
@@ -75,7 +75,8 @@ export function AdminDashboard() {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json',
                         'Accept': 'application/json'
-                    }
+                    },
+                    credentials: 'same-origin'
                 })
 
                 console.log('AdminDashboard - Response received:', {
@@ -84,17 +85,29 @@ export function AdminDashboard() {
                     headers: Object.fromEntries(response.headers.entries())
                 })
 
+                const responseText = await response.text()
+                console.log('AdminDashboard - Raw response:', responseText)
+
                 if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({}))
-                    console.error('AdminDashboard - Response error:', {
-                        status: response.status,
-                        statusText: response.statusText,
-                        data: errorData
-                    })
-                    throw new Error(errorData.error || 'Erreur lors de la récupération des données')
+                    if (response.status === 401) {
+                        console.log('AdminDashboard - Unauthorized, clearing token and redirecting...');
+                        localStorage.removeItem('token')
+                        router.push('/connexion')
+                        return
+                    }
+
+                    let errorMessage = 'Erreur lors de la récupération des données'
+                    try {
+                        const errorData = JSON.parse(responseText)
+                        errorMessage = errorData.error || errorData.details || errorMessage
+                    } catch (e) {
+                        console.error('AdminDashboard - Error parsing error response:', e)
+                    }
+
+                    throw new Error(errorMessage)
                 }
 
-                const data = await response.json()
+                const data = JSON.parse(responseText)
                 console.log('AdminDashboard - Data received:', data)
 
                 if (!data || typeof data.totalRevenue === 'undefined') {
