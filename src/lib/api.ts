@@ -590,7 +590,7 @@ export class Api {
             const token = getToken()
             console.log('Auth token:', token ? 'Present' : 'Missing')
             
-            const response = await this.client.get("/api/admin/dashboard/stats")
+            const response = await this.client.get("/admin/dashboard/stats")
             console.log('Dashboard stats response:', response.data)
             return response.data
         } catch (error) {

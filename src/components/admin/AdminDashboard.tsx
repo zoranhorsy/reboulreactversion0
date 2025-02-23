@@ -61,80 +61,43 @@ export function AdminDashboard() {
 
             try {
                 const token = localStorage.getItem('token')
-                if (!token) {
-                    console.log('AdminDashboard - No token found');
-                    throw new Error('Token non trouvé')
-                }
-
-                console.log('AdminDashboard - Token found:', token.substring(0, 20) + '...');
-                const apiUrl = `${BACKEND_URL}/api/admin/dashboard/stats`;
-                console.log('AdminDashboard - API URL:', apiUrl);
-
-                const response = await fetch(apiUrl, {
-                    method: 'GET',
+                console.log('Token:', token ? `${token.substring(0, 10)}...` : 'No token')
+                
+                const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://reboul-store-api-production.up.railway.app'
+                console.log('API URL:', API_URL)
+                
+                const response = await fetch(`${API_URL}/api/admin/dashboard/stats`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'Origin': process.env.NEXT_PUBLIC_SITE_URL || 'https://reboulreactversion0.vercel.app'
+                        'Content-Type': 'application/json'
                     },
-                    cache: 'no-store'
+                    credentials: 'include'
                 })
-
-                console.log('AdminDashboard - Response received:', {
-                    status: response.status,
-                    statusText: response.statusText,
-                    headers: Object.fromEntries(response.headers.entries())
-                })
-
-                const responseText = await response.text()
-                console.log('AdminDashboard - Raw response:', responseText)
-
+                
+                console.log('Response status:', response.status)
+                console.log('Response headers:', response.headers)
+                
                 if (!response.ok) {
                     if (response.status === 401) {
-                        console.log('AdminDashboard - Unauthorized, clearing token and redirecting...');
+                        console.log('Unauthorized - clearing token')
                         localStorage.removeItem('token')
                         router.push('/connexion')
                         return
                     }
-
-                    let errorMessage = 'Erreur lors de la récupération des données'
-                    try {
-                        const errorData = JSON.parse(responseText)
-                        errorMessage = errorData.error || errorData.details || errorMessage
-                        console.error('AdminDashboard - Error data:', errorData)
-                    } catch (e) {
-                        console.error('AdminDashboard - Error parsing error response:', e)
-                    }
-
-                    throw new Error(errorMessage)
+                    throw new Error(`HTTP error! status: ${response.status}`)
                 }
-
-                let data
-                try {
-                    data = JSON.parse(responseText)
-                } catch (e) {
-                    console.error('AdminDashboard - Error parsing response:', e)
-                    throw new Error('Format de réponse invalide')
+                
+                const data = await response.json()
+                console.log('Response data:', data)
+                
+                if (!data || typeof data !== 'object') {
+                    throw new Error('Invalid data format received')
                 }
-
-                console.log('AdminDashboard - Data received:', data)
-
-                if (!data || typeof data.totalRevenue === 'undefined') {
-                    console.error('AdminDashboard - Invalid data format:', data);
-                    throw new Error('Format de données invalide')
-                }
-
-                console.log('AdminDashboard - Setting stats:', data);
+                
                 setStats(data)
             } catch (error) {
-                console.error('AdminDashboard - Error:', error)
-                setError('Une erreur est survenue lors du chargement des données.')
-                toast({
-                    title: "Erreur",
-                    description: error instanceof Error ? error.message : "Impossible de charger les données",
-                    variant: "destructive"
-                })
+                console.error('Error fetching data:', error)
+                setError(error instanceof Error ? error.message : 'Erreur lors de la récupération des données')
             } finally {
                 setIsLoading(false)
             }
