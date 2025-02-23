@@ -1437,14 +1437,34 @@ export class Api {
 
     async fetchArchives() {
         try {
-            console.log('Appel de fetchArchives');
+            console.log('Début de fetchArchives');
+            console.log('URL de base:', this.client.defaults.baseURL);
+            console.log('Headers:', this.client.defaults.headers);
+            
+            const token = getToken();
+            console.log('Token présent:', !!token);
+            
             const response = await this.client.get('/archives', {
                 withCredentials: true
             });
-            console.log('Réponse des archives:', response.data);
+            
+            console.log('Réponse reçue:', {
+                status: response.status,
+                headers: response.headers,
+                data: response.data
+            });
+            
             return response.data;
         } catch (error) {
-            console.error('Erreur lors du chargement des archives:', error);
+            console.error('Erreur détaillée lors du chargement des archives:', error);
+            if (error instanceof AxiosError) {
+                console.error('Détails de l\'erreur:', {
+                    status: error.response?.status,
+                    statusText: error.response?.statusText,
+                    headers: error.response?.headers,
+                    data: error.response?.data
+                });
+            }
             throw error;
         }
     }
