@@ -1438,7 +1438,14 @@ export class Api {
     async fetchArchives() {
         try {
             console.log('Appel de fetchArchives');
-            const response = await this.client.get('/archives');
+            // Utiliser l'URL complète pour éviter les problèmes de routage
+            const response = await axios.get(`${API_URL}/api/archives`, {
+                headers: {
+                    'Authorization': `Bearer ${getToken()}`,
+                    'Content-Type': 'application/json'
+                },
+                withCredentials: true
+            });
             console.log('Réponse des archives:', response.data);
             return response.data;
         } catch (error) {
