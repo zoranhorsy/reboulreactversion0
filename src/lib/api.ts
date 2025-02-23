@@ -1,7 +1,7 @@
 import axios, { AxiosError, type AxiosInstance, type InternalAxiosRequestConfig } from "axios"
 import { toast } from "@/components/ui/use-toast"
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api"
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://reboul-store-api-production.up.railway.app"
 
 // Types
 export interface Product {
@@ -208,10 +208,10 @@ export interface Settings {
 }
 
 const getToken = () => {
-  if (typeof window !== 'undefined') {
-    return localStorage.getItem("token")
-  }
-  return null
+    if (typeof window !== 'undefined') {
+        return localStorage.getItem('token')
+    }
+    return null
 }
 
 export const getImagePath = (path: string): string => {
@@ -221,1274 +221,1295 @@ export const getImagePath = (path: string): string => {
 }
 
 export class Api {
-  private readonly client: AxiosInstance
-  private readonly isValidEmail = (email: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    return emailRegex.test(email)
-  }
-
-  private formatImageUrl(url: string | undefined): string {
-    if (!url) return ''
-    if (url.startsWith('http')) return url
-    return `${process.env.NEXT_PUBLIC_API_URL}${url}`
-  }
-
-  constructor() {
-    this.client = axios.create({
-      baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    })
-
-    this.setupInterceptors()
-  }
-
-  private setupInterceptors(): void {
-    this.client.interceptors.request.use(
-      (config: InternalAxiosRequestConfig) => {
-        const token = getToken()
-        console.log('Request URL:', config.url);
-        console.log('Token present:', !!token);
-        
-        if (token) {
-          config.headers = config.headers || {}
-          config.headers.Authorization = `Bearer ${token}`
-          console.log('Authorization header set');
-        } else {
-          console.log('No token found');
-        }
-        return config
-      },
-      (error) => {
-        console.error('Request interceptor error:', error);
-        return Promise.reject(error)
-      }
-    )
-
-    this.client.interceptors.response.use(
-      (response) => response,
-      async (error) => {
-        console.error('Response error:', error.response?.status, error.response?.data);
-        if (error.response?.status === 401) {
-          console.log('Unauthorized, redirecting to login...');
-          localStorage.removeItem('token')
-          window.location.href = '/login'
-        }
-        return Promise.reject(error)
-      }
-    )
-  }
-
-  private handleError(error: unknown, customMessage: string): void {
-    console.error(customMessage, error)
-    if (error instanceof AxiosError) {
-      const errorMessage = error.response?.data?.message || error.message
-      toast({
-        title: "Error",
-        description: `${customMessage}: ${errorMessage}`,
-        variant: "destructive",
-      })
-    } else {
-      toast({
-        title: "Error",
-        description: customMessage,
-        variant: "destructive",
-      })
-    }
-  }
-
-  async fetchProducts(params: Record<string, string | number> = {}): Promise<{ products: Product[]; total: number }> {
-    try {
-      const transformedParams = { ...params }
-      if (transformedParams.category && transformedParams.category !== 'all') {
-        transformedParams.category_id = transformedParams.category
-        delete transformedParams.category
-      }
-
-      const activeParams = Object.entries(transformedParams).reduce(
-        (acc, [key, value]) => {
-          if (key === "store_type" || (value && value !== "all" && value !== "" && value !== "false")) {
-            acc[key] = String(value)
-          }
-          return acc
-        },
-        {} as Record<string, string>,
-      )
-
-      const response = await this.client.get("/products", { params: activeParams })
-
-      if (!response.data || !Array.isArray(response.data.data)) {
-        throw new Error("Format de réponse API inattendu")
-      }
-
-      const products = response.data.data.map((product: Product) => {
-        // Normalisation des données
-        const normalizedProduct = {
-          ...product,
-          price: this.normalizePrice(product.price),
-          category: product.category_id,
-          image_url: this.formatImageUrl(product.image_url),
-          images: Array.isArray(product.images) 
-            ? product.images.map((img) => typeof img === 'string' ? this.formatImageUrl(img) : img) 
-            : [],
-          variants: Array.isArray(product.variants) 
-            ? product.variants 
-            : [],
-          reviews: Array.isArray(product.reviews) 
-            ? product.reviews 
-            : [],
-          tags: Array.isArray(product.tags) 
-            ? product.tags 
-            : []
-        }
-
-        // Vérification des types
-        if (typeof normalizedProduct.id !== 'string') {
-          normalizedProduct.id = String(normalizedProduct.id)
-        }
-
-        return normalizedProduct
-      })
-
-      return {
-        products,
-        total: response.data.pagination?.totalItems || products.length
-      }
-    } catch (error) {
-      this.handleError(error, "Erreur lors de la récupération des produits")
-      return { products: [], total: 0 }
-    }
-  }
-
-  private normalizePrice(price: any): number {
-    if (typeof price === 'number') {
-      return price
-    }
-    if (typeof price === 'string') {
-      const normalized = parseFloat(price.replace(/[^0-9.-]+/g, ''))
-      return isNaN(normalized) ? 0 : normalized
-    }
-    return 0
-  }
-
-  async getProductById(id: string): Promise<Product | null> {
-    try {
-      const response = await this.client.get(`/products/${id}`)
-      return response.data
-    } catch (error) {
-      this.handleError(error, `Error fetching product with ID ${id}`)
-      return null
-    }
-  }
-
-  async createProduct(data: Partial<Product>): Promise<Product> {
-    const productData = {
-      name: data.name,
-      price: data.price || 0,
-      description: data.description,
-      category_id: data.category_id,
-      brand: data.brand,
-      store_type: data.store_type,
-      featured: data.featured || false,
-      stock: data.stock || 0,
-      variants: data.variants || [],
-      colors: data.colors || [],
-      images: data.images || [],
-      reviews: data.reviews || [],
-      questions: data.questions || [],
-      faqs: data.faqs || [],
-      size_chart: data.size_chart || []
+    private readonly client: AxiosInstance
+    private readonly isValidEmail = (email: string): boolean => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+        return emailRegex.test(email)
     }
 
-    const response = await this.client.post("/products", productData)
-    return response.data
-  }
-
-  async updateProduct(id: string, productData: Partial<Product>): Promise<Product | null> {
-    try {
-      console.log(`Tentative de mise à jour du produit avec l'ID: ${id}`)
-      console.log("Données du produit reçues:", JSON.stringify(productData, null, 2))
-
-      // Créer un nouvel objet avec les champs requis et validés
-      const validatedData: Partial<Product> = {
-        name: productData.name?.trim(),
-        price: typeof productData.price === 'number' ? productData.price : parseFloat(String(productData.price)),
-        description: productData.description?.trim(),
-        category_id: typeof productData.category_id === 'number' 
-          ? productData.category_id 
-          : parseInt(String(productData.category_id), 10),
-        brand: productData.brand?.trim(),
-        store_type: productData.store_type || "adult",
-        featured: Boolean(productData.featured),
-        stock: typeof productData.stock === 'number' ? productData.stock : parseInt(String(productData.stock), 10),
-        variants: productData.variants,
-        colors: productData.colors,
-        images: productData.images
-      }
-
-      // Vérifier les valeurs requises
-      if (!validatedData.name || validatedData.name.length === 0) {
-        throw new Error("Le nom du produit est requis")
-      }
-
-      if (isNaN(validatedData.price!) || validatedData.price! < 0) {
-        throw new Error("Le prix doit être un nombre positif")
-      }
-
-      if (isNaN(validatedData.category_id!)) {
-        throw new Error("La catégorie est requise")
-      }
-
-      // Gérer les tableaux optionnels
-      if (productData.variants) {
-        validatedData.variants = productData.variants.map(variant => ({
-          color: variant.color.trim(),
-          size: variant.size.trim(),
-          stock: parseInt(String(variant.stock), 10)
-        }))
-      }
-
-      if (productData.colors) {
-        validatedData.colors = productData.colors.filter(color => color.trim().length > 0)
-      }
-
-      // Gérer les images
-      const imagesToUpload = productData.images?.filter((img): img is File | Blob => 
-        img instanceof File || img instanceof Blob
-      ) || []
-      const imageUrls = productData.images?.filter((img): img is string => 
-        typeof img === "string"
-      ) || []
-
-      // Si il y a des images à uploader
-      if (imagesToUpload.length > 0) {
-        const uploadedImageUrls = await this.uploadImages(imagesToUpload)
-        validatedData.images = [...imageUrls, ...uploadedImageUrls]
-      } else if (imageUrls.length > 0) {
-        validatedData.images = imageUrls
-      }
-
-      console.log("Données validées à envoyer:", JSON.stringify(validatedData, null, 2))
-
-      const response = await this.client.put(`/products/${id}`, validatedData)
-
-      if (!response.data) {
-        throw new Error("Aucune donnée reçue du serveur après la mise à jour")
-      }
-
-      // Formater la réponse
-      const updatedProduct = {
-        ...response.data,
-        category: response.data.category_id,
-        images: response.data.images || [],
-        variants: response.data.variants || [],
-        colors: response.data.colors || [],
-        featured: Boolean(response.data.featured)
-      }
-
-      return updatedProduct
-
-    } catch (error) {
-      console.error(`Error updating product with ID ${id}:`, error)
-      if (error instanceof AxiosError) {
-        console.error("Server response:", error.response?.data)
-        const errorMessage = error.response?.data?.message || error.message
-        throw new Error(`Erreur lors de la mise à jour du produit: ${errorMessage}`)
-      }
-      if (error instanceof Error) {
-        throw new Error(`Erreur lors de la mise à jour du produit: ${error.message}`)
-      }
-      throw new Error("Erreur inconnue lors de la mise à jour du produit")
+    private formatImageUrl(url: string | undefined): string {
+        if (!url) return ''
+        if (url.startsWith('http')) return url
+        return `${process.env.NEXT_PUBLIC_API_URL}${url}`
     }
-  }
 
-  async deleteProduct(id: string): Promise<boolean> {
-    try {
-      console.log(`Tentative de suppression du produit avec l'ID: ${id}`)
-      const response = await this.client.delete(`/products/${id}`)
-      console.log(`Réponse de suppression:`, response)
-
-      if (response.status === 200) {
-        toast({
-          title: "Succès",
-          description: `Le produit avec l'ID ${id} a été supprimé avec succès.`,
-        })
-        return true
-      } else {
-        throw new Error(response.data.message || "Erreur inconnue lors de la suppression")
-      }
-    } catch (error) {
-      console.error(`Erreur détaillée lors de la suppression du produit avec l'ID ${id}:`, error)
-      if (error instanceof AxiosError) {
-        console.error(`Statut: ${error.response?.status}, Données:`, error.response?.data)
-        const errorMessage = error.response?.data?.message || error.message
-        toast({
-          title: "Erreur",
-          description: errorMessage,
-          variant: "destructive",
-        })
-      } else {
-        this.handleError(error, `Erreur lors de la suppression du produit avec l'ID ${id}`)
-      }
-      return false
-    }
-  }
-
-  async fetchOrders(): Promise<{
-    data: Order[]
-    pagination: { totalItems: number; totalPages: number; currentPage: number }
-  }> {
-    try {
-      const response = await this.client.get("/orders")
-      return response.data
-    } catch (error) {
-      this.handleError(error, "Error fetching orders")
-      return { data: [], pagination: { totalItems: 0, totalPages: 0, currentPage: 0 } }
-    }
-  }
-
-  async getOrderById(id: string): Promise<Order | null> {
-    try {
-      const response = await this.client.get(`/orders/${id}`)
-      return response.data
-    } catch (error) {
-      this.handleError(error, `Error fetching order with ID ${id}`)
-      return null
-    }
-  }
-
-  async updateOrderStatus(orderId: number, newStatus: string): Promise<Order | null> {
-    try {
-      const response = await this.client.put(`/orders/${orderId}/status`, { status: newStatus })
-      return response.data
-    } catch (error) {
-      this.handleError(error, `Error updating status for order ${orderId}`)
-      return null
-    }
-  }
-
-  async fetchDashboardStats(): Promise<DashboardStats> {
-    try {
-      const response = await this.client.get("/admin/dashboard/stats")
-      return response.data
-    } catch (error) {
-      this.handleError(error, "Error fetching dashboard stats")
-      return {
-        totalRevenue: 0,
-        totalOrders: 0,
-        totalProducts: 0,
-        totalUsers: 0,
-      }
-    }
-  }
-
-  async fetchRecentOrders(): Promise<Order[]> {
-    try {
-      const response = await this.client.get("/admin/dashboard/recent-orders")
-      return response.data
-    } catch (error) {
-      this.handleError(error, "Error fetching recent orders")
-      return []
-    }
-  }
-
-  async fetchTopProducts(): Promise<TopProduct[]> {
-    try {
-      const response = await this.client.get("/admin/dashboard/top-products")
-      return response.data
-    } catch (error) {
-      this.handleError(error, "Error fetching top products")
-      return []
-    }
-  }
-
-  async fetchWeeklySales(): Promise<WeeklySales[]> {
-    try {
-      const response = await this.client.get("/admin/dashboard/weekly-sales")
-      return response.data
-    } catch (error) {
-      this.handleError(error, "Error fetching weekly sales")
-      return []
-    }
-  }
-
-  async updateProductStock(
-    productId: string,
-    quantity: number,
-    variant: { size: string; color: string },
-  ): Promise<boolean> {
-    try {
-      await this.client.put(`/products/${productId}/stock`, { quantity, variant })
-      return true
-    } catch (error) {
-      this.handleError(error, "Error updating product stock")
-      return false
-    }
-  }
-
-  async changePassword(currentPassword: string, newPassword: string): Promise<ChangePasswordResponse> {
-    try {
-      const response = await this.client.put('/users/password', {
-        currentPassword,
-        newPassword,
-      })
-      return {
-        success: true,
-        message: response.data.message || 'Mot de passe changé avec succès',
-      }
-    } catch (error) {
-      if (error instanceof AxiosError) {
-        return {
-          success: false,
-          message: error.response?.data?.message || 'Erreur lors du changement de mot de passe',
-        }
-      }
-      return {
-        success: false,
-        message: 'Une erreur inattendue est survenue',
-      }
-    }
-  }
-
-  async fetchAddresses(): Promise<Address[]> {
-    try {
-      console.log('Fetching addresses...');
-      const token = getToken();
-      console.log('Auth token:', token ? 'Present' : 'Missing');
-      
-      const response = await this.client.get("/addresses")
-      console.log('Response:', response.data);
-      return Array.isArray(response.data) ? response.data : []
-    } catch (error) {
-      this.handleError(error, "Erreur lors de la récupération des adresses")
-      return []
-    }
-  }
-
-  async updateUserInfo(userInfo: Partial<User>): Promise<User | null> {
-    try {
-      const { name, email, phone } = userInfo;
-      if (!name) {
-        throw new Error("Le nom est requis")
-      }
-
-      // Validation de l'email
-      if (email && !this.isValidEmail(email)) {
-        throw new Error("Format d'email invalide")
-      }
-
-      // Construction des données à envoyer
-      const userData: {
-        username: string;
-        email?: string;
-        phone?: string;
-        first_name: string;
-        last_name: string;
-      } = {
-        username: name,
-        email,
-        phone,
-        first_name: name.split(' ')[0],
-        last_name: name.split(' ')[1] || ''
-      }
-
-      // Suppression des champs undefined
-      if (userData.email === undefined) {
-        delete userData.email;
-      }
-      if (userData.phone === undefined) {
-        delete userData.phone;
-      }
-
-      const response = await this.client.put(`/users/${userInfo.id}`, userData)
-
-      return {
-        id: response.data.id,
-        name: response.data.username || response.data.name,
-        email: response.data.email,
-        phone: response.data.phone,
-        avatar_url: response.data.avatar_url,
-        created_at: response.data.created_at,
-        isAdmin: response.data.is_admin || false,
-        status: response.data.status
-      }
-    } catch (error) {
-      if (error instanceof AxiosError) {
-        const errorMessage = error.response?.data?.message || error.message
-        this.handleError(error, `Erreur: ${errorMessage}`)
-      } else if (error instanceof Error) {
-        this.handleError(error, error.message)
-      } else {
-        this.handleError(error, "Erreur lors de la mise à jour des informations utilisateur")
-      }
-      return null
-    }
-  }
-
-  async login(email: string, password: string): Promise<{ user: User; token: string } | null> {
-    try {
-      const response = await this.client.post("/auth/login", { email, password })
-      const { user, token } = response.data
-      if (typeof window !== "undefined") {
-        localStorage.setItem("token", token)
-      }
-      return { user, token }
-    } catch (error) {
-      this.handleError(error, "Error during login")
-      return null
-    }
-  }
-
-  async register(userData: { name: string; email: string; password: string }): Promise<User | null> {
-    try {
-      const response = await this.client.post("/auth/register", userData)
-      return response.data
-    } catch (error) {
-      this.handleError(error, "Error during registration")
-      return null
-    }
-  }
-
-  async logout(): Promise<void> {
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("token")
-      localStorage.removeItem("refreshToken")
-    }
-  }
-
-  async fetchUserProfile(): Promise<User | null> {
-    try {
-      const token = getToken()
-      if (!token) {
-        throw new Error("Non authentifié")
-      }
-      
-      const base64Url = token.split('.')[1]
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
-      const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
-        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
-      }).join(''))
-      const { userId } = JSON.parse(jsonPayload)
-
-      const response = await this.client.get(`/users/${userId}`)
-      
-      return {
-        id: response.data.id,
-        name: response.data.username,
-        email: response.data.email,
-        avatar_url: response.data.avatar_url,
-        created_at: response.data.created_at,
-        isAdmin: response.data.is_admin || false,
-        status: response.data.status
-      }
-    } catch (error) {
-      if (error instanceof AxiosError && error.response?.status === 401) {
-        if (typeof window !== "undefined") {
-          window.location.href = '/login'
-        }
-      }
-      this.handleError(error, "Erreur lors de la récupération du profil utilisateur")
-      return null
-    }
-  }
-
-  async addToCart(productId: string, quantity: number): Promise<boolean> {
-    try {
-      await this.client.post("/cart/add", { productId, quantity })
-      return true
-    } catch (error) {
-      this.handleError(error, "Error adding product to cart")
-      return false
-    }
-  }
-
-  async removeFromCart(productId: string): Promise<boolean> {
-    try {
-      await this.client.delete(`/cart/remove/${productId}`)
-      return true
-    } catch (error) {
-      this.handleError(error, "Error removing product from cart")
-      return false
-    }
-  }
-
-  async fetchCart(): Promise<{ items: Array<{ product: Product; quantity: number }>; total: number } | null> {
-    try {
-      const response = await this.client.get("/cart")
-      return response.data
-    } catch (error) {
-      this.handleError(error, "Error fetching cart")
-      return null
-    }
-  }
-
-  async createOrder(orderData: { addressId: string; paymentMethod: string }): Promise<Order | null> {
-    try {
-      const response = await this.client.post("/orders", orderData)
-      return response.data
-    } catch (error) {
-      this.handleError(error, "Error creating order")
-      return null
-    }
-  }
-
-  async addAddress(addressData: Omit<Address, "id">): Promise<Address | null> {
-    try {
-      const response = await this.client.post("/addresses", addressData)
-      return response.data
-    } catch (error) {
-      this.handleError(error, "Erreur lors de l'ajout de l'adresse")
-      return null
-    }
-  }
-
-  async updateAddress(id: string, addressData: Partial<Address>): Promise<Address | null> {
-    try {
-      const response = await this.client.put(`/addresses/${id}`, addressData)
-      return response.data
-    } catch (error) {
-      this.handleError(error, "Erreur lors de la mise à jour de l'adresse")
-      return null
-    }
-  }
-
-  async deleteAddress(id: string): Promise<boolean> {
-    try {
-      await this.client.delete(`/addresses/${id}`)
-      return true
-    } catch (error) {
-      this.handleError(error, "Erreur lors de la suppression de l'adresse")
-      return false
-    }
-  }
-
-  async searchProducts(query: string): Promise<Product[]> {
-    try {
-      const response = await this.client.get("/products/search", { params: { q: query } })
-      return response.data
-    } catch (error) {
-      this.handleError(error, "Error searching products")
-      return []
-    }
-  }
-
-  async addReview(productId: string, reviewData: { rating: number; comment: string }): Promise<boolean> {
-    try {
-      console.log('Adding review for product:', productId, reviewData);
-      const response = await this.client.post('/reviews', {
-        product_id: productId,
-        rating: reviewData.rating,
-        comment: reviewData.comment
-      });
-      console.log('Review added successfully:', response.data);
-      return true;
-    } catch (error) {
-      console.error('Error adding review:', error);
-      if (error instanceof AxiosError) {
-        console.error('Server response:', error.response?.data);
-      }
-      this.handleError(error, "Impossible d'ajouter votre avis");
-      return false;
-    }
-  }
-
-  async fetchProductReviews(
-    productId: string,
-  ): Promise<{ id: number; rating: number; comment: string; userName: string; date: string }[]> {
-    try {
-      const response = await this.client.get(`/products/${productId}/reviews`)
-      return response.data
-    } catch (error) {
-      this.handleError(error, "Error fetching product reviews")
-      return []
-    }
-  }
-
-  async fetchCategories(): Promise<Category[]> {
-    try {
-      const response = await this.client.get("/categories")
-      return response.data
-    } catch (error) {
-      this.handleError(error, "Error fetching categories")
-      return []
-    }
-  }
-
-  async createCategory(name: string): Promise<Category> {
-    try {
-      const response = await this.client.post("/categories", { name })
-      return response.data
-    } catch (error) {
-      this.handleError(error, "Error creating category")
-      throw error
-    }
-  }
-
-  async updateCategory(id: number, name: string): Promise<Category> {
-    try {
-      const response = await this.client.put(`/categories/${id}`, { name })
-      return response.data
-    } catch (error) {
-      this.handleError(error, "Error updating category")
-      throw error
-    }
-  }
-
-  async deleteCategory(id: number): Promise<boolean> {
-    try {
-      await this.client.delete(`/categories/${id}`)
-      return true
-    } catch (error) {
-      this.handleError(error, "Error deleting category")
-      return false
-    }
-  }
-
-  async fetchBrands(): Promise<Brand[]> {
-    try {
-      const response = await this.client.get("/brands")
-      return response.data
-    } catch (error) {
-      this.handleError(error, "Error fetching brands")
-      return []
-    }
-  }
-
-  async createBrand(data: { name: string; logo: File | null; description: string }): Promise<Brand> {
-    try {
-      const formData = new FormData()
-      formData.append('name', data.name)
-      formData.append('description', data.description)
-      if (data.logo) {
-        formData.append('logo', data.logo)
-      }
-
-      const response = await this.client.post("/brands", formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      })
-      return response.data
-    } catch (error) {
-      this.handleError(error, "Error creating brand")
-      throw error
-    }
-  }
-
-  async updateBrand(id: number, data: { name: string; logo: File | null; description: string }): Promise<Brand> {
-    try {
-      const formData = new FormData()
-      formData.append('name', data.name)
-      formData.append('description', data.description)
-      if (data.logo) {
-        formData.append('logo', data.logo)
-      }
-
-      const response = await this.client.put(`/brands/${id}`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      })
-      return response.data
-    } catch (error) {
-      this.handleError(error, "Error updating brand")
-      throw error
-    }
-  }
-
-  async deleteBrand(id: number): Promise<boolean> {
-    try {
-      await this.client.delete(`/brands/${id}`)
-      return true
-    } catch (error) {
-      this.handleError(error, "Error deleting brand")
-      return false
-    }
-  }
-
-  async uploadImages(files: (File | Blob)[]): Promise<string[]> {
-    try {
-      const formData = new FormData()
-      files.forEach((file, index) => {
-        formData.append(`images`, file)
-      })
-
-      const response = await this.client.post('/upload', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      })
-
-      if (!response.data || !Array.isArray(response.data.urls)) {
-        throw new Error('Format de réponse inattendu pour l\'upload d\'images')
-      }
-
-      return response.data.urls
-    } catch (error) {
-      this.handleError(error, "Erreur lors de l'upload des images")
-      return []
-    }
-  }
-
-  async processReturn(orderId: string, reason: string): Promise<Order> {
-    try {
-      const response = await this.client.post(`/orders/${orderId}/return`, { reason })
-      return response.data
-    } catch (error) {
-      this.handleError(error, "Error processing return")
-      throw error
-    }
-  }
-
-  async deleteOrder(orderId: string): Promise<boolean> {
-    try {
-      const response = await this.client.delete(`/orders/${orderId}`)
-      return response.status === 200
-    } catch (error) {
-      this.handleError(error, "Error deleting order")
-      return false
-    }
-  }
-
-  async fetchNotificationSettings(): Promise<NotificationSettings> {
-    try {
-        const token = getToken();
-        if (!token) {
-            throw new Error('No token found');
-        }
-        
-        const response = await this.client.get("/users/notification-settings", {
+    constructor() {
+        this.client = axios.create({
+            baseURL: API_URL,
             headers: {
-                Authorization: `Bearer ${token}`
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            withCredentials: true
+        })
+
+        this.setupInterceptors()
+    }
+
+    private setupInterceptors(): void {
+        this.client.interceptors.request.use(
+            (config: InternalAxiosRequestConfig) => {
+                const token = getToken()
+                console.log('Request URL:', config.url)
+                console.log('Token present:', !!token)
+                
+                if (token) {
+                    config.headers = config.headers || {}
+                    config.headers.Authorization = `Bearer ${token}`
+                    console.log('Authorization header set')
+                } else {
+                    console.log('No token found')
+                }
+                return config
+            },
+            (error) => {
+                console.error('Request interceptor error:', error)
+                return Promise.reject(error)
             }
-        });
-        return response.data;
-    } catch (error) {
-        this.handleError(error, "Error fetching notification settings");
-        return {
-            email: false,
-            push: false,
-            marketing: false,
-            security: false,
-        };
+        )
+
+        this.client.interceptors.response.use(
+            (response) => {
+                console.log('Response received:', {
+                    url: response.config.url,
+                    status: response.status,
+                    data: response.data
+                })
+                return response
+            },
+            async (error) => {
+                console.error('Response error:', {
+                    url: error.config?.url,
+                    status: error.response?.status,
+                    data: error.response?.data
+                })
+
+                if (error.response?.status === 401) {
+                    console.log('Unauthorized, redirecting to login...')
+                    if (typeof window !== 'undefined') {
+                        localStorage.removeItem('token')
+                        window.location.href = '/connexion'
+                    }
+                }
+                return Promise.reject(error)
+            }
+        )
     }
-  }
 
-  async updateNotificationSettings(settings: NotificationSettings): Promise<boolean> {
-    try {
-      console.log('Updating notification settings:', settings);
-      const response = await this.client.put("/users/notification-settings", settings)
-      console.log('Update response:', response);
-      return response.status === 200
-    } catch (error) {
-      console.error('Update error details:', error);
-      if (error instanceof AxiosError) {
-        console.error('Server response:', error.response?.data);
-      }
-      this.handleError(error, "Error updating notification settings")
-      return false
-    }
-  }
-
-  async uploadUserAvatar(file: File): Promise<string> {
-    try {
-      const formData = new FormData()
-      formData.append("avatar", file)
-
-      const response = await this.client.post("/users/avatar", formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      })
-
-      if (!response.data || !Array.isArray(response.data.urls)) {
-        throw new Error("Error uploading user avatar")
-      }
-
-      return response.data.urls[0]
-    } catch (error) {
-      this.handleError(error, "Error uploading user avatar")
-      throw error
-    }
-  }
-
-  async deleteAccount(): Promise<boolean> {
-    try {
-      const response = await this.client.delete("/users")
-      return response.status === 200
-    } catch (error) {
-      this.handleError(error, "Error deleting account")
-      return false
-    }
-  }
-
-  async fetchUserOrders(): Promise<Order[]> {
-    try {
-      console.log('Fetching user orders...');
-      const token = getToken();
-      console.log('Auth token:', token ? 'Present' : 'Missing');
-      
-      const response = await this.client.get("/orders/me");
-      console.log('Orders response:', response.data);
-      
-      return Array.isArray(response.data) ? response.data : [];
-    } catch (error) {
-      console.error('Detailed error:', error);
-      if (error instanceof AxiosError) {
-        console.error('Server response:', error.response?.data);
-      }
-      this.handleError(error, "Error fetching user orders");
-      return [];
-    }
-  }
-
-  async fetchUserReviews(): Promise<UserReview[]> {
-    try {
-      console.log('Fetching user reviews...');
-      const token = getToken();
-      console.log('Auth token:', token ? 'Present' : 'Missing');
-      
-      const response = await this.client.get("/reviews");
-      console.log('Reviews response:', response.data);
-      
-      return Array.isArray(response.data) ? response.data : [];
-    } catch (error) {
-      console.error('Error fetching user reviews:', error);
-      if (error instanceof AxiosError) {
-        console.error('Server response:', error.response?.data);
-      }
-      this.handleError(error, "Error fetching user reviews");
-      return [];
-    }
-  }
-
-  async updateReview(reviewId: string, rating: number, comment: string): Promise<boolean> {
-    try {
-      const response = await this.client.put(`/reviews/${reviewId}`, { rating, comment })
-      return response.status === 200
-    } catch (error) {
-      this.handleError(error, "Error updating review")
-      return false
-    }
-  }
-
-  async deleteReview(reviewId: string): Promise<boolean> {
-    try {
-      const response = await this.client.delete(`/reviews/${reviewId}`)
-      return response.status === 200
-    } catch (error) {
-      this.handleError(error, "Error deleting review")
-      return false
-    }
-  }
-
-  async fetchUsers(): Promise<User[]> {
-    try {
-      const response = await this.client.get('/users')
-      return response.data.map((user: any) => ({
-        id: user.id,
-        name: user.username || user.name,
-        email: user.email,
-        isAdmin: user.is_admin,
-        created_at: user.created_at,
-        status: user.status
-      }))
-    } catch (error) {
-      this.handleError(error, 'Erreur lors de la récupération des utilisateurs')
-      return []
-    }
-  }
-
-  async updateUserRole(userId: string, isAdmin: boolean): Promise<boolean> {
-    try {
-      const response = await this.client.put(`/users/${userId}/role`, { is_admin: isAdmin })
-      return response.status === 200
-    } catch (error) {
-      this.handleError(error, "Erreur lors de la modification du rôle utilisateur")
-      return false
-    }
-  }
-
-  async fetchMonthlyStats(): Promise<MonthlyStats[]> {
-    try {
-        console.log('Fetching monthly stats...');
-        const response = await this.client.get('/stats/monthly-sales');
-        console.log('Monthly stats response:', response.data);
-        return Array.isArray(response.data) ? response.data : [];
-    } catch (error) {
-        console.error('Error fetching monthly stats:', error);
-        this.handleError(error, "Error fetching monthly statistics");
-        return [];
-    }
-  }
-
-  async fetchTopProductsByCategory(): Promise<TopProductByCategory[]> {
-    try {
-        console.log('Fetching top products by category...');
-        const response = await this.client.get('/stats/top-products-by-category');
-        console.log('Top products response:', response.data);
-        return Array.isArray(response.data) ? response.data : [];
-    } catch (error) {
-        console.error('Error fetching top products:', error);
-        this.handleError(error, "Error fetching top products");
-        return [];
-    }
-  }
-
-  async fetchCustomerStats(): Promise<CustomerStats[]> {
-    try {
-        console.log('Fetching customer stats...');
-        const response = await this.client.get('/stats/customer-stats');
-        console.log('Customer stats response:', response.data);
-        return Array.isArray(response.data) ? response.data : [];
-    } catch (error) {
-        console.error('Error fetching customer stats:', error);
-        this.handleError(error, "Error fetching customer statistics");
-        return [];
-    }
-  }
-
-  async fetchSalesStats(dateRange: { from: Date; to: Date }): Promise<SalesStats[]> {
-    try {
-      const response = await this.client.get('/stats/sales', {
-        params: {
-          from: dateRange.from.toISOString(),
-          to: dateRange.to.toISOString()
+    private handleError(error: unknown, message: string): void {
+        console.error(message, error)
+        if (error instanceof AxiosError) {
+            const errorMessage = error.response?.data?.error || error.message
+            toast({
+                title: "Erreur",
+                description: errorMessage,
+                variant: "destructive"
+            })
+        } else {
+            toast({
+                title: "Erreur",
+                description: message,
+                variant: "destructive"
+            })
         }
-      })
-      return response.data
-    } catch (error) {
-      this.handleError(error, "Erreur lors de la récupération des statistiques de ventes")
-      return []
     }
-  }
 
-  async fetchCategoryStats(): Promise<CategoryStats[]> {
-    try {
-      const response = await this.client.get('/stats/categories')
-      return response.data
-    } catch (error) {
-      this.handleError(error, "Erreur lors de la récupération des statistiques par catégorie")
-      return []
-    }
-  }
+    async fetchProducts(params: Record<string, string | number> = {}): Promise<{ products: Product[]; total: number }> {
+        try {
+            const transformedParams = { ...params }
+            if (transformedParams.category && transformedParams.category !== 'all') {
+                transformedParams.category_id = transformedParams.category
+                delete transformedParams.category
+            }
 
-  async fetchBrandStats(): Promise<BrandStats[]> {
-    try {
-      const response = await this.client.get('/stats/brands')
-      return response.data
-    } catch (error) {
-      this.handleError(error, "Erreur lors de la récupération des statistiques par marque")
-      return []
-    }
-  }
+            const activeParams = Object.entries(transformedParams).reduce(
+                (acc, [key, value]) => {
+                    if (key === "store_type" || (value && value !== "all" && value !== "" && value !== "false")) {
+                        acc[key] = String(value)
+                    }
+                    return acc
+                },
+                {} as Record<string, string>,
+            )
 
-  async createUser(userData: CreateUserData): Promise<User | null> {
-    try {
-      if (!userData.username || !userData.email || !userData.password) {
-        throw new Error("Le nom, l'email et le mot de passe sont requis")
-      }
+            const response = await this.client.get("/products", { params: activeParams })
 
-      if (!this.isValidEmail(userData.email)) {
-        throw new Error("Format d'email invalide")
-      }
+            if (!response.data || !Array.isArray(response.data.data)) {
+                throw new Error("Format de réponse API inattendu")
+            }
 
-      const response = await this.client.post("/admin/users", userData)
-      
-      return {
-        id: response.data.id,
-        name: response.data.username || response.data.name,
-        email: response.data.email,
-        isAdmin: response.data.isAdmin || false,
-        created_at: response.data.created_at,
-        avatar_url: response.data.avatar_url
-      }
-    } catch (error) {
-      if (error instanceof AxiosError) {
-        const errorMessage = error.response?.data?.message || error.message
-        this.handleError(error, `Erreur: ${errorMessage}`)
-      } else if (error instanceof Error) {
-        this.handleError(error, error.message)
-      } else {
-        this.handleError(error, "Erreur lors de la création de l'utilisateur")
-      }
-      return null
-    }
-  }
+            const products = response.data.data.map((product: Product) => {
+                // Normalisation des données
+                const normalizedProduct = {
+                    ...product,
+                    price: this.normalizePrice(product.price),
+                    category: product.category_id,
+                    image_url: this.formatImageUrl(product.image_url),
+                    images: Array.isArray(product.images) 
+                        ? product.images.map((img) => typeof img === 'string' ? this.formatImageUrl(img) : img) 
+                        : [],
+                    variants: Array.isArray(product.variants) 
+                        ? product.variants 
+                        : [],
+                    reviews: Array.isArray(product.reviews) 
+                        ? product.reviews 
+                        : [],
+                    tags: Array.isArray(product.tags) 
+                        ? product.tags 
+                        : []
+                }
 
-  async updateSettings(settings: Settings): Promise<Settings> {
-    try {
-      const response = await this.client.put('/admin/settings', settings);
-      return response.data;
-    } catch (error) {
-      this.handleError(error, "Erreur lors de la mise à jour des paramètres");
-      throw error;
-    }
-  }
+                // Vérification des types
+                if (typeof normalizedProduct.id !== 'string') {
+                    normalizedProduct.id = String(normalizedProduct.id)
+                }
 
-  async getFavorites(): Promise<Product[]> {
-    try {
-      console.log('Appel de getFavorites');
-      const token = getToken();
-      console.log('Token présent:', !!token);
+                return normalizedProduct
+            })
 
-      if (!token) {
-        console.log('Pas de token, retour tableau vide');
-        return [];
-      }
-
-      const response = await this.client.get('/users/favorites', {
-        headers: {
-          'Authorization': `Bearer ${token}`
+            return {
+                products,
+                total: response.data.pagination?.totalItems || products.length
+            }
+        } catch (error) {
+            this.handleError(error, "Erreur lors de la récupération des produits")
+            return { products: [], total: 0 }
         }
-      });
+    }
 
-      console.log('Réponse des favoris:', response.data);
-      return response.data;
-    } catch (error) {
-      console.error('Erreur détaillée dans getFavorites:', error);
-      if (error instanceof AxiosError) {
-        console.error('Réponse du serveur:', error.response?.data);
-        // Si l'utilisateur n'est pas authentifié, retourner un tableau vide
-        if (error.response?.status === 401) {
-          return [];
+    private normalizePrice(price: any): number {
+        if (typeof price === 'number') {
+            return price
         }
-      }
-      this.handleError(error, "Erreur lors du chargement des favoris");
-      return [];
-    }
-  }
-
-  async addToFavorites(productId: number | string): Promise<void> {
-    try {
-      const token = getToken();
-      if (!token) {
-        throw new Error('Vous devez être connecté pour ajouter des favoris');
-      }
-
-      // Convertir l'ID en nombre si c'est une chaîne
-      const numericId = typeof productId === 'string' ? parseInt(productId, 10) : productId;
-      
-      // S'assurer que l'ID est valide
-      if (isNaN(numericId)) {
-        throw new Error('ID de produit invalide');
-      }
-
-      const response = await this.client.post('/users/favorites', { 
-        product_id: numericId
-      }, {
-        headers: {
-          'Authorization': `Bearer ${token}`
+        if (typeof price === 'string') {
+            const normalized = parseFloat(price.replace(/[^0-9.-]+/g, ''))
+            return isNaN(normalized) ? 0 : normalized
         }
-      });
-
-      if (!response.data) {
-        throw new Error('Réponse invalide du serveur');
-      }
-    } catch (error) {
-      console.error('Erreur détaillée lors de l\'ajout aux favoris:', error);
-      if (error instanceof AxiosError) {
-        console.error('Données de la réponse:', error.response?.data);
-      }
-      this.handleError(error, "Erreur lors de l'ajout aux favoris");
-      throw error;
+        return 0
     }
-  }
 
-  async removeFromFavorites(productId: number | string): Promise<void> {
-    try {
-      const token = getToken();
-      if (!token) {
-        throw new Error('Vous devez être connecté pour gérer vos favoris');
-      }
-
-      await this.client.delete(`/users/favorites/${productId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
+    async getProductById(id: string): Promise<Product | null> {
+        try {
+            const response = await this.client.get(`/products/${id}`)
+            return response.data
+        } catch (error) {
+            this.handleError(error, `Error fetching product with ID ${id}`)
+            return null
         }
-      });
-    } catch (error) {
-      this.handleError(error, "Erreur lors de la suppression des favoris");
-      throw error;
     }
-  }
 
-  async fetchArchives() {
-    try {
-        console.log('Appel de fetchArchives');
-        const response = await this.client.get('/archives');
-        console.log('Réponse des archives:', response.data);
-        return response.data;
-    } catch (error) {
-        console.error('Erreur lors du chargement des archives:', error);
-        throw error;
-    }
-  }
+    async createProduct(data: Partial<Product>): Promise<Product> {
+        const productData = {
+            name: data.name,
+            price: data.price || 0,
+            description: data.description,
+            category_id: data.category_id,
+            brand: data.brand,
+            store_type: data.store_type,
+            featured: data.featured || false,
+            stock: data.stock || 0,
+            variants: data.variants || [],
+            colors: data.colors || [],
+            images: data.images || [],
+            reviews: data.reviews || [],
+            questions: data.questions || [],
+            faqs: data.faqs || [],
+            size_chart: data.size_chart || []
+        }
 
-  async fetchSettings(): Promise<Settings> {
-    try {
-      const response = await this.client.get('/admin/settings')
-      return response.data
-    } catch (error) {
-      this.handleError(error, 'Erreur lors de la récupération des paramètres')
-      throw error
+        const response = await this.client.post("/products", productData)
+        return response.data
     }
-  }
 
-  async deleteUser(userId: string): Promise<boolean> {
-    try {
-      const response = await this.client.delete(`/users/${userId}`)
-      return response.status === 200
-    } catch (error) {
-      this.handleError(error, "Erreur lors de la suppression de l'utilisateur")
-      return false
-    }
-  }
+    async updateProduct(id: string, productData: Partial<Product>): Promise<Product | null> {
+        try {
+            console.log(`Tentative de mise à jour du produit avec l'ID: ${id}`)
+            console.log("Données du produit reçues:", JSON.stringify(productData, null, 2))
 
-  async updateUserStatus(userId: string, status: string): Promise<boolean> {
-    try {
-      const response = await this.client.put(`/users/${userId}/status`, { status })
-      return response.status === 200
-    } catch (error) {
-      this.handleError(error, "Erreur lors de la mise à jour du statut de l'utilisateur")
-      return false
-    }
-  }
+            // Créer un nouvel objet avec les champs requis et validés
+            const validatedData: Partial<Product> = {
+                name: productData.name?.trim(),
+                price: typeof productData.price === 'number' ? productData.price : parseFloat(String(productData.price)),
+                description: productData.description?.trim(),
+                category_id: typeof productData.category_id === 'number' 
+                    ? productData.category_id 
+                    : parseInt(String(productData.category_id), 10),
+                brand: productData.brand?.trim(),
+                store_type: productData.store_type || "adult",
+                featured: Boolean(productData.featured),
+                stock: typeof productData.stock === 'number' ? productData.stock : parseInt(String(productData.stock), 10),
+                variants: productData.variants,
+                colors: productData.colors,
+                images: productData.images
+            }
 
-  async updateArchive(id: string, data: FormData): Promise<any> {
-    try {
-      const response = await this.client.put(`/archives/${id}`, data, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      })
-      return response.data
-    } catch (error) {
-      this.handleError(error, "Erreur lors de la mise à jour de l'archive")
-      throw error
-    }
-  }
+            // Vérifier les valeurs requises
+            if (!validatedData.name || validatedData.name.length === 0) {
+                throw new Error("Le nom du produit est requis")
+            }
 
-  async createArchive(data: FormData): Promise<any> {
-    try {
-      const response = await this.client.post('/archives', data, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      })
-      return response.data
-    } catch (error) {
-      this.handleError(error, "Erreur lors de la création de l'archive")
-      throw error
-    }
-  }
+            if (isNaN(validatedData.price!) || validatedData.price! < 0) {
+                throw new Error("Le prix doit être un nombre positif")
+            }
 
-  async deleteArchive(id: string): Promise<boolean> {
-    try {
-      const response = await this.client.delete(`/archives/${id}`)
-      return response.status === 200
-    } catch (error) {
-      this.handleError(error, "Erreur lors de la suppression de l'archive")
-      return false
+            if (isNaN(validatedData.category_id!)) {
+                throw new Error("La catégorie est requise")
+            }
+
+            // Gérer les tableaux optionnels
+            if (productData.variants) {
+                validatedData.variants = productData.variants.map(variant => ({
+                    color: variant.color.trim(),
+                    size: variant.size.trim(),
+                    stock: parseInt(String(variant.stock), 10)
+                }))
+            }
+
+            if (productData.colors) {
+                validatedData.colors = productData.colors.filter(color => color.trim().length > 0)
+            }
+
+            // Gérer les images
+            const imagesToUpload = productData.images?.filter((img): img is File | Blob => 
+                img instanceof File || img instanceof Blob
+            ) || []
+            const imageUrls = productData.images?.filter((img): img is string => 
+                typeof img === "string"
+            ) || []
+
+            // Si il y a des images à uploader
+            if (imagesToUpload.length > 0) {
+                const uploadedImageUrls = await this.uploadImages(imagesToUpload)
+                validatedData.images = [...imageUrls, ...uploadedImageUrls]
+            } else if (imageUrls.length > 0) {
+                validatedData.images = imageUrls
+            }
+
+            console.log("Données validées à envoyer:", JSON.stringify(validatedData, null, 2))
+
+            const response = await this.client.put(`/products/${id}`, validatedData)
+
+            if (!response.data) {
+                throw new Error("Aucune donnée reçue du serveur après la mise à jour")
+            }
+
+            // Formater la réponse
+            const updatedProduct = {
+                ...response.data,
+                category: response.data.category_id,
+                images: response.data.images || [],
+                variants: response.data.variants || [],
+                colors: response.data.colors || [],
+                featured: Boolean(response.data.featured)
+            }
+
+            return updatedProduct
+
+        } catch (error) {
+            console.error(`Error updating product with ID ${id}:`, error)
+            if (error instanceof AxiosError) {
+                console.error("Server response:", error.response?.data)
+                const errorMessage = error.response?.data?.message || error.message
+                throw new Error(`Erreur lors de la mise à jour du produit: ${errorMessage}`)
+            }
+            if (error instanceof Error) {
+                throw new Error(`Erreur lors de la mise à jour du produit: ${error.message}`)
+            }
+            throw new Error("Erreur inconnue lors de la mise à jour du produit")
+        }
     }
-  }
+
+    async deleteProduct(id: string): Promise<boolean> {
+        try {
+            console.log(`Tentative de suppression du produit avec l'ID: ${id}`)
+            const response = await this.client.delete(`/products/${id}`)
+            console.log(`Réponse de suppression:`, response)
+
+            if (response.status === 200) {
+                toast({
+                    title: "Succès",
+                    description: `Le produit avec l'ID ${id} a été supprimé avec succès.`,
+                })
+                return true
+            } else {
+                throw new Error(response.data.message || "Erreur inconnue lors de la suppression")
+            }
+        } catch (error) {
+            console.error(`Erreur détaillée lors de la suppression du produit avec l'ID ${id}:`, error)
+            if (error instanceof AxiosError) {
+                console.error(`Statut: ${error.response?.status}, Données:`, error.response?.data)
+                const errorMessage = error.response?.data?.message || error.message
+                toast({
+                    title: "Erreur",
+                    description: errorMessage,
+                    variant: "destructive",
+                })
+            } else {
+                this.handleError(error, `Erreur lors de la suppression du produit avec l'ID ${id}`)
+            }
+            return false
+        }
+    }
+
+    async fetchOrders(): Promise<{
+        data: Order[]
+        pagination: { totalItems: number; totalPages: number; currentPage: number }
+    }> {
+        try {
+            const response = await this.client.get("/orders")
+            return response.data
+        } catch (error) {
+            this.handleError(error, "Error fetching orders")
+            return { data: [], pagination: { totalItems: 0, totalPages: 0, currentPage: 0 } }
+        }
+    }
+
+    async getOrderById(id: string): Promise<Order | null> {
+        try {
+            const response = await this.client.get(`/orders/${id}`)
+            return response.data
+        } catch (error) {
+            this.handleError(error, `Error fetching order with ID ${id}`)
+            return null
+        }
+    }
+
+    async updateOrderStatus(orderId: number, newStatus: string): Promise<Order | null> {
+        try {
+            const response = await this.client.put(`/orders/${orderId}/status`, { status: newStatus })
+            return response.data
+        } catch (error) {
+            this.handleError(error, `Error updating status for order ${orderId}`)
+            return null
+        }
+    }
+
+    async fetchDashboardStats(): Promise<DashboardStats> {
+        try {
+            console.log('Fetching dashboard stats...')
+            const token = getToken()
+            console.log('Auth token:', token ? 'Present' : 'Missing')
+            
+            const response = await this.client.get("/api/admin/dashboard/stats")
+            console.log('Dashboard stats response:', response.data)
+            return response.data
+        } catch (error) {
+            this.handleError(error, "Erreur lors de la récupération des statistiques du tableau de bord")
+            return {
+                totalRevenue: 0,
+                totalOrders: 0,
+                totalProducts: 0,
+                totalUsers: 0,
+            }
+        }
+    }
+
+    async fetchRecentOrders(): Promise<Order[]> {
+        try {
+            const response = await this.client.get("/admin/dashboard/recent-orders")
+            return response.data
+        } catch (error) {
+            this.handleError(error, "Error fetching recent orders")
+            return []
+        }
+    }
+
+    async fetchTopProducts(): Promise<TopProduct[]> {
+        try {
+            const response = await this.client.get("/admin/dashboard/top-products")
+            return response.data
+        } catch (error) {
+            this.handleError(error, "Error fetching top products")
+            return []
+        }
+    }
+
+    async fetchWeeklySales(): Promise<WeeklySales[]> {
+        try {
+            const response = await this.client.get("/admin/dashboard/weekly-sales")
+            return response.data
+        } catch (error) {
+            this.handleError(error, "Error fetching weekly sales")
+            return []
+        }
+    }
+
+    async updateProductStock(
+        productId: string,
+        quantity: number,
+        variant: { size: string; color: string },
+    ): Promise<boolean> {
+        try {
+            await this.client.put(`/products/${productId}/stock`, { quantity, variant })
+            return true
+        } catch (error) {
+            this.handleError(error, "Error updating product stock")
+            return false
+        }
+    }
+
+    async changePassword(currentPassword: string, newPassword: string): Promise<ChangePasswordResponse> {
+        try {
+            const response = await this.client.put('/users/password', {
+                currentPassword,
+                newPassword,
+            })
+            return {
+                success: true,
+                message: response.data.message || 'Mot de passe changé avec succès',
+            }
+        } catch (error) {
+            if (error instanceof AxiosError) {
+                return {
+                    success: false,
+                    message: error.response?.data?.message || 'Erreur lors du changement de mot de passe',
+                }
+            }
+            return {
+                success: false,
+                message: 'Une erreur inattendue est survenue',
+            }
+        }
+    }
+
+    async fetchAddresses(): Promise<Address[]> {
+        try {
+            console.log('Fetching addresses...');
+            const token = getToken();
+            console.log('Auth token:', token ? 'Present' : 'Missing');
+            
+            const response = await this.client.get("/addresses")
+            console.log('Response:', response.data);
+            return Array.isArray(response.data) ? response.data : []
+        } catch (error) {
+            this.handleError(error, "Erreur lors de la récupération des adresses")
+            return []
+        }
+    }
+
+    async updateUserInfo(userInfo: Partial<User>): Promise<User | null> {
+        try {
+            const { name, email, phone } = userInfo;
+            if (!name) {
+                throw new Error("Le nom est requis")
+            }
+
+            // Validation de l'email
+            if (email && !this.isValidEmail(email)) {
+                throw new Error("Format d'email invalide")
+            }
+
+            // Construction des données à envoyer
+            const userData: {
+                username: string;
+                email?: string;
+                phone?: string;
+                first_name: string;
+                last_name: string;
+            } = {
+                username: name,
+                email,
+                phone,
+                first_name: name.split(' ')[0],
+                last_name: name.split(' ')[1] || ''
+            }
+
+            // Suppression des champs undefined
+            if (userData.email === undefined) {
+                delete userData.email;
+            }
+            if (userData.phone === undefined) {
+                delete userData.phone;
+            }
+
+            const response = await this.client.put(`/users/${userInfo.id}`, userData)
+
+            return {
+                id: response.data.id,
+                name: response.data.username || response.data.name,
+                email: response.data.email,
+                phone: response.data.phone,
+                avatar_url: response.data.avatar_url,
+                created_at: response.data.created_at,
+                isAdmin: response.data.is_admin || false,
+                status: response.data.status
+            }
+        } catch (error) {
+            if (error instanceof AxiosError) {
+                const errorMessage = error.response?.data?.message || error.message
+                this.handleError(error, `Erreur: ${errorMessage}`)
+            } else if (error instanceof Error) {
+                this.handleError(error, error.message)
+            } else {
+                this.handleError(error, "Erreur lors de la mise à jour des informations utilisateur")
+            }
+            return null
+        }
+    }
+
+    async login(email: string, password: string): Promise<{ user: User; token: string } | null> {
+        try {
+            const response = await this.client.post("/auth/login", { email, password })
+            const { user, token } = response.data
+            if (typeof window !== "undefined") {
+                localStorage.setItem("token", token)
+            }
+            return { user, token }
+        } catch (error) {
+            this.handleError(error, "Error during login")
+            return null
+        }
+    }
+
+    async register(userData: { name: string; email: string; password: string }): Promise<User | null> {
+        try {
+            const response = await this.client.post("/auth/register", userData)
+            return response.data
+        } catch (error) {
+            this.handleError(error, "Error during registration")
+            return null
+        }
+    }
+
+    async logout(): Promise<void> {
+        if (typeof window !== "undefined") {
+            localStorage.removeItem("token")
+            localStorage.removeItem("refreshToken")
+        }
+    }
+
+    async fetchUserProfile(): Promise<User | null> {
+        try {
+            const token = getToken()
+            if (!token) {
+                throw new Error("Non authentifié")
+            }
+            
+            const base64Url = token.split('.')[1]
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
+            const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+            }).join(''))
+            const { userId } = JSON.parse(jsonPayload)
+
+            const response = await this.client.get(`/users/${userId}`)
+            
+            return {
+                id: response.data.id,
+                name: response.data.username,
+                email: response.data.email,
+                avatar_url: response.data.avatar_url,
+                created_at: response.data.created_at,
+                isAdmin: response.data.is_admin || false,
+                status: response.data.status
+            }
+        } catch (error) {
+            if (error instanceof AxiosError && error.response?.status === 401) {
+                if (typeof window !== "undefined") {
+                    window.location.href = '/login'
+                }
+            }
+            this.handleError(error, "Erreur lors de la récupération du profil utilisateur")
+            return null
+        }
+    }
+
+    async addToCart(productId: string, quantity: number): Promise<boolean> {
+        try {
+            await this.client.post("/cart/add", { productId, quantity })
+            return true
+        } catch (error) {
+            this.handleError(error, "Error adding product to cart")
+            return false
+        }
+    }
+
+    async removeFromCart(productId: string): Promise<boolean> {
+        try {
+            await this.client.delete(`/cart/remove/${productId}`)
+            return true
+        } catch (error) {
+            this.handleError(error, "Error removing product from cart")
+            return false
+        }
+    }
+
+    async fetchCart(): Promise<{ items: Array<{ product: Product; quantity: number }>; total: number } | null> {
+        try {
+            const response = await this.client.get("/cart")
+            return response.data
+        } catch (error) {
+            this.handleError(error, "Error fetching cart")
+            return null
+        }
+    }
+
+    async createOrder(orderData: { addressId: string; paymentMethod: string }): Promise<Order | null> {
+        try {
+            const response = await this.client.post("/orders", orderData)
+            return response.data
+        } catch (error) {
+            this.handleError(error, "Error creating order")
+            return null
+        }
+    }
+
+    async addAddress(addressData: Omit<Address, "id">): Promise<Address | null> {
+        try {
+            const response = await this.client.post("/addresses", addressData)
+            return response.data
+        } catch (error) {
+            this.handleError(error, "Erreur lors de l'ajout de l'adresse")
+            return null
+        }
+    }
+
+    async updateAddress(id: string, addressData: Partial<Address>): Promise<Address | null> {
+        try {
+            const response = await this.client.put(`/addresses/${id}`, addressData)
+            return response.data
+        } catch (error) {
+            this.handleError(error, "Erreur lors de la mise à jour de l'adresse")
+            return null
+        }
+    }
+
+    async deleteAddress(id: string): Promise<boolean> {
+        try {
+            await this.client.delete(`/addresses/${id}`)
+            return true
+        } catch (error) {
+            this.handleError(error, "Erreur lors de la suppression de l'adresse")
+            return false
+        }
+    }
+
+    async searchProducts(query: string): Promise<Product[]> {
+        try {
+            const response = await this.client.get("/products/search", { params: { q: query } })
+            return response.data
+        } catch (error) {
+            this.handleError(error, "Error searching products")
+            return []
+        }
+    }
+
+    async addReview(productId: string, reviewData: { rating: number; comment: string }): Promise<boolean> {
+        try {
+            console.log('Adding review for product:', productId, reviewData);
+            const response = await this.client.post('/reviews', {
+                product_id: productId,
+                rating: reviewData.rating,
+                comment: reviewData.comment
+            });
+            console.log('Review added successfully:', response.data);
+            return true;
+        } catch (error) {
+            console.error('Error adding review:', error);
+            if (error instanceof AxiosError) {
+                console.error('Server response:', error.response?.data);
+            }
+            this.handleError(error, "Impossible d'ajouter votre avis");
+            return false;
+        }
+    }
+
+    async fetchProductReviews(
+        productId: string,
+    ): Promise<{ id: number; rating: number; comment: string; userName: string; date: string }[]> {
+        try {
+            const response = await this.client.get(`/products/${productId}/reviews`)
+            return response.data
+        } catch (error) {
+            this.handleError(error, "Error fetching product reviews")
+            return []
+        }
+    }
+
+    async fetchCategories(): Promise<Category[]> {
+        try {
+            const response = await this.client.get("/categories")
+            return response.data
+        } catch (error) {
+            this.handleError(error, "Error fetching categories")
+            return []
+        }
+    }
+
+    async createCategory(name: string): Promise<Category> {
+        try {
+            const response = await this.client.post("/categories", { name })
+            return response.data
+        } catch (error) {
+            this.handleError(error, "Error creating category")
+            throw error
+        }
+    }
+
+    async updateCategory(id: number, name: string): Promise<Category> {
+        try {
+            const response = await this.client.put(`/categories/${id}`, { name })
+            return response.data
+        } catch (error) {
+            this.handleError(error, "Error updating category")
+            throw error
+        }
+    }
+
+    async deleteCategory(id: number): Promise<boolean> {
+        try {
+            await this.client.delete(`/categories/${id}`)
+            return true
+        } catch (error) {
+            this.handleError(error, "Error deleting category")
+            return false
+        }
+    }
+
+    async fetchBrands(): Promise<Brand[]> {
+        try {
+            const response = await this.client.get("/brands")
+            return response.data
+        } catch (error) {
+            this.handleError(error, "Error fetching brands")
+            return []
+        }
+    }
+
+    async createBrand(data: { name: string; logo: File | null; description: string }): Promise<Brand> {
+        try {
+            const formData = new FormData()
+            formData.append('name', data.name)
+            formData.append('description', data.description)
+            if (data.logo) {
+                formData.append('logo', data.logo)
+            }
+
+            const response = await this.client.post("/brands", formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            })
+            return response.data
+        } catch (error) {
+            this.handleError(error, "Error creating brand")
+            throw error
+        }
+    }
+
+    async updateBrand(id: number, data: { name: string; logo: File | null; description: string }): Promise<Brand> {
+        try {
+            const formData = new FormData()
+            formData.append('name', data.name)
+            formData.append('description', data.description)
+            if (data.logo) {
+                formData.append('logo', data.logo)
+            }
+
+            const response = await this.client.put(`/brands/${id}`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            })
+            return response.data
+        } catch (error) {
+            this.handleError(error, "Error updating brand")
+            throw error
+        }
+    }
+
+    async deleteBrand(id: number): Promise<boolean> {
+        try {
+            await this.client.delete(`/brands/${id}`)
+            return true
+        } catch (error) {
+            this.handleError(error, "Error deleting brand")
+            return false
+        }
+    }
+
+    async uploadImages(files: (File | Blob)[]): Promise<string[]> {
+        try {
+            const formData = new FormData()
+            files.forEach((file, index) => {
+                formData.append(`images`, file)
+            })
+
+            const response = await this.client.post('/upload', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            })
+
+            if (!response.data || !Array.isArray(response.data.urls)) {
+                throw new Error('Format de réponse inattendu pour l\'upload d\'images')
+            }
+
+            return response.data.urls
+        } catch (error) {
+            this.handleError(error, "Erreur lors de l'upload des images")
+            return []
+        }
+    }
+
+    async processReturn(orderId: string, reason: string): Promise<Order> {
+        try {
+            const response = await this.client.post(`/orders/${orderId}/return`, { reason })
+            return response.data
+        } catch (error) {
+            this.handleError(error, "Error processing return")
+            throw error
+        }
+    }
+
+    async deleteOrder(orderId: string): Promise<boolean> {
+        try {
+            const response = await this.client.delete(`/orders/${orderId}`)
+            return response.status === 200
+        } catch (error) {
+            this.handleError(error, "Error deleting order")
+            return false
+        }
+    }
+
+    async fetchNotificationSettings(): Promise<NotificationSettings> {
+        try {
+            const token = getToken();
+            if (!token) {
+                throw new Error('No token found');
+            }
+            
+            const response = await this.client.get("/users/notification-settings", {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+            return response.data;
+        } catch (error) {
+            this.handleError(error, "Error fetching notification settings");
+            return {
+                email: false,
+                push: false,
+                marketing: false,
+                security: false,
+            };
+        }
+    }
+
+    async updateNotificationSettings(settings: NotificationSettings): Promise<boolean> {
+        try {
+            console.log('Updating notification settings:', settings);
+            const response = await this.client.put("/users/notification-settings", settings)
+            console.log('Update response:', response);
+            return response.status === 200
+        } catch (error) {
+            console.error('Update error details:', error);
+            if (error instanceof AxiosError) {
+                console.error('Server response:', error.response?.data);
+            }
+            this.handleError(error, "Error updating notification settings")
+            return false
+        }
+    }
+
+    async uploadUserAvatar(file: File): Promise<string> {
+        try {
+            const formData = new FormData()
+            formData.append("avatar", file)
+
+            const response = await this.client.post("/users/avatar", formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            })
+
+            if (!response.data || !Array.isArray(response.data.urls)) {
+                throw new Error("Error uploading user avatar")
+            }
+
+            return response.data.urls[0]
+        } catch (error) {
+            this.handleError(error, "Error uploading user avatar")
+            throw error
+        }
+    }
+
+    async deleteAccount(): Promise<boolean> {
+        try {
+            const response = await this.client.delete("/users")
+            return response.status === 200
+        } catch (error) {
+            this.handleError(error, "Error deleting account")
+            return false
+        }
+    }
+
+    async fetchUserOrders(): Promise<Order[]> {
+        try {
+            console.log('Fetching user orders...');
+            const token = getToken();
+            console.log('Auth token:', token ? 'Present' : 'Missing');
+            
+            const response = await this.client.get("/orders/me");
+            console.log('Orders response:', response.data);
+            
+            return Array.isArray(response.data) ? response.data : [];
+        } catch (error) {
+            console.error('Detailed error:', error);
+            if (error instanceof AxiosError) {
+                console.error('Server response:', error.response?.data);
+            }
+            this.handleError(error, "Error fetching user orders");
+            return [];
+        }
+    }
+
+    async fetchUserReviews(): Promise<UserReview[]> {
+        try {
+            console.log('Fetching user reviews...');
+            const token = getToken();
+            console.log('Auth token:', token ? 'Present' : 'Missing');
+            
+            const response = await this.client.get("/reviews");
+            console.log('Reviews response:', response.data);
+            
+            return Array.isArray(response.data) ? response.data : [];
+        } catch (error) {
+            console.error('Error fetching user reviews:', error);
+            if (error instanceof AxiosError) {
+                console.error('Server response:', error.response?.data);
+            }
+            this.handleError(error, "Error fetching user reviews");
+            return [];
+        }
+    }
+
+    async updateReview(reviewId: string, rating: number, comment: string): Promise<boolean> {
+        try {
+            const response = await this.client.put(`/reviews/${reviewId}`, { rating, comment })
+            return response.status === 200
+        } catch (error) {
+            this.handleError(error, "Error updating review")
+            return false
+        }
+    }
+
+    async deleteReview(reviewId: string): Promise<boolean> {
+        try {
+            const response = await this.client.delete(`/reviews/${reviewId}`)
+            return response.status === 200
+        } catch (error) {
+            this.handleError(error, "Error deleting review")
+            return false
+        }
+    }
+
+    async fetchUsers(): Promise<User[]> {
+        try {
+            const response = await this.client.get('/users')
+            return response.data.map((user: any) => ({
+                id: user.id,
+                name: user.username || user.name,
+                email: user.email,
+                isAdmin: user.is_admin,
+                created_at: user.created_at,
+                status: user.status
+            }))
+        } catch (error) {
+            this.handleError(error, 'Erreur lors de la récupération des utilisateurs')
+            return []
+        }
+    }
+
+    async updateUserRole(userId: string, isAdmin: boolean): Promise<boolean> {
+        try {
+            const response = await this.client.put(`/users/${userId}/role`, { is_admin: isAdmin })
+            return response.status === 200
+        } catch (error) {
+            this.handleError(error, "Erreur lors de la modification du rôle utilisateur")
+            return false
+        }
+    }
+
+    async fetchMonthlyStats(): Promise<MonthlyStats[]> {
+        try {
+            console.log('Fetching monthly stats...');
+            const response = await this.client.get('/stats/monthly-sales');
+            console.log('Monthly stats response:', response.data);
+            return Array.isArray(response.data) ? response.data : [];
+        } catch (error) {
+            console.error('Error fetching monthly stats:', error);
+            this.handleError(error, "Error fetching monthly statistics");
+            return [];
+        }
+    }
+
+    async fetchTopProductsByCategory(): Promise<TopProductByCategory[]> {
+        try {
+            console.log('Fetching top products by category...');
+            const response = await this.client.get('/stats/top-products-by-category');
+            console.log('Top products response:', response.data);
+            return Array.isArray(response.data) ? response.data : [];
+        } catch (error) {
+            console.error('Error fetching top products:', error);
+            this.handleError(error, "Error fetching top products");
+            return [];
+        }
+    }
+
+    async fetchCustomerStats(): Promise<CustomerStats[]> {
+        try {
+            console.log('Fetching customer stats...');
+            const response = await this.client.get('/stats/customer-stats');
+            console.log('Customer stats response:', response.data);
+            return Array.isArray(response.data) ? response.data : [];
+        } catch (error) {
+            console.error('Error fetching customer stats:', error);
+            this.handleError(error, "Error fetching customer statistics");
+            return [];
+        }
+    }
+
+    async fetchSalesStats(dateRange: { from: Date; to: Date }): Promise<SalesStats[]> {
+        try {
+            const response = await this.client.get('/stats/sales', {
+                params: {
+                    from: dateRange.from.toISOString(),
+                    to: dateRange.to.toISOString()
+                }
+            })
+            return response.data
+        } catch (error) {
+            this.handleError(error, "Erreur lors de la récupération des statistiques de ventes")
+            return []
+        }
+    }
+
+    async fetchCategoryStats(): Promise<CategoryStats[]> {
+        try {
+            const response = await this.client.get('/stats/categories')
+            return response.data
+        } catch (error) {
+            this.handleError(error, "Erreur lors de la récupération des statistiques par catégorie")
+            return []
+        }
+    }
+
+    async fetchBrandStats(): Promise<BrandStats[]> {
+        try {
+            const response = await this.client.get('/stats/brands')
+            return response.data
+        } catch (error) {
+            this.handleError(error, "Erreur lors de la récupération des statistiques par marque")
+            return []
+        }
+    }
+
+    async createUser(userData: CreateUserData): Promise<User | null> {
+        try {
+            if (!userData.username || !userData.email || !userData.password) {
+                throw new Error("Le nom, l'email et le mot de passe sont requis")
+            }
+
+            if (!this.isValidEmail(userData.email)) {
+                throw new Error("Format d'email invalide")
+            }
+
+            const response = await this.client.post("/admin/users", userData)
+            
+            return {
+                id: response.data.id,
+                name: response.data.username || response.data.name,
+                email: response.data.email,
+                isAdmin: response.data.isAdmin || false,
+                created_at: response.data.created_at,
+                avatar_url: response.data.avatar_url
+            }
+        } catch (error) {
+            if (error instanceof AxiosError) {
+                const errorMessage = error.response?.data?.message || error.message
+                this.handleError(error, `Erreur: ${errorMessage}`)
+            } else if (error instanceof Error) {
+                this.handleError(error, error.message)
+            } else {
+                this.handleError(error, "Erreur lors de la création de l'utilisateur")
+            }
+            return null
+        }
+    }
+
+    async updateSettings(settings: Settings): Promise<Settings> {
+        try {
+            const response = await this.client.put('/admin/settings', settings);
+            return response.data;
+        } catch (error) {
+            this.handleError(error, "Erreur lors de la mise à jour des paramètres");
+            throw error;
+        }
+    }
+
+    async getFavorites(): Promise<Product[]> {
+        try {
+            console.log('Appel de getFavorites');
+            const token = getToken();
+            console.log('Token présent:', !!token);
+
+            if (!token) {
+                console.log('Pas de token, retour tableau vide');
+                return [];
+            }
+
+            const response = await this.client.get('/users/favorites', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            console.log('Réponse des favoris:', response.data);
+            return response.data;
+        } catch (error) {
+            console.error('Erreur détaillée dans getFavorites:', error);
+            if (error instanceof AxiosError) {
+                console.error('Réponse du serveur:', error.response?.data);
+                // Si l'utilisateur n'est pas authentifié, retourner un tableau vide
+                if (error.response?.status === 401) {
+                    return [];
+                }
+            }
+            this.handleError(error, "Erreur lors du chargement des favoris");
+            return [];
+        }
+    }
+
+    async addToFavorites(productId: number | string): Promise<void> {
+        try {
+            const token = getToken();
+            if (!token) {
+                throw new Error('Vous devez être connecté pour ajouter des favoris');
+            }
+
+            // Convertir l'ID en nombre si c'est une chaîne
+            const numericId = typeof productId === 'string' ? parseInt(productId, 10) : productId;
+            
+            // S'assurer que l'ID est valide
+            if (isNaN(numericId)) {
+                throw new Error('ID de produit invalide');
+            }
+
+            const response = await this.client.post('/users/favorites', { 
+                product_id: numericId
+            }, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.data) {
+                throw new Error('Réponse invalide du serveur');
+            }
+        } catch (error) {
+            console.error('Erreur détaillée lors de l\'ajout aux favoris:', error);
+            if (error instanceof AxiosError) {
+                console.error('Données de la réponse:', error.response?.data);
+            }
+            this.handleError(error, "Erreur lors de l'ajout aux favoris");
+            throw error;
+        }
+    }
+
+    async removeFromFavorites(productId: number | string): Promise<void> {
+        try {
+            const token = getToken();
+            if (!token) {
+                throw new Error('Vous devez être connecté pour gérer vos favoris');
+            }
+
+            await this.client.delete(`/users/favorites/${productId}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+        } catch (error) {
+            this.handleError(error, "Erreur lors de la suppression des favoris");
+            throw error;
+        }
+    }
+
+    async fetchArchives() {
+        try {
+            console.log('Appel de fetchArchives');
+            const response = await this.client.get('/archives');
+            console.log('Réponse des archives:', response.data);
+            return response.data;
+        } catch (error) {
+            console.error('Erreur lors du chargement des archives:', error);
+            throw error;
+        }
+    }
+
+    async fetchSettings(): Promise<Settings> {
+        try {
+            const response = await this.client.get('/admin/settings')
+            return response.data
+        } catch (error) {
+            this.handleError(error, 'Erreur lors de la récupération des paramètres')
+            throw error
+        }
+    }
+
+    async deleteUser(userId: string): Promise<boolean> {
+        try {
+            const response = await this.client.delete(`/users/${userId}`)
+            return response.status === 200
+        } catch (error) {
+            this.handleError(error, "Erreur lors de la suppression de l'utilisateur")
+            return false
+        }
+    }
+
+    async updateUserStatus(userId: string, status: string): Promise<boolean> {
+        try {
+            const response = await this.client.put(`/users/${userId}/status`, { status })
+            return response.status === 200
+        } catch (error) {
+            this.handleError(error, "Erreur lors de la mise à jour du statut de l'utilisateur")
+            return false
+        }
+    }
+
+    async updateArchive(id: string, data: FormData): Promise<any> {
+        try {
+            const response = await this.client.put(`/archives/${id}`, data, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            })
+            return response.data
+        } catch (error) {
+            this.handleError(error, "Erreur lors de la mise à jour de l'archive")
+            throw error
+        }
+    }
+
+    async createArchive(data: FormData): Promise<any> {
+        try {
+            const response = await this.client.post('/archives', data, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            })
+            return response.data
+        } catch (error) {
+            this.handleError(error, "Erreur lors de la création de l'archive")
+            throw error
+        }
+    }
+
+    async deleteArchive(id: string): Promise<boolean> {
+        try {
+            const response = await this.client.delete(`/archives/${id}`)
+            return response.status === 200
+        } catch (error) {
+            this.handleError(error, "Erreur lors de la suppression de l'archive")
+            return false
+        }
+    }
 }
 
 export const api = new Api()

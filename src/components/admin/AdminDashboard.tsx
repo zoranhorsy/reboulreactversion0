@@ -35,7 +35,7 @@ interface DashboardStats {
     }[]
 }
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'https://reboul-store-api-production.up.railway.app';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://reboul-store-api-production.up.railway.app';
 
 export function AdminDashboard() {
     const router = useRouter()
@@ -61,11 +61,23 @@ export function AdminDashboard() {
                     throw new Error('Token non trouvé')
                 }
 
-                const response = await fetch(`${BACKEND_URL}/api/admin/dashboard/stats`, {
+                console.log('Tentative de récupération des stats depuis:', `${API_URL}/api/admin/dashboard/stats`)
+                console.log('Token:', token)
+
+                const response = await fetch(`${API_URL}/api/admin/dashboard/stats`, {
+                    method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    credentials: 'include'
+                })
+
+                console.log('Réponse reçue:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    headers: Object.fromEntries(response.headers.entries())
                 })
 
                 if (!response.ok) {
@@ -80,13 +92,18 @@ export function AdminDashboard() {
 
                 const data = await response.json()
                 console.log('Données reçues:', data)
+
+                if (!data || typeof data.totalRevenue === 'undefined') {
+                    throw new Error('Format de données invalide')
+                }
+
                 setStats(data)
             } catch (error) {
                 console.error('Error fetching data:', error)
                 setError('Une erreur est survenue lors du chargement des données.')
                 toast({
                     title: "Erreur",
-                    description: "Impossible de charger les données",
+                    description: error instanceof Error ? error.message : "Impossible de charger les données",
                     variant: "destructive"
                 })
             } finally {
