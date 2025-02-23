@@ -76,7 +76,7 @@ export function AdminDashboard() {
                         'Content-Type': 'application/json',
                         'Accept': 'application/json'
                     },
-                    credentials: 'same-origin'
+                    cache: 'no-store'
                 })
 
                 console.log('AdminDashboard - Response received:', {
@@ -100,6 +100,7 @@ export function AdminDashboard() {
                     try {
                         const errorData = JSON.parse(responseText)
                         errorMessage = errorData.error || errorData.details || errorMessage
+                        console.error('AdminDashboard - Error data:', errorData)
                     } catch (e) {
                         console.error('AdminDashboard - Error parsing error response:', e)
                     }
@@ -107,7 +108,14 @@ export function AdminDashboard() {
                     throw new Error(errorMessage)
                 }
 
-                const data = JSON.parse(responseText)
+                let data
+                try {
+                    data = JSON.parse(responseText)
+                } catch (e) {
+                    console.error('AdminDashboard - Error parsing response:', e)
+                    throw new Error('Format de réponse invalide')
+                }
+
                 console.log('AdminDashboard - Data received:', data)
 
                 if (!data || typeof data.totalRevenue === 'undefined') {
@@ -130,7 +138,9 @@ export function AdminDashboard() {
             }
         }
 
-        fetchData()
+        if (user) {
+            fetchData()
+        }
     }, [user, router, toast])
 
     if (isLoading) {

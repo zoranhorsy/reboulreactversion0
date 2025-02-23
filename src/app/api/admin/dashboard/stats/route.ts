@@ -30,11 +30,14 @@ export async function GET(request: NextRequest) {
         })
 
         const response = await fetch(backendUrl, {
+            method: 'GET',
             headers: {
                 'Authorization': authHeader,
                 'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            }
+                'Accept': 'application/json',
+                'Origin': process.env.NEXT_PUBLIC_SITE_URL || 'https://reboulreactversion0.vercel.app'
+            },
+            cache: 'no-store'
         })
 
         console.log('API Route - Backend response:', {
@@ -48,16 +51,39 @@ export async function GET(request: NextRequest) {
 
         if (!response.ok) {
             console.error('API Route - Backend error response:', responseText)
+            let errorMessage = 'Backend error'
+            try {
+                const errorData = JSON.parse(responseText)
+                errorMessage = errorData.error || errorData.details || errorMessage
+            } catch (e) {
+                console.error('API Route - Error parsing error response:', e)
+            }
             return NextResponse.json(
-                { error: "Backend error", details: responseText },
+                { error: errorMessage },
                 { status: response.status }
             )
         }
 
-        const data = JSON.parse(responseText)
+        let data
+        try {
+            data = JSON.parse(responseText)
+        } catch (e) {
+            console.error('API Route - Error parsing response:', e)
+            return NextResponse.json(
+                { error: "Invalid JSON response from backend" },
+                { status: 500 }
+            )
+        }
+
         console.log('API Route - Backend data received:', data)
 
-        return NextResponse.json(data)
+        const headers = new Headers()
+        headers.set('Cache-Control', 'no-store')
+        
+        return NextResponse.json(data, {
+            headers,
+            status: 200
+        })
     } catch (error) {
         console.error("API Route - Error:", error)
         return NextResponse.json(
