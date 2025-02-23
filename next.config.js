@@ -25,7 +25,7 @@ const nextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: 'https://reboul-store-api-production.up.railway.app/:path*'
+        destination: 'https://reboul-store-api-production.up.railway.app/api/:path*'
       }
     ]
   }
