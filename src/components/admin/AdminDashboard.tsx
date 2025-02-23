@@ -47,7 +47,11 @@ export function AdminDashboard() {
 
     useEffect(() => {
         const fetchData = async () => {
+            console.log('AdminDashboard - Starting data fetch');
+            console.log('AdminDashboard - User:', user);
+
             if (!user?.isAdmin) {
+                console.log('AdminDashboard - User is not admin, redirecting...');
                 router.push('/connexion')
                 return
             }
@@ -58,10 +62,12 @@ export function AdminDashboard() {
             try {
                 const token = localStorage.getItem('token')
                 if (!token) {
+                    console.log('AdminDashboard - No token found');
                     throw new Error('Token non trouvé')
                 }
 
-                console.log('Tentative de récupération des stats depuis:', API_URL)
+                console.log('AdminDashboard - Token found, fetching stats...');
+                console.log('AdminDashboard - API URL:', API_URL);
 
                 const response = await fetch(API_URL, {
                     method: 'GET',
@@ -72,14 +78,15 @@ export function AdminDashboard() {
                     }
                 })
 
-                console.log('Réponse reçue:', {
+                console.log('AdminDashboard - Response received:', {
                     status: response.status,
-                    statusText: response.statusText
+                    statusText: response.statusText,
+                    headers: Object.fromEntries(response.headers.entries())
                 })
 
                 if (!response.ok) {
                     const errorData = await response.json().catch(() => ({}))
-                    console.error('Erreur de réponse:', {
+                    console.error('AdminDashboard - Response error:', {
                         status: response.status,
                         statusText: response.statusText,
                         data: errorData
@@ -88,15 +95,17 @@ export function AdminDashboard() {
                 }
 
                 const data = await response.json()
-                console.log('Données reçues:', data)
+                console.log('AdminDashboard - Data received:', data)
 
                 if (!data || typeof data.totalRevenue === 'undefined') {
+                    console.error('AdminDashboard - Invalid data format:', data);
                     throw new Error('Format de données invalide')
                 }
 
+                console.log('AdminDashboard - Setting stats:', data);
                 setStats(data)
             } catch (error) {
-                console.error('Error fetching data:', error)
+                console.error('AdminDashboard - Error:', error)
                 setError('Une erreur est survenue lors du chargement des données.')
                 toast({
                     title: "Erreur",
