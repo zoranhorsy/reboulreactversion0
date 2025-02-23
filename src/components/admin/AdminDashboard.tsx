@@ -35,7 +35,7 @@ interface DashboardStats {
     }[]
 }
 
-const API_URL = '/api/admin/dashboard/stats';
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "https://reboul-store-api-production.up.railway.app";
 
 export function AdminDashboard() {
     const router = useRouter()
@@ -67,14 +67,16 @@ export function AdminDashboard() {
                 }
 
                 console.log('AdminDashboard - Token found:', token.substring(0, 20) + '...');
-                console.log('AdminDashboard - API URL:', API_URL);
+                const apiUrl = `${BACKEND_URL}/api/admin/dashboard/stats`;
+                console.log('AdminDashboard - API URL:', apiUrl);
 
-                const response = await fetch(API_URL, {
+                const response = await fetch(apiUrl, {
                     method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json',
-                        'Accept': 'application/json'
+                        'Accept': 'application/json',
+                        'Origin': process.env.NEXT_PUBLIC_SITE_URL || 'https://reboulreactversion0.vercel.app'
                     },
                     cache: 'no-store'
                 })
