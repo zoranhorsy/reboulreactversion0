@@ -35,6 +35,8 @@ interface DashboardStats {
     }[]
 }
 
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'https://reboul-store-api-production.up.railway.app';
+
 export function AdminDashboard() {
     const router = useRouter()
     const { user } = useAuth()
@@ -59,17 +61,25 @@ export function AdminDashboard() {
                     throw new Error('Token non trouvé')
                 }
 
-                const response = await fetch('/api/admin/dashboard/stats', {
+                const response = await fetch(`${BACKEND_URL}/api/admin/dashboard/stats`, {
                     headers: {
-                        'Authorization': `Bearer ${token}`
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
                     }
                 })
 
                 if (!response.ok) {
-                    throw new Error('Erreur lors de la récupération des données')
+                    const errorData = await response.json().catch(() => ({}))
+                    console.error('Erreur de réponse:', {
+                        status: response.status,
+                        statusText: response.statusText,
+                        data: errorData
+                    })
+                    throw new Error(errorData.error || 'Erreur lors de la récupération des données')
                 }
 
                 const data = await response.json()
+                console.log('Données reçues:', data)
                 setStats(data)
             } catch (error) {
                 console.error('Error fetching data:', error)
