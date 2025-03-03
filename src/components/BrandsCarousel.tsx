@@ -29,6 +29,13 @@ export function BrandsCarousel() {
             try {
                 const data = await fetchBrands()
                 if (data && data.length > 0) {
+                    console.log('=== DEBUG: Brands Data ===')
+                    data.forEach(brand => {
+                        console.log(`Brand: ${brand.name}`)
+                        console.log(`- logo_light: ${brand.logo_light}`)
+                        console.log(`- logo_dark: ${brand.logo_dark}`)
+                    })
+                    console.log('========================')
                     setBrands(data)
                 } else {
                     toast({
@@ -55,33 +62,38 @@ export function BrandsCarousel() {
         const defaultLogo = '/placeholder.png'
         if (!brand) return defaultLogo
         
-        console.log('Brand:', brand.name)
-        console.log('Logo Light:', brand.logo_light)
-        console.log('Logo Dark:', brand.logo_dark)
-        console.log('Theme:', resolvedTheme)
-        
         let selectedLogo = resolvedTheme === 'dark' 
             ? brand.logo_light 
             : brand.logo_dark;
-            
-        console.log('Selected Logo:', selectedLogo)
         
         if (!selectedLogo) {
-            console.log('Using default logo for brand:', brand.name)
             return defaultLogo
         }
         
-        // Ensure the path starts with /brands/
-        if (!selectedLogo.startsWith('/brands/')) {
-            selectedLogo = `/brands${selectedLogo}`
+        // Si l'URL est déjà complète (commence par http ou https), la retourner telle quelle
+        if (selectedLogo.startsWith('http')) {
+            return selectedLogo
         }
         
-        // Add API URL prefix
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://reboul-store-api-production.up.railway.app'
-        selectedLogo = `${apiUrl}${selectedLogo}`
+        // Construire l'URL complète en fonction de l'environnement
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001'
+        const isProduction = apiUrl.includes('railway.app')
         
-        console.log('Final Logo Path:', selectedLogo)
-        return selectedLogo
+        // En production, on ajoute /api au début du chemin
+        if (isProduction) {
+            // Si le chemin commence déjà par /api, on l'utilise tel quel
+            if (selectedLogo.startsWith('/api/')) {
+                return `${apiUrl}${selectedLogo}`
+            }
+            // Sinon on ajoute /api
+            return `${apiUrl}/api${selectedLogo}`
+        }
+        
+        // En développement, on retire le /api s'il existe
+        if (selectedLogo.startsWith('/api/')) {
+            selectedLogo = selectedLogo.replace('/api', '')
+        }
+        return `${apiUrl}${selectedLogo}`
     }, [resolvedTheme])
 
     const handlePrevious = useCallback(() => {
