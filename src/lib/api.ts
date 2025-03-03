@@ -217,7 +217,10 @@ const getToken = () => {
 export const getImagePath = (path: string): string => {
   if (!path) return '/placeholder.png'
   if (path.startsWith('http')) return path
-  return `${process.env.NEXT_PUBLIC_API_URL}${path}`
+  
+  // Utiliser directement le chemin tel qu'il est stocké dans la base de données
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://reboul-store-api-production.up.railway.app'
+  return `${apiUrl}${path}`
 }
 
 export class Api {
@@ -230,7 +233,10 @@ export class Api {
     private formatImageUrl(url: string | undefined): string {
         if (!url) return ''
         if (url.startsWith('http')) return url
-        return `${process.env.NEXT_PUBLIC_API_URL}${url}`
+        
+        // Utiliser directement le chemin tel qu'il est stocké dans la base de données
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://reboul-store-api-production.up.railway.app'
+        return `${apiUrl}${url}`
     }
 
     constructor() {

@@ -70,19 +70,17 @@ export function BrandsCarousel() {
             return defaultLogo
         }
         
-        // Si l'URL est déjà complète (commence par http ou https), la retourner telle quelle
+        // Si l'URL est déjà complète, la retourner telle quelle
         if (selectedLogo.startsWith('http')) {
             return selectedLogo
         }
         
-        // Construire l'URL complète
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001'
+        // S'assurer que le chemin commence par /brands/
+        if (!selectedLogo.startsWith('/brands/')) {
+            selectedLogo = `/brands/${selectedLogo}`
+        }
         
-        // Retirer tous les /api du chemin
-        selectedLogo = selectedLogo.replace(/^\/api\//, '').replace(/^\//, '')
-        
-        // Retourner l'URL complète
-        return `${apiUrl}/${selectedLogo}`
+        return selectedLogo
     }, [resolvedTheme])
 
     const handlePrevious = useCallback(() => {
