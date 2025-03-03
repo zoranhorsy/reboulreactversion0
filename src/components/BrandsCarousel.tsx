@@ -58,12 +58,11 @@ export function BrandsCarousel() {
         console.log('Brand:', brand.name)
         console.log('Logo Light:', brand.logo_light)
         console.log('Logo Dark:', brand.logo_dark)
-        console.log('Logo URL:', brand.logo_url)
         console.log('Theme:', resolvedTheme)
         
         let selectedLogo = resolvedTheme === 'dark' 
-            ? brand.logo_light || brand.logo_url 
-            : brand.logo_dark || brand.logo_url;
+            ? brand.logo_light 
+            : brand.logo_dark;
             
         console.log('Selected Logo:', selectedLogo)
         
