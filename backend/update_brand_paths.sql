@@ -78,7 +78,8 @@ WHERE name IN (
     'ZADIG & VOLTAIRE'
 );
 
+-- Mise à jour générale pour toutes les marques
 UPDATE brands 
-SET logo_white = CONCAT('/brands/', REPLACE(UPPER(name), ' ', ''), '/', REPLACE(UPPER(name), ' ', ''), '_w.png'),
-    logo_black = CONCAT('/brands/', REPLACE(UPPER(name), ' ', ''), '/', REPLACE(UPPER(name), ' ', ''), '_b.png')
+SET logo_light = CONCAT('/brands/', REPLACE(UPPER(name), ' ', ''), '/', REPLACE(UPPER(name), ' ', ''), '_w.png'),
+    logo_dark = CONCAT('/brands/', REPLACE(UPPER(name), ' ', ''), '/', REPLACE(UPPER(name), ' ', ''), '_b.png')
 WHERE 1=1; 
