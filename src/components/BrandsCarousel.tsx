@@ -62,24 +62,32 @@ export function BrandsCarousel() {
         const defaultLogo = '/placeholder.png'
         if (!brand) return defaultLogo
         
+        console.log(`Getting logo for brand: ${brand.name}`);
         let selectedLogo = resolvedTheme === 'dark' 
             ? brand.logo_light 
             : brand.logo_dark;
         
+        console.log(`Selected logo before processing: ${selectedLogo}`);
+        
         if (!selectedLogo) {
+            console.log('No logo found, using default');
             return defaultLogo
         }
         
-        // Si l'URL est déjà complète, la retourner telle quelle
-        if (selectedLogo.startsWith('http')) {
-            return selectedLogo
+        // Remove spaces from the folder name
+        const parts = selectedLogo.split('/');
+        console.log(`Split parts: ${JSON.stringify(parts)}`);
+        
+        if (parts.length >= 2) {
+            parts[1] = parts[1].replace(/\s+/g, '');
         }
         
-        // S'assurer que le chemin commence par /brands/
-        if (!selectedLogo.startsWith('/brands/')) {
-            selectedLogo = `/brands/${selectedLogo}`
-        }
+        // Ensure the path starts with /brands/
+        const path = parts.join('/');
+        console.log(`Final path after processing: ${path}`);
+        selectedLogo = path.startsWith('/brands/') ? path : `/brands${path}`;
         
+        console.log(`Final logo URL: ${selectedLogo}`);
         return selectedLogo
     }, [resolvedTheme])
 
