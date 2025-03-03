@@ -74,21 +74,19 @@ export function BrandsCarousel() {
             return defaultLogo
         }
         
-        // Remove spaces from the folder name
-        const parts = selectedLogo.split('/');
-        console.log(`Split parts: ${JSON.stringify(parts)}`);
+        // Utiliser directement l'URL de Railway
+        const apiUrl = 'https://reboul-store-api-production.up.railway.app';
         
-        if (parts.length >= 2) {
-            parts[1] = parts[1].replace(/\s+/g, '');
-        }
+        // Nettoyer le chemin pour s'assurer qu'il commence par /brands/
+        let cleanPath = selectedLogo;
+        // Enlever le slash initial s'il existe
+        cleanPath = cleanPath.startsWith('/') ? cleanPath.slice(1) : cleanPath;
+        // Enlever 'api/' s'il existe
+        cleanPath = cleanPath.startsWith('api/') ? cleanPath.slice(4) : cleanPath;
         
-        // Ensure the path starts with /brands/
-        const path = parts.join('/');
-        console.log(`Final path after processing: ${path}`);
-        selectedLogo = path.startsWith('/brands/') ? path : `/brands${path}`;
-        
-        console.log(`Final logo URL: ${selectedLogo}`);
-        return selectedLogo
+        const finalUrl = `${apiUrl}/${cleanPath}`;
+        console.log(`Final logo URL: ${finalUrl}`);
+        return finalUrl;
     }, [resolvedTheme])
 
     const handlePrevious = useCallback(() => {

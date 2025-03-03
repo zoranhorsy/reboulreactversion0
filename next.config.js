@@ -12,7 +12,7 @@ const nextConfig = {
       {
         protocol: 'https',
         hostname: 'reboul-store-api-production.up.railway.app',
-        pathname: '/brands/**'
+        pathname: '/**'
       }
     ],
   },

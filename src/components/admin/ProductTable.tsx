@@ -107,19 +107,23 @@ export function ProductTable({
     }
 
     const getImageUrl = (product: Product) => {
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://reboul-store-api-production.up.railway.app'
+
         if (product.images && product.images.length > 0) {
             const firstImage = product.images[0]
             if (typeof firstImage === 'string') {
                 if (firstImage.startsWith('http')) return firstImage
-                if (firstImage.startsWith('/')) return firstImage
-                return `/uploads/${firstImage}`
+                let cleanPath = firstImage.startsWith('/') ? firstImage.slice(1) : firstImage
+                cleanPath = cleanPath.startsWith('api/') ? cleanPath.slice(4) : cleanPath
+                return `${baseUrl}/${cleanPath}`
             }
         }
         
         if (product.image) {
             if (product.image.startsWith('http')) return product.image
-            if (product.image.startsWith('/')) return product.image
-            return `/uploads/${product.image}`
+            let cleanPath = product.image.startsWith('/') ? product.image.slice(1) : product.image
+            cleanPath = cleanPath.startsWith('api/') ? cleanPath.slice(4) : cleanPath
+            return `${baseUrl}/${cleanPath}`
         }
 
         return "/placeholder.png"

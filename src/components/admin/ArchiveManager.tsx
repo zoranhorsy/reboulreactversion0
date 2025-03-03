@@ -73,7 +73,11 @@ const CATEGORIES = [
 const getImageUrl = (path: string) => {
     if (!path) return '/placeholder.png'
     if (path.startsWith('http')) return path
-    return `${process.env.NEXT_PUBLIC_API_URL}${path}`
+    
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://reboul-store-api-production.up.railway.app'
+    let cleanPath = path.startsWith('/') ? path.slice(1) : path
+    cleanPath = cleanPath.startsWith('api/') ? cleanPath.slice(4) : cleanPath
+    return `${baseUrl}/${cleanPath}`
 }
 
 export function ArchiveManager() {
