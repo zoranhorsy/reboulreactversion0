@@ -4,15 +4,17 @@ const nextConfig = {
   images: {
     remotePatterns: [
       {
-        protocol: 'https',
-        hostname: '**',
-      },
-      {
         protocol: 'http',
         hostname: 'localhost',
+        port: '5001',
+        pathname: '/**'
+      },
+      {
+        protocol: 'https',
+        hostname: 'reboul-store-api-production.up.railway.app',
+        pathname: '/**'
       }
     ],
-    domains: ['localhost'],
   },
   webpack(config) {
     config.module.rules.push({
@@ -22,10 +24,11 @@ const nextConfig = {
     return config;
   },
   async rewrites() {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
     return [
       {
-        source: '/api/:path*',
-        destination: 'https://reboul-store-api-production.up.railway.app/:path*'
+        source: '/brands/:path*',
+        destination: `${apiUrl}/brands/:path*`
       }
     ]
   }
