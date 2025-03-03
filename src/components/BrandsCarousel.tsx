@@ -76,6 +76,10 @@ export function BrandsCarousel() {
             selectedLogo = `/brands${selectedLogo}`
         }
         
+        // Add API URL prefix
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://reboul-store-api-production.up.railway.app'
+        selectedLogo = `${apiUrl}${selectedLogo}`
+        
         console.log('Final Logo Path:', selectedLogo)
         return selectedLogo
     }, [resolvedTheme])
