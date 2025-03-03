@@ -58,12 +58,27 @@ export function BrandsCarousel() {
         console.log('Brand:', brand.name)
         console.log('Logo Light:', brand.logo_light)
         console.log('Logo Dark:', brand.logo_dark)
+        console.log('Logo URL:', brand.logo_url)
         console.log('Theme:', resolvedTheme)
         
-        if (resolvedTheme === 'dark') {
-            return brand.logo_light || brand.logo_url || defaultLogo
+        let selectedLogo = resolvedTheme === 'dark' 
+            ? brand.logo_light || brand.logo_url 
+            : brand.logo_dark || brand.logo_url;
+            
+        console.log('Selected Logo:', selectedLogo)
+        
+        if (!selectedLogo) {
+            console.log('Using default logo for brand:', brand.name)
+            return defaultLogo
         }
-        return brand.logo_dark || brand.logo_url || defaultLogo
+        
+        // Ensure the path starts with /brands/
+        if (!selectedLogo.startsWith('/brands/')) {
+            selectedLogo = `/brands${selectedLogo}`
+        }
+        
+        console.log('Final Logo Path:', selectedLogo)
+        return selectedLogo
     }, [resolvedTheme])
 
     const handlePrevious = useCallback(() => {

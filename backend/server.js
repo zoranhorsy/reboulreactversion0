@@ -101,6 +101,9 @@ app.use('/brands', express.static(brandsDir, {
     etag: true,
     lastModified: true,
     setHeaders: (res, path) => {
+        console.log(`Serving brand image: ${path}`);
+        console.log(`Full path: ${path.join(brandsDir, path)}`);
+        console.log(`File exists: ${fs.existsSync(path)}`);
         res.setHeader('Cache-Control', 'public, max-age=3600');
         res.setHeader('Access-Control-Allow-Origin', '*');
     }
@@ -325,6 +328,40 @@ app.get('/status', (req, res) => {
             error: 'Server status check failed',
             details: error.message
         });
+    }
+});
+
+// Route de test pour les images des marques
+app.get('/api/test-brand-images', (req, res) => {
+    try {
+        const brandName = req.query.brand;
+        const brandPath = path.join(brandsDir, brandName || '');
+        
+        const result = {
+            brandsDir: {
+                path: brandsDir,
+                exists: fs.existsSync(brandsDir),
+                isDirectory: fs.existsSync(brandsDir) ? fs.statSync(brandsDir).isDirectory() : false,
+                permissions: fs.existsSync(brandsDir) ? fs.statSync(brandsDir).mode.toString(8) : null,
+                contents: fs.existsSync(brandsDir) ? fs.readdirSync(brandsDir) : []
+            }
+        };
+        
+        if (brandName) {
+            result.brandPath = {
+                path: brandPath,
+                exists: fs.existsSync(brandPath),
+                isDirectory: fs.existsSync(brandPath) ? fs.statSync(brandPath).isDirectory() : false,
+                permissions: fs.existsSync(brandPath) ? fs.statSync(brandPath).mode.toString(8) : null,
+                contents: fs.existsSync(brandPath) && fs.statSync(brandPath).isDirectory() 
+                    ? fs.readdirSync(brandPath) 
+                    : []
+            };
+        }
+        
+        res.json(result);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 });
 
