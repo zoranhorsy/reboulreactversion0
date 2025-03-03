@@ -77,23 +77,19 @@ export function BrandsCarousel() {
         
         // Construire l'URL complète en fonction de l'environnement
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001'
-        const isProduction = apiUrl.includes('railway.app')
         
-        // En production, on ajoute /api au début du chemin
-        if (isProduction) {
-            // Si le chemin commence déjà par /api, on l'utilise tel quel
-            if (selectedLogo.startsWith('/api/')) {
-                return `${apiUrl}${selectedLogo}`
-            }
-            // Sinon on ajoute /api
-            return `${apiUrl}/api${selectedLogo}`
-        }
-        
-        // En développement, on retire le /api s'il existe
+        // Nettoyer l'URL de tout double /api
         if (selectedLogo.startsWith('/api/')) {
-            selectedLogo = selectedLogo.replace('/api', '')
+            selectedLogo = selectedLogo.replace('/api/', '/')
         }
-        return `${apiUrl}${selectedLogo}`
+        
+        // En production (railway.app), ajouter /api
+        if (apiUrl.includes('railway.app')) {
+            return `${apiUrl}/api/${selectedLogo.replace(/^\//, '')}`
+        }
+        
+        // En développement, utiliser l'URL directement
+        return `${apiUrl}/${selectedLogo.replace(/^\//, '')}`
     }, [resolvedTheme])
 
     const handlePrevious = useCallback(() => {
