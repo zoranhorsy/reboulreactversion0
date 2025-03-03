@@ -1,6 +1,5 @@
 const express = require('express');
 const cors = require('cors');
-const path = require('path');
 const { errorHandler } = require('./middleware/errorHandler');
 const authRoutes = require('./routes/auth');
 const productsRoutes = require('./routes/products');
@@ -18,17 +17,14 @@ const app = express();
 
 // Configuration CORS
 app.use(cors({
-    origin: ['http://localhost:3000', 'https://reboul-store.vercel.app'],
-    credentials: true,
+    origin: 'http://localhost:3000', // L'URL de votre frontend
+    credentials: true, // Permet l'envoi de cookies et d'en-têtes d'authentification
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
 }));
 
 app.use(express.json());
-
-// Serve static files
 app.use(express.static('public'));
-app.use('/brands', express.static(path.join(__dirname, 'public', 'brands')));
 
 // Routes
 app.use('/api/auth', authRoutes);
