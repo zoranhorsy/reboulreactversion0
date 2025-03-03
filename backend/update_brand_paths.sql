@@ -76,4 +76,9 @@ WHERE name IN (
     'STONE ISLAND',
     'WHITE SAND',
     'ZADIG & VOLTAIRE'
-); 
+);
+
+UPDATE brands 
+SET logo_white = CONCAT('/brands/', REPLACE(UPPER(name), ' ', ''), '/', REPLACE(UPPER(name), ' ', ''), '_w.png'),
+    logo_black = CONCAT('/brands/', REPLACE(UPPER(name), ' ', ''), '/', REPLACE(UPPER(name), ' ', ''), '_b.png')
+WHERE 1=1; 
