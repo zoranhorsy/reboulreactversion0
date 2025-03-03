@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
+export const dynamic = 'force-dynamic'
+
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:5001/api"
 
 export async function GET(request: NextRequest) {
