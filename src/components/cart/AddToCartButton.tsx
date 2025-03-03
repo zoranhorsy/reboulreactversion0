@@ -1,19 +1,9 @@
 import React, { useRef, useEffect, useState } from "react"
 import anime from "animejs/lib/anime.es.js"
 import { Button } from "@/components/ui/button"
-import { useCart } from "@/app/contexts/CartContext"
+import { useCart, CartItem } from "@/app/contexts/CartContext"
 import { ShoppingCart } from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
-
-interface CartItem {
-  id: string
-  name: string
-  price: number
-  quantity: number
-  image: string
-  size?: string
-  color?: string
-}
 
 interface AddToCartButtonProps {
   productId: string
@@ -77,7 +67,17 @@ export function AddToCartButton({ productId, name, price, image, disabled, size,
     if (disabled) return
     setState({ isAdding: true, showParticles: true })
 
-    const newItem: CartItem = { id: productId, name, price, quantity: 1, image, size, color }
+    const newItem: CartItem = { 
+        id: productId, 
+        name, 
+        price, 
+        quantity: 1, 
+        image, 
+        variant: {
+            size: size || '',
+            color: color || ''
+        }
+    }
     addItem(newItem)
 
     toast({
