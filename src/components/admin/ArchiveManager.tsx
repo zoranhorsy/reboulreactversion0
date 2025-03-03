@@ -96,20 +96,20 @@ export function ArchiveManager() {
 
     const loadArchives = useCallback(async () => {
         try {
-            const archives = await api.fetchArchives()
-            if (archives && Array.isArray(archives.data)) {
-                setArchives(archives.data)
-            } else {
-                setArchives([])
-            }
+            setIsLoading(true);
+            const response = await api.fetchArchives();
+            console.log('Archives reçues:', response);
+            setArchives(Array.isArray(response) ? response : []);
         } catch (error) {
-            console.error('Erreur lors du chargement des archives:', error)
+            console.error('Erreur lors du chargement des archives:', error);
             toast({
                 title: "Erreur",
                 description: "Impossible de charger les archives.",
                 variant: "destructive",
-            })
-            setArchives([])
+            });
+            setArchives([]);
+        } finally {
+            setIsLoading(false);
         }
     }, [toast])
 
@@ -118,29 +118,51 @@ export function ArchiveManager() {
     }, [loadArchives])
 
     const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault()
-        setIsSubmitting(true)
+        e.preventDefault();
+        if (!formData.title || !formData.description || !formData.category) {
+            toast({
+                title: "Erreur",
+                description: "Veuillez remplir tous les champs obligatoires.",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        setIsSubmitting(true);
 
         try {
-            const formDataToSend = new FormData()
-            formDataToSend.append('title', formData.title)
-            formDataToSend.append('description', formData.description)
+            const formDataToSend = new FormData();
+            formDataToSend.append('title', formData.title);
+            formDataToSend.append('description', formData.description);
+            formDataToSend.append('category', formData.category);
+            formDataToSend.append('date', formData.date);
+            formDataToSend.append('active', formData.active.toString());
+            
             if (formData.image) {
-                formDataToSend.append('file', formData.image)
+                formDataToSend.append('image', formData.image);
             }
 
+            console.log('Envoi des données:', {
+                title: formData.title,
+                description: formData.description,
+                category: formData.category,
+                date: formData.date,
+                active: formData.active,
+                hasImage: !!formData.image
+            });
+
             if (editingArchive) {
-                await api.updateArchive(editingArchive.id.toString(), formDataToSend)
+                await api.updateArchive(editingArchive.id.toString(), formDataToSend);
                 toast({
                     title: "Succès",
                     description: "L'archive a été mise à jour avec succès.",
-                })
+                });
             } else {
-                await api.createArchive(formDataToSend)
+                await api.createArchive(formDataToSend);
                 toast({
                     title: "Succès",
                     description: "L'archive a été créée avec succès.",
-                })
+                });
             }
 
             setFormData({
@@ -150,21 +172,21 @@ export function ArchiveManager() {
                 date: format(new Date(), 'yyyy-MM-dd'),
                 image: null,
                 active: true
-            })
-            setEditingArchive(null)
-            setIsDialogOpen(false)
-            loadArchives()
+            });
+            setEditingArchive(null);
+            setIsDialogOpen(false);
+            loadArchives();
         } catch (error) {
-            console.error('Erreur lors de la soumission:', error)
+            console.error('Erreur lors de la soumission:', error);
             toast({
                 title: "Erreur",
                 description: "Une erreur est survenue lors de l'enregistrement.",
                 variant: "destructive",
-            })
+            });
         } finally {
-            setIsSubmitting(false)
+            setIsSubmitting(false);
         }
-    }
+    };
 
     const handleDelete = async (id: number) => {
         try {

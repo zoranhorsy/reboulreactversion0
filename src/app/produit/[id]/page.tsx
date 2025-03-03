@@ -73,9 +73,16 @@ export default function ProductPage() {
                         ...fetchedProduct,
                         quantity: 1,
                         images: Array.isArray(fetchedProduct.images) 
-                            ? fetchedProduct.images.map(image => 
-                            typeof image === 'string' ? image : URL.createObjectURL(image)
-                              )
+                            ? fetchedProduct.images.map(image => {
+                                if (typeof image === 'string') {
+                                    if (image.startsWith('http')) {
+                                        return image;
+                                    }
+                                    // Assurez-vous que l'URL est correctement construite pour les images
+                                    return `${process.env.NEXT_PUBLIC_API_URL}/uploads/${image.split('/').pop()}`;
+                                }
+                                return URL.createObjectURL(image);
+                            })
                             : []
                     })
                     if (fetchedProduct.variants && fetchedProduct.variants.length > 0) {

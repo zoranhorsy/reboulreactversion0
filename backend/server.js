@@ -34,19 +34,15 @@ const allowedOrigins = [
 const corsOptions = {
     origin: function(origin, callback) {
         console.log('Origin de la requête:', origin);
-        console.log('Origins autorisés:', allowedOrigins);
         
         // Allow requests with no origin (like mobile apps or curl requests)
         if (!origin) {
-            console.log('Requête sans origin autorisée');
             return callback(null, true);
         }
         
-        if (allowedOrigins.indexOf(origin) !== -1) {
-            console.log('Origin autorisé:', origin);
-            callback(null, true);
+        if (allowedOrigins.includes(origin)) {
+            callback(null, origin);
         } else {
-            console.log('Origin refusé:', origin);
             callback(new Error('Not allowed by CORS'));
         }
     },
@@ -59,23 +55,6 @@ const corsOptions = {
 
 // Middleware CORS
 app.use(cors(corsOptions));
-
-// Headers CORS supplémentaires pour plus de compatibilité
-app.use((req, res, next) => {
-    const origin = req.headers.origin;
-    console.log('Middleware CORS - Origin:', origin);
-    
-    if (allowedOrigins.includes(origin)) {
-        console.log('Setting CORS headers for origin:', origin);
-        res.header('Access-Control-Allow-Origin', origin);
-        res.header('Access-Control-Allow-Methods', corsOptions.methods.join(', '));
-        res.header('Access-Control-Allow-Headers', corsOptions.allowedHeaders.join(', '));
-        res.header('Access-Control-Allow-Credentials', 'true');
-    } else {
-        console.log('Origin not in allowed list:', origin);
-    }
-    next();
-});
 
 // Middleware pour parser le JSON
 app.use(express.json({ limit: '50mb' }));
@@ -97,12 +76,31 @@ app.use((req, res, next) => {
 });
 
 // Configuration des dossiers statiques
-app.use('/public', express.static(publicDir, {
+app.use('/uploads', express.static(uploadsDir, {
     maxAge: '1h',
     etag: true,
     lastModified: true,
     setHeaders: (res, path) => {
-        console.log(`Fichier statique accédé: ${path}`);
+        res.setHeader('Cache-Control', 'public, max-age=3600');
+        res.setHeader('Access-Control-Allow-Origin', '*');
+    }
+}));
+
+app.use('/archives', express.static(archivesDir, {
+    maxAge: '1h',
+    etag: true,
+    lastModified: true,
+    setHeaders: (res, path) => {
+        res.setHeader('Cache-Control', 'public, max-age=3600');
+        res.setHeader('Access-Control-Allow-Origin', '*');
+    }
+}));
+
+app.use('/brands', express.static(brandsDir, {
+    maxAge: '1h',
+    etag: true,
+    lastModified: true,
+    setHeaders: (res, path) => {
         res.setHeader('Cache-Control', 'public, max-age=3600');
         res.setHeader('Access-Control-Allow-Origin', '*');
     }
@@ -286,7 +284,7 @@ app.get('/status', (req, res) => {
         };
 
         // Vérifier la base de données
-        db.pool.query('SELECT NOW()', (err, result) => {
+        db.query('SELECT NOW()', (err, result) => {
             const status = {
                 server: {
                     status: 'running',
@@ -336,13 +334,12 @@ app.use(errorHandler);
 // Démarrage du serveur
 const port = process.env.PORT || 5001;
 
-// Test de connexion à la base de données avant de démarrer le serveur
-db.pool.query('SELECT NOW()', (err) => {
+// Test de connexion initial
+db.query('SELECT NOW()', (err) => {
     if (err) {
-        console.error('Erreur de connexion à la base de données:', err);
-        process.exit(1);
+        console.error('Erreur lors du test de connexion:', err);
     } else {
-        console.log('Connexion à la base de données réussie');
+        console.log('Test de connexion réussi');
         app.listen(port, () => {
             console.log(`Serveur démarré sur le port ${port}`);
             console.log('Environnement:', process.env.NODE_ENV);

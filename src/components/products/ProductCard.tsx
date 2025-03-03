@@ -65,19 +65,26 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
 
   const handleAddToCart = (size: string, color: string, quantity: number) => {
     try {
+      // Vérifier que le variant existe et a du stock
       const variant = product.variants.find((v) => v.size === size && v.color === color)
       if (!variant) {
-        throw new Error("Variant not found")
+        throw new Error(`Cette combinaison de taille (${size}) et couleur (${color}) n'est pas disponible.`)
       }
 
+      if (variant.stock < quantity) {
+        throw new Error(`Stock insuffisant. Seulement ${variant.stock} unité(s) disponible(s).`)
+      }
+
+      const colorInfo = colorMap[color.toLowerCase()] || { hex: color, label: color }
       const cartVariant: CartItemVariant = {
         size,
         color,
-        colorLabel: colorMap[color.toLowerCase()]?.label || color
+        colorLabel: colorInfo.label
       }
 
+      const cartItemId = `${product.id}-${size}-${color}`
       addItem({
-        id: `${product.id}-${size}-${color}`,
+        id: cartItemId,
         name: `${product.name} (${size}, ${cartVariant.colorLabel})`,
         price: product.price,
         quantity: quantity,
@@ -93,7 +100,7 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
       console.error("Error adding to cart:", error)
       toast({
         title: "Erreur",
-        description: "Impossible d'ajouter le produit au panier. Veuillez réessayer.",
+        description: error instanceof Error ? error.message : "Impossible d'ajouter le produit au panier. Veuillez réessayer.",
         variant: "destructive",
       })
     }

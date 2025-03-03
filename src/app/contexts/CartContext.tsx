@@ -8,9 +8,9 @@ export interface CartItem {
   price: number;
   quantity: number;
   image: string;
-  variant?: {
-    size?: string;
-    color?: string;
+  variant: {
+    size: string;
+    color: string;
   };
 }
 

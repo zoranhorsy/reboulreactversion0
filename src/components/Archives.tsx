@@ -79,14 +79,11 @@ export function Archives() {
     useEffect(() => {
         const loadArchives = async () => {
             try {
+                setIsLoading(true);
                 console.log('Chargement des archives...');
                 const response = await api.fetchArchives();
                 console.log('Réponse des archives:', response);
-                if (response && response.data) {
-                    setArchives(response.data);
-                } else {
-                    console.error('Format de réponse invalide:', response);
-                }
+                setArchives(Array.isArray(response) ? response : []);
             } catch (error) {
                 console.error('Erreur lors du chargement des archives:', error);
             } finally {

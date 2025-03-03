@@ -88,7 +88,7 @@ export default function SuccessPage() {
                     <CardFooter className="flex flex-col sm:flex-row gap-4">
                         <Button 
                             className="w-full sm:w-auto"
-                            onClick={() => router.push('/profile')}
+                            onClick={() => router.push('/profil')}
                         >
                             <ShoppingBag className="mr-2 h-4 w-4" />
                             Voir mes commandes

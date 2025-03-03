@@ -61,9 +61,9 @@ export function BrandsCarousel() {
         console.log('Theme:', resolvedTheme)
         
         if (resolvedTheme === 'dark') {
-            return brand.logo_dark || brand.logo_light || defaultLogo
+            return brand.logo_light || brand.logo_url || defaultLogo
         }
-        return brand.logo_light || brand.logo_dark || defaultLogo
+        return brand.logo_dark || brand.logo_url || defaultLogo
     }, [resolvedTheme])
 
     const handlePrevious = useCallback(() => {

@@ -239,8 +239,7 @@ export class Api {
             headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
-            },
-            withCredentials: true
+            }
         })
 
         this.setupInterceptors()
@@ -1437,33 +1436,21 @@ export class Api {
 
     async fetchArchives() {
         try {
-            console.log('Début de fetchArchives');
-            console.log('URL de base:', this.client.defaults.baseURL);
-            console.log('Headers:', this.client.defaults.headers);
+            console.log('Début du chargement des archives');
+            const response = await this.client.get('/archives');
+            console.log('Réponse reçue:', response.data);
             
-            const token = getToken();
-            console.log('Token présent:', !!token);
+            // Vérifier si la réponse contient un objet avec status et data
+            if (response.data && response.data.status === 'success') {
+                return response.data.data;
+            }
             
-            const response = await this.client.get('/archives', {
-                withCredentials: true
-            });
-            
-            console.log('Réponse reçue:', {
-                status: response.status,
-                headers: response.headers,
-                data: response.data
-            });
-            
+            // Si la structure est différente, retourner directement les données
             return response.data;
         } catch (error) {
             console.error('Erreur détaillée lors du chargement des archives:', error);
             if (error instanceof AxiosError) {
-                console.error('Détails de l\'erreur:', {
-                    status: error.response?.status,
-                    statusText: error.response?.statusText,
-                    headers: error.response?.headers,
-                    data: error.response?.data
-                });
+                console.error('Détails de l\'erreur:', error.response?.data);
             }
             throw error;
         }
@@ -1501,13 +1488,32 @@ export class Api {
 
     async updateArchive(id: string, data: FormData): Promise<any> {
         try {
+            console.log('Mise à jour de l\'archive:', id);
+            console.log('Données envoyées:', {
+                title: data.get('title'),
+                description: data.get('description'),
+                category: data.get('category'),
+                date: data.get('date'),
+                active: data.get('active'),
+                hasImage: data.has('image')
+            });
+
             const response = await this.client.put(`/archives/${id}`, data, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            })
-            return response.data
+                headers: { 
+                    'Content-Type': 'multipart/form-data',
+                    'Authorization': `Bearer ${getToken()}`
+                }
+            });
+            
+            console.log('Réponse reçue:', response.data);
+            return response.data;
         } catch (error) {
-            this.handleError(error, "Erreur lors de la mise à jour de l'archive")
-            throw error
+            console.error('Erreur détaillée lors de la mise à jour:', error);
+            if (error instanceof AxiosError) {
+                console.error('Réponse du serveur:', error.response?.data);
+            }
+            this.handleError(error, "Erreur lors de la mise à jour de l'archive");
+            throw error;
         }
     }
 

@@ -97,6 +97,13 @@ export default function CheckoutPage() {
                 throw new Error('Vous devez être connecté pour passer une commande')
             }
 
+            // Vérifier que tous les items ont des variants valides
+            const invalidItems = items.filter(item => !item.variant || !item.variant.size || !item.variant.color);
+            if (invalidItems.length > 0) {
+                const invalidNames = invalidItems.map(item => item.name).join(", ");
+                throw new Error(`Les articles suivants n'ont pas de variantes valides : ${invalidNames}. Veuillez retourner au panier pour les sélectionner.`);
+            }
+
             // Créer l'objet de commande
             const orderData = {
                 shipping_info: {
@@ -111,14 +118,23 @@ export default function CheckoutPage() {
                 },
                 items: items.map(item => {
                     // S'assurer que l'ID est un nombre entier positif
-                    const productId = parseInt(String(item.id), 10);
+                    const productId = parseInt(String(item.id).split('-')[0], 10);
                     if (isNaN(productId) || productId <= 0) {
-                        throw new Error(`ID de produit invalide: ${item.id}`);
+                        throw new Error(`ID de produit invalide pour l'article : ${item.name}`);
                     }
+                    
+                    if (!item.variant || !item.variant.size || !item.variant.color) {
+                        throw new Error(`Variants manquants pour l'article : ${item.name}`);
+                    }
+
                     return {
                         product_id: productId,
                         quantity: Math.max(1, Math.floor(Number(item.quantity))),
-                        price: Number(parseFloat(item.price.toString()).toFixed(2))
+                        price: Number(parseFloat(item.price.toString()).toFixed(2)),
+                        variant: {
+                            size: item.variant.size,
+                            color: item.variant.color
+                        }
                     };
                 }),
                 total_amount: Number(parseFloat(total.toString()).toFixed(2)),
@@ -128,7 +144,6 @@ export default function CheckoutPage() {
 
             // Vérification des données avant envoi
             console.log('Envoi de la commande:', JSON.stringify(orderData, null, 2))
-            console.log('Token:', token)
 
             // Envoyer la commande à l'API backend
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders`, {
@@ -140,21 +155,36 @@ export default function CheckoutPage() {
                 body: JSON.stringify(orderData)
             })
 
+            const responseData = await response.json()
+
             if (!response.ok) {
-                const errorData = await response.json()
                 console.error('Réponse de l\'API:', {
                     status: response.status,
                     statusText: response.statusText,
-                    error: errorData
+                    data: responseData
                 })
-                throw new Error(errorData.error || errorData.message || 'Erreur lors de la création de la commande')
+
+                // Tenter de parser le message d'erreur s'il est au format JSON
+                let errorMessage = 'Erreur lors de la création de la commande'
+                if (typeof responseData === 'string') {
+                    try {
+                        const parsedError = JSON.parse(responseData)
+                        errorMessage = Object.values(parsedError[0])[0] as string
+                    } catch (e) {
+                        errorMessage = responseData
+                    }
+                } else if (responseData.message) {
+                    errorMessage = responseData.message
+                } else if (responseData.error) {
+                    errorMessage = responseData.error
+                }
+
+                throw new Error(errorMessage)
             }
 
-            const savedOrder = await response.json()
-            
             // Sauvegarder les informations de la dernière commande
             localStorage.setItem('lastOrder', JSON.stringify({
-                orderNumber: savedOrder.order_number || savedOrder.id,
+                orderNumber: responseData.order_number || responseData.id,
                 total: total,
                 items: items.length
             }))
@@ -162,10 +192,10 @@ export default function CheckoutPage() {
             clearCart()
             toast({
                 title: "Commande réussie !",
-                description: `Commande n°${savedOrder.order_number || savedOrder.id} créée avec succès.`,
+                description: `Commande n°${responseData.order_number || responseData.id} créée avec succès.`,
             })
             
-            // Forcer la redirection avec un délai pour laisser le temps au toast de s'afficher
+            // Redirection avec un délai pour laisser le temps au toast de s'afficher
             setTimeout(() => {
                 window.location.href = '/success'
             }, 1000)
