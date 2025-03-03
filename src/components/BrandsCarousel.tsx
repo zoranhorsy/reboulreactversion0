@@ -75,21 +75,14 @@ export function BrandsCarousel() {
             return selectedLogo
         }
         
-        // Construire l'URL complète en fonction de l'environnement
+        // Construire l'URL complète
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001'
         
-        // Nettoyer l'URL de tout double /api
-        if (selectedLogo.startsWith('/api/')) {
-            selectedLogo = selectedLogo.replace('/api/', '/')
-        }
+        // Retirer tous les /api du chemin
+        selectedLogo = selectedLogo.replace(/^\/api\//, '').replace(/^\//, '')
         
-        // En production (railway.app), ajouter /api
-        if (apiUrl.includes('railway.app')) {
-            return `${apiUrl}/api/${selectedLogo.replace(/^\//, '')}`
-        }
-        
-        // En développement, utiliser l'URL directement
-        return `${apiUrl}/${selectedLogo.replace(/^\//, '')}`
+        // Retourner l'URL complète
+        return `${apiUrl}/${selectedLogo}`
     }, [resolvedTheme])
 
     const handlePrevious = useCallback(() => {
