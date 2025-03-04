@@ -64,7 +64,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, router: pr
   const router = propRouter || routerHook
 
   const isAdminRoute = useCallback((path: string) => {
-    return path.startsWith('/admin') && path !== '/admin/connexion'
+    return path.startsWith('/admin')
   }, [])
 
   const checkAuth = useCallback(async () => {
@@ -73,9 +73,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, router: pr
 
     if (token) {
       try {
+        // S'assurer que le token est correctement formaté
+        const tokenString = String(token).trim()
+        
+        // Définir l'en-tête d'autorisation avec le token formaté
+        axios.defaults.headers.common["Authorization"] = `Bearer ${tokenString}`
+        
         const response = await axios.get<AuthMeResponse>(`${API_URL}/auth/me`, {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { Authorization: `Bearer ${tokenString}` },
         })
+        
         const userData: User = {
           id: response.data.id,
           email: response.data.email,
@@ -84,31 +91,39 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, router: pr
           avatar_url: response.data.avatar_url,
           phone: response.data.phone,
         }
+        
         setUser(userData)
-        axios.defaults.headers.common["Authorization"] = `Bearer ${token}`
 
-        // Si l'utilisateur est sur la page de connexion admin et qu'il est admin
-        if (currentPath === "/admin/connexion" && userData.isAdmin) {
-          router.push("/admin")
+        // Gérer les redirections en fonction du rôle et du chemin actuel
+        if (currentPath === "/connexion") {
+          if (userData.isAdmin) {
+            window.location.href = "/admin"
+          } else {
+            window.location.href = "/profil"
+          }
+          return
         }
-        // Si l'utilisateur est sur une route admin mais n'est pas admin
-        else if (isAdminRoute(currentPath) && !userData.isAdmin) {
-          router.push("/")
+
+        // Si l'utilisateur n'est pas admin mais essaie d'accéder à une route admin
+        if (isAdminRoute(currentPath) && !userData.isAdmin) {
+          window.location.href = "/"
           toast({
             title: "Accès refusé",
             description: "Vous n'avez pas les droits d'accès à cette section.",
             variant: "destructive",
           })
+          return
         }
       } catch (error) {
         console.error("Error verifying token:", error)
+        // Nettoyer en cas d'erreur
         localStorage.removeItem("token")
         delete axios.defaults.headers.common["Authorization"]
         setUser(null)
         
-        // Rediriger vers connexion uniquement si on est sur une route admin
-        if (isAdminRoute(currentPath)) {
-          router.push("/connexion")
+        // Rediriger vers connexion uniquement si on est sur une route protégée
+        if (currentPath === "/profil" || isAdminRoute(currentPath)) {
+          window.location.href = "/connexion"
           toast({
             title: "Session expirée",
             description: "Veuillez vous reconnecter.",
@@ -118,9 +133,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, router: pr
       }
     } else {
       setUser(null)
-      // Rediriger vers connexion uniquement si on est sur une route admin
-      if (isAdminRoute(currentPath)) {
-        router.push("/connexion")
+      delete axios.defaults.headers.common["Authorization"]
+      // Rediriger vers connexion uniquement si on est sur une route protégée
+      if (currentPath === "/profil" || isAdminRoute(currentPath)) {
+        window.location.href = "/connexion"
         toast({
           title: "Authentification requise",
           description: "Veuillez vous connecter pour accéder à cette section.",
@@ -129,7 +145,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, router: pr
       }
     }
     setIsLoading(false)
-  }, [router, isAdminRoute])
+  }, [isAdminRoute])
 
   useEffect(() => {
     checkAuth()
@@ -153,13 +169,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children, router: pr
         phone: user.phone,
       }
 
+      // S'assurer que le token est une chaîne de caractères
+      const tokenString = String(token).trim()
+      
       setUser(userData)
-      localStorage.setItem("token", token)
-      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`
+      localStorage.setItem("token", tokenString)
+      
+      // Définir l'en-tête d'autorisation
+      axios.defaults.headers.common["Authorization"] = `Bearer ${tokenString}`
 
-      return { user: userData, token }
+      // Rediriger l'utilisateur en fonction de son rôle
+      if (userData.isAdmin) {
+        window.location.href = "/admin"
+      } else {
+        window.location.href = "/profil"
+      }
+
+      return { user: userData, token: tokenString }
     } catch (error) {
       console.error("Auth error:", error)
+      // Nettoyer en cas d'erreur
+      localStorage.removeItem("token")
+      delete axios.defaults.headers.common["Authorization"]
+      setUser(null)
+      
       toast({
         title: "Erreur d'authentification",
         description: "Une erreur s'est produite. Veuillez réessayer.",

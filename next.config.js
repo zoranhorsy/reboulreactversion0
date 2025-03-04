@@ -4,14 +4,13 @@ const nextConfig = {
   images: {
     remotePatterns: [
       {
-        protocol: 'http',
-        hostname: 'localhost',
-        port: '5001',
+        protocol: 'https',
+        hostname: 'reboul-store-api-production.up.railway.app',
         pathname: '/**'
       },
       {
         protocol: 'https',
-        hostname: 'reboul-store-api-production.up.railway.app',
+        hostname: 'res.cloudinary.com',
         pathname: '/**'
       }
     ],

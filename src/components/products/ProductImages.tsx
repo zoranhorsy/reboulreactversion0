@@ -36,31 +36,22 @@ const getValidImages = (product: Product): (string | File | Blob)[] => {
 
 const getImageUrl = (image: string | File | Blob): string => {
     if (typeof image === 'string') {
-        // Log pour debugging
-        console.log('Image URL originale:', image);
-        
         // Si c'est déjà une URL complète
         if (image.startsWith('http')) {
-            console.log('URL complète retournée:', image);
             return image;
         }
         
-        // Construire l'URL complète
-        const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://reboul-store-api-production.up.railway.app';
+        // Toujours utiliser l'URL Railway
+        const baseUrl = 'https://reboul-store-api-production.up.railway.app';
         
         // Nettoyer le chemin d'image et retirer /api s'il est présent
-        let cleanPath = image.startsWith('/') ? image.slice(1) : image;
-        cleanPath = cleanPath.startsWith('api/') ? cleanPath.slice(4) : cleanPath;
-        const fullUrl = `${baseUrl}/${cleanPath}`;
-            
-        console.log('URL complète construite:', fullUrl);
-        return fullUrl;
+        let cleanPath = image.startsWith('/') ? image : `/${image}`;
+        cleanPath = cleanPath.startsWith('/api/') ? cleanPath.slice(4) : cleanPath;
+        return `${baseUrl}${cleanPath}`;
     }
     
     // Pour les fichiers/blobs
-    const objectUrl = URL.createObjectURL(image);
-    console.log('URL d\'objet créée:', objectUrl);
-    return objectUrl;
+    return URL.createObjectURL(image);
 }
 
 export function ProductImages({ product, size = "lg" }: ProductImagesProps) {

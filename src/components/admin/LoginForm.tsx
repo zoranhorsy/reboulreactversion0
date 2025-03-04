@@ -27,11 +27,14 @@ export function LoginForm() {
             const { user } = await login(email, password)
 
             if (user && user.isAdmin) {
+                await new Promise(resolve => setTimeout(resolve, 100))
+                
                 toast({
                     title: "Connexion réussie",
                     description: "Bienvenue dans l'interface d'administration.",
                 })
-                router.push('/admin')
+                
+                window.location.href = '/admin'
             } else {
                 throw new Error('Accès non autorisé')
             }

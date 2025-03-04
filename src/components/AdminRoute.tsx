@@ -1,18 +1,26 @@
 'use client'
 
 import { useAuth } from '@/app/contexts/AuthContext'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { useEffect } from 'react'
 
 export function AdminRoute({ children }: { children: React.ReactNode }) {
     const { user, isLoading } = useAuth()
     const router = useRouter()
+    const pathname = usePathname()
 
     useEffect(() => {
-        if (!isLoading && (!user || !user.isAdmin)) {
-            router.push('/admin/login')
+        if (!isLoading) {
+            if (!user) {
+                // Si l'utilisateur n'est pas connecté et n'est pas déjà sur la page de connexion
+                if (pathname !== '/connexion') {
+                    window.location.href = '/connexion'
+                }
+            } else if (!user.isAdmin) {
+                window.location.href = '/'
+            }
         }
-    }, [user, isLoading, router])
+    }, [user, isLoading, pathname])
 
     if (isLoading) {
         return <div>Chargement...</div>

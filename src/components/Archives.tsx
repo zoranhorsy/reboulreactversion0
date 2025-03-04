@@ -33,12 +33,23 @@ const CATEGORIES = [
 
 const getImageUrl = (path: string): string => {
     if (!path) return '/placeholder.png'
-    if (path.startsWith('http')) return path
     
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://reboul-store-api-production.up.railway.app'
-    let cleanPath = path.startsWith('/') ? path.slice(1) : path
-    cleanPath = cleanPath.startsWith('api/') ? cleanPath.slice(4) : cleanPath
-    return `${baseUrl}/${cleanPath}`
+    const RAILWAY_BASE_URL = 'https://reboul-store-api-production.up.railway.app'
+    
+    // Si c'est une URL localhost, la convertir en URL Railway
+    if (path.includes('localhost:5001')) {
+        const parts = path.split('localhost:5001')
+        return `${RAILWAY_BASE_URL}${parts[1]}`
+    }
+    
+    // Si c'est déjà une URL complète (non-localhost)
+    if (path.startsWith('http')) {
+        return path
+    }
+    
+    // Pour les chemins relatifs
+    const cleanPath = path.startsWith('/') ? path : `/${path}`
+    return `${RAILWAY_BASE_URL}${cleanPath}`
 }
 
 const ARCHIVES = [

@@ -1,7 +1,7 @@
 import axios, { AxiosError, type AxiosInstance, type InternalAxiosRequestConfig } from "axios"
 import { toast } from "@/components/ui/use-toast"
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://reboul-store-api-production.up.railway.app"
+const API_URL = 'https://reboul-store-api-production.up.railway.app/api'
 
 // Types
 export interface Product {
@@ -216,27 +216,52 @@ const getToken = () => {
 
 export const getImagePath = (path: string): string => {
   if (!path) return '/placeholder.png'
-  if (path.startsWith('http')) return path
   
-  // Utiliser directement le chemin tel qu'il est stocké dans la base de données
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://reboul-store-api-production.up.railway.app'
-  return `${apiUrl}${path}`
+  // Si l'URL contient localhost, la convertir en URL Railway
+  if (path.includes('localhost:5001')) {
+    const cleanPath = path.split('localhost:5001')[1]
+    return `https://reboul-store-api-production.up.railway.app${cleanPath}`
+  }
+  
+  // Si c'est déjà une URL complète (non-localhost)
+  if (path.startsWith('http') && !path.includes('localhost')) {
+    return path
+  }
+  
+  // Pour les chemins relatifs
+  const cleanPath = path.startsWith('/') ? path : `/${path}`
+  return `https://reboul-store-api-production.up.railway.app${cleanPath}`
 }
 
 export class Api {
     private readonly client: AxiosInstance
+    private readonly RAILWAY_BASE_URL = 'https://reboul-store-api-production.up.railway.app'
+    
     private readonly isValidEmail = (email: string): boolean => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
         return emailRegex.test(email)
     }
 
+    private transformImageUrl(url: string): string {
+        // Si l'URL contient localhost, la convertir en URL Railway
+        if (url.includes('localhost:5001')) {
+            const path = url.split('localhost:5001')[1]
+            return `${this.RAILWAY_BASE_URL}${path}`
+        }
+        return url
+    }
+
     private formatImageUrl(url: string | undefined): string {
         if (!url) return ''
-        if (url.startsWith('http')) return url
         
-        // Utiliser directement le chemin tel qu'il est stocké dans la base de données
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://reboul-store-api-production.up.railway.app'
-        return `${apiUrl}${url}`
+        // Si c'est déjà une URL complète (non-localhost)
+        if (url.startsWith('http')) {
+            return this.transformImageUrl(url)
+        }
+        
+        // Pour les chemins relatifs
+        let cleanPath = url.startsWith('/') ? url : `/${url}`
+        return `${this.RAILWAY_BASE_URL}${cleanPath}`
     }
 
     constructor() {
@@ -350,8 +375,9 @@ export class Api {
                     price: this.normalizePrice(product.price),
                     category: product.category_id,
                     image_url: this.formatImageUrl(product.image_url),
+                    image: this.formatImageUrl(product.image),
                     images: Array.isArray(product.images) 
-                        ? product.images.map((img) => typeof img === 'string' ? this.formatImageUrl(img) : img) 
+                        ? product.images.map(img => typeof img === 'string' ? this.formatImageUrl(img) : img) 
                         : [],
                     variants: Array.isArray(product.variants) 
                         ? product.variants 
@@ -396,7 +422,18 @@ export class Api {
     async getProductById(id: string): Promise<Product | null> {
         try {
             const response = await this.client.get(`/products/${id}`)
-            return response.data
+            if (!response.data) return null
+            
+            // Format all image URLs in the response
+            return {
+                ...response.data,
+                image_url: this.formatImageUrl(response.data.image_url),
+                image: this.formatImageUrl(response.data.image),
+                images: Array.isArray(response.data.images)
+                    ? response.data.images.map((img: string | File | Blob) => 
+                        typeof img === 'string' ? this.formatImageUrl(img) : img)
+                    : []
+            }
         } catch (error) {
             this.handleError(error, `Error fetching product with ID ${id}`)
             return null
@@ -1446,13 +1483,17 @@ export class Api {
             const response = await this.client.get('/archives');
             console.log('Réponse reçue:', response.data);
             
-            // Vérifier si la réponse contient un objet avec status et data
+            // Transformer les données pour utiliser les URLs Railway
+            let archives = response.data;
             if (response.data && response.data.status === 'success') {
-                return response.data.data;
+                archives = response.data.data;
             }
-            
-            // Si la structure est différente, retourner directement les données
-            return response.data;
+
+            // Transformer les URLs des images
+            return Array.isArray(archives) ? archives.map(archive => ({
+                ...archive,
+                image: this.formatImageUrl(archive.image)
+            })) : [];
         } catch (error) {
             console.error('Erreur détaillée lors du chargement des archives:', error);
             if (error instanceof AxiosError) {

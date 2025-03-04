@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { useAuth } from '@/app/contexts/AuthContext'
 import { Loader2 } from 'lucide-react'
 import { Card, CardContent, CardDescription } from '@/components/ui/card'
@@ -13,14 +13,20 @@ export default function AdminLayout({
 }) {
     const { user, isLoading } = useAuth()
     const router = useRouter()
+    const pathname = usePathname()
 
     useEffect(() => {
-        if (!isLoading && !user) {
-            router.push('/connexion')
-        } else if (!isLoading && user && !user.isAdmin) {
-            router.push('/')
+        if (!isLoading) {
+            if (!user) {
+                // Si l'utilisateur n'est pas connecté et n'est pas déjà sur la page de connexion
+                if (pathname !== '/connexion') {
+                    window.location.href = '/connexion'
+                }
+            } else if (!user.isAdmin) {
+                window.location.href = '/'
+            }
         }
-    }, [user, isLoading, router])
+    }, [user, isLoading, pathname])
 
     if (isLoading) {
         return (

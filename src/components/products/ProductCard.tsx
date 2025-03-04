@@ -12,6 +12,7 @@ import { useFavorites } from "@/app/contexts/FavoritesContext"
 import { toast } from "@/components/ui/use-toast"
 import { useAuth } from '@/app/contexts/AuthContext'
 import type { CartItemVariant } from '@/lib/types/cart'
+import { getImageUrl } from '@/lib/cloudinary'
 
 // Import du mapping des couleurs
 const colorMap: Record<string, { hex: string; label: string }> = {
@@ -43,15 +44,7 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
 
   if (!product) return null
 
-  const imageUrl = (() => {
-    if (Array.isArray(product.images) && product.images.length > 0 && typeof product.images[0] === 'string' && product.images[0] !== "") {
-      return product.images[0]
-    }
-    if (typeof product.image_url === 'string' && product.image_url !== "") {
-      return product.image_url
-    }
-    return "/placeholder.svg"
-  })()
+  const imageUrl = getImageUrl(product.image_url)
 
   const formatPrice = (price: number | undefined) => {
     if (typeof price !== 'number') return null
@@ -88,7 +81,7 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
         name: `${product.name} (${size}, ${cartVariant.colorLabel})`,
         price: product.price,
         quantity: quantity,
-        image: typeof imageUrl === 'string' ? imageUrl : "/placeholder.svg",
+        image: getImageUrl(typeof imageUrl === 'string' ? imageUrl : "/placeholder.svg"),
         variant: cartVariant
       })
 
@@ -301,4 +294,3 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
     </>
   )
 }
-
