@@ -10,11 +10,10 @@ import { useNotifications } from '@/hooks/useNotifications'
 
 interface AdminClientLayoutProps {
     children: React.ReactNode
-    isAuthenticated: boolean
 }
 
-export function AdminClientLayout({ children, isAuthenticated }: AdminClientLayoutProps) {
-    const { user, logout } = useAuth()
+export function AdminClientLayout({ children }: AdminClientLayoutProps) {
+    const { user, logout, isAuthenticated, isAdmin } = useAuth()
     const router = useRouter()
     const pathname = usePathname()
     const { notifications, markAsRead } = useNotifications()
@@ -28,11 +27,11 @@ export function AdminClientLayout({ children, isAuthenticated }: AdminClientLayo
         if (mounted) {
             if (!isAuthenticated) {
                 router.replace('/connexion')
-            } else if (user && !user.isAdmin) {
+            } else if (!isAdmin) {
                 router.replace('/')
             }
         }
-    }, [mounted, isAuthenticated, user, router])
+    }, [mounted, isAuthenticated, isAdmin, router])
 
     // Attendre le montage du composant
     if (!mounted) {
@@ -47,7 +46,7 @@ export function AdminClientLayout({ children, isAuthenticated }: AdminClientLayo
     }
 
     // Si non authentifié ou non admin, ne rien afficher (la redirection sera gérée par l'effet)
-    if (!isAuthenticated || !user?.isAdmin) {
+    if (!isAuthenticated || !isAdmin) {
         return null
     }
 

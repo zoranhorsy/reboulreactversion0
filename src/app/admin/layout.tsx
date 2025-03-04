@@ -1,34 +1,82 @@
 'use client'
 
-import { useEffect } from 'react'
-import { useRouter, usePathname } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import { useAuth } from '@/app/contexts/AuthContext'
 import { Loader2 } from 'lucide-react'
 import { Card, CardContent, CardDescription } from '@/components/ui/card'
+
+// Fonction pour logger avec timestamp
+const logWithTime = (message: string, data?: any) => {
+  const timestamp = new Date().toISOString()
+  if (data) {
+    console.log(`[AdminLayout][${timestamp}] ${message}`, data)
+  } else {
+    console.log(`[AdminLayout][${timestamp}] ${message}`)
+  }
+}
 
 export default function AdminLayout({
     children,
 }: {
     children: React.ReactNode
 }) {
-    const { user, isLoading } = useAuth()
-    const router = useRouter()
-    const pathname = usePathname()
+    const { isLoading, isAuthenticated, isAdmin, checkAuthManually } = useAuth()
+    const [hasRedirected, setHasRedirected] = useState(false)
+    const [hasCheckedAuth, setHasCheckedAuth] = useState(false)
 
+    logWithTime("AdminLayout rendu", { 
+        isLoading, 
+        isAuthenticated, 
+        isAdmin,
+        hasRedirected,
+        hasCheckedAuth
+    })
+
+    // Effet pour vérifier l'authentification
     useEffect(() => {
-        if (!isLoading) {
-            if (!user) {
-                // Si l'utilisateur n'est pas connecté et n'est pas déjà sur la page de connexion
-                if (pathname !== '/connexion') {
-                    window.location.href = '/connexion'
-                }
-            } else if (!user.isAdmin) {
-                window.location.href = '/'
+        if (hasCheckedAuth) {
+            logWithTime("Vérification déjà effectuée, ignorée")
+            return
+        }
+
+        const verifyAuth = async () => {
+            logWithTime("Vérification manuelle de l'authentification")
+            try {
+                await checkAuthManually()
+                setHasCheckedAuth(true)
+                logWithTime("Vérification manuelle terminée", { 
+                    isAuthenticated, 
+                    isAdmin 
+                })
+            } catch (error) {
+                logWithTime("Erreur lors de la vérification manuelle", error)
             }
         }
-    }, [user, isLoading, pathname])
 
-    if (isLoading) {
+        verifyAuth()
+    }, [checkAuthManually, hasCheckedAuth])
+
+    // Effet pour la redirection
+    useEffect(() => {
+        if (hasRedirected || !hasCheckedAuth || isLoading) {
+            return
+        }
+
+        if (!isAuthenticated) {
+            logWithTime("Non authentifié - redirection vers /connexion")
+            setHasRedirected(true)
+            window.location.href = '/connexion'
+        } else if (!isAdmin) {
+            logWithTime("Authentifié mais non admin - redirection vers /")
+            setHasRedirected(true)
+            window.location.href = '/'
+        } else {
+            logWithTime("Authentifié et admin - accès autorisé")
+        }
+    }, [isAuthenticated, isAdmin, isLoading, hasRedirected, hasCheckedAuth])
+
+    if (isLoading || !hasCheckedAuth) {
+        logWithTime("Affichage du chargement")
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-background">
                 <Card className="w-[400px] shadow-none border-none bg-transparent">
@@ -41,7 +89,8 @@ export default function AdminLayout({
         )
     }
 
-    if (!user || !user.isAdmin) {
+    if (!isAuthenticated || !isAdmin) {
+        logWithTime("Non authentifié ou non admin - affichage du message d'erreur")
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-background">
                 <Card className="w-[400px] shadow-none border-none bg-transparent">
@@ -56,6 +105,7 @@ export default function AdminLayout({
         )
     }
 
+    logWithTime("Rendu du contenu admin")
     return children
 }
 
