@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils'
 import { fontSans } from '@/lib/fonts'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
+import { CloudinaryProvider } from '@/components/providers/CloudinaryProvider'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -27,14 +28,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <body className={cn("min-h-screen bg-background font-sans antialiased", fontSans.variable)}>
                 <AuthProvider>
                     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-                        <CartProvider>
-                            <FavoritesProvider>
-                                {children}
-                                <Footer />
-                                <Dock />
-                                <Toaster />
-                            </FavoritesProvider>
-                        </CartProvider>
+                        <CloudinaryProvider>
+                            <CartProvider>
+                                <FavoritesProvider>
+                                    {children}
+                                    <Footer />
+                                    <Dock />
+                                    <Toaster />
+                                </FavoritesProvider>
+                            </CartProvider>
+                        </CloudinaryProvider>
                     </ThemeProvider>
                 </AuthProvider>
             </body>

@@ -1,3 +1,5 @@
+import { ProductImage } from "./product-image"
+
 export interface Product {
   id: string
   name: string
@@ -10,7 +12,7 @@ export interface Product {
   brand_id: number
   brand: string
   image_url: string
-  images: (string | File | Blob)[]
+  images: (string | File | Blob | ProductImage)[]
   image: string
   variants: Variant[]
   tags: string[]

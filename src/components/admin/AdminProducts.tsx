@@ -212,6 +212,7 @@ export function AdminProducts() {
                             <ProductTable
                                 filteredProducts={filteredProducts}
                                 categories={categories}
+                                brands={brands}
                                 sortConfig={sortConfig}
                                 handleSort={(key) => handleSort(key, sortConfig, setSortConfig, products, 'all', setFilteredProducts)}
                                 handleEditProduct={handleEdit}

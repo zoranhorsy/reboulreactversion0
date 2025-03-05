@@ -6,7 +6,8 @@ import axios from 'axios'
 import { toast } from "@/components/ui/use-toast"
 
 // Définir l'URL de l'API
-const API_URL = 'http://localhost:5001/api'
+const API_URL = 'https://reboul-store-api-production.up.railway.app/api'
+console.log('[AuthContext] Utilisation de l\'API URL:', API_URL);
 
 // Type pour le router
 type RouterInstance = ReturnType<typeof useRouter>
@@ -207,70 +208,69 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Fonction pour se connecter
   const login = async (email: string, password: string) => {
-    logWithTime("login - Début", { email })
-    setIsLoading(true)
-    
+    logWithTime("Tentative de connexion", { email })
     try {
-      // Faire une requête à /auth/login
-      const response = await fetch(`${API_URL}/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ email, password })
+      setIsLoading(true)
+      
+      const response = await axios.post<AuthResponse>(`${API_URL}/auth/login`, {
+        email,
+        password
       })
       
-      logWithTime("login - Réponse", { 
-        status: response.status, 
-        ok: response.ok 
+      logWithTime("Réponse de connexion reçue", { 
+        status: response.status,
+        data: {
+          token: response.data.token ? response.data.token.substring(0, 20) + '...' : null,
+          user: response.data.user
+        }
       })
       
-      if (!response.ok) {
-        throw new Error('Email ou mot de passe incorrect')
-      }
+      const { token, user } = response.data
       
-      const data = await response.json()
-      logWithTime("login - Données brutes", data)
+      // Adapter la structure des données utilisateur
+      const isAdmin = user.is_admin === true || user.isAdmin === true
       
-      // Stocker le token dans localStorage
-      localStorage.setItem('token', data.token)
-      logWithTime("login - Token stocké", { 
-        tokenLength: data.token.length 
+      // Stocker le token et les informations utilisateur
+      localStorage.setItem('token', token)
+      setUser({
+        ...user,
+        isAdmin
       })
       
-      // Décoder le token pour voir son contenu
-      const decodedToken = decodeToken(data.token)
-      logWithTime("login - Token décodé", decodedToken)
-      
-      // Convertir les données utilisateur au format attendu
-      const formattedUser: User = {
-        id: data.user?.id?.toString() || '',
-        email: data.user?.email || '',
-        username: data.user?.username || '',
-        isAdmin: data.user?.is_admin === true,
-        avatar_url: data.user?.avatar_url,
-        phone: data.user?.phone
-      }
-      
-      logWithTime("login - Utilisateur formaté", formattedUser)
-      
-      // Mettre à jour l'état
-      setUser(formattedUser)
-      setIsAuthenticated(true)
-      setIsAdmin(formattedUser.isAdmin)
-      
-      logWithTime("login - Redirection", { 
-        isAdmin: formattedUser.isAdmin 
+      logWithTime("Utilisateur connecté", { 
+        id: user.id,
+        email: user.email,
+        isAdmin
       })
       
-      // Redirection
-      if (formattedUser.isAdmin) {
-        window.location.href = '/admin/dashboard'
+      // Redirection basée sur le rôle
+      if (isAdmin) {
+        logWithTime("Redirection vers /admin (admin)")
+        router.push('/admin')
       } else {
-        window.location.href = '/'
+        logWithTime("Redirection vers / (utilisateur)")
+        router.push('/')
       }
+      
+      toast({
+        title: "Connexion réussie",
+        description: "Vous êtes maintenant connecté.",
+      })
     } catch (error) {
-      logWithTime("login - Erreur", error)
+      logWithTime("Erreur de connexion", error)
+      
+      let errorMessage = "Une erreur est survenue lors de la connexion."
+      
+      if (axios.isAxiosError(error) && error.response) {
+        errorMessage = error.response.data.message || errorMessage
+      }
+      
+      toast({
+        variant: "destructive",
+        title: "Erreur de connexion",
+        description: errorMessage,
+      })
+      
       throw error
     } finally {
       setIsLoading(false)

@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils"
 import type { Product } from "@/lib/api"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
-import Image from "next/image"
+import { CloudinaryImage } from "@/components/ui/CloudinaryImage"
 
 interface ProductImagesProps {
   product: Product
@@ -41,7 +41,12 @@ const getImageUrl = (image: string | File | Blob): string => {
             return image;
         }
         
-        // Toujours utiliser l'URL Railway
+        // Vérifier si c'est une URL Cloudinary
+        if (image.includes('cloudinary.com')) {
+            return image;
+        }
+        
+        // Toujours utiliser l'URL Railway comme fallback
         const baseUrl = 'https://reboul-store-api-production.up.railway.app';
         
         // Nettoyer le chemin d'image et retirer /api s'il est présent
@@ -85,10 +90,10 @@ export function ProductImages({ product, size = "lg" }: ProductImagesProps) {
         )}>
             {/* Image principale */}
             <div className="relative aspect-[3/4] bg-muted rounded-lg overflow-hidden group">
-                <Image
+                <CloudinaryImage
                     src={getImageUrl(validImages[currentImage])}
                     alt={product.name}
-                    fill
+                    fill={true}
                     className="object-cover"
                     sizes={cn(
                         size === "sm" && "(max-width: 768px) 100vw, 200px",
@@ -151,10 +156,10 @@ export function ProductImages({ product, size = "lg" }: ProductImagesProps) {
                                 "transition-all duration-200"
                             )}
                         >
-                            <Image
+                            <CloudinaryImage
                                 src={getImageUrl(image)}
                                 alt={`${product.name} - Vue ${index + 1}`}
-                                fill
+                                fill={true}
                                 className="object-cover"
                                 sizes="100px"
                             />
@@ -175,10 +180,10 @@ export function ProductImages({ product, size = "lg" }: ProductImagesProps) {
                         </button>
 
                         <div className="relative w-full h-full">
-                            <Image
+                            <CloudinaryImage
                                 src={getImageUrl(validImages[currentImage])}
                                 alt={product.name}
-                                fill
+                                fill={true}
                                 className="object-contain"
                                 quality={100}
                             />
@@ -218,10 +223,10 @@ export function ProductImages({ product, size = "lg" }: ProductImagesProps) {
                                                     "transition-all duration-200"
                                                 )}
                                             >
-                                                <Image
+                                                <CloudinaryImage
                                                     src={getImageUrl(image)}
                                                     alt={`${product.name} - Miniature ${index + 1}`}
-                                                    fill
+                                                    fill={true}
                                                     className="object-cover"
                                                     sizes="64px"
                                                 />

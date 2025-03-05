@@ -164,28 +164,38 @@ export default function Login() {
                 description: 'Vous êtes maintenant connecté.',
             });
             
+            // S'assurer que nous utilisons la bonne propriété pour le statut admin
+            const isAdmin = data.user.is_admin === true;
+            
             // Adapter la structure des données utilisateur
             const userData = {
                 ...data.user,
-                isAdmin: data.user.isAdmin || data.user.is_admin || false
+                isAdmin: isAdmin // Utiliser la valeur extraite directement
             };
             
             // Ajouter des logs supplémentaires pour le débogage
             logWithTime("Données utilisateur adaptées", userData);
-            logWithTime("Statut admin:", userData.isAdmin);
+            logWithTime("Statut admin:", isAdmin);
+            logWithTime("Valeur de is_admin dans les données brutes:", data.user.is_admin);
+            logWithTime("Valeur de isAdmin dans les données brutes:", data.user.isAdmin);
             
             // Redirection manuelle
             logWithTime("Redirection manuelle", { 
-                isAdmin: userData.isAdmin,
-                destination: userData.isAdmin ? '/admin/dashboard' : '/'
+                isAdmin: isAdmin,
+                destination: isAdmin ? '/admin' : '/'
             });
             
             // Utiliser setTimeout pour s'assurer que les logs sont affichés avant la redirection
             setTimeout(() => {
-                setHasRedirected(true)
-                if (userData.isAdmin) {
-                    window.location.href = '/admin/dashboard';
+                logWithTime("Exécution du setTimeout pour la redirection");
+                setHasRedirected(true);
+                logWithTime("hasRedirected défini à true");
+                
+                if (isAdmin) {
+                    logWithTime("Tentative de redirection vers /admin");
+                    window.location.href = '/admin';
                 } else {
+                    logWithTime("Tentative de redirection vers /");
                     window.location.href = '/';
                 }
             }, 1000);
@@ -202,141 +212,13 @@ export default function Login() {
         }
     }
 
-    // Fonction pour tester le token
-    const testToken = () => {
-        const token = localStorage.getItem('token');
-        logWithTime("Test du token dans localStorage", { 
-            hasToken: !!token, 
-            tokenLength: token?.length,
-            tokenStart: token ? token.substring(0, 20) + '...' : 'Pas de token'
-        });
-
-        // Décoder le token pour voir son contenu
-        if (token) {
-            const decodedToken = decodeToken(token);
-            logWithTime("Contenu du token décodé", decodedToken);
-        }
-
-        // Tester une requête avec le token
-        if (token) {
-            logWithTime("Test d'une requête avec le token");
-            fetch(`${API_URL}/auth/me`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            })
-            .then(response => {
-                logWithTime("Réponse du test /auth/me", { 
-                    status: response.status, 
-                    ok: response.ok,
-                    statusText: response.statusText
-                });
-                if (response.ok) {
-                    return response.json();
-                }
-                throw new Error(`Erreur HTTP: ${response.status}`);
-            })
-            .then(data => {
-                logWithTime("Données de l'utilisateur", data);
-                toast({
-                    title: 'Test réussi',
-                    description: `Utilisateur: ${data.email} (${data.is_admin ? 'Admin' : 'Utilisateur'})`,
-                });
-            })
-            .catch(error => {
-                logWithTime("Erreur lors du test", error);
-                toast({
-                    title: 'Erreur de test',
-                    description: 'Le token est invalide ou expiré.',
-                    variant: 'destructive',
-                });
-            });
-        } else {
-            toast({
-                title: 'Pas de token',
-                description: 'Aucun token trouvé dans le localStorage.',
-                variant: 'destructive',
-            });
-        }
-    };
-
-    // Fonction pour tester la connexion directe
-    const testDirectLogin = async () => {
-        logWithTime("Test de connexion directe");
-        try {
-            const response = await fetch(`${API_URL}/auth/login`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ 
-                    email: 'zoran@reboul.com', 
-                    password: 'nouveauMotDePasse123' 
-                })
-            });
-            
-            logWithTime("Réponse du test de connexion directe", { 
-                status: response.status, 
-                ok: response.ok,
-                statusText: response.statusText
-            });
-            
-            if (!response.ok) {
-                throw new Error(`Erreur HTTP: ${response.status}`);
-            }
-            
-            const data = await response.json();
-            logWithTime("Données de connexion directe", data);
-            
-            // Décoder le token pour voir son contenu
-            const decodedToken = decodeToken(data.token);
-            logWithTime("Token décodé", decodedToken);
-            
-            // Stocker le token manuellement
-            localStorage.setItem('token', data.token);
-            logWithTime("Token stocké dans localStorage", { 
-                tokenLength: data.token.length,
-                tokenStart: data.token.substring(0, 20) + '...'
-            });
-            
-            toast({
-                title: 'Connexion directe réussie',
-                description: 'Token stocké dans localStorage.',
-            });
-            
-            // Redirection manuelle
-            logWithTime("Redirection manuelle", { 
-                isAdmin: data.user.is_admin,
-                destination: data.user.is_admin ? '/admin/dashboard' : '/'
-            });
-            
-            // Utiliser setTimeout pour s'assurer que les logs sont affichés avant la redirection
-            setTimeout(() => {
-                setHasRedirected(true)
-                if (data.user.is_admin) {
-                    window.location.href = '/admin/dashboard';
-                } else {
-                    window.location.href = '/';
-                }
-            }, 1000);
-        } catch (error) {
-            logWithTime("Erreur lors de la connexion directe", error);
-            toast({
-                title: 'Erreur de connexion directe',
-                description: 'Impossible de se connecter directement.',
-                variant: 'destructive',
-            });
-        }
-    };
-
     return (
-        <div className="container mx-auto flex items-center justify-center min-h-screen py-10">
-            <Card className="w-[400px]">
-                <CardHeader>
-                    <CardTitle>Connexion</CardTitle>
-                    <CardDescription>
-                        Connectez-vous à votre compte pour accéder à votre espace personnel.
+        <div className="flex items-center justify-center min-h-screen bg-background">
+            <Card className="w-[400px] shadow-md">
+                <CardHeader className="space-y-1">
+                    <CardTitle className="text-2xl text-center">Connexion</CardTitle>
+                    <CardDescription className="text-center">
+                        Entrez vos identifiants pour accéder à votre compte
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -381,15 +263,6 @@ export default function Login() {
                             {isLoading ? "Connexion en cours..." : "Se connecter"}
                         </Button>
                     </form>
-                    
-                    <div className="mt-4 flex space-x-2">
-                        <Button variant="outline" onClick={testToken} className="flex-1">
-                            Tester le token
-                        </Button>
-                        <Button variant="outline" onClick={testDirectLogin} className="flex-1">
-                            Connexion directe
-                        </Button>
-                    </div>
                     
                     <div className="mt-4 text-center space-y-2">
                         <p>

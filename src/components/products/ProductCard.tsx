@@ -1,10 +1,10 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import type { Product } from "@/lib/api"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Heart, ShoppingCart } from "lucide-react"
+import { Heart, ShoppingCart, ImageOff } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ProductVariantModal } from "@/components/ProductVariantModal"
 import { useCart } from "@/app/contexts/CartContext"
@@ -12,7 +12,7 @@ import { useFavorites } from "@/app/contexts/FavoritesContext"
 import { toast } from "@/components/ui/use-toast"
 import { useAuth } from '@/app/contexts/AuthContext'
 import type { CartItemVariant } from '@/lib/types/cart'
-import { getImageUrl } from '@/lib/cloudinary'
+import { ProductImage } from "@/lib/types/product-image"
 
 // Import du mapping des couleurs
 const colorMap: Record<string, { hex: string; label: string }> = {
@@ -38,13 +38,55 @@ interface ProductCardProps {
 
 export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [imageError, setImageError] = useState(false)
   const { addItem } = useCart()
   const { addToFavorites, removeFromFavorites, isFavorite } = useFavorites()
   const { user } = useAuth()
 
   if (!product) return null
 
-  const imageUrl = getImageUrl(product.image_url)
+  const getImageUrl = (product: Product) => {
+    // Fonction pour vérifier si une URL est valide
+    const isValidUrl = (url: string): boolean => {
+      if (!url) return false;
+      // Vérifier si c'est une URL absolue
+      if (url.startsWith('http://') || url.startsWith('https://')) return true;
+      // Vérifier si c'est une URL relative
+      if (url.startsWith('/')) return true;
+      return false;
+    };
+    
+    // Essayer d'abord les images du tableau
+    if (product.images && product.images.length > 0) {
+      const firstImage = product.images[0];
+      
+      // Vérifier si c'est un objet ProductImage
+      if (typeof firstImage === 'object' && firstImage !== null && 'url' in firstImage && 'publicId' in firstImage) {
+        const url = (firstImage as ProductImage).url;
+        if (isValidUrl(url)) return url;
+      }
+      // Vérifier si c'est une chaîne de caractères (ancien format)
+      else if (typeof firstImage === 'string') {
+        if (isValidUrl(firstImage)) return firstImage;
+      }
+    }
+    
+    // Essayer ensuite l'image principale
+    if (product.image && isValidUrl(product.image)) {
+      return product.image;
+    }
+    
+    // Essayer enfin l'image_url
+    if (product.image_url && isValidUrl(product.image_url)) {
+      return product.image_url;
+    }
+    
+    return "/placeholder.png";
+  }
+
+  const handleImageError = () => {
+    setImageError(true);
+  }
 
   const formatPrice = (price: number | undefined) => {
     if (typeof price !== 'number') return null
@@ -81,7 +123,7 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
         name: `${product.name} (${size}, ${cartVariant.colorLabel})`,
         price: product.price,
         quantity: quantity,
-        image: getImageUrl(typeof imageUrl === 'string' ? imageUrl : "/placeholder.svg"),
+        image: getImageUrl(product),
         variant: cartVariant
       })
 
@@ -141,13 +183,20 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
             "aspect-[3/4] relative overflow-hidden",
             viewMode === "list" && "w-48"
           )}>
-            <Image
-              src={imageUrl}
-              alt={product.name}
-              fill
-              className="object-cover transition-transform duration-300 group-hover:scale-105"
-              sizes={viewMode === "list" ? "192px" : "(max-width: 768px) 100vw, 25vw"}
-            />
+            {imageError ? (
+              <div className="w-full h-full flex items-center justify-center bg-muted">
+                <ImageOff className="w-8 h-8 text-muted-foreground" />
+              </div>
+            ) : (
+              <Image
+                src={getImageUrl(product)}
+                alt={product.name}
+                fill
+                className="object-cover transition-transform duration-300 group-hover:scale-105"
+                sizes={viewMode === "list" ? "192px" : "(max-width: 768px) 100vw, 25vw"}
+                onError={handleImageError}
+              />
+            )}
             <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 
               transition-all duration-300 flex items-center justify-center gap-4">
               <Button

@@ -2,10 +2,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Edit, Trash2, ArrowUpDown, Eye, Package, Star, Calendar, ImageOff } from "lucide-react"
-import { type Product, type Category } from "@/lib/api"
-import Image from "next/image"
+import { type Product } from "@/lib/types/product"
+import { type Category } from "@/lib/types/category"
 import Link from "next/link"
-import { formatPrice } from "@/lib/utils"
+import { formatPrice, convertToCloudinaryUrl } from "@/lib/utils"
 import {
     Tooltip,
     TooltipContent,
@@ -13,11 +13,16 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { CloudinaryImage } from "@/components/ui/CloudinaryImage"
+import { isCloudinaryUrl } from "@/config/cloudinary"
+import { fixCloudinaryUrl } from "@/lib/cloudinary"
+import { ProductImage } from "@/lib/types/product-image"
 
 interface ProductTableProps {
     filteredProducts: Product[]
     categories: Category[]
+    brands: { id: number; name: string }[]
     sortConfig: { key: keyof Product; direction: "ascending" | "descending" } | null
     handleSort: (key: keyof Product) => void
     handleEditProduct: (product: Product) => void
@@ -27,12 +32,45 @@ interface ProductTableProps {
 export function ProductTable({
     filteredProducts,
     categories,
+    brands,
     sortConfig,
     handleSort,
     handleEditProduct,
     handleDeleteProduct,
 }: ProductTableProps) {
     const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({})
+    const [debugInfo, setDebugInfo] = useState<Record<string, any>>({})
+
+    useEffect(() => {
+        const newDebugInfo: Record<string, any> = {};
+        
+        filteredProducts.forEach(product => {
+            if (product.images && product.images.length > 0) {
+                const firstImage = product.images[0];
+                newDebugInfo[`product_${product.id}`] = {
+                    id: product.id,
+                    name: product.name,
+                    imageType: typeof firstImage,
+                    isProductImage: typeof firstImage === 'object' && firstImage !== null && 'url' in firstImage,
+                    imageUrl: typeof firstImage === 'object' && firstImage !== null && 'url' in firstImage 
+                        ? (firstImage as ProductImage).url 
+                        : (typeof firstImage === 'string' ? firstImage : 'non-string'),
+                    hasError: imageErrors[product.id] || false
+                };
+            } else {
+                newDebugInfo[`product_${product.id}`] = {
+                    id: product.id,
+                    name: product.name,
+                    imageType: 'none',
+                    hasImage: !!product.image || !!product.image_url,
+                    imageUrl: product.image || product.image_url || 'none',
+                    hasError: imageErrors[product.id] || false
+                };
+            }
+        });
+        
+        setDebugInfo(newDebugInfo);
+    }, [filteredProducts, imageErrors]);
 
     const getSortIcon = (key: keyof Product) => {
         if (!sortConfig || sortConfig.key !== key) {
@@ -54,6 +92,11 @@ export function ProductTable({
     const getCategoryName = (categoryId: number) => {
         const category = categories.find(cat => cat.id === categoryId)
         return category ? category.name : "Non catégorisé"
+    }
+
+    const getBrandName = (brandId: number) => {
+        const brand = brands.find(b => b.id === brandId)
+        return brand ? brand.name : "Non défini"
     }
 
     const getStockStatus = (product: Product) => {
@@ -106,38 +149,72 @@ export function ProductTable({
         })
     }
 
-    const getImageUrl = (product: Product) => {
-        const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://reboul-store-api-production.up.railway.app'
-
-        if (product.images && product.images.length > 0) {
-            const firstImage = product.images[0]
-            if (typeof firstImage === 'string') {
-                if (firstImage.startsWith('http')) return firstImage
-                let cleanPath = firstImage.startsWith('/') ? firstImage.slice(1) : firstImage
-                cleanPath = cleanPath.startsWith('api/') ? cleanPath.slice(4) : cleanPath
-                return `${baseUrl}/${cleanPath}`
+    const getImageUrl = (product: Product): string => {
+        try {
+            // 1. Vérifier d'abord les images[] car elles sont toujours en Cloudinary
+            if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+                const firstImage = product.images[0];
+                
+                // Si c'est une string et que c'est une URL Cloudinary
+                if (typeof firstImage === 'string' && firstImage.includes('cloudinary.com')) {
+                    console.log('URL Cloudinary trouvée dans images[]:', firstImage);
+                    return firstImage;
+                }
+                
+                // Si c'est un objet ProductImage avec une URL Cloudinary
+                if (typeof firstImage === 'object' && firstImage !== null && 'url' in firstImage) {
+                    const imageUrl = (firstImage as ProductImage).url;
+                    if (imageUrl.includes('cloudinary.com')) {
+                        console.log('URL Cloudinary trouvée dans ProductImage:', imageUrl);
+                        return imageUrl;
+                    }
+                }
             }
-        }
-        
-        if (product.image) {
-            if (product.image.startsWith('http')) return product.image
-            let cleanPath = product.image.startsWith('/') ? product.image.slice(1) : product.image
-            cleanPath = cleanPath.startsWith('api/') ? cleanPath.slice(4) : cleanPath
-            return `${baseUrl}/${cleanPath}`
-        }
 
-        return "/placeholder.png"
+            // 2. Si pas d'URL Cloudinary dans images[], vérifier image_url
+            if (product.image_url && typeof product.image_url === 'string' && product.image_url.trim() !== '') {
+                if (product.image_url.includes('cloudinary.com')) {
+                    console.log('URL Cloudinary trouvée dans image_url:', product.image_url);
+                    return product.image_url;
+                }
+                console.log('URL non-Cloudinary trouvée dans image_url:', product.image_url);
+            }
+
+            console.log('Aucune URL Cloudinary trouvée pour le produit:', product.id);
+            return "/placeholder.png";
+        } catch (error) {
+            console.error("Erreur lors de la récupération de l'URL de l'image:", error);
+            return "/placeholder.png";
+        }
     }
 
     const handleImageError = (productId: string) => {
-        setImageErrors(prev => ({
-            ...prev,
-            [productId]: true
-        }))
+        try {
+            console.error(`Erreur de chargement de l'image pour le produit ${productId}`);
+            
+            // Mettre à jour l'état pour afficher un placeholder
+            setImageErrors(prev => ({
+                ...prev,
+                [productId]: true
+            }));
+        } catch (error) {
+            console.error("Erreur lors de la gestion de l'erreur d'image:", error);
+        }
     }
 
     return (
         <div className="rounded-md border">
+            {process.env.NODE_ENV === 'development' && Object.keys(debugInfo).length > 0 && (
+                <div className="p-2 bg-yellow-50 text-xs border-b">
+                    <details>
+                        <summary className="cursor-pointer font-medium">Informations de débogage des images</summary>
+                        <pre className="mt-2 p-2 bg-gray-100 rounded overflow-auto max-h-40">
+                            {JSON.stringify(debugInfo, null, 2)}
+                        </pre>
+                    </details>
+                </div>
+            )}
+            
             <ScrollArea className="h-[calc(100vh-300px)]">
                 <Table>
                     <TableHeader className="sticky top-0 bg-background z-10">
@@ -174,22 +251,29 @@ export function ProductTable({
                                                                     <ImageOff className="w-6 h-6 text-muted-foreground" />
                                                                 </div>
                                                             ) : (
-                                                                <Image
+                                                                <CloudinaryImage
                                                                     src={getImageUrl(product)}
                                                                     alt={product.name}
-                                                                    fill
-                                                                    className="object-cover hover:scale-105 transition-transform"
-                                                                    sizes="64px"
-                                                                    onError={() => {
-                                                                        handleImageError(product.id.toString())
-                                                                    }}
-                                                                    priority
+                                                                    fill={true}
+                                                                    className="w-full h-full"
+                                                                    onError={() => handleImageError(product.id.toString())}
+                                                                    fallbackSrc="/placeholder.png"
                                                                 />
+                                                            )}
+                                                            {process.env.NODE_ENV === 'development' && (
+                                                                <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white text-[6px] p-0.5 overflow-hidden">
+                                                                    ID: {product.id}
+                                                                </div>
                                                             )}
                                                         </div>
                                                     </TooltipTrigger>
                                                     <TooltipContent>
                                                         <p>Voir le produit</p>
+                                                        {process.env.NODE_ENV === 'development' && (
+                                                            <div className="mt-1 pt-1 border-t text-xs max-w-[300px] break-all">
+                                                                <p className="text-[10px] text-muted-foreground">URL: {getImageUrl(product)}</p>
+                                                            </div>
+                                                        )}
                                                     </TooltipContent>
                                                 </Tooltip>
                                             </TooltipProvider>
@@ -234,7 +318,7 @@ export function ProductTable({
                                     </TableCell>
                                     <TableCell>
                                         <Badge variant="outline" className="justify-center w-full">
-                                            {product.brand}
+                                            {getBrandName(product.brand_id)}
                                         </Badge>
                                     </TableCell>
                                     <TableCell>

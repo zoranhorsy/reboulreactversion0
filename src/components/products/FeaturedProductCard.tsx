@@ -1,66 +1,67 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { motion } from 'framer-motion'
-import { Heart, Star } from 'lucide-react'
+import { Heart, Star, ImageOff } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { ProductImage } from "@/lib/types/product-image"
+import type { Product } from "@/lib/api"
 
 interface FeaturedProductCardProps {
-    product: {
-        id: string
-        name: string
-        price: number
-        images: (string | File | Blob)[]
-        description?: string
-        category?: string
-        tags?: string[]
-        brand?: string
-        rating?: number
-        reviews_count?: number
-        stock?: number
-        variants?: Array<{
-            size: string
-            color: string
-            stock: number
-        }>
-    }
-}
-
-const getImageUrl = (image: string | File | Blob): string => {
-    if (typeof image === 'string') {
-        // Log pour debugging
-        console.log('Image URL originale:', image);
-        
-        // Si c'est déjà une URL complète
-        if (image.startsWith('http')) {
-            console.log('URL complète retournée:', image);
-            return image;
-        }
-        
-        // Construire l'URL complète
-        const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://reboul-store-api-production.up.railway.app';
-        
-        // Nettoyer le chemin d'image et retirer /api s'il est présent
-        let cleanPath = image.startsWith('/') ? image.slice(1) : image;
-        cleanPath = cleanPath.startsWith('api/') ? cleanPath.slice(4) : cleanPath;
-        const fullUrl = `${baseUrl}/${cleanPath}`;
-            
-        console.log('URL complète construite:', fullUrl);
-        return fullUrl;
-    }
-    
-    // Pour les fichiers/blobs
-    const objectUrl = URL.createObjectURL(image);
-    console.log('URL d\'objet créée:', objectUrl);
-    return objectUrl;
+    product: Product
 }
 
 export function FeaturedProductCard({ product }: FeaturedProductCardProps) {
+    const [imageError, setImageError] = useState(false)
+
+    const getImageUrl = (product: Product) => {
+        // Fonction pour vérifier si une URL est valide
+        const isValidUrl = (url: string): boolean => {
+            if (!url) return false;
+            // Vérifier si c'est une URL absolue
+            if (url.startsWith('http://') || url.startsWith('https://')) return true;
+            // Vérifier si c'est une URL relative
+            if (url.startsWith('/')) return true;
+            return false;
+        };
+        
+        // Essayer d'abord les images du tableau
+        if (product.images && product.images.length > 0) {
+            const firstImage = product.images[0];
+            
+            // Vérifier si c'est un objet ProductImage
+            if (typeof firstImage === 'object' && firstImage !== null && 'url' in firstImage && 'publicId' in firstImage) {
+                const url = (firstImage as ProductImage).url;
+                if (isValidUrl(url)) return url;
+            }
+            // Vérifier si c'est une chaîne de caractères (ancien format)
+            else if (typeof firstImage === 'string') {
+                if (isValidUrl(firstImage)) return firstImage;
+            }
+        }
+        
+        // Essayer ensuite l'image principale
+        if (product.image && isValidUrl(product.image)) {
+            return product.image;
+        }
+        
+        // Essayer enfin l'image_url
+        if (product.image_url && isValidUrl(product.image_url)) {
+            return product.image_url;
+        }
+        
+        return "/placeholder.png";
+    }
+
+    const handleImageError = () => {
+        setImageError(true);
+    }
+
     const formatPrice = (price: number) => {
         return new Intl.NumberFormat('fr-FR', {
             style: 'currency',
@@ -84,14 +85,21 @@ export function FeaturedProductCard({ product }: FeaturedProductCardProps) {
             <Card className="group relative overflow-hidden bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800
                 hover:border-primary/50 dark:hover:border-primary/50 transition-colors duration-300">
                 <div className="aspect-[3/4] relative overflow-hidden">
-                    <Image
-                        src={Array.isArray(product.images) && product.images.length > 0 ? getImageUrl(product.images[0]) : '/placeholder.svg'}
-                        alt={product.name}
-                        fill
-                        className="object-cover transition-transform duration-500 group-hover:scale-105"
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-                        priority
-                    />
+                    {imageError ? (
+                        <div className="w-full h-full flex items-center justify-center bg-muted">
+                            <ImageOff className="w-8 h-8 text-muted-foreground" />
+                        </div>
+                    ) : (
+                        <Image
+                            src={getImageUrl(product)}
+                            alt={product.name}
+                            fill
+                            className="object-cover transition-transform duration-500 group-hover:scale-105"
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                            priority
+                            onError={handleImageError}
+                        />
+                    )}
                     <div className="absolute top-4 left-4 right-4 flex justify-between items-start gap-2">
                         <div className="flex flex-col gap-2">
                             {product.category && (

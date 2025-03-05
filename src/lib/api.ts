@@ -1,5 +1,6 @@
 import axios, { AxiosError, type AxiosInstance, type InternalAxiosRequestConfig } from "axios"
 import { toast } from "@/components/ui/use-toast"
+import { convertToCloudinaryUrl } from "./utils"
 
 const API_URL = 'https://reboul-store-api-production.up.railway.app/api'
 
@@ -254,14 +255,25 @@ export class Api {
     private formatImageUrl(url: string | undefined): string {
         if (!url) return ''
         
-        // Si c'est déjà une URL complète (non-localhost)
-        if (url.startsWith('http')) {
-            return this.transformImageUrl(url)
+        // Utiliser la fonction convertToCloudinaryUrl
+        return convertToCloudinaryUrl(url)
+    }
+
+    // Nouvelle fonction pour convertir les anciennes URLs en URLs Cloudinary
+    private migrateToCloudinary(url: string | undefined): string {
+        if (!url) return ''
+        
+        // Si c'est déjà une URL Cloudinary, la retourner directement
+        if (url.includes('cloudinary.com')) {
+            return url
         }
         
-        // Pour les chemins relatifs
-        let cleanPath = url.startsWith('/') ? url : `/${url}`
-        return `${this.RAILWAY_BASE_URL}${cleanPath}`
+        // Si c'est une URL de l'API Railway, essayer de trouver une image Cloudinary correspondante
+        // Cette fonction est un placeholder - vous devrez implémenter la logique de migration réelle
+        console.log('Migration d\'image vers Cloudinary:', url)
+        
+        // Pour l'instant, retourner l'URL d'origine
+        return this.formatImageUrl(url)
     }
 
     constructor() {
@@ -387,20 +399,14 @@ export class Api {
                         : [],
                     tags: Array.isArray(product.tags) 
                         ? product.tags 
-                        : []
+                        : [],
                 }
-
-                // Vérification des types
-                if (typeof normalizedProduct.id !== 'string') {
-                    normalizedProduct.id = String(normalizedProduct.id)
-                }
-
                 return normalizedProduct
             })
 
             return {
                 products,
-                total: response.data.pagination?.totalItems || products.length
+                total: response.data.total || products.length,
             }
         } catch (error) {
             this.handleError(error, "Erreur lors de la récupération des produits")

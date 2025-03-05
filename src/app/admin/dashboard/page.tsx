@@ -47,27 +47,6 @@ export default function AdminDashboardPage() {
         }
     }, [isAuthenticated, isAdmin, isLoading, router])
 
-    const handleCheckAuth = async () => {
-        logWithTime("Vérification manuelle de l'authentification")
-        try {
-            await checkAuthManually()
-            logWithTime("Vérification terminée", { 
-                isAuthenticated, 
-                isAdmin, 
-                hasUser: !!user 
-            })
-            
-            // Afficher les informations du localStorage
-            const token = localStorage.getItem('token')
-            logWithTime("Token dans localStorage", { 
-                hasToken: !!token, 
-                tokenLength: token?.length 
-            })
-        } catch (error) {
-            logWithTime("Erreur lors de la vérification", error)
-        }
-    }
-
     if (isLoading) {
         logWithTime("Affichage du chargement")
         return (
@@ -114,18 +93,6 @@ export default function AdminDashboardPage() {
         <div className="container mx-auto py-6">
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-3xl font-bold">Tableau de bord</h1>
-                <Button onClick={handleCheckAuth}>
-                    Vérifier l&apos;authentification
-                </Button>
-            </div>
-            
-            <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
-                <p className="text-yellow-800">
-                    <strong>Informations de débogage :</strong><br />
-                    Utilisateur connecté : {user?.email}<br />
-                    Rôle : {isAdmin ? 'Administrateur' : 'Utilisateur'}<br />
-                    ID : {user?.id}
-                </p>
             </div>
             
             <AdminDashboard />
