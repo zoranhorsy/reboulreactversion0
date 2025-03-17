@@ -6,12 +6,10 @@ import { type Product } from "@/lib/types/product"
 import { toast } from "@/components/ui/use-toast"
 
 export default function TestProductFormPage() {
-  const [isSubmitting, setIsSubmitting] = useState(false)
   const [submittedProduct, setSubmittedProduct] = useState<Product | null>(null)
 
   const handleSubmit = async (product: Product) => {
     try {
-      setIsSubmitting(true)
       console.log("Produit soumis:", product)
       
       // Simuler un délai d'envoi
@@ -29,8 +27,6 @@ export default function TestProductFormPage() {
         description: "Une erreur est survenue lors de la soumission du produit.",
         variant: "destructive",
       })
-    } finally {
-      setIsSubmitting(false)
     }
   }
 
@@ -44,17 +40,16 @@ export default function TestProductFormPage() {
           <ProductForm
             product={null}
             categories={[
-              { id: 1, name: "Vêtements", slug: "vetements" },
-              { id: 2, name: "Chaussures", slug: "chaussures" },
-              { id: 3, name: "Accessoires", slug: "accessoires" },
+              { id: 1, name: "Vêtements", slug: "vetements", description: "Vêtements pour homme et femme" },
+              { id: 2, name: "Chaussures", slug: "chaussures", description: "Chaussures pour homme et femme" },
+              { id: 3, name: "Accessoires", slug: "accessoires", description: "Accessoires de mode" },
             ]}
             brands={[
-              { id: 1, name: "Nike", slug: "nike" },
-              { id: 2, name: "Adidas", slug: "adidas" },
-              { id: 3, name: "Puma", slug: "puma" },
+              { id: 1, name: "Nike" },
+              { id: 2, name: "Adidas" },
+              { id: 3, name: "Puma" },
             ]}
             onSubmit={handleSubmit}
-            isSubmitting={isSubmitting}
           />
         </div>
         

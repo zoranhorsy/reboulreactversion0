@@ -24,7 +24,8 @@ export function LoginForm() {
         setError(null)
 
         try {
-            const { user } = await login(email, password)
+            const response = await login(email, password)
+            const { user } = response
 
             if (user && user.isAdmin) {
                 await new Promise(resolve => setTimeout(resolve, 100))
@@ -38,33 +39,39 @@ export function LoginForm() {
             } else {
                 throw new Error('Accès non autorisé')
             }
-        } catch (err) {
-            console.error('Erreur de connexion:', err)
-            setError('Identifiants invalides ou accès non autorisé')
+        } catch (error) {
+            console.error('Erreur de connexion:', error)
+            setError('Email ou mot de passe incorrect')
             toast({
-                title: "Erreur de connexion",
-                description: "Veuillez vérifier vos identifiants et réessayer.",
                 variant: "destructive",
+                title: "Erreur de connexion",
+                description: "Email ou mot de passe incorrect.",
             })
         }
     }
 
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Connexion Administrateur</CardTitle>
-                <CardDescription>
-                    Accédez au panneau d&apos;administration de Reboul Store
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit}>
+            <Card className="w-full max-w-md mx-auto">
+                <CardHeader>
+                    <CardTitle>Connexion administrateur</CardTitle>
+                    <CardDescription>
+                        Connectez-vous pour accéder à l&apos;interface d&apos;administration.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {error && (
+                        <Alert variant="destructive">
+                            <ExclamationTriangleIcon className="h-4 w-4" />
+                            <AlertDescription>{error}</AlertDescription>
+                        </Alert>
+                    )}
                     <div className="space-y-2">
                         <Label htmlFor="email">Email</Label>
                         <Input
                             id="email"
                             type="email"
-                            placeholder="admin@reboul.com"
+                            placeholder="admin@example.com"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             required
@@ -80,22 +87,12 @@ export function LoginForm() {
                             required
                         />
                     </div>
-                    {error && (
-                        <Alert variant="destructive">
-                            <ExclamationTriangleIcon className="h-4 w-4" />
-                            <AlertDescription>{error}</AlertDescription>
-                        </Alert>
-                    )}
-                    <Button
-                        type="submit"
-                        className="w-full"
-                        disabled={isLoading}
-                    >
-                        {isLoading ? 'Connexion en cours...' : 'Se connecter'}
+                    <Button type="submit" className="w-full" disabled={isLoading}>
+                        {isLoading ? "Connexion..." : "Se connecter"}
                     </Button>
-                </form>
-            </CardContent>
-        </Card>
+                </CardContent>
+            </Card>
+        </form>
     )
 }
 

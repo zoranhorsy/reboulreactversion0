@@ -15,7 +15,7 @@ import { type FilterState, type FilterChangeHandler } from '@/lib/types/filters'
 import { ActiveFilters } from "@/components/catalogue/ActiveFilters"
 
 interface CatalogueContentProps {
-  initialProducts: Product[]
+  initialProducts: Product[] 
   total: number
   initialCategories: Category[]
   initialBrands: Brand[]

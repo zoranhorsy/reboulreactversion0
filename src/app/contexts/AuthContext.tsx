@@ -1,6 +1,6 @@
 "use client"
 
-import React, { createContext, useState, useEffect, useContext } from 'react'
+import React, { createContext, useState, useEffect, useContext, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import axios from 'axios'
 import { toast } from "@/components/ui/use-toast"
@@ -22,10 +22,15 @@ interface User {
   phone?: string
 }
 
-// Interface pour la réponse d'authentification
+// Interface pour la réponse d'authentification avec is_admin
+interface AuthResponseUser extends Omit<User, 'isAdmin'> {
+  is_admin?: boolean;
+  isAdmin?: boolean;
+}
+
 interface AuthResponse {
-  user: User
-  token: string
+  user: AuthResponseUser;
+  token: string;
 }
 
 // Interface pour la réponse de /auth/me
@@ -41,7 +46,7 @@ interface AuthMeResponse {
 // Interface pour le contexte d'authentification
 interface AuthContextType {
   user: User | null
-  login: (email: string, password: string) => Promise<void>
+  login: (email: string, password: string) => Promise<AuthResponse>
   logout: () => void
   isLoading: boolean
   register: (username: string, email: string, password: string) => Promise<void>
@@ -102,7 +107,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   logWithTime("AuthProvider initialisé")
 
   // Fonction pour vérifier l'authentification
-  const checkAuth = async () => {
+  const checkAuth = useCallback(async () => {
     // Éviter les vérifications trop fréquentes
     const now = Date.now()
     if (now - lastCheckTime < 1000) {
@@ -193,7 +198,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [lastCheckTime])
 
   // Fonction pour vérifier l'authentification manuellement
   const checkAuthManually = async () => {
@@ -207,70 +212,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }
 
   // Fonction pour se connecter
-  const login = async (email: string, password: string) => {
-    logWithTime("Tentative de connexion", { email })
+  const login = async (email: string, password: string): Promise<AuthResponse> => {
+    setIsLoading(true)
     try {
-      setIsLoading(true)
-      
-      const response = await axios.post<AuthResponse>(`${API_URL}/auth/login`, {
+      const response = await axios.post(`${API_URL}/auth/login`, {
         email,
-        password
+        password,
       })
-      
-      logWithTime("Réponse de connexion reçue", { 
-        status: response.status,
-        data: {
-          token: response.data.token ? response.data.token.substring(0, 20) + '...' : null,
-          user: response.data.user
-        }
-      })
-      
-      const { token, user } = response.data
-      
-      // Adapter la structure des données utilisateur
-      const isAdmin = user.is_admin === true || user.isAdmin === true
-      
-      // Stocker le token et les informations utilisateur
+
+      const { user: responseUser, token } = response.data
+
+      // Normaliser l'utilisateur
+      const normalizedUser = {
+        id: responseUser.id,
+        email: responseUser.email,
+        username: responseUser.username,
+        isAdmin: responseUser.is_admin || responseUser.isAdmin || false,
+        avatar_url: responseUser.avatar_url,
+        phone: responseUser.phone
+      }
+
+      // Stocker le token
       localStorage.setItem('token', token)
-      setUser({
-        ...user,
-        isAdmin
-      })
       
-      logWithTime("Utilisateur connecté", { 
-        id: user.id,
-        email: user.email,
-        isAdmin
-      })
-      
-      // Redirection basée sur le rôle
-      if (isAdmin) {
-        logWithTime("Redirection vers /admin (admin)")
-        router.push('/admin')
-      } else {
-        logWithTime("Redirection vers / (utilisateur)")
-        router.push('/')
+      // Mettre à jour l'état
+      setUser(normalizedUser)
+      setIsAuthenticated(true)
+      setIsAdmin(normalizedUser.isAdmin)
+
+      return { 
+        user: normalizedUser, 
+        token 
       }
-      
-      toast({
-        title: "Connexion réussie",
-        description: "Vous êtes maintenant connecté.",
-      })
     } catch (error) {
-      logWithTime("Erreur de connexion", error)
-      
-      let errorMessage = "Une erreur est survenue lors de la connexion."
-      
-      if (axios.isAxiosError(error) && error.response) {
-        errorMessage = error.response.data.message || errorMessage
-      }
-      
-      toast({
-        variant: "destructive",
-        title: "Erreur de connexion",
-        description: errorMessage,
-      })
-      
+      console.error('Erreur de connexion:', error)
       throw error
     } finally {
       setIsLoading(false)
@@ -374,9 +349,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     // Vérifier périodiquement l'authentification
     const interval = setInterval(() => {
-      const token = localStorage.getItem('token')
-      if (token && !isAuthenticated) {
-        logWithTime("Vérification périodique - Token trouvé mais non authentifié")
+      if (isAuthenticated) {
         checkAuth()
       }
     }, 5000)
@@ -384,7 +357,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => {
       clearInterval(interval)
     }
-  }, [isAuthenticated])
+  }, [isAuthenticated, checkAuth])
 
   // Valeur du contexte
   const value = {

@@ -27,7 +27,6 @@ export function AdminProducts() {
     const [brands, setBrands] = useState<Brand[]>([])
     const [activeTab, setActiveTab] = useState("products")
     const { toast } = useToast()
-    const [isSubmitting, setIsSubmitting] = useState(false)
 
     const loadProducts = useCallback(async () => {
         setIsLoading(true)
@@ -88,7 +87,6 @@ export function AdminProducts() {
     }
 
     const handleProductSubmit = async (productData: Product) => {
-        setIsSubmitting(true)
         try {
             if (editingProduct) {
                 await api.updateProduct(editingProduct.id, productData)
@@ -112,19 +110,15 @@ export function AdminProducts() {
                 description: "Une erreur est survenue lors de l'enregistrement du produit.",
                 variant: "destructive",
             })
-        } finally {
-            setIsSubmitting(false)
         }
     }
 
     const handleCloseDialog = () => {
         setIsDialogOpen(false)
         setEditingProduct(null)
-        setIsSubmitting(false)
     }
 
     const handleEdit = (product: Product) => {
-        setIsSubmitting(false)
         setEditingProduct(product)
         setIsDialogOpen(true)
     }
@@ -148,7 +142,6 @@ export function AdminProducts() {
 
     const handleAddProduct = () => {
         setEditingProduct(null)
-        setIsSubmitting(false)
         setIsDialogOpen(true)
     }
 
@@ -188,7 +181,6 @@ export function AdminProducts() {
                                             onSubmit={handleProductSubmit}
                                             categories={categories}
                                             brands={brands}
-                                            isSubmitting={isSubmitting}
                                         />
                                     </DialogContent>
                                 </Dialog>

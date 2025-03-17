@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '@/app/contexts/AuthContext'
 import { Loader2 } from 'lucide-react'
 import { Card, CardContent, CardDescription } from '@/components/ui/card'
+import { useRouter } from 'next/navigation'
 
 // Fonction pour logger avec timestamp
 const logWithTime = (message: string, data?: any) => {
@@ -23,6 +24,7 @@ export default function AdminLayout({
     const { isLoading, isAuthenticated, isAdmin, checkAuthManually } = useAuth()
     const [hasRedirected, setHasRedirected] = useState(false)
     const [hasCheckedAuth, setHasCheckedAuth] = useState(false)
+    const router = useRouter()
 
     logWithTime("AdminLayout rendu", { 
         isLoading, 
@@ -54,7 +56,7 @@ export default function AdminLayout({
         }
 
         verifyAuth()
-    }, [checkAuthManually, hasCheckedAuth])
+    }, [checkAuthManually, hasCheckedAuth, isAuthenticated, isAdmin])
 
     // Effet pour la redirection
     useEffect(() => {
@@ -62,18 +64,11 @@ export default function AdminLayout({
             return
         }
 
-        if (!isAuthenticated) {
-            logWithTime("Non authentifié - redirection vers /connexion")
+        if (!isAuthenticated || !isAdmin) {
+            router.push('/')
             setHasRedirected(true)
-            window.location.href = '/connexion'
-        } else if (!isAdmin) {
-            logWithTime("Authentifié mais non admin - redirection vers /")
-            setHasRedirected(true)
-            window.location.href = '/'
-        } else {
-            logWithTime("Authentifié et admin - accès autorisé")
         }
-    }, [isAuthenticated, isAdmin, isLoading, hasRedirected, hasCheckedAuth])
+    }, [hasRedirected, hasCheckedAuth, isLoading, isAuthenticated, isAdmin, router])
 
     if (isLoading || !hasCheckedAuth) {
         logWithTime("Affichage du chargement")

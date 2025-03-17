@@ -83,7 +83,12 @@ export default function ProductPage() {
                                 return processedUrl;
                             }
                             console.log('Image non-string:', image);
-                            return URL.createObjectURL(image);
+                            // Handle ProductImage objects
+                            if ('url' in image) {
+                                return image.url;
+                            }
+                            // Handle File and Blob objects
+                            return URL.createObjectURL(image as Blob);
                         })
                         : [];
                     
@@ -342,14 +347,14 @@ export default function ProductPage() {
                                 <Truck className="w-6 h-6 text-primary" />
                             </div>
                             <h3 className="font-medium">Livraison rapide</h3>
-                            <p className="text-sm text-muted-foreground">Livraison gratuite à partir de 100€ d'achat. Livraison en 2-4 jours ouvrés.</p>
+                            <p className="text-sm text-muted-foreground">Livraison gratuite à partir de 100€ d&apos;achat. Livraison en 2-4 jours ouvrés.</p>
                         </div>
                         <div className="flex flex-col items-center text-center space-y-3">
                             <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
                                 <RefreshCw className="w-6 h-6 text-primary" />
                             </div>
                             <h3 className="font-medium">Retours faciles</h3>
-                            <p className="text-sm text-muted-foreground">30 jours pour changer d'avis. Retours gratuits en boutique ou à domicile.</p>
+                            <p className="text-sm text-muted-foreground">30 jours pour changer d&apos;avis. Retours gratuits en boutique ou à domicile.</p>
                         </div>
                         <div className="flex flex-col items-center text-center space-y-3">
                             <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">

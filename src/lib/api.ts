@@ -1,36 +1,12 @@
 import axios, { AxiosError, type AxiosInstance, type InternalAxiosRequestConfig } from "axios"
 import { toast } from "@/components/ui/use-toast"
 import { convertToCloudinaryUrl } from "./utils"
+import { Product } from "./types/product"
 
 const API_URL = 'https://reboul-store-api-production.up.railway.app/api'
 
 // Types
-export interface Product {
-  id: string
-  name: string
-  description: string
-  price: number
-  old_price?: number
-  stock: number
-  category_id: number
-  category: string
-  brand_id: number
-  brand: string
-  image_url: string
-  images: (string | File | Blob)[]
-  image: string
-  variants: Variant[]
-  tags: string[]
-  details: string[]
-  reviews: { id: number; rating: number; comment: string; userName: string; date: string }[]
-  questions: { id: number; question: string; answer?: string }[]
-  faqs: { question: string; answer: string }[]
-  size_chart: { size: string; chest: number; waist: number; hips: number }[]
-  store_type: "adult" | "kids" | "sneakers" | "cpcompany"
-  featured: boolean
-  colors: string[]
-  created_at: string
-}
+export type { Product }
 
 export interface Address {
   id: string

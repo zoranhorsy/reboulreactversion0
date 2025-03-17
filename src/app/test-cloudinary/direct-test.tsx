@@ -2,6 +2,7 @@
 
 import { CldImage } from 'next-cloudinary';
 import { useState } from 'react';
+import Image from 'next/image'
 
 export function DirectCloudinaryTest() {
   const [error, setError] = useState<string | null>(null);
@@ -10,7 +11,7 @@ export function DirectCloudinaryTest() {
   const testPublicId = 'reboul-store/products/ii0hmm8djmibphbwmsse';
   
   const handleError = () => {
-    setError('Erreur lors du chargement de l\'image de test');
+    setError('Erreur lors du chargement de l&apos;image de test');
   };
   
   return (
@@ -40,11 +41,11 @@ export function DirectCloudinaryTest() {
         <div className="space-y-2">
           <p className="text-sm">Test avec balise img standard:</p>
           <div className="relative aspect-square bg-muted rounded-md overflow-hidden">
-            <img
+            <Image
               src={`https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/${testPublicId}`}
               alt="Test direct avec img"
-              className="w-full h-full object-cover"
-              onError={() => console.error('Erreur avec balise img standard')}
+              fill
+              className="object-cover"
             />
           </div>
           <p className="text-xs text-muted-foreground">

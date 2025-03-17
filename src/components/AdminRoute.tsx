@@ -2,6 +2,7 @@
 
 import { useAuth } from '@/app/contexts/AuthContext'
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 // Fonction pour logger avec timestamp
 const logWithTime = (message: string, data?: any) => {
@@ -17,6 +18,7 @@ export function AdminRoute({ children }: { children: React.ReactNode }) {
     const { isLoading, isAuthenticated, isAdmin, checkAuthManually } = useAuth()
     const [hasRedirected, setHasRedirected] = useState(false)
     const [hasCheckedAuth, setHasCheckedAuth] = useState(false)
+    const router = useRouter()
 
     logWithTime("AdminRoute rendu", { 
         isLoading, 
@@ -48,7 +50,7 @@ export function AdminRoute({ children }: { children: React.ReactNode }) {
         }
 
         verifyAuth()
-    }, [checkAuthManually, hasCheckedAuth])
+    }, [checkAuthManually, hasCheckedAuth, isAuthenticated, isAdmin])
 
     // Effet pour la redirection
     useEffect(() => {
@@ -56,18 +58,11 @@ export function AdminRoute({ children }: { children: React.ReactNode }) {
             return
         }
 
-        if (!isAuthenticated) {
-            logWithTime("Non authentifié - redirection vers /connexion")
+        if (!isAuthenticated || !isAdmin) {
+            router.push('/')
             setHasRedirected(true)
-            window.location.href = '/connexion'
-        } else if (!isAdmin) {
-            logWithTime("Authentifié mais non admin - redirection vers /")
-            setHasRedirected(true)
-            window.location.href = '/'
-        } else {
-            logWithTime("Authentifié et admin - accès autorisé")
         }
-    }, [isAuthenticated, isAdmin, isLoading, hasRedirected, hasCheckedAuth])
+    }, [hasRedirected, hasCheckedAuth, isLoading, isAuthenticated, isAdmin, router])
 
     if (isLoading || !hasCheckedAuth) {
         logWithTime("Affichage du chargement")

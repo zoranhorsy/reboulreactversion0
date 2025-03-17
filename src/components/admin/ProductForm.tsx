@@ -9,44 +9,37 @@ import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ImagePreview } from "@/components/ImagePreview"
 import { VariantManager } from "@/components/admin/VariantManager"
-import { type Product } from "@/lib/types/product"
+import { type Product, type Review, type Question, type FAQ, type SizeChart, type Variant } from "@/lib/types/product"
 import { type Category } from "@/lib/types/category"
 import { type Brand } from "@/lib/types/brand"
-import { type Variant } from "@/lib/types/product"
+import { type ProductImage } from "@/lib/types/product-image"
 import { api } from "@/lib/api"
 import { toast } from "@/components/ui/use-toast"
 import { Loader2, Save, ImagePlus, AlertCircle, X, ImageIcon } from "lucide-react"
 import { cn, convertToCloudinaryUrl } from "@/lib/utils"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { uploadImages as cloudinaryUploadImages, CloudinaryUploadResult } from "@/lib/cloudinary"
+import { cloudinaryUploadImages } from "@/lib/cloudinary"
 import { getCloudinaryUrl } from "@/config/cloudinary"
 import Image from "next/image"
+import { useRouter } from "next/navigation"
 
 const colors = ["Red", "Blue", "Green", "Yellow", "Black", "White"]
-
-// Interface pour les images du produit
-interface ProductImage {
-  url: string;
-  publicId: string;
-}
 
 interface ProductFormProps {
   product: Product | null
   categories: Category[]
   brands: Brand[]
-  onSubmit: (product: Product) => void
-  isSubmitting?: boolean
+  onSubmit: (product: Product) => Promise<void>
 }
 
 export function ProductForm({ 
   product, 
   categories, 
   brands, 
-  onSubmit,
-  isSubmitting = false 
+  onSubmit
 }: ProductFormProps) {
   // Fonction pour nettoyer les images du produit et les convertir en URLs
-  const cleanProductImages = (productImages: any[] | undefined): string[] => {
+  const cleanProductImages = (productImages: (string | File | Blob | ProductImage)[] | undefined): string[] => {
     if (!productImages || !Array.isArray(productImages)) {
       console.log("Pas d'images à nettoyer");
       return [];
@@ -72,7 +65,7 @@ export function ProductForm({
         console.warn("Image de type non reconnu:", img);
         return null;
       })
-      .filter(Boolean) as string[];
+      .filter((url): url is string => url !== null);
     
     console.log("URLs d'images nettoyées:", cleanedImageUrls);
     return cleanedImageUrls;
@@ -89,104 +82,162 @@ export function ProductForm({
     price: product?.price || 0,
     old_price: product?.old_price || 0,
     stock: product?.stock || 0,
-    category_id: product?.category_id || '',
+    category_id: product?.category_id || 0,
     category: product?.category || '',
-    brand_id: product?.brand_id || '',
+    brand_id: product?.brand_id || 0,
     brand: product?.brand || '',
+    image_url: product?.image_url || '',
+    image: product?.image || '',
     featured: product?.featured || false,
     active: product?.active !== undefined ? product.active : true,
     images: initialImages,
     variants: product?.variants || [],
     tags: product?.tags || [],
+    details: product?.details || [],
+    reviews: product?.reviews || [],
+    questions: product?.questions || [],
+    faqs: product?.faqs || [],
+    size_chart: product?.size_chart || [],
+    store_type: product?.store_type || "adult",
+    colors: product?.colors || [],
+    created_at: product?.created_at || new Date().toISOString(),
+    updated_at: product?.updated_at,
     sku: product?.sku || '',
     weight: product?.weight || 0,
     dimensions: product?.dimensions || '',
     material: product?.material || '',
-    new: product?.new || false,
-  })
-  const [errors, setErrors] = useState<Record<string, string>>({})
-  const [isUploading, setIsUploading] = useState(false)
-  const [testImageDisplay, setTestImageDisplay] = useState(false)
-  const [isDirty, setIsDirty] = useState(false)
+    new: product?.new || false
+  });
 
-  const defaultFormData = useCallback(() => {
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isUploading, setIsUploading] = useState<boolean>(false);
+  const [testImageDisplay, setTestImageDisplay] = useState<boolean>(false);
+  const [isDirty, setIsDirty] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const router = useRouter();
+
+  const defaultFormData = useCallback((): Product => {
     if (!product) return {
+      id: '',
       name: '',
       description: '',
       price: 0,
+      old_price: 0,
+      stock: 0,
       category_id: 0,
+      category: '',
       brand_id: 0,
+      brand: '',
+      image_url: '',
+      image: '',
       images: [],
       variants: [],
       tags: [],
       details: [],
-      store_type: 'adult' as "adult" | "kids" | "sneakers" | "cpcompany"
-    }
+      reviews: [],
+      questions: [],
+      faqs: [],
+      size_chart: [],
+      store_type: 'adult' as "adult" | "kids" | "sneakers" | "cpcompany",
+      featured: false,
+      colors: [],
+      created_at: new Date().toISOString(),
+      active: true,
+      sku: '',
+      weight: 0,
+      dimensions: '',
+      material: '',
+      new: false
+    };
 
     return {
+      id: product.id,
       name: product.name,
       description: product.description,
       price: product.price,
+      old_price: product.old_price || 0,
+      stock: product.stock,
       category_id: product.category_id,
+      category: product.category,
       brand_id: product.brand_id,
+      brand: product.brand,
+      image_url: product.image_url,
+      image: product.image,
       images: product.images,
       variants: product.variants,
       tags: product.tags,
       details: product.details,
-      store_type: product.store_type
-    }
-  }, [product])
+      reviews: product.reviews,
+      questions: product.questions,
+      faqs: product.faqs,
+      size_chart: product.size_chart,
+      store_type: product.store_type,
+      featured: product.featured,
+      colors: product.colors,
+      created_at: product.created_at,
+      updated_at: product.updated_at,
+      active: product.active !== undefined ? product.active : true,
+      sku: product.sku || '',
+      weight: product.weight || 0,
+      dimensions: product.dimensions || '',
+      material: product.material || '',
+      new: product.new || false
+    };
+  }, [product]);
 
   useEffect(() => {
     if (product) {
-      setFormData(defaultFormData())
+      setFormData(defaultFormData());
     }
-  }, [product, defaultFormData])
+  }, [product, defaultFormData]);
 
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {}
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
     
     if (!formData.name?.trim()) {
-      newErrors.name = "Le nom du produit est requis"
+      newErrors.name = "Le nom du produit est requis";
     }
     if (!formData.description?.trim()) {
-      newErrors.description = "La description est requise"
+      newErrors.description = "La description est requise";
     }
     if (!formData.price || formData.price <= 0) {
-      newErrors.price = "Le prix doit être supérieur à 0"
+      newErrors.price = "Le prix doit être supérieur à 0";
     }
     if (!formData.category_id) {
-      newErrors.category_id = "La catégorie est requise"
+      newErrors.category_id = "La catégorie est requise";
     }
     if (!formData.brand_id) {
-      newErrors.brand_id = "La marque est requise"
+      newErrors.brand_id = "La marque est requise";
+    }
+    if (!formData.stock || formData.stock < 0) {
+      newErrors.stock = "Le stock doit être supérieur ou égal à 0";
     }
 
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleChange = (
     field: keyof Product,
-    value: string | number | boolean | (string | File | Blob | ProductImage)[] | Variant[]
-  ) => {
+    value: string | number | boolean | (string | File | Blob | ProductImage)[] | Variant[] | Review[] | Question[] | FAQ[] | SizeChart[] | string[]
+  ): void => {
     setFormData(prev => ({
       ...prev,
       [field]: value,
-    }))
-    setIsDirty(true)
+    }));
+    setIsDirty(true);
     // Effacer l'erreur du champ modifié
     if (errors[field]) {
       setErrors(prev => {
-        const newErrors = { ...prev }
-        delete newErrors[field]
-        return newErrors
-      })
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
     }
-  }
+  };
 
   // Fonction pour nettoyer les images et s'assurer qu'elles sont au bon format
-  const cleanImages = (images: any[]): ProductImage[] => {
+  const cleanImages = (images: (string | File | Blob | ProductImage)[]): ProductImage[] => {
     if (!images || !Array.isArray(images)) return [];
     
     return images.map(img => {
@@ -206,10 +257,7 @@ export function ProductForm({
         };
       }
       
-      // Si c'est un File ou Blob, on ne peut pas le convertir directement
-      // Ces objets devraient être uploadés via handleImageUpload
-      
-      // Par défaut, retourner un objet vide qui sera filtré
+      // Si c'est un File ou Blob, on retourne un objet vide qui sera filtré
       return {
         url: '',
         publicId: ''
@@ -217,72 +265,64 @@ export function ProductForm({
     }).filter(img => img.url && img.url.trim() !== '');
   };
 
-  const handleImageUpload = async (files: File[]) => {
-    try {
-      setIsUploading(true);
-      
-      if (files.length === 0) {
-        toast({
-          title: "Attention",
-          description: "Aucun fichier sélectionné pour l'upload.",
-        });
-        setIsUploading(false);
-        return;
-      }
-      
-      // Upload des images vers Cloudinary
-      const results = await cloudinaryUploadImages(files);
-      console.log("Résultats de l'upload:", results);
-      
-      // Filtrer les résultats valides
-      const validResults = results.filter(r => r.url && typeof r.url === 'string' && r.url.trim() !== '');
-      
-      if (validResults.length === 0) {
-        toast({
-          title: "Erreur",
-          description: "Aucune image n'a pu être uploadée correctement.",
-          variant: "destructive",
-        });
-        setIsUploading(false);
-        return;
-      }
-      
-      // Récupérer les images existantes
-      const existingImages = formData.images || [];
-      
-      // Convertir les images existantes en URLs
-      const existingImageUrls = existingImages.map(img => {
-        if (typeof img === 'string') {
-          return img;
-        } else if (typeof img === 'object' && img !== null && 'url' in img) {
-          return img.url;
-        }
-        return '';
-      }).filter(url => url !== '');
-      
-      // Combiner les images existantes avec les nouvelles images
-      const newImageUrls = validResults.map(r => r.url);
-      const updatedImages = [...existingImageUrls, ...newImageUrls];
-      
-      // Mettre à jour le formulaire avec les nouvelles images
-      // et s'assurer que image_url pointe vers la première image
-      setFormData(prev => ({
-        ...prev,
-        images: updatedImages,
-        image_url: updatedImages[0] // Utiliser la première image comme image_url
-      }));
-      
-      setIsDirty(true);
-      
-      toast({
-        title: "Succès",
-        description: `${validResults.length} image(s) uploadée(s) avec succès.`,
-      });
-    } catch (error) {
-      console.error("Erreur lors de l'upload des images:", error);
+  const handleImageUpload = async (files: FileList | File[] | null): Promise<void> => {
+    if (!files?.length) {
       toast({
         title: "Erreur",
-        description: "Une erreur est survenue lors de l'upload des images.",
+        description: "Aucun fichier sélectionné",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setIsUploading(true);
+
+      const uploadPromises = Array.from(files).map(async (file) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', 'ml_default');
+
+        const response = await fetch(
+          `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
+          {
+            method: 'POST',
+            body: formData,
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error('Upload failed');
+        }
+
+        const data = await response.json();
+        return data.secure_url;
+      });
+
+      const uploadedUrls = await Promise.all(uploadPromises);
+      const validUrls = uploadedUrls.filter(url => url);
+
+      if (validUrls.length) {
+        const existingImages = formData.images || [];
+        const updatedImages = [...existingImages, ...validUrls];
+        
+        setFormData(prev => ({
+          ...prev,
+          images: updatedImages,
+          image_url: updatedImages[0]
+        }));
+        
+        setIsDirty(true);
+        toast({
+          title: "Succès",
+          description: "Images téléchargées avec succès",
+        });
+      }
+    } catch (error) {
+      console.error('Error uploading images:', error);
+      toast({
+        title: "Erreur",
+        description: "Erreur lors du téléchargement des images",
         variant: "destructive",
       });
     } finally {
@@ -290,123 +330,218 @@ export function ProductForm({
     }
   };
 
-  // Fonction utilitaire pour obtenir l'URL d'une image
-  const getImageUrl = (image: string | File | Blob | ProductImage): string => {
-    console.log("getImageUrl - Type d'image:", typeof image);
-    console.log("getImageUrl - Image:", image);
-    
-    try {
-      if (typeof image === 'string') {
-        console.log("getImageUrl - C'est une chaîne:", image);
-        return image;
-      } else if (image instanceof File || image instanceof Blob) {
-        console.log("getImageUrl - C'est un File ou Blob");
-        return URL.createObjectURL(image);
-      } else if (typeof image === 'object' && image !== null) {
-        console.log("getImageUrl - C'est un objet");
-        
-        if ('url' in image && typeof image.url === 'string') {
-          console.log("getImageUrl - L'objet a une propriété url:", image.url);
-          return image.url;
-        }
-        
-        // Essayer de trouver d'autres propriétés qui pourraient contenir une URL
-        const possibleUrlProps = ['src', 'source', 'path', 'href'];
-        for (const prop of possibleUrlProps) {
-          if (prop in image && typeof (image as any)[prop] === 'string') {
-            console.log(`getImageUrl - L'objet a une propriété ${prop}:`, (image as any)[prop]);
-            return (image as any)[prop];
-          }
-        }
-        
-        console.log("getImageUrl - Aucune URL trouvée dans l'objet");
-      }
-    } catch (error) {
-      console.error("getImageUrl - Erreur:", error);
-    }
-    
-    console.log("getImageUrl - Retourne une chaîne vide");
-    return '';
-  };
-
-  const handleRemoveImage = (index: number) => {
+  const handleImageRemove = (index: number): void => {
     if (!formData.images) return;
-    
-    console.log("Suppression de l'image à l'index:", index);
-    console.log("Images avant suppression:", formData.images);
-    
-    // Vérifier que l'index est valide
-    if (index < 0 || index >= formData.images.length) {
-      console.error("Index d'image invalide:", index);
-      return;
-    }
-    
-    // Créer une copie du tableau d'images
+
     const updatedImages = [...formData.images];
-    
-    // Supprimer l'image à l'index spécifié
     updatedImages.splice(index, 1);
-    
-    console.log("Images après suppression:", updatedImages);
-    
-    // Mettre à jour le formData avec les images mises à jour
+
+    const firstImage = updatedImages[0];
+    const imageUrl = typeof firstImage === 'string' 
+      ? firstImage 
+      : firstImage instanceof File || firstImage instanceof Blob 
+        ? URL.createObjectURL(firstImage)
+        : firstImage?.url || '';
+
     setFormData(prev => ({
       ...prev,
-      images: updatedImages
+      images: updatedImages,
+      image_url: imageUrl
     }));
-    
+
     setIsDirty(true);
-    
     toast({
-      title: "Image supprimée",
-      description: "L'image a été supprimée avec succès.",
+      title: "Succès",
+      description: "Image supprimée avec succès",
     });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (isSubmitting) return;
+  const handleImagePreview = (image: string | File | Blob | ProductImage): string => {
+    if (typeof image === 'string') {
+      return image;
+    }
+    if (image instanceof File || image instanceof Blob) {
+      return URL.createObjectURL(image);
+    }
+    if ('url' in image) {
+      return image.url;
+    }
+    return '';
+  };
 
-    // Valider le formulaire
-    const formErrors = validateForm();
-    if (Object.keys(formErrors).length > 0) {
-      setErrors(formErrors);
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
       toast({
-        title: "Erreur de validation",
-        description: "Veuillez corriger les erreurs dans le formulaire.",
+        title: "Erreur",
+        description: "Veuillez corriger les erreurs dans le formulaire",
         variant: "destructive",
       });
       return;
     }
 
     try {
-      // Nettoyer les images avant de soumettre le formulaire
-      // S'assurer que nous n'envoyons que des URLs d'images
-      const cleanedImageUrls = cleanProductImages(formData.images);
+      setIsSubmitting(true);
       
-      // Créer une copie du formulaire avec les images nettoyées
+      // Clean image URLs before submission
       const cleanedFormData = {
         ...formData,
-        images: cleanedImageUrls
+        images: formData.images?.filter(img => typeof img === 'string' || 'url' in img).map(img => {
+          if (typeof img === 'string') return img;
+          return (img as ProductImage).url;
+        })
       };
-      
-      console.log("Formulaire nettoyé avant soumission:", cleanedFormData);
-      
-      // Soumettre le formulaire
-      await onSubmit(cleanedFormData as Product);
-      setIsDirty(false);
+
+      const response = await fetch('/api/products', {
+        method: product ? 'PUT' : 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(cleanedFormData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save product');
+      }
+
       toast({
         title: "Succès",
-        description: `Le produit a été ${product ? 'mis à jour' : 'créé'} avec succès.`,
+        description: product ? "Produit mis à jour avec succès" : "Produit créé avec succès",
       });
+      router.push('/admin/products');
     } catch (error) {
-      console.error("Erreur lors de la soumission du formulaire:", error);
+      console.error('Error saving product:', error);
       toast({
         title: "Erreur",
-        description: `Une erreur est survenue lors de la ${product ? 'mise à jour' : 'création'} du produit.`,
+        description: "Une erreur est survenue lors de l'enregistrement du produit",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
+  };
+
+  const handleVariantChange = (variants: Variant[]): void => {
+    handleChange("variants", variants);
+  };
+
+  const handleColorsChange = (colors: string[]): void => {
+    handleChange("colors", colors);
+  };
+
+  const handleTagsChange = (tags: string[]): void => {
+    handleChange("tags", tags);
+  };
+
+  const handleDetailsChange = (details: string[]): void => {
+    handleChange("details", details);
+  };
+
+  const handleSizeChartChange = (sizeChart: SizeChart[]): void => {
+    handleChange("size_chart", sizeChart);
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    await handleImageUpload(files);
+  };
+
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>): Promise<void> => {
+    e.preventDefault();
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length === 0) return;
+    await handleImageUpload(files);
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>): void => {
+    e.preventDefault();
+  };
+
+  const handleStoreTypeChange = (value: "adult" | "kids" | "sneakers" | "cpcompany"): void => {
+    handleChange("store_type", value);
+  };
+
+  const handleFeaturedChange = (checked: boolean): void => {
+    handleChange("featured", checked);
+  };
+
+  const handleActiveChange = (checked: boolean): void => {
+    handleChange("active", checked);
+  };
+
+  const handleNewChange = (checked: boolean): void => {
+    handleChange("new", checked);
+  };
+
+  const handleCategoryChange = (value: string): void => {
+    const categoryId = parseInt(value, 10);
+    const selectedCategory = categories.find(c => c.id === categoryId);
+    handleChange("category_id", categoryId);
+    handleChange("category", selectedCategory?.name || '');
+  };
+
+  const handleBrandChange = (value: string): void => {
+    const brandId = parseInt(value, 10);
+    const selectedBrand = brands.find(b => b.id === brandId);
+    handleChange("brand_id", brandId);
+    handleChange("brand", selectedBrand?.name || '');
+  };
+
+  const handleTextChange = (field: keyof Pick<Product, "name" | "description" | "sku" | "dimensions" | "material">) => (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ): void => {
+    handleChange(field, e.target.value);
+  };
+
+  const handleNumberChange = (field: keyof Pick<Product, "price" | "old_price" | "stock" | "weight">) => (
+    e: React.ChangeEvent<HTMLInputElement>
+  ): void => {
+    const value = parseFloat(e.target.value);
+    if (!isNaN(value)) {
+      handleChange(field, value);
+    }
+  };
+
+  const handleCheckboxChange = (field: keyof Pick<Product, "featured" | "active" | "new">) => (
+    checked: string | boolean
+  ): void => {
+    handleChange(field, Boolean(checked));
+  };
+
+  const handleSelectChange = (field: keyof Pick<Product, "category_id" | "brand_id" | "store_type">) => (
+    value: string
+  ): void => {
+    if (field === "category_id") {
+      handleCategoryChange(value);
+    } else if (field === "brand_id") {
+      handleBrandChange(value);
+    } else if (field === "store_type") {
+      handleStoreTypeChange(value as "adult" | "kids" | "sneakers" | "cpcompany");
+    }
+  };
+
+  const handleArrayChange = (field: keyof Pick<Product, "tags" | "details" | "colors">) => (
+    value: string[]
+  ): void => {
+    handleChange(field, value);
+  };
+
+  const handleComplexArrayChange = (field: keyof Pick<Product, "variants" | "reviews" | "questions" | "faqs" | "size_chart">) => (
+    value: Variant[] | Review[] | Question[] | FAQ[] | SizeChart[]
+  ): void => {
+    handleChange(field, value);
+  };
+
+  const handleImageChange = (field: keyof Pick<Product, "image_url" | "image">) => (
+    value: string
+  ): void => {
+    handleChange(field, value);
+  };
+
+  const handleImagesChange = (value: (string | File | Blob | ProductImage)[]): void => {
+    handleChange("images", value);
   };
 
   return (
@@ -419,7 +554,7 @@ export function ProductForm({
             <Input 
               id="name" 
               value={formData.name} 
-              onChange={(e) => handleChange("name", e.target.value)} 
+              onChange={handleTextChange("name")} 
               required 
               className={cn(
                 "border-muted-foreground/20",
@@ -436,8 +571,8 @@ export function ProductForm({
               id="price"
               type="number"
               step="0.01"
-              value={formData.price}
-              onChange={(e) => handleChange("price", Number(e.target.value))}
+              value={formData.price.toString()}
+              onChange={handleNumberChange("price")}
               required
               className={cn(
                 "border-muted-foreground/20",
@@ -456,7 +591,7 @@ export function ProductForm({
           <Textarea
             id="description"
             value={formData.description}
-            onChange={(e) => handleChange("description", e.target.value)}
+            onChange={handleTextChange("description")}
             required
             className={cn(
               "min-h-[100px] border-muted-foreground/20 resize-none",
@@ -474,7 +609,7 @@ export function ProductForm({
             <Label htmlFor="category_id" className="text-sm font-medium">Catégorie</Label>
             <Select
               value={formData.category_id?.toString() || ""}
-              onValueChange={(value) => handleChange("category_id", Number(value))}
+              onValueChange={(value) => handleSelectChange("category_id")(value)}
             >
               <SelectTrigger className={cn(
                 "border-muted-foreground/20",
@@ -498,7 +633,7 @@ export function ProductForm({
             <Label htmlFor="brand_id" className="text-sm font-medium">Marque</Label>
             <Select
               value={formData.brand_id?.toString() || ""}
-              onValueChange={(value) => handleChange("brand_id", Number(value))}
+              onValueChange={(value) => handleSelectChange("brand_id")(value)}
             >
               <SelectTrigger className={cn(
                 "border-muted-foreground/20",
@@ -561,10 +696,9 @@ export function ProductForm({
                   accept="image/*"
                   multiple
                   className="hidden"
-                  onChange={(e) => {
-                    const files = Array.from(e.target.files || [])
-                    handleImageUpload(files)
-                  }}
+                  onChange={handleFileChange}
+                  onDrop={handleDrop}
+                  onDragOver={handleDragOver}
                   disabled={isUploading}
                 />
               </label>
@@ -612,7 +746,7 @@ export function ProductForm({
                             variant="destructive"
                             size="icon"
                             className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={() => handleRemoveImage(idx)}
+                            onClick={() => handleImageRemove(idx)}
                           >
                             <X className="h-3 w-3" />
                           </Button>
@@ -635,7 +769,7 @@ export function ProductForm({
           <div className="border border-dashed border-muted-foreground/20 rounded-lg p-4">
             <VariantManager
               variants={formData.variants || []}
-              onChange={(newVariants) => handleChange("variants", newVariants)}
+              onChange={(newVariants) => handleVariantChange(newVariants)}
             />
           </div>
         </div>
@@ -645,7 +779,7 @@ export function ProductForm({
           <Label htmlFor="store_type" className="text-sm font-medium">Type de magasin</Label>
           <Select
             value={formData.store_type}
-            onValueChange={(value) => handleChange("store_type", value as "adult" | "kids" | "sneakers" | "cpcompany")}
+            onValueChange={(value) => handleSelectChange("store_type")(value)}
           >
             <SelectTrigger className="border-muted-foreground/20">
               <SelectValue placeholder="Sélectionner le type de magasin" />
@@ -665,7 +799,7 @@ export function ProductForm({
             <Checkbox
               id="featured"
               checked={formData.featured}
-              onCheckedChange={(checked) => handleChange("featured", checked)}
+              onCheckedChange={(checked) => handleCheckboxChange("featured")(checked)}
             />
             <Label htmlFor="featured" className="text-sm font-medium">Produit en vedette</Label>
           </div>
@@ -681,10 +815,9 @@ export function ProductForm({
                     onCheckedChange={(checked) => {
                       const currentColors = formData.colors || []
                       if (checked) {
-                        handleChange("colors", [...currentColors, color])
+                        handleColorsChange([...currentColors, color])
                       } else {
-                        handleChange(
-                          "colors",
+                        handleColorsChange(
                           currentColors.filter((c) => c !== color)
                         )
                       }

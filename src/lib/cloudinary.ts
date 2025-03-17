@@ -224,4 +224,14 @@ export const fixCloudinaryUrl = (url: string): string => {
   return url;
 };
 
+// Fonction pour uploader plusieurs images via Cloudinary
+export const cloudinaryUploadImages = async (files: File[]): Promise<CloudinaryUploadResult[]> => {
+  try {
+    return await uploadImages(files);
+  } catch (error) {
+    console.error('Erreur lors de l\'upload multiple vers Cloudinary:', error);
+    throw error;
+  }
+};
+
 export default cld; 

@@ -75,7 +75,7 @@ export const ImagePreview: React.FC<ImagePreviewProps> = ({ images, onRemove }) 
       {process.env.NODE_ENV === 'development' && (
         <div className="mt-4 p-2 bg-muted/20 rounded-md text-xs space-y-1 max-h-32 overflow-y-auto">
           <div className="font-semibold">Informations de débogage:</div>
-          <div className="text-muted-foreground">Nombre d'images: {images.length}</div>
+          <div className="text-muted-foreground">Nombre d&apos;images: {images.length}</div>
           <div className="text-muted-foreground">Images traitées: {processedImages.length}</div>
           {processedImages.map((url, idx) => (
             <div key={idx} className="text-muted-foreground truncate">

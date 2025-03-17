@@ -18,7 +18,20 @@ const getValidImages = (product: Product): (string | File | Blob)[] => {
             if (typeof img === 'string') {
                 return img && img.trim() !== ""
             }
-            return img instanceof File || img instanceof Blob
+            if (img instanceof File || img instanceof Blob) {
+                return true
+            }
+            // Si c'est un objet ProductImage, on vérifie qu'il a une URL valide
+            if (typeof img === 'object' && img !== null && 'url' in img) {
+                return img.url && img.url.trim() !== ""
+            }
+            return false
+        }).map(img => {
+            // Convertir les objets ProductImage en chaînes
+            if (typeof img === 'object' && img !== null && 'url' in img) {
+                return img.url
+            }
+            return img
         })
         if (validImages.length > 0) return validImages
     }
@@ -90,20 +103,23 @@ export function ProductImages({ product, size = "lg" }: ProductImagesProps) {
         )}>
             {/* Image principale */}
             <div className="relative aspect-[3/4] bg-muted rounded-lg overflow-hidden group">
-                <CloudinaryImage
-                    src={getImageUrl(validImages[currentImage])}
-                    alt={product.name}
-                    fill={true}
-                    className="object-cover"
-                    sizes={cn(
-                        size === "sm" && "(max-width: 768px) 100vw, 200px",
-                        size === "md" && "(max-width: 768px) 100vw, 300px",
-                        size === "lg" && "(max-width: 768px) 100vw, 400px"
-                    )}
-                    priority
-                    quality={90}
+                <button
                     onClick={() => setIsFullscreen(true)}
-                />
+                    className="block w-full h-full"
+                >
+                    <CloudinaryImage
+                        src={getImageUrl(validImages[currentImage])}
+                        alt={product.name}
+                        fill={true}
+                        className="object-cover"
+                        sizes={cn(
+                            size === "sm" && "(max-width: 768px) 100vw, 200px",
+                            size === "md" && "(max-width: 768px) 100vw, 300px",
+                            size === "lg" && "(max-width: 768px) 100vw, 400px"
+                        )}
+                        priority
+                    />
+                </button>
 
                 {/* Overlay avec boutons de navigation */}
                 {hasMultipleImages && (
@@ -185,7 +201,6 @@ export function ProductImages({ product, size = "lg" }: ProductImagesProps) {
                                 alt={product.name}
                                 fill={true}
                                 className="object-contain"
-                                quality={100}
                             />
                         </div>
 

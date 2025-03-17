@@ -26,6 +26,14 @@ export interface Product {
   colors: string[]
   created_at: string
   updated_at?: string
+  active?: boolean
+  sku?: string
+  weight?: number
+  dimensions?: string
+  material?: string
+  new?: boolean
+  rating?: number
+  reviews_count?: number
 }
 
 export interface Variant {

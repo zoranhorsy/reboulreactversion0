@@ -1,12 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { uploadImage } from '@/lib/cloudinary';
+import { uploadImage, CloudinaryUploadResult } from '@/lib/cloudinary';
 import { CloudinaryImage } from '@/components/ui/CloudinaryImage';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Loader2, Info } from 'lucide-react';
 import { DirectCloudinaryTest } from './direct-test';
+import Image from 'next/image';
 
 export default function TestCloudinaryPage() {
   const [isUploading, setIsUploading] = useState(false);
@@ -22,16 +23,17 @@ export default function TestCloudinaryPage() {
     setError(null);
 
     try {
-      console.log('Début de l\'upload de', files.length, 'image(s)');
+      console.log('Début de l&apos;upload de', files.length, 'image(s)');
       
       const uploadPromises = files.map(file => uploadImage(file));
-      const urls = await Promise.all(uploadPromises);
+      const results = await Promise.all(uploadPromises);
+      const urls = results.map(result => result.url);
       
       console.log('Images uploadées avec succès:', urls);
       setUploadedImages(prev => [...prev, ...urls]);
     } catch (err) {
-      console.error('Erreur lors de l\'upload:', err);
-      setError(err instanceof Error ? err.message : 'Une erreur est survenue lors de l\'upload');
+      console.error('Erreur lors de l&apos;upload:', err);
+      setError(err instanceof Error ? err.message : 'Une erreur est survenue lors de l&apos;upload');
     } finally {
       setIsUploading(false);
     }
@@ -39,10 +41,10 @@ export default function TestCloudinaryPage() {
 
   return (
     <div className="container mx-auto py-10 space-y-8">
-      <h1 className="text-3xl font-bold">Test d'upload Cloudinary</h1>
+      <h1 className="text-3xl font-bold">Test d&apos;upload Cloudinary</h1>
       
       <div className="space-y-4">
-        <h2 className="text-xl font-semibold">Upload d'images</h2>
+        <h2 className="text-xl font-semibold">Upload d&apos;images</h2>
         
         <div className="flex items-center gap-4">
           <Input
@@ -108,16 +110,19 @@ export default function TestCloudinaryPage() {
                     </div>
                     <div>
                       <strong>Test direct:</strong>
-                      <img 
-                        src={url} 
-                        alt="Test direct" 
-                        className="mt-1 w-full h-20 object-cover rounded-md"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.src = '/placeholder.svg';
-                          target.title = 'Erreur de chargement';
-                        }}
-                      />
+                      <div className="relative mt-1 w-full h-20">
+                        <Image 
+                          src={url} 
+                          alt="Test direct" 
+                          fill
+                          className="object-cover rounded-md"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = '/placeholder.svg';
+                            target.title = 'Erreur de chargement';
+                          }}
+                        />
+                      </div>
                     </div>
                   </div>
                 )}
