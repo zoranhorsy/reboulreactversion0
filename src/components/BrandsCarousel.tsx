@@ -10,6 +10,7 @@ import { fetchBrands } from '@/lib/api'
 import { useTheme } from 'next-themes'
 import type { Brand } from '@/lib/api'
 import { toast } from '@/components/ui/use-toast'
+import { cn } from '@/lib/utils'
 
 const VISIBLE_BRANDS = 6
 const AUTO_SCROLL_INTERVAL = 8000
@@ -165,7 +166,7 @@ export function BrandsCarousel() {
                                 variant="ghost"
                                 size="icon"
                                 onClick={handlePrevious}
-                                className="h-16 w-16 rounded-full bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 
+                                className="h-16 w-16 rounded-full bg-zinc-100 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 
                                     hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-all duration-300
                                     hover:scale-110 active:scale-95"
                                 disabled={isTransitioning}
@@ -176,7 +177,7 @@ export function BrandsCarousel() {
                                 variant="ghost"
                                 size="icon"
                                 onClick={handleNext}
-                                className="h-16 w-16 rounded-full bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 
+                                className="h-16 w-16 rounded-full bg-zinc-100 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 
                                     hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-all duration-300
                                     hover:scale-110 active:scale-95"
                                 disabled={isTransitioning}
@@ -207,7 +208,7 @@ export function BrandsCarousel() {
                             }}
                         >
                             <Card className="relative aspect-square overflow-hidden transition-all duration-700 
-                                bg-zinc-100 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800
+                                bg-zinc-100 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800
                                 hover:border-primary/20 hover:shadow-2xl hover:scale-[1.02] hover:-rotate-1">
                                 <div className="absolute inset-0 p-12 flex items-center justify-center">
                                     <div className="relative w-full h-full">
@@ -267,11 +268,12 @@ export function BrandsCarousel() {
                     {Array.from({ length: Math.ceil(brands.length / VISIBLE_BRANDS) }).map((_, index) => (
                         <div
                             key={index}
-                            className={`h-1.5 rounded-full transition-all duration-700 ${
+                            className={cn(
+                                "h-1.5 rounded-full mt-6 transition-all duration-300",
                                 Math.floor(currentIndex / VISIBLE_BRANDS) === index
-                                    ? "w-12 bg-foreground dark:bg-white scale-100" 
+                                    ? "w-12 bg-foreground dark:bg-white scale-100"
                                     : "w-3 bg-foreground/20 dark:bg-white/20 scale-90"
-                            }`}
+                            )}
                         />
                     ))}
                 </div>

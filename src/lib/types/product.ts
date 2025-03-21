@@ -5,8 +5,6 @@ export interface Product {
   name: string
   description: string
   price: number
-  old_price?: number
-  stock: number
   category_id: number
   category: string
   brand_id: number
@@ -21,19 +19,22 @@ export interface Product {
   questions: Question[]
   faqs: FAQ[]
   size_chart: SizeChart[]
-  store_type: "adult" | "kids" | "sneakers" | "cpcompany"
+  store_type: "adult" | "kids" | "sneakers" | "cpcompany" | "deleted"
   featured: boolean
-  colors: string[]
   created_at: string
   updated_at?: string
   active?: boolean
-  sku?: string
-  weight?: number
-  dimensions?: string
-  material?: string
+  sku?: string | null
+  weight?: number | null
+  dimensions?: string | null
+  material?: string | null
   new?: boolean
   rating?: number
   reviews_count?: number
+  store_reference?: string | null
+  old_price?: number
+  _actiontype?: string
+  deleted?: boolean
 }
 
 export interface Variant {

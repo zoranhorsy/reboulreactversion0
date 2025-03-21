@@ -64,33 +64,101 @@ export function AdminOrders() {
         setIsLoading(true)
         try {
             const response = await api.fetchOrders()
+            console.log('Réponse API complète:', response)
+            
             if (response && response.data) {
                 console.log('Commandes chargées:', response.data.length)
-                response.data.forEach(order => {
-                    console.log(`Commande #${order.id}:`, {
-                        hasShippingAddress: !!order.shipping_address,
-                        shippingAddress: order.shipping_address,
-                        status: order.status,
-                        created_at: order.created_at
+                
+                // Récupérer les détails de chaque commande pour obtenir les articles (items)
+                const ordersWithDetails = await Promise.all(
+                    response.data.map(async (order) => {
+                        try {
+                            console.log(`Récupération des détails pour la commande #${order.id}`);
+                            const orderDetails = await api.getOrderById(order.id.toString());
+                            console.log(`Détails récupérés pour la commande #${order.id}:`, orderDetails);
+                            
+                            // Loguer les items pour voir leur structure
+                            if (orderDetails && orderDetails.items) {
+                                console.log(`Commande #${order.id} - Structure des items:`, orderDetails.items.map(item => ({
+                                    id: item.id,
+                                    product_name: item.product_name,
+                                    product_id: item.product_id
+                                })));
+                                
+                                // Récupérer les détails des produits pour obtenir les SKU et références
+                                const itemsWithProductDetails = await Promise.all(
+                                    orderDetails.items.map(async (item) => {
+                                        try {
+                                            // Récupérer les détails du produit
+                                            const productId = item.product_id;
+                                            if (productId) {
+                                                console.log(`Récupération des détails du produit #${productId}`);
+                                                const productDetails = await api.getProductById(productId.toString());
+                                                console.log(`Détails du produit #${productId}:`, productDetails);
+                                                
+                                                if (productDetails) {
+                                                    return {
+                                                        ...item,
+                                                        product_details: productDetails
+                                                    };
+                                                }
+                                            }
+                                            return item;
+                                        } catch (error) {
+                                            console.error(`Erreur lors de la récupération des détails du produit pour l'item #${item.id}:`, error);
+                                            return item;
+                                        }
+                                    })
+                                );
+                                
+                                // Mettre à jour les items avec les détails des produits
+                                orderDetails.items = itemsWithProductDetails;
+                            }
+                            
+                            return orderDetails || order;
+                        } catch (error) {
+                            console.error(`Erreur lors de la récupération des détails pour la commande #${order.id}:`, error);
+                            return order;
+                        }
                     })
-                })
-                setOrders(response.data)
-                setFilteredOrders(response.data)
+                );
+                
+                console.log('Commandes avec détails:', ordersWithDetails);
+                
+                // Adapter les données pour que shipping_info soit converti en shipping_address
+                // et variant_info soit converti en variant pour les items
+                const adaptedOrders = ordersWithDetails.map(order => {
+                    let adaptedOrder = { ...order };
+                    
+                    // Adapter les items pour remapper variant_info vers variant
+                    if (adaptedOrder.items && adaptedOrder.items.length > 0) {
+                        console.log(`Commande #${order.id} a ${adaptedOrder.items.length} articles adaptés:`, adaptedOrder.items);
+                    } else {
+                        console.warn(`Pas d&apos;items trouvés pour la commande #${order.id} à adapter`);
+                    }
+                    
+                    return adaptedOrder;
+                });
+                
+                console.log('Commandes adaptées:', adaptedOrders.length);
+                console.log('Exemple de commande adaptée:', adaptedOrders[0]);
+                setOrders(adaptedOrders);
+                setFilteredOrders(adaptedOrders);
             } else {
-                setOrders([])
-                setFilteredOrders([])
+                setOrders([]);
+                setFilteredOrders([]);
             }
         } catch (error) {
-            console.error('Error loading orders:', error)
+            console.error('Error loading orders:', error);
             toast({
                 title: "Erreur",
                 description: "Impossible de charger les commandes.",
                 variant: "destructive",
-            })
-            setOrders([])
-            setFilteredOrders([])
+            });
+            setOrders([]);
+            setFilteredOrders([]);
         } finally {
-            setIsLoading(false)
+            setIsLoading(false);
         }
     }, [toast])
 
@@ -197,12 +265,35 @@ export function AdminOrders() {
     const validateShippingAddress = (address: any) => {
         if (!address) return false
         
-        const requiredFields = ['street', 'postal_code', 'city', 'country']
-        const missingFields = requiredFields.filter(field => !address[field])
+        console.log('Validating address:', address)
+        console.log('Address type:', typeof address)
         
-        if (missingFields.length > 0) {
+        // Si l'adresse est une chaîne JSON, essayer de la parser
+        if (typeof address === 'string') {
+            try {
+                address = JSON.parse(address)
+                console.log('Parsed address from string:', address)
+            } catch (err) {
+                console.error('Failed to parse address string:', err)
+                return false
+            }
+        }
+        
+        // Vérifier les champs requis
+        const hasRequiredFields = 
+            !!address.street && 
+            !!address.postal_code && 
+            !!address.city && 
+            !!address.country
+        
+        if (!hasRequiredFields) {
             console.warn('Adresse incomplète:', {
-                missingFields,
+                missingFields: {
+                    street: !address.street,
+                    postal_code: !address.postal_code,
+                    city: !address.city,
+                    country: !address.country
+                },
                 address
             })
             return false
@@ -215,6 +306,7 @@ export function AdminOrders() {
         console.log(`Rendu adresse pour commande #${order.id}:`, {
             hasAddress: !!order.shipping_address,
             address: order.shipping_address,
+            addressType: order.shipping_address ? typeof order.shipping_address : 'undefined',
             isValid: validateShippingAddress(order.shipping_address)
         })
 
@@ -267,13 +359,16 @@ export function AdminOrders() {
                             {!order.shipping_address.postal_code && <li>Code postal</li>}
                             {!order.shipping_address.city && <li>Ville</li>}
                             {!order.shipping_address.country && <li>Pays</li>}
-                            {!order.shipping_address.phone && <li>Téléphone</li>}
                         </ul>
                     </div>
                 </div>
             )
         }
 
+        // Obtenir les bonnes valeurs d'adresse, en tenant compte des deux formats possibles
+        const streetAddress = order.shipping_address.street
+        const postalCode = order.shipping_address.postal_code
+        
         return (
             <div className="space-y-2">
                 <div className="flex items-center gap-2">
@@ -282,14 +377,9 @@ export function AdminOrders() {
                     </Badge>
                 </div>
                 <div className="text-sm">
-                    <p className="font-medium">{order.shipping_address.street}</p>
-                    <p>{order.shipping_address.postal_code} {order.shipping_address.city}</p>
+                    <p className="font-medium">{streetAddress}</p>
+                    <p>{postalCode} {order.shipping_address.city}</p>
                     <p className="text-muted-foreground">{order.shipping_address.country}</p>
-                    {order.shipping_address.phone && (
-                        <p className="text-muted-foreground mt-1">
-                            Tél: {order.shipping_address.phone}
-                        </p>
-                    )}
                 </div>
             </div>
         )
@@ -397,30 +487,41 @@ export function AdminOrders() {
                                                         {order.items?.length || 0} article{order.items?.length !== 1 ? 's' : ''}
                                                     </Badge>
                                                 </div>
-                                                <div className="space-y-1">
-                                                    {order.items?.slice(0, 3).map((item) => (
-                                                        <div key={item.id} className="flex justify-between items-center text-sm">
-                                                            <div className="flex-1 min-w-0">
-                                                                <span className="truncate block">{item.product_name}</span>
-                                                                {item.variant && (
-                                                                    <span className="text-xs text-muted-foreground">
-                                                                        {item.variant.color} - {item.variant.size}
+                                                <div className="space-y-2">
+                                                    {(!order.items || order.items.length === 0) ? (
+                                                        <div className="text-sm text-yellow-600 bg-yellow-50 p-2 rounded">
+                                                            <p>Aucun produit dans cette commande</p>
+                                                            <p className="text-xs text-muted-foreground mt-1">La commande ne contient aucun article.</p>
+                                                        </div>
+                                                    ) : (
+                                                        <>
+                                                            {order.items.slice(0, 3).map((item) => (
+                                                                <div key={item.id || `item-${Math.random()}`} className="flex justify-between items-start text-sm py-1">
+                                                                    <div className="flex-1 min-w-0">
+                                                                        <p className="truncate">{item.product_name}</p>
+                                                                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground mt-1">
+                                                                            <div>
+                                                                                <p>Qté: {item.quantity}</p>
+                                                                            </div>
+                                                                            <div>
+                                                                                <p>Prix: {formatAmount(item.price)}</p>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="text-right">
+                                                                        <p className="font-medium">{formatAmount(item.price * item.quantity)}</p>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                            {order.items.length > 3 && (
+                                                                <div className="flex items-center justify-between text-xs text-muted-foreground pt-1 border-t">
+                                                                    <span>
+                                                                        +{order.items.length - 3} autre{order.items.length - 3 > 1 ? 's' : ''} article{order.items.length - 3 > 1 ? 's' : ''}
                                                                     </span>
-                                                                )}
-                                                            </div>
-                                                            <div className="flex items-center gap-2 ml-2">
-                                                                <span className="text-muted-foreground">{item.quantity}x</span>
-                                                                <span className="font-medium">{formatAmount(item.price)}</span>
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                    {order.items && order.items.length > 3 && (
-                                                        <div className="flex items-center justify-between text-xs text-muted-foreground pt-1 border-t">
-                                                            <span>
-                                                                +{order.items.length - 3} autre{order.items.length - 3 > 1 ? 's' : ''} article{order.items.length - 3 > 1 ? 's' : ''}
-                                                            </span>
-                                                            <span>Total: {formatAmount(order.total_amount)}</span>
-                                                        </div>
+                                                                    <span>Total: {formatAmount(order.total_amount)}</span>
+                                                                </div>
+                                                            )}
+                                                        </>
                                                     )}
                                                 </div>
                                             </div>
@@ -513,23 +614,33 @@ export function AdminOrders() {
                                                                 <div>
                                                                     <h4 className="font-medium mb-2">Produits commandés</h4>
                                                                     <div className="space-y-2">
-                                                                        {selectedOrder.items?.map((item) => (
-                                                                            <div key={item.id} className="flex justify-between items-center py-2 border-b last:border-0">
-                                                                                <div>
-                                                                                    <p className="font-medium">{item.product_name}</p>
-                                                                                    {item.variant && (
-                                                                                        <p className="text-sm text-muted-foreground">
-                                                                                            {item.variant.color} - {item.variant.size}
-                                                                                        </p>
-                                                                                    )}
-                                                                                    <p className="text-sm text-muted-foreground">Quantité: {item.quantity}</p>
-                                                                                </div>
-                                                                                <div className="text-right">
-                                                                                    <p className="font-medium">{formatAmount(item.price)}</p>
-                                                                                    <p className="text-sm text-muted-foreground">Total: {formatAmount(item.price * item.quantity)}</p>
-                                                                                </div>
+                                                                        {(!selectedOrder.items || selectedOrder.items.length === 0) ? (
+                                                                            <div className="text-sm text-yellow-600 bg-yellow-50 p-4 rounded">
+                                                                                <p className="font-medium">Aucun produit dans cette commande</p>
+                                                                                <p className="text-xs text-muted-foreground mt-1">
+                                                                                    Cette commande ne contient aucun article. Cela peut indiquer un problème avec les données.
+                                                                                </p>
                                                                             </div>
-                                                                        ))}
+                                                                        ) : (
+                                                                            selectedOrder.items.map((item) => (
+                                                                                <div key={item.id || `item-${Math.random()}`} className="flex justify-between items-center py-2 border-b last:border-0">
+                                                                                    <div>
+                                                                                        <p className="font-medium">{item.product_name}</p>
+                                                                                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground mt-1">
+                                                                                            <div>
+                                                                                                <p>Qté: {item.quantity}</p>
+                                                                                            </div>
+                                                                                            <div>
+                                                                                                <p>Prix: {formatAmount(item.price)}</p>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                    <div className="text-right">
+                                                                                        <p className="font-medium">{formatAmount(item.price * item.quantity)}</p>
+                                                                                    </div>
+                                                                                </div>
+                                                                            ))
+                                                                        )}
                                                                     </div>
                                                                 </div>
 
@@ -543,18 +654,10 @@ export function AdminOrders() {
                                                                                     <p>{selectedOrder.shipping_address.postal_code} {selectedOrder.shipping_address.city}</p>
                                                                                     <p>{selectedOrder.shipping_address.country}</p>
                                                                                 </div>
-                                                                                {selectedOrder.shipping_address.phone && (
-                                                                                    <div className="pt-2 border-t">
-                                                                                        <p className="text-sm text-muted-foreground">Contact téléphonique</p>
-                                                                                        <p className="font-medium">{selectedOrder.shipping_address.phone}</p>
-                                                                                    </div>
-                                                                                )}
-                                                                                {selectedOrder.shipping_address.instructions && (
-                                                                                    <div className="pt-2 border-t">
-                                                                                        <p className="text-sm text-muted-foreground">Instructions de livraison</p>
-                                                                                        <p className="text-sm">{selectedOrder.shipping_address.instructions}</p>
-                                                                                    </div>
-                                                                                )}
+                                                                                <div className="pt-2 border-t">
+                                                                                    <p className="text-sm text-muted-foreground">Contact</p>
+                                                                                    <p className="font-medium">-</p>
+                                                                                </div>
                                                                             </div>
                                                                         ) : (
                                                                             <div className="space-y-2">
@@ -563,7 +666,7 @@ export function AdminOrders() {
                                                                                         Cette commande nécessite une adresse de livraison.
                                                                                     </p>
                                                                                     <p className="text-xs text-yellow-700 mt-1">
-                                                                                        Veuillez compléter les informations de livraison pour permettre l'expédition.
+                                                                                        Veuillez compléter les informations de livraison pour permettre l&apos;expédition.
                                                                                     </p>
                                                                                 </div>
                                                                                 <div className="space-y-2">

@@ -35,13 +35,13 @@ export const handleSort = (
         const valueA = a[key];
         const valueB = b[key];
 
-        // Si les deux valeurs sont undefined, on les considère égales
-        if (valueA === undefined && valueB === undefined) return 0;
-        // Si une seule valeur est undefined, on la met à la fin
-        if (valueA === undefined) return 1;
-        if (valueB === undefined) return -1;
+        // Si les deux valeurs sont undefined ou null, on les considère égales
+        if ((valueA === undefined || valueA === null) && (valueB === undefined || valueB === null)) return 0;
+        // Si une seule valeur est undefined ou null, on la met à la fin
+        if (valueA === undefined || valueA === null) return 1;
+        if (valueB === undefined || valueB === null) return -1;
 
-        // Comparaison des valeurs définies
+        // Comparaison des valeurs définies (à ce stade, on sait que valueA et valueB ne sont ni null ni undefined)
         if (valueA < valueB) return direction === 'ascending' ? -1 : 1;
         if (valueA > valueB) return direction === 'ascending' ? 1 : -1;
         return 0;

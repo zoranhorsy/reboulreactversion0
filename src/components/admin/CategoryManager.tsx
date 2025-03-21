@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/components/ui/use-toast"
 import { api } from '@/lib/api'
-import { Pencil, Trash2, Plus, Loader2 } from 'lucide-react'
+import { Pencil, Trash2, Plus, Loader2, Edit, Trash } from 'lucide-react'
 import { Badge } from "@/components/ui/badge"
 import {
     Table,
@@ -132,113 +132,111 @@ export function CategoryManager({ onUpdate }: CategoryManagerProps) {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Catégories</h2>
-          <p className="text-muted-foreground">
-            Gérez les catégories de produits de votre boutique
-          </p>
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 items-start sm:items-end">
+        <div className="w-full sm:w-auto space-y-1 sm:space-y-2 flex-1">
+          <Label htmlFor="newCategoryName" className="text-xs sm:text-sm">Nom de la catégorie</Label>
+          <Input 
+            id="newCategoryName" 
+            value={newCategoryName} 
+            onChange={(e) => setNewCategoryName(e.target.value)}
+            placeholder="Nom de la catégorie"
+            className="text-xs sm:text-sm h-8 sm:h-9"
+            disabled={isLoading}
+          />
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={handleAdd}>
-              <Plus className="h-4 w-4 mr-2" />
-              Ajouter une catégorie
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>
-                {editingCategory ? "Modifier la catégorie" : "Ajouter une catégorie"}
-              </DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Nom de la catégorie</Label>
-                <Input
-                  id="name"
-                  value={newCategoryName}
-                  onChange={(e) => setNewCategoryName(e.target.value)}
-                  placeholder="Entrez le nom de la catégorie"
-                  required
-                />
-              </div>
-              <DialogFooter>
-                <Button
-                  type="submit"
-                  disabled={isSubmitting || !newCategoryName.trim()}
-                >
-                  {isSubmitting && (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  )}
-                  {editingCategory ? "Mettre à jour" : "Ajouter"}
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
+        <Button 
+          onClick={handleAdd} 
+          disabled={!newCategoryName.trim() || isLoading}
+          className="w-full sm:w-auto mt-1 h-8 sm:h-9 text-xs sm:text-sm"
+        >
+          {isLoading ? <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" /> : 'Ajouter'}
+        </Button>
       </div>
 
-      <div className="rounded-md border">
-        <ScrollArea className="h-[calc(100vh-400px)]">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nom</TableHead>
-                <TableHead>Nombre de produits</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={3} className="h-24 text-center">
-                    <Loader2 className="h-4 w-4 animate-spin mx-auto" />
+      <div className="rounded-md border overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-12 text-xs sm:text-sm">ID</TableHead>
+              <TableHead className="text-xs sm:text-sm">Nom</TableHead>
+              <TableHead className="text-right text-xs sm:text-sm">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {categories.map((category) => (
+              <TableRow key={category.id}>
+                <TableCell className="font-medium text-xs sm:text-sm">{category.id}</TableCell>
+                {editingCategory?.id === category.id ? (
+                  <TableCell>
+                    <Input 
+                      value={newCategoryName} 
+                      onChange={(e) => setNewCategoryName(e.target.value)}
+                      className="w-full text-xs sm:text-sm h-7 sm:h-8"
+                      disabled={isLoading}
+                    />
                   </TableCell>
-                </TableRow>
-              ) : categories.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={3} className="h-24 text-center">
-                    Aucune catégorie trouvée
-                  </TableCell>
-                </TableRow>
-              ) : (
-                categories.map((category) => (
-                  <TableRow key={category.id} className="group">
-                    <TableCell>
-                      <div className="font-medium">{category.name}</div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/20">
-                        {category.products_count || 0} produit(s)
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button
-                          variant="ghost"
-                          size="icon"
+                ) : (
+                  <TableCell className="text-xs sm:text-sm">{category.name}</TableCell>
+                )}
+                <TableCell className="text-right">
+                  <div className="flex justify-end gap-2">
+                    {editingCategory?.id === category.id ? (
+                      <>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={handleSubmit}
+                          disabled={isLoading || !newCategoryName.trim()}
+                          className="h-7 sm:h-8 text-[10px] sm:text-xs"
+                        >
+                          {isLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Enregistrer'}
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => setEditingCategory(null)}
+                          disabled={isLoading}
+                          className="h-7 sm:h-8 text-[10px] sm:text-xs"
+                        >
+                          Annuler
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
                           onClick={() => handleEdit(category)}
+                          disabled={isLoading}
+                          className="h-7 sm:h-8 text-[10px] sm:text-xs"
                         >
-                          <Pencil className="h-4 w-4" />
+                          <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
+                        <Button 
+                          variant="destructive" 
+                          size="sm" 
                           onClick={() => handleDelete(category.id)}
-                          className="text-destructive hover:text-destructive"
+                          disabled={isLoading}
+                          className="h-7 sm:h-8 text-[10px] sm:text-xs"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash className="h-3 w-3 sm:h-4 sm:w-4" />
                         </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </ScrollArea>
+                      </>
+                    )}
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+            {categories.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={3} className="text-center text-muted-foreground py-6 text-xs sm:text-sm">
+                  Aucune catégorie trouvée
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
       </div>
     </div>
   )

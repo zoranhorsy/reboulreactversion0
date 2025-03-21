@@ -21,7 +21,8 @@ export function ShippingAddresses() {
         street: '',
         city: '',
         postal_code: '',
-        country: ''
+        country: '',
+        phone: ''
     })
     const { toast } = useToast()
 
@@ -56,7 +57,8 @@ export function ShippingAddresses() {
                     street: '',
                     city: '',
                     postal_code: '',
-                    country: ''
+                    country: '',
+                    phone: ''
                 })
                 toast({
                     title: 'Adresse ajoutée',
@@ -184,6 +186,14 @@ export function ShippingAddresses() {
                                     onChange={e => setNewAddress(prev => ({ ...prev, country: e.target.value }))}
                                 />
                             </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="phone">Téléphone</Label>
+                                <Input
+                                    id="phone"
+                                    value={newAddress.phone}
+                                    onChange={e => setNewAddress(prev => ({ ...prev, phone: e.target.value }))}
+                                />
+                            </div>
                         </div>
                         <DialogFooter>
                             <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
@@ -289,6 +299,14 @@ export function ShippingAddresses() {
                                     id="edit-country"
                                     value={currentAddress.country}
                                     onChange={e => setCurrentAddress(prev => prev ? { ...prev, country: e.target.value } : null)}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="edit-phone">Téléphone</Label>
+                                <Input
+                                    id="edit-phone"
+                                    value={currentAddress.phone}
+                                    onChange={e => setCurrentAddress(prev => prev ? { ...prev, phone: e.target.value } : null)}
                                 />
                             </div>
                         </div>

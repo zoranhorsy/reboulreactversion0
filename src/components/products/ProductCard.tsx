@@ -13,6 +13,62 @@ import { toast } from "@/components/ui/use-toast"
 import { useAuth } from '@/app/contexts/AuthContext'
 import type { CartItemVariant } from '@/lib/types/cart'
 import { ProductImage } from "@/lib/types/product-image"
+import { getColorInfo, isWhiteColor } from '@/config/productColors'
+import { api } from "@/lib/api"
+
+// Hook pour récupérer les marques
+function useBrands() {
+  const [brands, setBrands] = useState<Record<number, string>>({})
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    async function loadBrands() {
+      try {
+        const brandsData = await api.fetchBrands()
+        const brandsMap = brandsData.reduce((acc, brand) => {
+          acc[brand.id] = brand.name
+          return acc
+        }, {} as Record<number, string>)
+        setBrands(brandsMap)
+      } catch (error) {
+        console.error("Error loading brands:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadBrands()
+  }, [])
+
+  return { brands, isLoading }
+}
+
+// Hook pour récupérer les catégories
+function useCategories() {
+  const [categories, setCategories] = useState<Record<number, string>>({})
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    async function loadCategories() {
+      try {
+        const categoriesData = await api.fetchCategories()
+        const categoriesMap = categoriesData.reduce((acc, category) => {
+          acc[category.id] = category.name
+          return acc
+        }, {} as Record<number, string>)
+        setCategories(categoriesMap)
+      } catch (error) {
+        console.error("Error loading categories:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadCategories()
+  }, [])
+
+  return { categories, isLoading }
+}
 
 // Import du mapping des couleurs
 const colorMap: Record<string, { hex: string; label: string }> = {
@@ -42,6 +98,8 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
   const { addItem } = useCart()
   const { addToFavorites, removeFromFavorites, isFavorite } = useFavorites()
   const { user } = useAuth()
+  const { brands } = useBrands()
+  const { categories } = useCategories()
 
   if (!product) return null
 
@@ -114,7 +172,8 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
       const cartVariant: CartItemVariant = {
         size,
         color,
-        colorLabel: colorInfo.label
+        colorLabel: colorInfo.label,
+        stock: variant.stock
       }
 
       const cartItemId = `${product.id}-${size}-${color}`
@@ -135,7 +194,7 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
       console.error("Error adding to cart:", error)
       toast({
         title: "Erreur",
-        description: error instanceof Error ? error.message : "Impossible d'ajouter le produit au panier. Veuillez réessayer.",
+        description: error instanceof Error ? error.message : "Impossible d&apos;ajouter le produit au panier. Veuillez réessayer.",
         variant: "destructive",
       })
     }
@@ -197,33 +256,39 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
                 onError={handleImageError}
               />
             )}
+            
+            {/* Bouton favoris (toujours visible) */}
+            <Button
+              size="icon"
+              variant="ghost"
+              className={cn(
+                "absolute top-2 right-2 z-10",
+                "w-9 h-9 rounded-full",
+                "bg-zinc-200/80 dark:bg-zinc-700/80 backdrop-blur-sm",
+                "hover:bg-zinc-200/90 dark:hover:bg-zinc-700/90",
+                isFavorite(product.id) 
+                  ? "text-red-500" 
+                  : "text-zinc-500 dark:text-zinc-400"
+              )}
+              onClick={handleFavoriteClick}
+            >
+              <Heart className="w-[18px] h-[18px]" fill={isFavorite(product.id) ? "currentColor" : "none"} />
+            </Button>
+            
+            {/* Boutons desktop (hover) */}
             <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 
-              transition-all duration-300 flex items-center justify-center gap-4">
+              transition-all duration-300 hidden sm:flex items-center justify-center gap-4">
               <Button
                 size="icon"
                 variant="ghost"
                 className={cn(
-                  "w-10 h-10 rounded-full",
+                  "w-8 h-8 rounded-full",
                   "bg-background/95 backdrop-blur-sm",
                   "opacity-0 group-hover:opacity-100",
                   "transition-all duration-300",
                   "hover:scale-110 hover:bg-primary hover:text-background",
-                  "shadow-sm",
-                  isFavorite(product.id) && "text-red-500 hover:text-background"
+                  "shadow-sm"
                 )}
-                onClick={handleFavoriteClick}
-              >
-                <Heart className="w-4 h-4" fill={isFavorite(product.id) ? "currentColor" : "none"} />
-              </Button>
-              <Button
-                size="icon"
-                variant="ghost"
-                className="w-10 h-10 rounded-full 
-                  bg-background/95 backdrop-blur-sm
-                  opacity-0 group-hover:opacity-100 
-                  transition-all duration-300
-                  hover:scale-110 hover:bg-primary hover:text-background
-                  shadow-sm"
                 onClick={(e) => {
                   e.preventDefault()
                   e.stopPropagation()
@@ -236,102 +301,117 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
           </div>
           
           <div className={cn(
-            "p-4 space-y-2 bg-card",
+            "p-3 space-y-1.5",
             viewMode === "list" && "flex-1"
           )}>
             <div className="flex justify-between items-start">
               <div className="space-y-1">
-                <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  {product.brand || 'REBOUL'}
-                </h3>
-                <p className="text-sm font-medium text-primary line-clamp-1">
+                <p className="text-sm sm:text-base font-medium line-clamp-1">
                   {product.name}
                 </p>
-              </div>
-              <Badge variant="secondary" className="text-xs">
-                {product.category || 'Nouveauté'}
-              </Badge>
-            </div>
-
-            {/* Couleurs disponibles */}
-            {product.variants && product.variants.length > 0 && (
-              <div className="flex items-center gap-1.5 mt-2">
-                <span className="text-xs text-muted-foreground">Couleurs :</span>
-                <div className="flex gap-1">
-                  {Array.from(new Set(product.variants.map(v => v.color?.toLowerCase())))
-                    .filter(Boolean)
-                    .slice(0, 4)
-                    .map((color, index) => {
-                      const colorInfo = colorMap[color] || { hex: color, label: color }
-                      return (
-                        <div
-                          key={color}
-                          className={cn(
-                            "w-4 h-4 rounded-full border border-border/50",
-                            "transition-transform hover:scale-125",
-                            colorInfo.hex === "#FFFFFF" && "border-border"
-                          )}
-                          title={colorInfo.label}
-                          style={{ 
-                            background: colorInfo.hex.startsWith('linear-gradient') 
-                              ? colorInfo.hex 
-                              : colorInfo.hex
-                          }}
-                        />
-                      )
-                    })}
-                  {product.variants.length > 4 && (
-                    <div className="text-xs text-muted-foreground font-medium">
-                      +{Array.from(new Set(product.variants.map(v => v.color))).length - 4}
-                    </div>
+                {/* Affichage de la marque et catégorie */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {product.brand_id && brands[product.brand_id] && (
+                    <span className="text-xs text-muted-foreground font-medium">
+                      {brands[product.brand_id]}
+                    </span>
+                  )}
+                  {product.brand_id && brands[product.brand_id] && product.category_id && categories[product.category_id] && (
+                    <span className="text-xs text-muted-foreground">•</span>
+                  )}
+                  {product.category_id && categories[product.category_id] && (
+                    <span className="text-xs text-muted-foreground">
+                      {categories[product.category_id]}
+                    </span>
                   )}
                 </div>
               </div>
-            )}
+            </div>
 
-            {/* Tailles disponibles */}
+            {/* Couleurs disponibles - Taille augmentée */}
             {product.variants && product.variants.length > 0 && (
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs text-muted-foreground">Tailles :</span>
-                <div className="flex gap-1">
-                  {Array.from(new Set(product.variants.map(v => v.size)))
-                    .filter(Boolean)
-                    .slice(0, 5)
-                    .map((size) => (
-                      <span key={size} className="text-xs font-medium">
-                        {size}
-                      </span>
-                    ))}
-                  {Array.from(new Set(product.variants.map(v => v.size))).length > 5 && (
-                    <span className="text-xs text-muted-foreground font-medium">
-                      +{Array.from(new Set(product.variants.map(v => v.size))).length - 5}
+              <div className="flex items-center gap-2 overflow-hidden mt-2">
+                <span className="text-xs font-medium text-muted-foreground">Couleurs:</span>
+                <div className="flex items-center gap-1.5">
+                  {Array.from(new Set(product.variants.map(v => v.color.toLowerCase())))
+                    .slice(0, 3)
+                    .map((color, index) => {
+                      const colorInfo = getColorInfo(color)
+                      return (
+                        <div 
+                          key={index}
+                          className={cn(
+                            "h-4 w-4 rounded-full", 
+                            isWhiteColor(color) && "border border-gray-200"
+                          )}
+                          style={{ background: colorInfo.hex }}
+                          title={colorInfo.label}
+                        />
+                      )
+                    })}
+                  {Array.from(new Set(product.variants.map(v => v.color.toLowerCase()))).length > 3 && (
+                    <span className="text-xs text-muted-foreground">
+                      +{Array.from(new Set(product.variants.map(v => v.color.toLowerCase()))).length - 3}
                     </span>
                   )}
                 </div>
               </div>
             )}
-            
-            <div className="flex items-center justify-between pt-2">
-              {product.price ? (
-                <span className="text-base font-bold text-primary">
-                  {formatPrice(product.price)}
-                </span>
-              ) : (
-                <span className="text-xs text-muted-foreground italic">
-                  Prix sur demande
-                </span>
-              )}
-              {product.stock > 0 ? (
-                <Badge variant="outline" className="text-xs">
-                  En stock
-                </Badge>
-              ) : (
-                <Badge variant="destructive" className="text-xs">
-                  Rupture de stock
-                </Badge>
-              )}
+
+            {/* Tailles disponibles - Taille augmentée */}
+            {product.variants && product.variants.length > 0 && (
+              <div className="flex items-center gap-2 overflow-hidden mt-1.5">
+                <span className="text-xs font-medium text-muted-foreground">Tailles:</span>
+                <div className="flex items-center gap-1.5">
+                  {Array.from(new Set(product.variants.map(v => v.size)))
+                    .slice(0, 5)
+                    .map((size, index) => (
+                      <span 
+                        key={index} 
+                        className="text-xs text-foreground"
+                      >
+                        {size}{index < Math.min(Array.from(new Set(product.variants.map(v => v.size))).length, 5) - 1 ? "," : ""}
+                      </span>
+                    ))}
+                  {Array.from(new Set(product.variants.map(v => v.size))).length > 5 && (
+                    <span className="text-xs text-muted-foreground">...</span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-between items-center pt-1.5">
+              <div className="font-medium text-sm sm:text-base">
+                {formatPrice(product.price)}
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <div className="text-[10px] text-muted-foreground hidden sm:block">
+                  {product.variants && product.variants.some(v => v.stock > 0) ? 'En stock' : 'Rupture'}
+                </div>
+              </div>
             </div>
           </div>
+
+          {/* Bouton ajouter au panier sur mobile - positionné en bas à droite */}
+          <Button
+            size="icon"
+            variant="ghost"
+            className={cn(
+              "sm:hidden absolute bottom-3 right-3 z-10",
+              "w-8 h-8 rounded-full",
+              "bg-zinc-200/80 dark:bg-zinc-700/80 backdrop-blur-sm",
+              "hover:bg-zinc-200/90 dark:hover:bg-zinc-700/90",
+              "text-zinc-600 dark:text-zinc-300"
+            )}
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              setIsModalOpen(true)
+            }}
+          >
+            <ShoppingCart className="w-[18px] h-[18px]" />
+          </Button>
         </div>
       </Link>
       <ProductVariantModal

@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -42,7 +44,7 @@ export function HeroSection() {
     return (
         <section 
             ref={heroRef} 
-            className="relative min-h-[60dvh] w-full flex items-center justify-center overflow-hidden bg-background py-8"
+            className="relative min-h-[60dvh] w-full flex items-center justify-center overflow-hidden bg-white dark:bg-zinc-950 py-8"
         >
             {/* Contenu principal */}
             <div className="relative z-10 flex flex-col items-center justify-center h-full w-full max-w-screen-xl mx-auto px-4">

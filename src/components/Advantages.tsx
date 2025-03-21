@@ -46,7 +46,7 @@ const ADVANTAGES = [
 
 export function Advantages() {
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
             {ADVANTAGES.map((advantage, index) => {
                 const Icon = advantage.icon
                 return (
@@ -54,36 +54,36 @@ export function Advantages() {
                         key={advantage.id}
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.5, delay: index * 0.1 }}
+                        viewport={{ once: true, margin: "-50px" }}
+                        transition={{ duration: 0.5, delay: index * 0.05 }}
                         className="group relative"
                     >
                         <div className={cn(
-                            "flex flex-col items-center text-center p-8 rounded-xl",
-                            "bg-white dark:bg-zinc-900",
-                            "shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] dark:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.2)]",
-                            "hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.1)] dark:hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.3)]",
+                            "flex flex-col items-center text-center p-3 sm:p-4 md:p-6 rounded-lg sm:rounded-xl",
+                            "bg-white dark:bg-zinc-950",
+                            "shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] dark:shadow-[0_2px_10px_-4px_rgba(0,0,0,0.2)]",
+                            "hover:shadow-[0_4px_15px_-4px_rgba(0,0,0,0.1)] dark:hover:shadow-[0_4px_15px_-4px_rgba(0,0,0,0.3)]",
                             "border border-zinc-200 dark:border-zinc-800",
                             "transition-all duration-300"
                         )}>
                             <div className={cn(
-                                "w-16 h-16 mb-6 rounded-full",
-                                "bg-zinc-100 dark:bg-zinc-800/50",
+                                "w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 mb-2 sm:mb-3 md:mb-4 rounded-full",
+                                "bg-zinc-100 dark:bg-zinc-900/50",
                                 "flex items-center justify-center",
                                 "group-hover:scale-110 group-hover:rotate-[5deg]",
                                 "transition-all duration-300"
                             )}>
                                 <Icon className={cn(
-                                    "w-8 h-8",
+                                    "w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7",
                                     "text-zinc-900 dark:text-zinc-100",
                                     "group-hover:text-primary dark:group-hover:text-primary",
                                     "transition-colors"
                                 )} />
                             </div>
-                            <h3 className="font-geist text-lg font-medium text-zinc-900 dark:text-white mb-3">
+                            <h3 className="font-geist text-sm sm:text-base md:text-lg font-medium text-zinc-900 dark:text-white mb-1 sm:mb-2">
                                 {advantage.title}
                             </h3>
-                            <p className="font-geist text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                            <p className="font-geist text-xs leading-tight sm:leading-relaxed text-zinc-600 dark:text-zinc-400 max-w-[90%] mx-auto">
                                 {advantage.description}
                             </p>
                         </div>

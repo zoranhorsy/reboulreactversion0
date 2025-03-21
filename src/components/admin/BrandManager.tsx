@@ -161,170 +161,111 @@ export function BrandManager({ onUpdate }: BrandManagerProps) {
     }
 
     return (
-        <div className="space-y-4">
-            <div className="flex justify-between items-center">
-                <div>
-                    <h2 className="text-2xl font-bold tracking-tight">Marques</h2>
-                    <p className="text-muted-foreground">
-                        Gérez les marques de produits de votre boutique
-                    </p>
+        <div className="space-y-4 sm:space-y-6">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 items-start sm:items-end">
+                <div className="w-full sm:w-auto space-y-1 sm:space-y-2 flex-1">
+                    <Label htmlFor="newBrandName" className="text-xs sm:text-sm">Nom de la marque</Label>
+                    <Input 
+                        id="newBrandName" 
+                        value={formData.name} 
+                        onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                        placeholder="Nom de la marque"
+                        className="text-xs sm:text-sm h-8 sm:h-9"
+                        disabled={isLoading}
+                    />
                 </div>
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                    <DialogTrigger asChild>
-                        <Button onClick={handleAdd}>
-                            <Plus className="h-4 w-4 mr-2" />
-                            Ajouter une marque
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>
-                                {editingBrand ? "Modifier la marque" : "Ajouter une marque"}
-                            </DialogTitle>
-                        </DialogHeader>
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="name">Nom de la marque</Label>
-                                <Input
-                                    id="name"
-                                    value={formData.name}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                                    placeholder="Entrez le nom de la marque"
-                                    required
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="description">Description</Label>
-                                <Input
-                                    id="description"
-                                    value={formData.description}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                                    placeholder="Description de la marque"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="logo">Logo</Label>
-                                <div className="flex items-center gap-4">
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        onClick={() => document.getElementById('logo')?.click()}
-                                    >
-                                        <ImagePlus className="h-4 w-4 mr-2" />
-                                        {formData.logo ? "Changer le logo" : "Ajouter un logo"}
-                                    </Button>
-                                    <Input
-                                        id="logo"
-                                        type="file"
-                                        accept="image/*"
-                                        className="hidden"
-                                        onChange={handleFileChange}
-                                    />
-                                    {formData.logo && (
-                                        <span className="text-sm text-muted-foreground">
-                                            {formData.logo.name}
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
-                            <DialogFooter>
-                                <Button
-                                    type="submit"
-                                    disabled={isSubmitting || !formData.name.trim()}
-                                >
-                                    {isSubmitting && (
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    )}
-                                    {editingBrand ? "Mettre à jour" : "Ajouter"}
-                                </Button>
-                            </DialogFooter>
-                        </form>
-                    </DialogContent>
-                </Dialog>
+                <Button 
+                    onClick={handleAdd} 
+                    disabled={!formData.name.trim() || isLoading}
+                    className="w-full sm:w-auto mt-1 h-8 sm:h-9 text-xs sm:text-sm"
+                >
+                    {isLoading ? <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" /> : 'Ajouter'}
+                </Button>
             </div>
 
-            <div className="rounded-md border">
-                <ScrollArea className="h-[calc(100vh-400px)]">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Logo</TableHead>
-                                <TableHead>Nom</TableHead>
-                                <TableHead>Description</TableHead>
-                                <TableHead>Nombre de produits</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {isLoading ? (
-                                <TableRow>
-                                    <TableCell colSpan={5} className="h-24 text-center">
-                                        <Loader2 className="h-4 w-4 animate-spin mx-auto" />
+            <div className="rounded-md border overflow-hidden">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead className="w-12 text-xs sm:text-sm">ID</TableHead>
+                            <TableHead className="text-xs sm:text-sm">Nom</TableHead>
+                            <TableHead className="text-right text-xs sm:text-sm">Actions</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {brands.map((brand) => (
+                            <TableRow key={brand.id}>
+                                <TableCell className="font-medium text-xs sm:text-sm">{brand.id}</TableCell>
+                                {editingBrand && editingBrand.id === brand.id ? (
+                                    <TableCell>
+                                        <Input 
+                                            value={formData.name} 
+                                            onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                                            className="w-full text-xs sm:text-sm h-7 sm:h-8"
+                                            disabled={isLoading}
+                                        />
                                     </TableCell>
-                                </TableRow>
-                            ) : brands.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={5} className="h-24 text-center">
-                                        Aucune marque trouvée
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                brands.map((brand) => (
-                                    <TableRow key={brand.id} className="group">
-                                        <TableCell>
-                                            <div className="relative w-10 h-10 rounded-md overflow-hidden bg-muted">
-                                                {brand.logo ? (
-                                                    <Image
-                                                        src={brand.logo}
-                                                        alt={brand.name}
-                                                        fill
-                                                        className="object-contain"
-                                                    />
-                                                ) : (
-                                                    <div className="w-full h-full flex items-center justify-center">
-                                                        <ImagePlus className="w-4 h-4 text-muted-foreground" />
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="font-medium">{brand.name}</div>
-                                        </TableCell>
-                                        <TableCell>
-                                            <span className="text-sm text-muted-foreground line-clamp-1">
-                                                {brand.description || "Aucune description"}
-                                            </span>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Badge variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/20">
-                                                {brand.products_count || 0} produit(s)
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
+                                ) : (
+                                    <TableCell className="text-xs sm:text-sm">{brand.name}</TableCell>
+                                )}
+                                <TableCell className="text-right">
+                                    <div className="flex justify-end gap-2">
+                                        {editingBrand && editingBrand.id === brand.id ? (
+                                            <>
+                                                <Button 
+                                                    variant="outline" 
+                                                    size="sm" 
+                                                    onClick={handleSubmit}
+                                                    disabled={isLoading || !formData.name.trim()}
+                                                    className="h-7 sm:h-8 text-[10px] sm:text-xs"
+                                                >
+                                                    {isLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Enregistrer'}
+                                                </Button>
+                                                <Button 
+                                                    variant="ghost" 
+                                                    size="sm" 
+                                                    onClick={() => setEditingBrand(null)}
+                                                    disabled={isLoading}
+                                                    className="h-7 sm:h-8 text-[10px] sm:text-xs"
+                                                >
+                                                    Annuler
+                                                </Button>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Button 
+                                                    variant="outline" 
+                                                    size="sm" 
                                                     onClick={() => handleEdit(brand)}
+                                                    disabled={isLoading}
+                                                    className="h-7 sm:h-8 text-[10px] sm:text-xs"
                                                 >
-                                                    <Edit className="h-4 w-4" />
+                                                    <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
                                                 </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
+                                                <Button 
+                                                    variant="destructive" 
+                                                    size="sm" 
                                                     onClick={() => handleDelete(brand.id)}
-                                                    className="text-destructive hover:text-destructive"
+                                                    disabled={isLoading}
+                                                    className="h-7 sm:h-8 text-[10px] sm:text-xs"
                                                 >
-                                                    <Trash2 className="h-4 w-4" />
+                                                    <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                                                 </Button>
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
-                </ScrollArea>
+                                            </>
+                                        )}
+                                    </div>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                        {brands.length === 0 && (
+                            <TableRow>
+                                <TableCell colSpan={3} className="text-center text-muted-foreground py-6 text-xs sm:text-sm">
+                                    Aucune marque trouvée
+                                </TableCell>
+                            </TableRow>
+                        )}
+                    </TableBody>
+                </Table>
             </div>
         </div>
     )

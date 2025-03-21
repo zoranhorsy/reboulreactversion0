@@ -16,7 +16,7 @@ interface AddToCartButtonProps {
   stock: number
 }
 
-export function AddToCartButton({ productId, name, price, image, disabled, size, color }: AddToCartButtonProps) {
+export function AddToCartButton({ productId, name, price, image, disabled, size, color, stock }: AddToCartButtonProps) {
   const { addItem } = useCart()
   const [state, setState] = useState({ isAdding: false, showParticles: false })
   const buttonRef = useRef<HTMLButtonElement>(null)
@@ -75,7 +75,9 @@ export function AddToCartButton({ productId, name, price, image, disabled, size,
         image, 
         variant: {
             size: size || '',
-            color: color || ''
+            color: color || '',
+            colorLabel: color || '',
+            stock: stock || 0
         }
     }
     addItem(newItem)

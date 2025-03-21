@@ -63,6 +63,7 @@ export function Cart() {
               price={item.price}
               quantity={item.quantity}
               image={item.image || "/placeholder.png"}
+              variant={item.variant || { size: "", color: "", stock: 999 }}
               onRemove={() => removeItem(item.id)}
               onUpdateQuantity={(quantity) => updateQuantity(item.id, quantity)}
             />

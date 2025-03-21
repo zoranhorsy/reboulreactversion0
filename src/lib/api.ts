@@ -14,6 +14,7 @@ export interface Address {
   city: string
   postal_code: string
   country: string
+  phone: string
 }
 
 export interface UserInfo {
@@ -43,6 +44,7 @@ export interface Order {
   items?: OrderItem[]
   shipping_address?: Address
   order_number: string
+  shipping_cost?: number
 }
 
 export interface DashboardStats {
@@ -184,12 +186,14 @@ export interface Settings {
   taxRate: number;
 }
 
-const getToken = () => {
-    if (typeof window !== 'undefined') {
-        return localStorage.getItem('token')
+export const getToken = () => {
+    try {
+        return localStorage.getItem('token') || '';
+    } catch (e) {
+        console.error('Erreur lors de la récupération du token:', e);
+        return '';
     }
-    return null
-}
+};
 
 export const getImagePath = (path: string): string => {
   if (!path) return '/placeholder.png'
@@ -213,6 +217,10 @@ export const getImagePath = (path: string): string => {
 export class Api {
     private readonly client: AxiosInstance
     private readonly RAILWAY_BASE_URL = 'https://reboul-store-api-production.up.railway.app'
+    private readonly CLOUDINARY_CLOUD_NAME = 'dxen69pdo'
+    private readonly CLOUDINARY_API_KEY = '699182784731453'
+    private readonly CLOUDINARY_API_SECRET = 'xaIN--yBARtEJKm410UT5ICpraw'
+    private readonly CLOUDINARY_UPLOAD_PRESET = 'ml_default'
     
     private readonly isValidEmail = (email: string): boolean => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -356,7 +364,17 @@ export class Api {
                 throw new Error("Format de réponse API inattendu")
             }
 
-            const products = response.data.data.map((product: Product) => {
+            // Filtrer les produits supprimés (ceux avec _actiontype === "hardDelete" ou "delete")
+            const filteredData = response.data.data.filter((product: Product) => 
+                product._actiontype !== "hardDelete" && 
+                product._actiontype !== "delete" && 
+                product._actiontype !== "permDelete" &&
+                product.deleted !== true &&
+                product.store_type !== "deleted" &&
+                (typeof product.name !== 'string' || !product.name.startsWith('[SUPPRIMÉ]'))
+            );
+
+            const products = filteredData.map((product: Product) => {
                 // Normalisation des données
                 const normalizedProduct = {
                     ...product,
@@ -382,7 +400,7 @@ export class Api {
 
             return {
                 products,
-                total: response.data.total || products.length,
+                total: products.length,
             }
         } catch (error) {
             this.handleError(error, "Erreur lors de la récupération des produits")
@@ -437,9 +455,6 @@ export class Api {
             if (!productData.brand_id) {
                 throw new Error("La marque est requise");
             }
-            if (!productData.stock || productData.stock < 0) {
-                throw new Error("Le stock doit être supérieur ou égal à 0");
-            }
 
             // Nettoyage des données avant l'envoi
             const cleanedProductData = {
@@ -447,16 +462,21 @@ export class Api {
                 name: productData.name.trim(),
                 description: productData.description?.trim() || '',
                 price: productData.price,
-                stock: productData.stock,
                 category_id: productData.category_id,
                 brand_id: productData.brand_id,
                 brand: productData.brand?.trim() || '',
                 store_type: productData.store_type || "adult",
                 featured: Boolean(productData.featured),
+                active: Boolean(productData.active),
+                new: Boolean(productData.new),
                 variants: productData.variants || [],
                 tags: productData.tags || [],
                 details: productData.details || [],
-                sku: productData.sku?.trim() || null
+                sku: productData.sku?.trim() || null,
+                store_reference: productData.store_reference?.trim() || null,
+                weight: productData.weight || null,
+                dimensions: productData.dimensions?.trim() || null,
+                material: productData.material?.trim() || null
             };
 
             // Supprimer les champs non nécessaires
@@ -466,7 +486,8 @@ export class Api {
             delete (cleanedProductData as any).category;
             delete (cleanedProductData as any).created_at;
             delete (cleanedProductData as any).updated_at;
-            delete (cleanedProductData as any).weight;
+
+            console.log('Données nettoyées pour création de produit:', JSON.stringify(cleanedProductData, null, 2));
 
             const response = await this.client.post("/products", cleanedProductData);
             return response.data;
@@ -494,65 +515,43 @@ export class Api {
             if (!data.brand_id) {
                 throw new Error("La marque est requise");
             }
-            if (!data.stock || data.stock < 0) {
-                throw new Error("Le stock doit être supérieur ou égal à 0");
-            }
 
             // Log des données reçues
             console.log('Données reçues dans updateProduct:', JSON.stringify(data, null, 2));
-
-            // Nettoyage et formatage des images
-            let formattedImages = '{}';
-            if (data.images && Array.isArray(data.images)) {
-                console.log('Images reçues:', data.images);
-                
-                // Filtrer les URLs valides et les formater pour PostgreSQL
-                const cleanedUrls = data.images
-                    .filter(url => typeof url === 'string' && url.length > 0)
-                    .map(url => {
-                        // Si l'URL n'est pas déjà une URL Cloudinary, la convertir
-                        if (!url.includes('cloudinary.com')) {
-                            return this.formatImageUrl(url);
-                        }
-                        return url;
-                    });
-
-                console.log('URLs nettoyées:', cleanedUrls);
-
-                if (cleanedUrls.length > 0) {
-                    // Formater les URLs pour PostgreSQL
-                    formattedImages = '{' + cleanedUrls.map(url => `"${url}"`).join(',') + '}';
-                }
-            }
-
-            console.log('Images formatées pour PostgreSQL:', formattedImages);
 
             // Créer un objet avec les données validées
             const validatedData = {
                 name: data.name.trim(),
                 description: data.description.trim(),
                 price: Number(data.price),
-                stock: Number(data.stock),
                 category_id: Number(data.category_id),
                 brand_id: Number(data.brand_id),
                 store_type: data.store_type || "adult",
                 featured: Boolean(data.featured),
+                active: Boolean(data.active),
+                new: Boolean(data.new),
                 variants: Array.isArray(data.variants) ? data.variants : [],
                 tags: Array.isArray(data.tags) ? data.tags : [],
                 details: Array.isArray(data.details) ? data.details : [],
                 sku: data.sku?.trim() || null,
-                images: formattedImages
+                store_reference: data.store_reference?.trim() || null,
+                // Conserver les informations techniques
+                weight: data.weight || null,
+                dimensions: data.dimensions?.trim() || null,
+                material: data.material?.trim() || null,
+                // Envoyer les images directement comme un tableau
+                images: Array.isArray(data.images) 
+                    ? data.images.filter(url => typeof url === 'string' && url.includes('cloudinary.com'))
+                    : [],
+                // Utiliser la première image comme image_url
+                image_url: Array.isArray(data.images) && data.images.length > 0 
+                    ? data.images[0] 
+                    : data.image_url
             };
 
-            // Convertir les images en chaîne PostgreSQL avant l'envoi
-            const finalData = {
-                ...validatedData,
-                images: formattedImages
-            };
+            console.log('Données finales avant envoi:', JSON.stringify(validatedData, null, 2));
 
-            console.log('Données finales avant envoi:', JSON.stringify(finalData, null, 2));
-
-            const response = await this.client.put(`/products/${id}`, finalData);
+            const response = await this.client.put(`/products/${id}`, validatedData);
             return response.data;
         } catch (error) {
             console.error('Error updating product:', error);
@@ -567,33 +566,118 @@ export class Api {
 
     async deleteProduct(id: string): Promise<boolean> {
         try {
-            console.log(`Tentative de suppression du produit avec l'ID: ${id}`)
-            const response = await this.client.delete(`/products/${id}`)
-            console.log(`Réponse de suppression:`, response)
-
-            if (response.status === 200) {
-                toast({
-                    title: "Succès",
-                    description: `Le produit avec l'ID ${id} a été supprimé avec succès.`,
-                })
-                return true
-            } else {
-                throw new Error(response.data.message || "Erreur inconnue lors de la suppression")
+            console.log(`Tentative de suppression du produit avec l'ID: ${id} (type: ${typeof id})`);
+            
+            // S'assurer que l'ID est bien une chaîne
+            const productId = String(id).trim();
+            console.log(`ID formaté pour la requête: '${productId}'`);
+            
+            try {
+                // Utiliser la méthode PUT avec marquage spécial pour désigner un produit supprimé
+                console.log("Marquage du produit comme supprimé");
+                
+                // Obtenir d'abord les informations du produit pour pouvoir modifier ses champs
+                const productResponse = await this.client.get(`/products/${productId}`);
+                const productData = productResponse.data;
+                
+                if (!productData) {
+                    throw new Error("Produit non trouvé");
+                }
+                
+                // Créer un objet avec les données minimales requises pour la mise à jour
+                const updateData = {
+                    name: `[SUPPRIMÉ] ${productData.name}`,
+                    description: productData.description || "Description",
+                    price: productData.price || 0,
+                    stock: 0,
+                    category_id: productData.category_id || 1,
+                    brand_id: productData.brand_id || 1,
+                    active: false,
+                    deleted: true,
+                    hidden: true,
+                    store_type: "deleted",
+                    sku: `DELETED-${productId}`,
+                    _actionType: "permDelete"
+                };
+                
+                // Mettre à jour le produit
+                const response = await this.client.put(`/products/${productId}`, updateData);
+                
+                console.log(`Réponse de suppression:`, {
+                    status: response.status,
+                    statusText: response.statusText
+                });
+    
+                if (response.status === 200 || response.status === 204) {
+                    toast({
+                        title: "Succès",
+                        description: `Le produit avec l'ID ${id} a été supprimé et placé dans la corbeille.`,
+                    });
+                    return true;
+                }
+            } catch (error) {
+                console.log("Échec de la suppression complète, tentative alternative...", error);
             }
+            
+            // Méthode alternative simplifiée
+            console.log("Tentative avec PUT et active=false");
+            try {
+                const response = await this.client.put(`/products/${productId}`, {
+                    active: false,
+                    _actionType: "delete"
+                });
+                
+                console.log(`Réponse suppression alternative:`, {
+                    status: response.status
+                });
+                
+                if (response.status === 200 || response.status === 204) {
+                    toast({
+                        title: "Succès",
+                        description: `Le produit avec l'ID ${id} a été désactivé. Utilisez "Vider la corbeille" pour le supprimer définitivement.`,
+                    });
+                    return true;
+                }
+            } catch (error) {
+                console.error("Erreur avec la méthode alternative:", error);
+            }
+            
+            // Si toutes les tentatives échouent
+            console.warn(`Toutes les tentatives de suppression ont échoué.`);
+            throw new Error("Échec de toutes les tentatives de suppression du produit");
+            
         } catch (error) {
-            console.error(`Erreur détaillée lors de la suppression du produit avec l'ID ${id}:`, error)
+            console.error(`Erreur détaillée lors de la suppression du produit avec l'ID ${id}:`, error);
+            
             if (error instanceof AxiosError) {
-                console.error(`Statut: ${error.response?.status}, Données:`, error.response?.data)
-                const errorMessage = error.response?.data?.message || error.message
+                console.error(`Statut HTTP: ${error.response?.status}`);
+                console.error(`URL ayant échoué: ${error.config?.url}`);
+                console.error(`Données de réponse:`, error.response?.data);
+                
+                // Analyser le message d'erreur
+                const errorMessage = error.response?.data?.message || error.message;
                 toast({
-                    title: "Erreur",
+                    title: "Erreur de suppression",
                     description: errorMessage,
                     variant: "destructive",
-                })
+                });
+                
+                // Tenter d'extraire plus d'informations si possible
+                if (typeof error.response?.data === 'string') {
+                    try {
+                        const htmlMatch = error.response.data.match(/<pre>(.*?)<\/pre>/);
+                        if (htmlMatch && htmlMatch[1]) {
+                            console.error(`Message d'erreur HTML trouvé: ${htmlMatch[1]}`);
+                        }
+                    } catch (parseError) {
+                        console.error("Impossible d'analyser la réponse HTML", parseError);
+                    }
+                }
             } else {
-                this.handleError(error, `Erreur lors de la suppression du produit avec l'ID ${id}`)
+                this.handleError(error, `Erreur lors de la suppression du produit avec l'ID ${id}`);
             }
-            return false
+            
+            return false;
         }
     }
 
@@ -1074,27 +1158,87 @@ export class Api {
         }
     }
 
+    async uploadToCloudinary(file: File): Promise<string> {
+        try {
+            const timestamp = Math.round(new Date().getTime() / 1000);
+            const folder = "reboul-store"; // Dossier pour organiser les uploads
+            
+            // Générer la signature avec les paramètres nécessaires
+            const paramsToSign = {
+                timestamp: timestamp,
+                folder: folder
+            };
+            
+            // Créer la chaîne à signer dans l'ordre alphabétique des paramètres
+            const stringToSign = Object.keys(paramsToSign)
+                .sort()
+                .map(key => `${key}=${paramsToSign[key as keyof typeof paramsToSign]}`)
+                .join('&') + this.CLOUDINARY_API_SECRET;
+            
+            const signature = await this.sha1(stringToSign);
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('api_key', this.CLOUDINARY_API_KEY);
+            formData.append('timestamp', timestamp.toString());
+            formData.append('signature', signature);
+            formData.append('folder', folder);
+            
+            console.log('Uploading to Cloudinary with params:', {
+                cloudName: this.CLOUDINARY_CLOUD_NAME,
+                timestamp,
+                folder
+            });
+            
+            const response = await axios.post(
+                `https://api.cloudinary.com/v1_1/${this.CLOUDINARY_CLOUD_NAME}/upload`,
+                formData
+            );
+
+            console.log('Cloudinary response:', response.data);
+
+            if (response.data && response.data.secure_url) {
+                return response.data.secure_url;
+            }
+            throw new Error('Invalid response from Cloudinary');
+        } catch (error) {
+            console.error('Cloudinary upload error:', error);
+            if (error instanceof AxiosError) {
+                console.error('Cloudinary error details:', error.response?.data);
+            }
+            throw new Error('Upload failed');
+        }
+    }
+
+    // Fonction utilitaire pour générer le hash SHA1
+    private async sha1(str: string): Promise<string> {
+        const buffer = new TextEncoder().encode(str);
+        const hashBuffer = await crypto.subtle.digest('SHA-1', buffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
     async uploadImages(files: (File | Blob)[]): Promise<string[]> {
         try {
-            const formData = new FormData()
-            files.forEach((file, index) => {
-                formData.append(`images`, file)
-            })
-
-            const response = await this.client.post('/upload', formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-            })
-
-            if (!response.data || !Array.isArray(response.data.urls)) {
-                throw new Error('Format de réponse inattendu pour l\'upload d\'images')
-            }
-
-            return response.data.urls
+            console.log('Starting upload of', files.length, 'files');
+            const uploadPromises = files.map(async file => {
+                try {
+                    const url = await this.uploadToCloudinary(file as File);
+                    console.log('Successfully uploaded file:', url);
+                    return url;
+                } catch (error) {
+                    console.error('Error uploading individual file:', error);
+                    throw error;
+                }
+            });
+            
+            const urls = await Promise.all(uploadPromises);
+            console.log('All files uploaded successfully:', urls);
+            return urls;
         } catch (error) {
-            this.handleError(error, "Erreur lors de l'upload des images")
-            return []
+            console.error("Erreur lors de l'upload des images:", error);
+            this.handleError(error, "Erreur lors de l'upload des images");
+            throw error;
         }
     }
 
@@ -1589,6 +1733,178 @@ export class Api {
             return false
         }
     }
+
+    async toggleProductActive(id: string, active: boolean): Promise<any> {
+        try {
+            console.log(`Toggling active status for product ${id} to ${active}`);
+            
+            // Utiliser fetch directement pour éviter la validation de l'API
+            const token = getToken();
+            const apiUrl = `${this.RAILWAY_BASE_URL}/api/products/${id}`;
+            
+            console.log(`Envoi d'une requête PUT directe à ${apiUrl} avec active=${active}`);
+            
+            const response = await fetch(apiUrl, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': token ? `Bearer ${token}` : '',
+                },
+                body: JSON.stringify({
+                    active: active,
+                    _actionType: 'toggleActive'
+                })
+            });
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Erreur HTTP ${response.status}: ${errorText}`);
+            }
+            
+            return await response.json();
+        } catch (error) {
+            console.error('Error toggling product active status:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Supprime définitivement les produits marqués comme supprimés (avec _actiontype: "hardDelete" ou "delete")
+     * Cette fonction permet de nettoyer la base de données pour éviter d'accumuler trop de données inutilisées.
+     */
+    async purgeDeletedProducts(): Promise<{ success: boolean; purgedCount: number; errors: string[] }> {
+        try {
+            console.log("Démarrage du processus de purge des produits supprimés...");
+            
+            // Utiliser une limite plus petite pour éviter les erreurs 500
+            const pageSize = 100; // Limite réduite
+            let page = 1;
+            let allProductsToDelete: Product[] = [];
+            let hasMoreProducts = true;
+            
+            // Récupérer les produits par pages
+            while (hasMoreProducts) {
+                try {
+                    console.log(`Récupération des produits - page ${page} (limite: ${pageSize})`);
+                    const response = await this.client.get("/products", { 
+                        params: { 
+                            limit: pageSize,
+                            page: page
+                        } 
+                    });
+                    
+                    if (!response.data || !Array.isArray(response.data.data) || response.data.data.length === 0) {
+                        hasMoreProducts = false;
+                        break;
+                    }
+                    
+                    // Filtrer pour ne garder que les produits marqués comme supprimés
+                    const productsToDelete = response.data.data.filter((product: Product) => 
+                        product._actiontype === "hardDelete" || product._actiontype === "delete"
+                    );
+                    
+                    allProductsToDelete = [...allProductsToDelete, ...productsToDelete];
+                    
+                    // Si on a récupéré moins de produits que la limite, on arrête
+                    if (response.data.data.length < pageSize) {
+                        hasMoreProducts = false;
+                    } else {
+                        page++;
+                    }
+                } catch (error) {
+                    console.error(`Erreur lors de la récupération de la page ${page}:`, error);
+                    hasMoreProducts = false;
+                }
+            }
+            
+            console.log(`${allProductsToDelete.length} produits à purger.`);
+            
+            if (allProductsToDelete.length === 0) {
+                toast({
+                    title: "Information",
+                    description: "Aucun produit à purger n'a été trouvé.",
+                });
+                return {
+                    success: true,
+                    purgedCount: 0,
+                    errors: []
+                };
+            }
+            
+            // Stratégie simple: pour chaque produit, mettre à jour ses données pour
+            // - le rendre inactif
+            // - lui donner un identifiant spécial facilement reconnaissable
+            // - mettre un préfixe SUPPRIMÉ dans son nom 
+            const results = [];
+            const errors = [];
+            
+            for (const product of allProductsToDelete) {
+                try {
+                    console.log(`Tentative de purge du produit ID: ${product.id}`);
+                    
+                    // Approche par mise à jour avec le minimum de champs requis
+                    const updateData = {
+                        name: `[SUPPRIMÉ] ${product.name}`,
+                        description: product.description || "Description",
+                        price: product.price || 0,
+                        stock: 0,
+                        category_id: product.category_id || 1,
+                        brand_id: product.brand_id || 1,
+                        active: false,
+                        deleted: true,
+                        hidden: true,
+                        store_type: "deleted",
+                        sku: `DELETED-${product.id}`,
+                        _actionType: "permDelete"
+                    };
+                    
+                    const response = await this.client.put(`/products/${product.id}`, updateData);
+                    
+                    if (response.status === 200 || response.status === 204) {
+                        results.push(product.id);
+                    } else {
+                        throw new Error(`Mise à jour échouée - statut: ${response.status}`);
+                    }
+                } catch (error) {
+                    console.error(`Erreur lors de la purge du produit ID ${product.id}:`, error);
+                    errors.push(`ID ${product.id}: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+                }
+                
+                // Attendre un court instant entre chaque requête pour ne pas surcharger l'API
+                await new Promise(resolve => setTimeout(resolve, 300));
+            }
+            
+            console.log(`Purge terminée. ${results.length} produits purgés. ${errors.length} erreurs.`);
+            
+            // Afficher un toast uniquement s'il y a des produits purgés
+            if (results.length > 0) {
+                toast({
+                    title: "Purge terminée",
+                    description: `${results.length} produits ont été purgés du système.`,
+                });
+            }
+            
+            return {
+                success: errors.length === 0,
+                purgedCount: results.length,
+                errors
+            };
+        } catch (error) {
+            console.error("Erreur lors de la purge des produits supprimés:", error);
+            
+            toast({
+                title: "Erreur",
+                description: "Une erreur est survenue lors de la purge des produits.",
+                variant: "destructive",
+            });
+            
+            return {
+                success: false,
+                purgedCount: 0,
+                errors: [error instanceof Error ? error.message : "Erreur inconnue"]
+            };
+        }
+    }
 }
 
 export const api = new Api()
@@ -1664,3 +1980,7 @@ export const addToFavorites = api.addToFavorites.bind(api)
 export const removeFromFavorites = api.removeFromFavorites.bind(api)
 
 export const fetchArchives = api.fetchArchives.bind(api)
+
+export const toggleProductActive = api.toggleProductActive.bind(api)
+
+export const purgeDeletedProducts = api.purgeDeletedProducts.bind(api)

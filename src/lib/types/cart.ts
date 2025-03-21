@@ -4,6 +4,7 @@ export interface CartItemVariant {
   size: string
   color: string
   colorLabel: string
+  stock: number
 }
 
 export interface CartItem {

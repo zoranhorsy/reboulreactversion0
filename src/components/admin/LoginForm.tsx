@@ -32,7 +32,7 @@ export function LoginForm() {
                 
                 toast({
                     title: "Connexion réussie",
-                    description: "Bienvenue dans l'interface d'administration.",
+                    description: "Bienvenue dans l&apos;interface d&apos;administration.",
                 })
                 
                 window.location.href = '/admin'

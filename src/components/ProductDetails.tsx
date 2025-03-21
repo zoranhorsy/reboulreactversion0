@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -16,7 +16,8 @@ import {
   AlertCircle,
   Minus,
   Plus,
-  Star
+  Star,
+  Tag
 } from 'lucide-react'
 import { 
   Tooltip,
@@ -37,6 +38,36 @@ import {
 import { cn } from '@/lib/utils'
 import type { Product, Variant } from '@/lib/api'
 import { ProductImage } from '@/lib/types/product-image'
+import { SizeGuide } from '@/components/SizeGuide'
+import { SocialShare } from '@/components/SocialShare'
+import { api } from '@/lib/api'
+import { useCart } from '@/app/contexts/CartContext'
+import { toast } from '@/components/ui/use-toast'
+import { 
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion'
+import { getColorInfo, isWhiteColor } from '@/config/productColors'
+
+// Fonction pour transformer le type de magasin en nom d'affichage
+const getStoreDisplayName = (storeType: string | undefined): string => {
+  if (!storeType) return '';
+  
+  switch (storeType) {
+    case 'adult':
+      return 'REBOUL ADULTE';
+    case 'kids':
+      return 'LES MINOTS DE REBOUL';
+    case 'sneakers':
+      return 'REBOUL SNEAKERS';
+    case 'cpcompany':
+      return 'THE CORNER - C.P.COMPANY';
+    default:
+      return storeType;
+  }
+};
 
 // Fonction utilitaire pour formater les prix
 const formatPrice = (price: number | undefined): string => {
@@ -65,8 +96,14 @@ interface ProductDetailsProps {
 
 // Fonction utilitaire pour vérifier le stock
 export function checkProductStock(product: Product, size: string, color: string): boolean {
-  if (!product.variants || product.variants.length === 0) return true;
+  if (!product.variants || product.variants.length === 0) return true; // Considérer comme disponible par défaut
   
+  // Si aucune taille ou couleur n'est sélectionnée, vérifier si au moins une variante a du stock
+  if (!size || !color) {
+    return product.variants.some(v => v.stock > 0);
+  }
+  
+  // Sinon, vérifier si la variante sélectionnée a du stock
   const selectedVariant = product.variants.find(
     (v: Variant) => v.size === size && v.color === color
   )
@@ -76,6 +113,9 @@ export function checkProductStock(product: Product, size: string, color: string)
 // Fonction pour obtenir le stock disponible pour une variante
 export function getVariantStock(product: Product, size: string, color: string): number {
   if (!product.variants || product.variants.length === 0) return 0;
+  
+  // Si aucune taille ou couleur n'est sélectionnée, retourner 0
+  if (!size || !color) return 0;
   
   const selectedVariant = product.variants.find(
     (v: Variant) => v.size === size && v.color === color
@@ -113,29 +153,10 @@ export function ProductDetails({
   const totalStock = calculateTotalStock(variants);
   
   // Calcul de la réduction si old_price existe
-  const discount = product.old_price && product.price 
-    ? Math.round(((product.old_price - product.price) / product.old_price) * 100) 
+  const oldPrice = (product as any).old_price;
+  const discount = oldPrice && product.price 
+    ? Math.round(((oldPrice - product.price) / oldPrice) * 100) 
     : null;
-
-  // Fonction pour obtenir la couleur d'affichage
-  const getDisplayColor = (colorCode: string): { name: string, hex: string } => {
-    const colorMap: Record<string, { name: string, hex: string }> = {
-      'black': { name: 'Noir', hex: '#000000' },
-      'white': { name: 'Blanc', hex: '#FFFFFF' },
-      'red': { name: 'Rouge', hex: '#FF0000' },
-      'blue': { name: 'Bleu', hex: '#0000FF' },
-      'green': { name: 'Vert', hex: '#008000' },
-      'yellow': { name: 'Jaune', hex: '#FFFF00' },
-      'purple': { name: 'Violet', hex: '#800080' },
-      'orange': { name: 'Orange', hex: '#FFA500' },
-      'pink': { name: 'Rose', hex: '#FFC0CB' },
-      'gray': { name: 'Gris', hex: '#808080' },
-      'brown': { name: 'Marron', hex: '#A52A2A' },
-      'navy': { name: 'Bleu Marine', hex: '#000080' },
-    };
-    
-    return colorMap[colorCode.toLowerCase()] || { name: colorCode, hex: colorCode };
-  };
 
   return (
     <div className="space-y-6">
@@ -145,36 +166,14 @@ export function ProductDetails({
           {/* Nom du produit */}
           <h1 className="text-3xl font-light tracking-tight">{product.name}</h1>
           
-          {/* Évaluation */}
-          <div className="flex items-center gap-2">
-            <div className="flex">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <Star 
-                  key={star} 
-                  className={cn(
-                    "w-4 h-4", 
-                    star <= (product.rating || 4) 
-                      ? "text-amber-400 fill-amber-400" 
-                      : "text-muted-foreground"
-                  )} 
-                />
-              ))}
-            </div>
-            <span className="text-sm text-muted-foreground">
-              {product.rating || 4}/5 ({product.reviews_count || 12} avis)
-            </span>
-          </div>
-        </div>
-        
-        {/* Prix et réduction */}
-        <div className="space-y-2">
-          <div className="flex items-baseline gap-3">
+          {/* Prix et réduction */}
+          <div className="flex items-baseline gap-3 mt-1">
             <p className="text-2xl font-medium">
               {formatPrice(product.price)}
             </p>
-            {product.old_price && (
+            {oldPrice && (
               <p className="text-lg text-muted-foreground line-through">
-                {formatPrice(product.old_price)}
+                {formatPrice(oldPrice)}
               </p>
             )}
             {discount && discount > 0 && (
@@ -184,16 +183,64 @@ export function ProductDetails({
             )}
           </div>
           
+          {/* Tags du produit */}
+          {product.tags && product.tags.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2 mt-2">
+              {product.tags.map((tag, index) => (
+                <div key={index} className="flex items-center px-3 py-1 rounded-full text-sm bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200">
+                  <Tag className="h-3 w-3 mr-1" />
+                  <span>{tag}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          
+          {/* Référence, SKU et Type de magasin */}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground mt-3">
+            {product.sku && (
+              <div className="flex items-center gap-1">
+                <span className="font-medium">SKU:</span> {product.sku}
+              </div>
+            )}
+            {(product as any).store_reference && (
+              <div className="flex items-center gap-1">
+                <span className="font-medium">Réf. Magasin:</span> {(product as any).store_reference}
+              </div>
+            )}
+            {product.store_type && (
+              <div className="flex items-center gap-1">
+                <span className="font-medium">Boutique:</span> {getStoreDisplayName(product.store_type)}
+              </div>
+            )}
+          </div>
+          
           {/* Informations de livraison */}
           {product.price && product.price >= 100 ? (
-            <div className="flex items-center gap-2 text-green-600">
+            <div className="flex items-center gap-2 text-green-600 mt-2">
               <Truck className="w-4 h-4" />
               <span className="text-sm font-medium">Livraison gratuite</span>
             </div>
           ) : (
-            <div className="flex items-center gap-2 text-muted-foreground">
+            <div className="flex items-center gap-2 text-muted-foreground mt-2">
               <Truck className="w-4 h-4" />
               <span className="text-sm">Livraison à partir de 4,99€</span>
+            </div>
+          )}
+          
+          {/* Description du produit */}
+          <div className="mt-4 text-sm text-muted-foreground">
+            <p>{product.description}</p>
+          </div>
+          
+          {/* Caractéristiques */}
+          {product.details && product.details.length > 0 && (
+            <div className="mt-4">
+              <h3 className="text-sm font-medium mb-2">Caractéristiques:</h3>
+              <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+                {product.details.map((detail, index) => (
+                  <li key={index}>{detail}</li>
+                ))}
+              </ul>
             </div>
           )}
         </div>
@@ -203,58 +250,59 @@ export function ProductDetails({
       
       {/* Sélection des variantes */}
       <div className="space-y-6">
-        {/* Sélection de couleur */}
-        {colors.length > 0 && (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-medium">Couleur</label>
-              <span className="text-sm text-muted-foreground">
-                {selectedColor ? getDisplayColor(selectedColor).name : 'Sélectionnez une couleur'}
+        {/* Sélecteur de couleurs */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium">Couleur: <span className="text-muted-foreground">{selectedColor ? getColorInfo(selectedColor).label : 'Sélectionnez une couleur'}</span></h3>
+            {/* Information sur le stock */}
+            {selectedSize && selectedColor && (
+              <span className={`text-xs ${isInStock ? 'text-green-500' : 'text-red-500'}`}>
+                {isInStock 
+                  ? currentVariantStock > 5 ? 'En stock' : `Plus que ${currentVariantStock} en stock` 
+                  : 'Rupture de stock'}
               </span>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              {colors.map((color) => {
-                const displayColor = getDisplayColor(color);
-                const isSelected = selectedColor === color;
-                const hasStock = variants.some(v => v.color === color && v.size === selectedSize && v.stock > 0);
-                
-                return (
-                  <TooltipProvider key={color}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button
-                          onClick={() => onColorChange(color)}
-                          disabled={!hasStock}
-                          className={cn(
-                            "relative w-12 h-12 rounded-full transition-all duration-200",
-                            isSelected 
-                              ? "ring-2 ring-primary scale-95" 
-                              : "ring-1 ring-border hover:ring-primary/50",
-                            !hasStock && "opacity-40 cursor-not-allowed"
-                          )}
-                        >
-                          <span 
-                            className="absolute inset-1 rounded-full border border-border/20"
-                            style={{ backgroundColor: displayColor.hex }}
-                          />
-                          {isSelected && (
-                            <span className="absolute inset-0 flex items-center justify-center">
-                              <Check className="w-5 h-5 text-white drop-shadow-md" />
-                            </span>
-                          )}
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent side="bottom">
-                        <p>{displayColor.name}</p>
-                        {!hasStock && <p className="text-xs text-destructive">Rupture de stock</p>}
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                );
-              })}
-            </div>
+            )}
           </div>
-        )}
+          
+          {/* Options de couleurs */}
+          <div className="flex flex-wrap gap-2">
+            {colors.map(color => {
+              const colorInfo = getColorInfo(color);
+              const isWhite = isWhiteColor(colorInfo.hex);
+              
+              return (
+                <button
+                  key={color}
+                  onClick={() => onColorChange(color)}
+                  aria-label={`Sélectionner couleur ${colorInfo.label}`}
+                  className={cn(
+                    "relative w-9 h-9 rounded-full flex items-center justify-center",
+                    "transition-all duration-200 ease-in-out hover:scale-110",
+                    "focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary",
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "w-7 h-7 rounded-full border",
+                      selectedColor === color && "ring-2 ring-primary ring-offset-2",
+                      isWhite && "border-zinc-300 dark:border-zinc-600"
+                    )}
+                    style={{ 
+                      backgroundColor: colorInfo.hex.startsWith('linear-gradient') 
+                        ? colorInfo.hex 
+                        : colorInfo.hex
+                    }}
+                  />
+                  {selectedColor === color && (
+                    <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[8px] text-white">
+                      ✓
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+        </div>
         
         {/* Sélection de taille */}
         {sizes.length > 0 && (
@@ -271,30 +319,46 @@ export function ProductDetails({
               </Button>
             </div>
             <div className="grid grid-cols-4 gap-2">
-              {sizes.map((size) => {
-                const hasStock = variants.some(v => v.size === size && v.color === selectedColor && v.stock > 0);
-                return (
-                  <button
-                    key={size}
-                    onClick={() => onSizeChange(size)}
-                    disabled={!hasStock}
-                    className={cn(
-                      "h-12 rounded-md border-2 transition-all duration-200 flex items-center justify-center",
-                      selectedSize === size 
-                        ? "border-primary bg-primary/5 font-medium" 
-                        : "border-border hover:border-primary/50 hover:bg-primary/5",
-                      !hasStock && "opacity-40 cursor-not-allowed line-through"
-                    )}
-                  >
-                    {size}
-                  </button>
-                );
-              })}
+              {!selectedColor ? (
+                <div className="col-span-4 text-center py-3 text-sm text-muted-foreground bg-muted/30 rounded-md">
+                  Veuillez d&apos;abord sélectionner une couleur
+                </div>
+              ) : (
+                sizes.map((size) => {
+                  // Vérifier si la taille est disponible pour la couleur sélectionnée
+                  const isSizeAvailable = variants.some(v => v.size === size && v.color === selectedColor && v.stock > 0);
+                  
+                  // Ne pas afficher les tailles indisponibles pour la couleur sélectionnée
+                  if (!isSizeAvailable) return null;
+                  
+                  return (
+                    <button
+                      key={size}
+                      onClick={() => onSizeChange(size)}
+                      className={cn(
+                        "h-12 rounded-md border-2 transition-all duration-200 flex items-center justify-center",
+                        selectedSize === size 
+                          ? "border-primary bg-primary/5 font-medium" 
+                          : "border-border hover:border-primary/50 hover:bg-primary/5",
+                      )}
+                    >
+                      {size}
+                    </button>
+                  );
+                })
+              )}
             </div>
             
             {/* Indicateur de stock */}
             <div className="flex items-center gap-2 text-sm">
-              {isInStock ? (
+              {!selectedSize || !selectedColor ? (
+                <>
+                  <Check className="w-4 h-4 text-green-500" />
+                  <span className="text-muted-foreground">
+                    Sélectionnez une taille et une couleur pour voir la disponibilité
+                  </span>
+                </>
+              ) : isInStock ? (
                 <>
                   <Check className="w-4 h-4 text-green-500" />
                   <span className="text-green-600">
@@ -387,33 +451,38 @@ export function ProductDetails({
         </div>
       </div>
       
-      {/* Avantages et services */}
-      <div className="grid grid-cols-1 gap-4 py-6 border-t border-b border-border/10">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-            <Truck className="w-5 h-5 text-primary" />
+      {/* Avantages d'achat */}
+      <div className="mt-8 space-y-4">
+        <h3 className="font-medium">Pourquoi nous choisir</h3>
+        <div className="grid grid-cols-1 gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-full bg-background/50 flex items-center justify-center border border-border">
+              <ShieldCheck className="w-5 h-5" />
+            </div>
+            <div>
+              <h4 className="text-sm font-medium">Garantie authentique</h4>
+              <p className="text-xs text-muted-foreground">Tous nos produits sont 100% authentiques</p>
+            </div>
           </div>
-          <div>
-            <p className="text-sm font-medium">Livraison rapide</p>
-            <p className="text-xs text-muted-foreground">Livraison gratuite à partir de 100€</p>
+          
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-full bg-background/50 flex items-center justify-center border border-border">
+              <Truck className="w-5 h-5" />
+            </div>
+            <div>
+              <h4 className="text-sm font-medium">Livraison rapide</h4>
+              <p className="text-xs text-muted-foreground">Livraison gratuite à partir de 100€</p>
+            </div>
           </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-            <RefreshCw className="w-5 h-5 text-primary" />
-          </div>
-          <div>
-            <p className="text-sm font-medium">Retours gratuits</p>
-            <p className="text-xs text-muted-foreground">Retours sous 30 jours</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-            <ShieldCheck className="w-5 h-5 text-primary" />
-          </div>
-          <div>
-            <p className="text-sm font-medium">Garantie authentique</p>
-            <p className="text-xs text-muted-foreground">Tous nos produits sont 100% authentiques</p>
+          
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-full bg-background/50 flex items-center justify-center border border-border">
+              <RefreshCw className="w-5 h-5" />
+            </div>
+            <div>
+              <h4 className="text-sm font-medium">Retours sous 30 jours</h4>
+              <p className="text-xs text-muted-foreground">Retours gratuits en boutique ou à domicile</p>
+            </div>
           </div>
         </div>
       </div>

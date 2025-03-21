@@ -145,7 +145,8 @@ router.post('/',
                 
                 // Trouver le variant correspondant
                 const variant = product.variants.find(
-                    v => v.size === item.variant.size && v.color === item.variant.color
+                    v => String(v.size) === String(item.variant.size) && 
+                         String(v.color).toLowerCase() === String(item.variant.color).toLowerCase()
                 );
 
                 if (!variant) {
@@ -153,7 +154,9 @@ router.post('/',
                         productId: item.product_id,
                         requestedSize: item.variant.size,
                         requestedColor: item.variant.color,
-                        availableVariants: product.variants
+                        availableVariants: product.variants,
+                        sizeType: typeof item.variant.size,
+                        colorType: typeof item.variant.color
                     });
                     throw new AppError(
                         `Variant non trouvé pour le produit ${item.product_id} (taille: ${item.variant.size}, couleur: ${item.variant.color})`,
@@ -205,8 +208,8 @@ router.post('/',
             // Créer les items de la commande avec les informations de variant
             for (const item of items) {
                 await client.query(
-                    'INSERT INTO order_items (order_id, product_id, quantity, price, variant_info) VALUES ($1, $2, $3, (SELECT price FROM products WHERE id = $2), $4)',
-                    [orderId, item.product_id, item.quantity, JSON.stringify(item.variant)]
+                    'INSERT INTO order_items (order_id, product_id, product_name, quantity, price, variant_info) VALUES ($1, $2, $3, $4, (SELECT price FROM products WHERE id = $2), $5)',
+                    [orderId, item.product_id, item.product_name, item.quantity, JSON.stringify(item.variant)]
                 );
             }
 

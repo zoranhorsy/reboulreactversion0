@@ -1,3 +1,5 @@
+'use client'
+
 import React from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -42,7 +44,7 @@ const STORES = [
 
 export function StoreSelection() {
     return (
-        <section className="w-full bg-background px-3 py-12 md:py-20 lg:py-24">
+        <section className="w-full bg-white dark:bg-zinc-950 px-3 py-12 md:py-20 lg:py-24">
             <div className="max-w-screen-2xl mx-auto">
                 {/* Titre de la section */}
                 <motion.div 
@@ -71,7 +73,7 @@ export function StoreSelection() {
                             <Link 
                                 href={store.href} 
                                 className="block w-full aspect-[4/5] relative overflow-hidden rounded-2xl 
-                                    bg-zinc-100 dark:bg-zinc-900 shadow-sm hover:shadow-xl
+                                    bg-zinc-100 dark:bg-zinc-950 shadow-sm hover:shadow-xl
                                     transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)]"
                             >
                                 {/* Image avec overlay */}

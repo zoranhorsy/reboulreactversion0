@@ -174,7 +174,7 @@ export function UserReviews() {
             console.error('Error adding review:', error)
             toast({
                 title: "Erreur",
-                description: "Impossible d'ajouter votre avis.",
+                description: "Impossible d&apos;ajouter votre avis.",
                 variant: "destructive"
             })
         }

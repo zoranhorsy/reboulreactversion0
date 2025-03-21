@@ -1,74 +1,78 @@
+import React from 'react'
+import { cn } from '@/lib/utils'
+import { getColorInfo, isWhiteColor } from '@/config/productColors'
+
 interface ColorSelectorProps {
+  colors: string[]
+  variants: any[]
   selectedColor: string
+  selectedSize: string
   onColorChange: (color: string) => void
-  variants: { size: string; color: string; stock: number }[]
 }
 
-export function ColorSelector({ selectedColor, onColorChange, variants }: ColorSelectorProps) {
-  const availableColors = Array.from(new Set(variants.map((v) => v.color)))
-
-  const getColorHex = (colorName: string) => {
-    const colorMap: { [key: string]: string } = {
-      Blanc: "#FFFFFF",
-      Noir: "#000000",
-      Rouge: "#FF0000",
-      Bleu: "#0000FF",
-      Vert: "#008000",
-      Jaune: "#FFFF00",
-      Orange: "#FFA500",
-      Violet: "#800080",
-      Rose: "#FFC0CB",
-      Gris: "#808080",
-      Marron: "#A52A2A",
-      Beige: "#F5F5DC",
-      Turquoise: "#40E0D0",
-      Corail: "#FF7F50",
-      Indigo: "#4B0082",
-    }
-    return colorMap[colorName] || colorName
-  }
-
-  const getColorLabel = (colorName: string) => {
-    return colorName.toUpperCase()
-  }
-
-  const getTextColor = (bgColor: string) => {
-    const hex = bgColor.replace("#", "")
-    const r = Number.parseInt(hex.substr(0, 2), 16)
-    const g = Number.parseInt(hex.substr(2, 2), 16)
-    const b = Number.parseInt(hex.substr(4, 2), 16)
-
-    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
-
-    return luminance > 0.5 ? "text-black" : "text-white"
+export function ColorSelector({
+  colors,
+  variants,
+  selectedColor,
+  selectedSize,
+  onColorChange
+}: ColorSelectorProps) {
+  
+  // Vérifie si une couleur est disponible pour la taille sélectionnée
+  const isColorAvailable = (color: string) => {
+    // Si aucune taille n'est sélectionnée, toutes les couleurs sont disponibles
+    if (!selectedSize) return true
+    
+    // Vérifier s'il existe une variante avec la taille et la couleur spécifiées qui a du stock
+    return variants.some(variant => 
+      variant.color === color && 
+      variant.size === selectedSize && 
+      variant.stock > 0
+    )
   }
 
   return (
-    <div>
-      <div className="flex gap-[2px]">
-        {availableColors.map((color) => {
-          const isWhite = color.toLowerCase() === "blanc" || color.toLowerCase() === "white"
-          const hexColor = getColorHex(color)
-
+    <div className="mb-6">
+      <h3 className="text-sm font-medium mb-3">Couleur: {selectedColor ? getColorInfo(selectedColor).label : ''}</h3>
+      <div className="flex flex-wrap gap-2">
+        {colors.map(color => {
+          const colorInfo = getColorInfo(color);
+          const isWhite = isWhiteColor(colorInfo.hex);
+          const available = isColorAvailable(color);
+          
           return (
-            <div key={color} className="group">
-              <button onClick={() => onColorChange(color)} className="relative w-8 h-8">
-                <div
-                  className={`w-full h-full ${
-                    isWhite ? "border border-gray-300" : ""
-                  } ${selectedColor === color ? "ring-1 ring-black" : ""}`}
-                  style={{ backgroundColor: hexColor }}
-                />
-                <div
-                  className="absolute bottom-full left-0 w-8 h-0 group-hover:h-5 transition-all duration-200 ease-out overflow-hidden"
-                  style={{ backgroundColor: hexColor }}
-                >
-                  <div className={`text-[8px] ${getTextColor(hexColor)} text-center py-[2px] px-[1px] leading-tight`}>
-                    {getColorLabel(color)}
-                  </div>
-                </div>
-              </button>
-            </div>
+            <button
+              key={color}
+              type="button"
+              onClick={() => onColorChange(color)}
+              disabled={!available}
+              className={cn(
+                "relative w-10 h-10 rounded-full flex items-center justify-center",
+                "transition-all duration-200",
+                !available && "opacity-40 cursor-not-allowed",
+                "focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+              )}
+            >
+              <span
+                className={cn(
+                  "w-8 h-8 rounded-full border",
+                  selectedColor === color ? "ring-2 ring-primary ring-offset-2" : "",
+                  isWhite ? "border-zinc-300" : "border-transparent"
+                )}
+                style={{ 
+                  backgroundColor: colorInfo.hex.startsWith('linear-gradient') 
+                    ? colorInfo.hex 
+                    : colorInfo.hex
+                }}
+              />
+              {selectedColor === color && (
+                <span className="absolute right-0 bottom-0 w-4 h-4 bg-primary rounded-full flex items-center justify-center">
+                  <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </span>
+              )}
+            </button>
           )
         })}
       </div>

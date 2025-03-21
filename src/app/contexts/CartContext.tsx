@@ -11,6 +11,8 @@ export interface CartItem {
   variant: {
     size: string;
     color: string;
+    colorLabel: string;
+    stock: number;
   };
 }
 
@@ -79,15 +81,31 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, [lastOrder, isInitialized])
 
     const addItem = useCallback((item: CartItem) => {
-        setItems((prevItems) => {
-            const existingItem = prevItems.find((i) => i.id === item.id)
-            if (existingItem) {
-                return prevItems.map((i) =>
-                    i.id === item.id ? { ...i, quantity: +(i.quantity + item.quantity).toFixed(2) } : i
-                )
-            }
-            return [...prevItems, { ...item, quantity: +item.quantity.toFixed(2) }]
-        })
+        try {
+            console.log("CartContext - Adding item to cart:", item);
+            setItems((prevItems) => {
+                const existingItem = prevItems.find((i) => i.id === item.id)
+                console.log("CartContext - Existing item:", existingItem);
+                if (existingItem) {
+                    const newQuantity = existingItem.quantity + item.quantity
+                    if (newQuantity > existingItem.variant.stock) {
+                        throw new Error(`Stock insuffisant. Seulement ${existingItem.variant.stock} unité(s) disponible(s).`)
+                    }
+                    console.log("CartContext - Updating existing item quantity:", newQuantity);
+                    return prevItems.map((i) =>
+                        i.id === item.id ? { ...i, quantity: newQuantity } : i
+                    )
+                }
+                if (item.quantity > item.variant.stock) {
+                    throw new Error(`Stock insuffisant. Seulement ${item.variant.stock} unité(s) disponible(s).`)
+                }
+                console.log("CartContext - Adding new item to cart");
+                return [...prevItems, item]
+            })
+        } catch (error) {
+            console.error("Error adding item to cart:", error)
+            throw error
+        }
     }, [])
 
     const removeItem = useCallback((id: string) => {
@@ -95,11 +113,23 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, [])
 
     const updateQuantity = useCallback((id: string, quantity: number) => {
-        setItems((prevItems) =>
-            prevItems.map((item) =>
-                item.id === id ? { ...item, quantity: Math.max(0, quantity) } : item
-            )
-        )
+        try {
+            setItems((prevItems) => {
+                const item = prevItems.find((i) => i.id === id)
+                if (!item) return prevItems
+
+                if (quantity > item.variant.stock) {
+                    throw new Error(`Stock insuffisant. Seulement ${item.variant.stock} unité(s) disponible(s).`)
+                }
+
+                return prevItems.map((item) =>
+                    item.id === id ? { ...item, quantity: Math.max(0, quantity) } : item
+                )
+            })
+        } catch (error) {
+            console.error("Error updating quantity:", error)
+            throw error
+        }
     }, [])
 
     const clearCart = useCallback(() => {

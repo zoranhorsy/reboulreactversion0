@@ -29,6 +29,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
+import { getColorInfo, isWhiteColor } from '@/config/productColors'
 
 interface SectionState {
   categories: boolean;
@@ -223,7 +224,7 @@ export const FilterComponent = ({
   )
 
   return (
-    <div className="space-y-4 p-3 bg-background border rounded-lg">
+    <div className="space-y-4 bg-background rounded-lg">
       {/* En-tête des filtres */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -294,24 +295,28 @@ export const FilterComponent = ({
       <div className="space-y-3">
         {/* Catégories */}
         <FilterSection title="Catégories" section="categories">
-          <div className="grid grid-cols-2 gap-1.5">
-            {categories.map((category) => (
-              <Button
-                key={category.id}
-                variant={selectedCategories.includes(category.id.toString()) ? "default" : "outline"}
-                size="sm"
-                onClick={() => toggleCategory(category.id.toString())}
-                className={cn(
-                  "h-7 justify-start text-xs group transition-all",
-                  selectedCategories.includes(category.id.toString()) && "bg-primary text-primary-foreground"
-                )}
-              >
-                <span className="truncate">{category.name}</span>
-                {selectedCategories.includes(category.id.toString()) && (
-                  <Check className="h-3 w-3 ml-auto" />
-                )}
-              </Button>
-            ))}
+          <div className="space-y-1.5">
+            <div className="flex flex-wrap gap-1.5">
+              {categories.map((category) => {
+                const isSelected = selectedCategories.includes(category.id.toString())
+                return (
+                  <button
+                    key={category.id}
+                    onClick={() => toggleCategory(category.id.toString())}
+                    className={cn(
+                      "px-2.5 py-1.5 text-xs font-medium rounded-full transition-all",
+                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                      isSelected
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted hover:bg-muted/80 text-muted-foreground"
+                    )}
+                  >
+                    {category.name}
+                    {isSelected && <Check className="ml-1 h-3 w-3 inline" />}
+                  </button>
+                )
+              })}
+            </div>
           </div>
         </FilterSection>
 
@@ -319,20 +324,65 @@ export const FilterComponent = ({
 
         {/* Marques */}
         <FilterSection title="Marques" section="brands">
-          <div className="flex flex-wrap gap-1.5">
-            {brands.map((brand) => (
-              <Badge
-                key={brand.id}
-                variant={selectedBrands.includes(brand.name) ? "default" : "secondary"}
-                className={cn(
-                  "cursor-pointer transition-all hover:bg-primary hover:text-primary-foreground",
-                  selectedBrands.includes(brand.name) && "bg-primary text-primary-foreground"
-                )}
-                onClick={() => toggleBrand(brand.name)}
-              >
-                {brand.name}
-              </Badge>
-            ))}
+          <div className="space-y-1.5 max-h-[200px] overflow-y-auto pr-1">
+            <div className="flex flex-wrap gap-1.5">
+              {brands.map((brand) => {
+                const isSelected = selectedBrands.includes(brand.name)
+                return (
+                  <button
+                    key={brand.id}
+                    onClick={() => toggleBrand(brand.name)}
+                    className={cn(
+                      "px-2.5 py-1.5 text-xs font-medium rounded-full transition-all",
+                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                      isSelected
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted hover:bg-muted/80 text-muted-foreground"
+                    )}
+                  >
+                    {brand.name}
+                    {isSelected && <Check className="ml-1 h-3 w-3 inline" />}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        </FilterSection>
+
+        <Separator />
+
+        {/* Couleurs */}
+        <FilterSection title="Couleurs" section="colors">
+          <div className="flex flex-wrap gap-2 pt-1.5">
+            {colors.map((color) => {
+              const colorInfo = getColorInfo(color)
+              const isSelected = filters.color === color
+              
+              return (
+                <button
+                  key={color}
+                  onClick={() => onFilterChange({ color: isSelected ? "" : color })}
+                  className={cn(
+                    "group h-8 w-8 rounded-full overflow-hidden flex items-center justify-center focus:outline-none",
+                    "transition-transform transform hover:scale-110",
+                    "focus-visible:ring-2 focus-visible:ring-primary",
+                    isSelected && "ring-2 ring-primary shadow-md"
+                  )}
+                  style={{
+                    background: colorInfo.hex,
+                    border: isWhiteColor(color) ? "1px solid #e2e8f0" : "none",
+                  }}
+                  title={colorInfo.label}
+                >
+                  {isSelected && (
+                    <Check className={cn(
+                      "h-4 w-4 opacity-100 transition-opacity",
+                      isWhiteColor(color) ? "text-black" : "text-white"
+                    )} />
+                  )}
+                </button>
+              )
+            })}
           </div>
         </FilterSection>
 
@@ -341,73 +391,22 @@ export const FilterComponent = ({
         {/* Tailles */}
         <FilterSection title="Tailles" section="sizes">
           <div className="flex flex-wrap gap-1.5">
-            {sizes.map((size) => (
-              <Button
-                key={size}
-                variant={filters.size === size ? "default" : "outline"}
-                size="sm"
-                onClick={() => onFilterChange({ size })}
-                className={cn(
-                  "h-7 w-7 p-0 transition-all",
-                  filters.size === size && "bg-primary text-primary-foreground"
-                )}
-              >
-                {size}
-              </Button>
-            ))}
-          </div>
-        </FilterSection>
-
-        <Separator />
-
-        {/* Couleurs */}
-        <FilterSection title="Couleurs" section="colors">
-          <div className="grid grid-cols-4 gap-1.5">
-            {colors.map((color) => {
-              const colorInfo = colorMap[color.toLowerCase()] || { 
-                hex: color, 
-                label: color.charAt(0).toUpperCase() + color.slice(1) 
-              }
-              
+            {sizes.map((size) => {
+              const isSelected = filters.size === size
               return (
                 <button
-                  key={color}
-                  onClick={() => onFilterChange({ color })}
+                  key={size}
+                  onClick={() => onFilterChange({ size: isSelected ? "" : size })}
                   className={cn(
-                    "w-full aspect-square rounded-md transition-all relative group",
-                    "border-2",
-                    filters.color === color 
-                      ? "ring-2 ring-primary ring-offset-2" 
-                      : "hover:ring-2 hover:ring-primary/50 hover:ring-offset-1",
-                    colorInfo.hex === "#FFFFFF" ? "border-border" : "border-transparent",
-                    "hover:scale-110 hover:z-10 transition-all duration-200"
+                    "min-w-[36px] h-9 px-2 inline-flex items-center justify-center text-sm font-medium",
+                    "rounded-md transition-colors",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                    isSelected
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted hover:bg-muted/80 text-muted-foreground"
                   )}
-                  style={{
-                    background: colorInfo.hex.startsWith('linear-gradient') 
-                      ? colorInfo.hex 
-                      : colorInfo.hex,
-                    boxShadow: filters.color === color ? '0 0 0 2px rgba(0,0,0,0.1)' : 'none'
-                  }}
-                  title={colorInfo.label}
                 >
-                  {filters.color === color && (
-                    <span className={cn(
-                      "absolute inset-0 flex items-center justify-center",
-                      colorInfo.hex === "#FFFFFF" || colorInfo.hex === "#F5F5DC" || colorInfo.hex === "#FFD700"
-                        ? "text-black" 
-                        : "text-white"
-                    )}>
-                      <Check className="h-4 w-4 drop-shadow-md" />
-                    </span>
-                  )}
-                  <span className="sr-only">{colorInfo.label}</span>
-                  
-                  {/* Tooltip amélioré */}
-                  <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs
-                    bg-background border rounded-md opacity-0 group-hover:opacity-100 transition-all duration-200
-                    shadow-sm z-20 pointer-events-none">
-                    {colorInfo.label}
-                  </span>
+                  {size}
                 </button>
               )
             })}

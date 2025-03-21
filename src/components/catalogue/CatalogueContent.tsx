@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useCallback, useEffect } from "react"
+import { useState, useCallback, useEffect, useRef } from "react"
 import { useRouter, useSearchParams, usePathname } from "next/navigation"
-import { SlidersHorizontal } from "lucide-react"
+import { SlidersHorizontal, ChevronUp } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { FilterComponent } from "@/components/catalogue/Filters"
@@ -13,6 +13,8 @@ import type { Category } from "@/lib/types/category"
 import type { Brand } from "@/lib/types/brand"
 import { type FilterState, type FilterChangeHandler } from '@/lib/types/filters'
 import { ActiveFilters } from "@/components/catalogue/ActiveFilters"
+import { cn } from "@/lib/utils"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface CatalogueContentProps {
   initialProducts: Product[] 
@@ -41,6 +43,9 @@ export function CatalogueContent({
   const [totalItems, setTotalItems] = useState(total)
   const limitParam = searchParams.get('limit') || '12'
   const [totalPages, setTotalPages] = useState(Math.ceil(total / Number(limitParam)))
+  const [isScrolled, setIsScrolled] = useState(false)
+  const filterButtonRef = useRef<HTMLDivElement>(null)
+  const [showScrollTop, setShowScrollTop] = useState(false)
 
   // Initialiser les filtres à partir des searchParams
   const defaultFilters: FilterState = {
@@ -139,18 +144,119 @@ export function CatalogueContent({
   const handlePageChange = useCallback(
     (newPage: number) => {
       handleFilterChange({ page: newPage.toString() })
+      window.scrollTo({ top: 0, behavior: 'smooth' })
     },
     [handleFilterChange]
   )
 
+  // Détecter le scroll pour afficher/masquer le bouton retour en haut
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollTop = window.scrollY
+      setIsScrolled(scrollTop > 100)
+      setShowScrollTop(scrollTop > 500)
+    }
+
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const activeFilterCount = Object.entries(filters).filter(
+    ([key, value]) => value && value !== "" && key !== "page" && key !== "limit"
+  ).length
+
   return (
-    <div className="min-h-screen bg-background w-full">
+    <div className="min-h-screen bg-background w-full pb-20 sm:pb-0">
+      {/* Barre de navigation en haut de l'écran - mobile */}
+      <div 
+        className={cn(
+          "sticky top-0 left-0 right-0 z-50 p-2 lg:hidden",
+          "bg-background/80 backdrop-blur-md",
+          "border-b border-border/30"
+        )}
+      >
+        <div className={cn(
+          "flex items-center justify-between gap-3 px-3 py-1.5 max-w-[1600px] mx-auto",
+        )}>
+          <span className="text-xs font-medium text-muted-foreground">
+            {totalItems} article{totalItems > 1 ? "s" : ""}
+          </span>
+          
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon" 
+              className="w-8 h-8 rounded-full text-muted-foreground hover:text-foreground"
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            >
+              <ChevronUp className="h-4 w-4" />
+            </Button>
+            
+            <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+              <SheetTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  className="w-8 h-8 rounded-full text-muted-foreground hover:text-foreground"
+                  onClick={() => setIsFilterOpen(true)}
+                >
+                  <SlidersHorizontal className="h-4 w-4" />
+                  {activeFilterCount > 0 && (
+                    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground">
+                      {activeFilterCount}
+                    </span>
+                  )}
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="bottom" className="h-[85vh] rounded-t-xl pt-2 sm:max-w-none">
+                <div className="mb-2 flex justify-center">
+                  <div className="h-1 w-12 rounded-full bg-muted-foreground/20"></div>
+                </div>
+                <div className="max-h-[calc(85vh-2rem)] overflow-y-auto pb-8">
+                  <FilterComponent
+                    filters={filters}
+                    categories={categories}
+                    brands={brands}
+                    colors={colors}
+                    sizes={sizes}
+                    storeTypes={["adult", "kids", "sneakers"]}
+                    onFilterChange={(newFilters) => {
+                      handleFilterChange(newFilters)
+                      setIsFilterOpen(false)
+                    }}
+                  />
+                </div>
+              </SheetContent>
+            </Sheet>
+            
+            <Select
+              value={filters.sort || "default"}
+              onValueChange={(value) => handleFilterChange({ sort: value })}
+            >
+              <SelectTrigger className="h-8 border-none text-xs text-muted-foreground hover:text-foreground px-2 min-w-0 w-auto">
+                <SelectValue placeholder="Tri" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="default">Pertinence</SelectItem>
+                <SelectItem value="price_asc">Prix ↑</SelectItem>
+                <SelectItem value="price_desc">Prix ↓</SelectItem>
+                <SelectItem value="newest">Nouveautés</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </div>
+
       {/* Contenu principal */}
-      <div className="w-full">
+      <div className="w-full mx-auto">
         <div className="flex flex-col lg:flex-row h-full">
-          {/* Sidebar des filtres */}
-          <aside className="lg:w-[280px] shrink-0 border-r border-border">
-            <div className="hidden lg:block sticky top-0 p-4">
+          {/* Sidebar des filtres - desktop */}
+          <aside className="hidden lg:block w-[280px] shrink-0 border-r border-border">
+            <div className="sticky top-0 p-4 overflow-auto h-[calc(100vh-1rem)]">
               <FilterComponent
                 filters={filters}
                 categories={categories}
@@ -161,37 +267,12 @@ export function CatalogueContent({
                 onFilterChange={handleFilterChange}
               />
             </div>
-            <div className="lg:hidden p-4">
-              <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
-                <SheetTrigger asChild>
-                  <Button variant="outline" className="w-full">
-                    <SlidersHorizontal className="mr-2 h-4 w-4" />
-                    Filtres
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="w-[300px] sm:w-[380px]">
-                  <div>
-                    <FilterComponent
-                      filters={filters}
-                      categories={categories}
-                      brands={brands}
-                      colors={colors}
-                      sizes={sizes}
-                      storeTypes={["adult", "kids", "sneakers"]}
-                      onFilterChange={(newFilters) => {
-                        handleFilterChange(newFilters)
-                        setIsFilterOpen(false)
-                      }}
-                    />
-                  </div>
-                </SheetContent>
-              </Sheet>
-            </div>
           </aside>
 
           {/* Grille de produits */}
-          <main className="flex-1 min-w-0 p-4">
-            <div className="mb-4">
+          <main className="flex-1 min-w-0 p-4 max-w-[1600px] mx-auto">
+            {/* Filtres actifs */}
+            <div className="mb-4 overflow-x-auto pb-2 scrollbar-hide">
               <ActiveFilters
                 filters={filters}
                 categories={categories}
@@ -201,6 +282,7 @@ export function CatalogueContent({
                 }}
               />
             </div>
+            
             <ProductGrid
               products={products}
               isLoading={loading}

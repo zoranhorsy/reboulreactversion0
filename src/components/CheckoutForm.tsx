@@ -33,6 +33,7 @@ interface OrderItem {
   variant: {
     size?: string
     color?: string
+    stock?: number
   }
 }
 
@@ -147,6 +148,7 @@ export function CheckoutForm({ shippingData }: CheckoutFormProps) {
           variant: {
             size: item.variant?.size || "Default",
             color: item.variant?.color || "Default",
+            stock: item.variant?.stock || 0,
           },
         })),
         shippingAddress: {

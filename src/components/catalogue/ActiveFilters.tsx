@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge"
 import type { SearchParams } from "@/lib/types/search"
 import type { Category } from "@/lib/types/category"
 import type { Brand } from "@/lib/types/brand"
+import { cn } from "@/lib/utils"
 
 interface ActiveFiltersProps {
   filters: Partial<SearchParams>
@@ -20,9 +21,15 @@ export function ActiveFilters({
   const getFilterLabel = (key: keyof SearchParams, value: string) => {
     switch (key) {
       case "category":
-        return categories.find(c => c.id.toString() === value)?.name
+        const category = categories.find(c => c.id.toString() === value)
+        return category ? category.name : null
       case "brand":
-        return brands.find(b => b.id.toString() === value)?.name
+        const brandNames = value.split(',')
+        if (brandNames.length === 1) {
+          const brand = brands.find(b => b.id.toString() === value || b.name === value)
+          return brand ? brand.name : value
+        }
+        return `${brandNames.length} marques`
       case "color":
         return `Couleur: ${value}`
       case "size":
@@ -31,20 +38,27 @@ export function ActiveFilters({
         return `Min: ${value}€`
       case "maxPrice":
         return `Max: ${value}€`
+      case "search":
+        return `Recherche: ${value}`
       case "featured":
         return "Produits vedettes"
       case "store_type":
+        if(value === "adult") return "Adulte"
+        if(value === "kids") return "Enfant"
+        if(value === "sneakers") return "Sneakers"
         return value === "new" ? "Nouveautés" : value
       case "sort":
         switch (value) {
           case "price_asc":
-            return "Prix croissant"
+            return "Prix ↑"
           case "price_desc":
-            return "Prix décroissant"
+            return "Prix ↓"
           case "name_asc":
             return "Nom A-Z"
           case "name_desc":
             return "Nom Z-A"
+          case "newest":
+            return "Nouveautés"
           default:
             return null
         }
@@ -54,7 +68,7 @@ export function ActiveFilters({
   }
 
   const activeFilters = Object.entries(filters).filter(([key, value]) => {
-    return value && value !== "all" && key !== "search" && key !== "page" && key !== "limit"
+    return value && value !== "all" && key !== "page" && key !== "limit"
   })
 
   if (activeFilters.length === 0) {
@@ -62,28 +76,34 @@ export function ActiveFilters({
   }
 
   return (
-    <div className="flex flex-wrap gap-2 mb-4">
-      {activeFilters.map(([key, value]) => {
-        const label = getFilterLabel(key as keyof SearchParams, value)
-        if (!label) return null
+    <div className="relative w-full">
+      <div className="flex items-center space-x-2 overflow-x-auto pb-1 scrollbar-hide">
+        {activeFilters.map(([key, value]) => {
+          const label = getFilterLabel(key as keyof SearchParams, value as string)
+          if (!label) return null
 
-        return (
-          <Badge
-            key={key}
-            variant="secondary"
-            className="pl-2 pr-1 py-1 flex items-center gap-1"
-          >
-            {label}
-            <button
-              onClick={() => onRemoveFilter(key as keyof SearchParams)}
-              className="ml-1 hover:bg-muted rounded-full p-0.5"
+          return (
+            <Badge 
+              key={key}
+              variant="secondary"
+              className={cn(
+                "flex items-center gap-1 whitespace-nowrap px-2.5 py-1", 
+                "border rounded-full text-xs font-medium"
+              )}
             >
-              <X className="h-3 w-3" />
-              <span className="sr-only">Supprimer le filtre {label}</span>
-            </button>
-          </Badge>
-        )
-      })}
+              {label}
+              <button
+                onClick={() => onRemoveFilter(key as keyof SearchParams)}
+                aria-label={`Supprimer le filtre ${label}`}
+                className="ml-1 rounded-full p-0.5 hover:bg-muted"
+              >
+                <X className="h-3 w-3" />
+                <span className="sr-only">Supprimer le filtre {label}</span>
+              </button>
+            </Badge>
+          )
+        })}
+      </div>
     </div>
   )
 } 

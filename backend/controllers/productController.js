@@ -214,30 +214,28 @@ class ProductController {
           productData.image_url = uploadedImages[0].url;
           
           // Stocker toutes les URLs des images dans le tableau images
-          const imageUrls = uploadedImages.map(img => img.url);
-          productData.images = JSON.stringify(imageUrls);
-          
-          console.log('Images préparées:', {
-            image_url: productData.image_url,
-            images: imageUrls
-          });
+          productData.images = uploadedImages.map(img => img.url);
         }
       } catch (error) {
         console.error('Erreur lors de l\'upload des images:', error);
         throw new AppError('Erreur lors de l\'upload des images', 500);
       }
     } else if (data.images) {
-      // Si pas de nouveaux fichiers mais des URLs d'images existantes
       let images = [];
       
-      // Parser les images si c'est une chaîne JSON ou une chaîne avec des URLs séparées par des virgules
+      // Traitement des images existantes
       if (typeof data.images === 'string') {
         try {
-          // Essayer d'abord de parser comme JSON
+          // Essayer de parser comme JSON
           images = JSON.parse(data.images);
         } catch (error) {
-          // Si ce n'est pas du JSON valide, essayer de splitter sur les virgules
-          images = data.images.split(',').map(url => url.trim());
+          // Si ce n'est pas du JSON valide, vérifier si c'est une URL unique
+          if (data.images.includes('cloudinary.com')) {
+            images = [data.images];
+          } else {
+            // Sinon, essayer de splitter sur les virgules
+            images = data.images.split(',').map(url => url.trim());
+          }
         }
       } else if (Array.isArray(data.images)) {
         images = data.images;
@@ -250,52 +248,29 @@ class ProductController {
       );
       
       if (cloudinaryImages.length > 0) {
-        // Toujours utiliser la première image Cloudinary comme image_url
+        // Toujours utiliser la première image comme image_url
         productData.image_url = cloudinaryImages[0];
-        // Stocker toutes les URLs Cloudinary
-        productData.images = JSON.stringify(cloudinaryImages);
-        
-        console.log('Images existantes mises à jour:', {
-          image_url: productData.image_url,
-          images: cloudinaryImages
-        });
+        productData.images = cloudinaryImages;
       }
     }
 
-    // Vérifier que image_url est bien une URL Cloudinary
-    if (productData.image_url && !productData.image_url.includes('cloudinary.com')) {
-      // Si image_url n'est pas une URL Cloudinary mais qu'on a des images Cloudinary
-      const images = typeof productData.images === 'string' 
-        ? JSON.parse(productData.images) 
-        : (Array.isArray(productData.images) ? productData.images : []);
-      
-      if (images.length > 0 && typeof images[0] === 'string' && images[0].includes('cloudinary.com')) {
-        productData.image_url = images[0];
-        console.log('image_url corrigée avec la première image Cloudinary:', productData.image_url);
-      }
-    }
-
-    // Traiter les champs JSON et tableaux
+    // Traiter les champs JSON
     const jsonFields = ["variants", "reviews", "questions", "faqs", "size_chart"]
-    const arrayFields = ["tags", "colors", "images"]
-
     jsonFields.forEach(field => {
       if (productData[field]) {
-        productData[field] = JSON.stringify(parseJsonField(field, productData[field]))
-      }
-    })
-
-    arrayFields.forEach(field => {
-      if (productData[field] && !jsonFields.includes(field)) {
-        if (Array.isArray(productData[field])) {
-          productData[field] = `{${productData[field].join(",")}}`
-        } else if (typeof productData[field] === "string" && field !== "images") {
-          productData[field] = `{${productData[field]}}`
+        if (typeof productData[field] === 'string') {
+          try {
+            productData[field] = JSON.parse(productData[field]);
+          } catch (e) {
+            console.error(`Erreur lors du parsing du champ ${field}:`, e);
+          }
         }
+        // Convertir en JSONB pour PostgreSQL
+        productData[field] = JSON.stringify(productData[field]);
       }
-    })
+    });
 
-    return productData
+    return productData;
   }
 
   static async _deleteProductImages(product) {

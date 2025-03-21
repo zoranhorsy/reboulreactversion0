@@ -18,7 +18,7 @@ import useEmblaCarousel from 'embla-carousel-react'
 import Autoplay from 'embla-carousel-autoplay'
 import { cn } from '@/lib/utils'
 
-export function FeaturedProducts() {
+export function RandomCpcompanyProducts() {
     const [emblaRef] = useEmblaCarousel(
         { 
             loop: true,
@@ -42,20 +42,26 @@ export function FeaturedProducts() {
     const [error, setError] = useState<string | null>(null)
 
     useEffect(() => {
-        const fetchFeaturedProducts = async () => {
+        const fetchRandomCpcompanyProducts = async () => {
             try {
                 setIsLoading(true)
-                const response = await api.fetchProducts({ featured: "true", limit: "8" })
-                setProducts(response.products)
+                const response = await api.fetchProducts({ store_type: "cpcompany", limit: "8" })
+                
+                // Shuffle the products array to get random products
+                const shuffled = [...response.products].sort(() => 0.5 - Math.random())
+                // Take the first 8 (or fewer if there aren't 8 available)
+                const randomProducts = shuffled.slice(0, 8)
+                
+                setProducts(randomProducts)
             } catch (err) {
-                console.error('Erreur lors de la récupération des produits mis en avant:', err)
+                console.error('Erreur lors de la récupération des produits CP Company aléatoires:', err)
                 setError(err instanceof Error ? err.message : "Une erreur est survenue")
             } finally {
                 setIsLoading(false)
             }
         }
 
-        fetchFeaturedProducts()
+        fetchRandomCpcompanyProducts()
     }, [])
 
     if (isLoading) {
@@ -76,9 +82,7 @@ export function FeaturedProducts() {
 
     return (
         <section className="w-full py-6 sm:py-8 md:py-10 lg:py-12 overflow-hidden">
-            <div className="text-center mb-4 sm:mb-5 md:mb-6 lg:mb-8">
-                
-            </div>
+            
 
             <div className="w-full px-1.5 sm:px-2 md:px-4 lg:px-6 xl:px-8">
                 <Carousel
@@ -175,13 +179,12 @@ export function FeaturedProducts() {
                         transition-all duration-200
                         h-8 sm:h-9 md:h-10"
                 >
-                    <Link href="/catalogue" className="flex items-center gap-1.5">
-                        Voir tout le catalogue
+                    <Link href="/catalogue?store_type=cpcompany" className="flex items-center gap-1.5">
+                        Voir tous les produits CP Company
                         <ChevronRight className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                     </Link>
                 </Button>
             </div>
         </section>
     )
-}
-
+} 

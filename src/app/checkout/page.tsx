@@ -136,29 +136,22 @@ export default function CheckoutPage() {
                     country: shippingData.country
                 },
                 items: items.map(item => {
-                    // S'assurer que l'ID est un nombre entier positif
                     const productId = parseInt(String(item.id).split('-')[0], 10);
-                    if (isNaN(productId) || productId <= 0) {
-                        throw new Error(`ID de produit invalide pour l'article : ${item.name}`);
-                    }
-                    
-                    if (!item.variant || !item.variant.size || !item.variant.color) {
-                        throw new Error(`Variants manquants pour l'article : ${item.name}`);
-                    }
-
                     return {
                         product_id: productId,
-                        quantity: Math.max(1, Math.floor(Number(item.quantity))),
-                        price: Number(parseFloat(item.price.toString()).toFixed(2)),
+                        product_name: item.name,
+                        quantity: item.quantity,
+                        price: item.price,
                         variant: {
                             size: item.variant.size,
                             color: item.variant.color
                         }
                     };
                 }),
-                total_amount: Number(parseFloat(total.toString()).toFixed(2)),
+                total_amount: total,
                 status: 'pending',
-                payment_status: 'completed'
+                payment_status: 'pending',
+                order_number: `ORD-${Math.floor(Math.random() * 1000000)}`
             }
 
             // Vérification des données avant envoi
@@ -166,8 +159,7 @@ export default function CheckoutPage() {
             console.log('Items du panier:', items)
             console.log('Envoi de la commande:', JSON.stringify(orderData, null, 2))
             console.log('URL de l\'API:', `${process.env.NEXT_PUBLIC_API_URL}/orders`)
-            console.log('Token:', token ? 'Présent' : 'Manquant')
-
+            
             // Envoyer la commande à l'API backend
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders`, {
                 method: 'POST',
@@ -178,53 +170,15 @@ export default function CheckoutPage() {
                 body: JSON.stringify(orderData)
             })
 
-            // Log de la réponse brute pour debug
-            const responseText = await response.text()
-            console.log('Réponse brute:', responseText)
-
-            let responseData
-            try {
-                responseData = JSON.parse(responseText)
-            } catch (e) {
-                console.error('Erreur de parsing JSON:', e)
-                throw new Error('La réponse du serveur n\'est pas au format JSON valide')
-            }
-
             if (!response.ok) {
-                console.error('Détails de la réponse:', {
-                    status: response.status,
-                    statusText: response.statusText,
-                    headers: Object.fromEntries(response.headers.entries()),
-                    data: responseData
-                })
-
-                // Tenter de parser le message d'erreur s'il est au format JSON
-                let errorMessage = 'Erreur lors de la création de la commande'
-                if (typeof responseData === 'string') {
-                    try {
-                        const parsedError = JSON.parse(responseData)
-                        errorMessage = Object.values(parsedError[0])[0] as string
-                    } catch (e) {
-                        errorMessage = responseData
-                    }
-                } else if (responseData.message) {
-                    errorMessage = responseData.message
-                } else if (responseData.error) {
-                    errorMessage = responseData.error
-                }
-
-                // Gestion spécifique des erreurs de stock et de variants
-                if (errorMessage.includes('Stock insuffisant')) {
-                    throw new Error('Désolé, certains articles ne sont plus disponibles en stock. Veuillez ajuster votre panier.')
-                } else if (errorMessage.includes('Variant non trouvé')) {
-                    throw new Error('Certains articles ne sont plus disponibles dans la taille ou la couleur sélectionnée. Veuillez ajuster votre panier.')
-                } else if (errorMessage.includes('Produit non trouvé')) {
-                    throw new Error('Certains articles ne sont plus disponibles. Veuillez ajuster votre panier.')
-                }
-
-                throw new Error(errorMessage)
+                const errorText = await response.text();
+                console.error('Erreur de réponse API:', response.status, errorText);
+                throw new Error(`Erreur lors de la création de la commande: ${response.status}`);
             }
 
+            const responseData = await response.json();
+            console.log('Commande créée avec succès:', responseData);
+            
             // Sauvegarder les informations de la dernière commande
             localStorage.setItem('lastOrder', JSON.stringify({
                 orderNumber: responseData.order_number || responseData.id,

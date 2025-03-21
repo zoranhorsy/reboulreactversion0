@@ -4,7 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Edit, Trash2, ArrowUpDown, Eye, Package, Star, Calendar, ImageOff } from "lucide-react"
-import { type Product, type Variant } from "@/lib/types/product"
+import { type Product } from "@/lib/types/product"
 import { type Category } from "@/lib/types/category"
 import Link from "next/link"
 import { formatPrice, convertToCloudinaryUrl } from "@/lib/utils"
@@ -34,7 +34,6 @@ interface ProductTableProps {
     handleSort: (key: keyof Product) => void
     handleEditProduct: (product: Product) => void
     handleDeleteProduct: (productId: number) => void
-    handleToggleActive: (product: Product) => Promise<void>
 }
 
 export function ProductTable({
@@ -132,13 +131,9 @@ export function ProductTable({
 
     const getImageUrl = (product: Product): string => {
         if (product.images?.[0]) {
-            if (typeof product.images[0] === 'string') {
-                return product.images[0];
-            } else if (typeof product.images[0] === 'object' && product.images[0] !== null) {
-                if ('url' in product.images[0]) {
-                    return product.images[0].url;
-                }
-            }
+            return typeof product.images[0] === 'string' 
+                ? product.images[0] 
+                : product.images[0].url;
         }
         return product.image_url || product.image || "/placeholder.png";
     }
@@ -155,7 +150,7 @@ export function ProductTable({
         if (product.variants && product.variants.length > 0) {
             return product.variants.reduce((total, variant) => total + (Number(variant.stock) || 0), 0);
         }
-        return 0; // Si pas de variants, pas de stock
+        return product.stock || 0;
     }
 
     // Fonction pour afficher le tableau des stocks par variant
@@ -375,15 +370,6 @@ export function ProductTable({
                             >
                                 <Edit className="h-3 w-3 sm:h-4 sm:w-4 mr-0.5 sm:mr-1" />
                                 Éditer
-                            </Button>
-
-                            <Button
-                                variant={product.active ? "secondary" : "outline"}
-                                size="sm"
-                                className="flex-1 h-7 sm:h-8 text-[10px] sm:text-xs"
-                                onClick={() => handleToggleActive(product)}
-                            >
-                                {product.active ? "Désactiver" : "Activer"}
                             </Button>
 
                             <Button

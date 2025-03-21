@@ -1,16 +1,16 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { motion } from 'framer-motion'
-import { Heart, Star, ImageOff } from 'lucide-react'
+import { Star, ImageOff } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ProductImage } from "@/lib/types/product-image"
 import type { Product } from "@/lib/api"
+import { api } from '@/lib/api'
+import { useToast } from '@/components/ui/use-toast'
+import { getColorInfo, isWhiteColor } from '@/config/productColors'
 
 interface FeaturedProductCardProps {
     product: Product
@@ -18,6 +18,24 @@ interface FeaturedProductCardProps {
 
 export function FeaturedProductCard({ product }: FeaturedProductCardProps) {
     const [imageError, setImageError] = useState(false)
+    const [isFavorite, setIsFavorite] = useState(false)
+    const [isProcessing, setIsProcessing] = useState(false)
+    const { toast } = useToast()
+
+    // Vérifier si le produit est dans les favoris au chargement
+    useEffect(() => {
+        const checkFavoriteStatus = async () => {
+            try {
+                const favorites = await api.getFavorites()
+                const isProductFavorite = favorites.some(fav => fav.id === product.id)
+                setIsFavorite(isProductFavorite)
+            } catch (error) {
+                console.error('Erreur lors de la vérification des favoris:', error)
+            }
+        }
+        
+        checkFavoriteStatus()
+    }, [product.id])
 
     const getImageUrl = (product: Product) => {
         // Fonction pour vérifier si une URL est valide
@@ -72,132 +90,267 @@ export function FeaturedProductCard({ product }: FeaturedProductCardProps) {
     }
 
     const calculateStock = () => {
-        if (product.variants && product.variants.length > 0) {
-            return product.variants.reduce((total, variant) => total + variant.stock, 0)
+        // Le produit n'a pas de stock direct, seulement via ses variantes
+        
+        // Si le produit a des variantes, additionner leurs stocks
+        if (product.variants && Array.isArray(product.variants) && product.variants.length > 0) {
+            return product.variants.reduce((total, variant) => {
+                // Vérifier si la variante a un stock défini et qu'il est un nombre
+                const variantStock = typeof variant.stock === 'number' ? variant.stock : 0;
+                return total + variantStock;
+            }, 0);
         }
-        return product.stock || 0
+        
+        // Si pas de variantes, considérer que le stock est 0
+        return 0;
     }
 
-    const totalStock = calculateStock()
+    const getStockLabel = () => {
+        const stockLevel = calculateStock();
+        
+        if (stockLevel === 0) {
+            return { label: 'Rupture', color: 'bg-red-500/80' }
+        } else if (stockLevel <= 5) {
+            return { label: 'Stock limité', color: 'bg-amber-500/80' }
+        } else if (stockLevel <= 10) {
+            return { label: 'En stock', color: 'bg-emerald-500/80' }
+        } else {
+            return { label: 'Disponible', color: 'bg-emerald-500/80' }
+        }
+    }
+    
+    // Extraire les tailles uniques des variantes
+    const getAvailableSizes = () => {
+        if (!product.variants || !Array.isArray(product.variants)) return [];
+        
+        // Ne récupérer que les tailles des variantes qui ont du stock
+        const sizes = product.variants
+            .filter(variant => typeof variant.stock === 'number' && variant.stock > 0)
+            .map(variant => variant.size)
+            .filter(Boolean);
+            
+        // Supprimer les doublons
+        return Array.from(new Set(sizes));
+    }
+    
+    // Extraire les couleurs uniques des variantes
+    const getAvailableColors = () => {
+        if (!product.variants || !Array.isArray(product.variants)) return [];
+        
+        // Ne récupérer que les couleurs des variantes qui ont du stock
+        const colors = product.variants
+            .filter(variant => typeof variant.stock === 'number' && variant.stock > 0)
+            .map(variant => variant.color)
+            .filter(Boolean);
+            
+        // Supprimer les doublons
+        return Array.from(new Set(colors));
+    }
+
+    const toggleFavorite = async (e: React.MouseEvent) => {
+        e.preventDefault() // Empêche la navigation vers la page produit
+        
+        if (isProcessing) return // Évite les clics multiples pendant le traitement
+        
+        try {
+            setIsProcessing(true)
+            
+            if (isFavorite) {
+                // Supprimer des favoris
+                await api.removeFromFavorites(product.id)
+                toast({
+                    title: "Supprimé des favoris",
+                    description: `${product.name} a été retiré de vos favoris`,
+                    variant: "default",
+                })
+            } else {
+                // Ajouter aux favoris
+                await api.addToFavorites(product.id)
+                toast({
+                    title: "Ajouté aux favoris",
+                    description: `${product.name} a été ajouté à vos favoris`,
+                    variant: "default",
+                })
+            }
+            
+            // Mettre à jour l'état local après succès
+            setIsFavorite(!isFavorite)
+        } catch (error) {
+            let errorMessage = "Une erreur est survenue"
+            
+            if (error instanceof Error) {
+                if (error.message.includes('connecté')) {
+                    errorMessage = "Veuillez vous connecter pour ajouter des favoris"
+                } else {
+                    errorMessage = error.message
+                }
+            }
+            
+            toast({
+                title: "Erreur",
+                description: errorMessage,
+                variant: "destructive",
+            })
+        } finally {
+            setIsProcessing(false)
+        }
+    }
+
+    const stockInfo = getStockLabel();
+    const hasStock = calculateStock() > 0;
+    const availableSizes = getAvailableSizes();
+    const availableColors = getAvailableColors();
 
     return (
         <Link href={`/produit/${product.id}`}>
-            <Card className="group relative overflow-hidden bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800
-                hover:border-primary/50 dark:hover:border-primary/50 transition-colors duration-300">
-                <div className="aspect-[3/4] relative overflow-hidden">
+            <Card className="group relative overflow-hidden bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800
+                shadow-sm hover:shadow-md hover:border-primary/20 dark:hover:border-primary/20 transition-all duration-300">
+                <div className="aspect-[4/5] relative overflow-hidden">
                     {imageError ? (
                         <div className="w-full h-full flex items-center justify-center bg-muted">
-                            <ImageOff className="w-8 h-8 text-muted-foreground" />
+                            <ImageOff className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-muted-foreground" />
                         </div>
                     ) : (
                         <Image
                             src={getImageUrl(product)}
                             alt={product.name}
                             fill
-                            className="object-cover transition-transform duration-500 group-hover:scale-105"
-                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                            className={cn(
+                                "object-cover transition-transform duration-500 group-hover:scale-105",
+                                !hasStock && "opacity-75 grayscale-[30%]"
+                            )}
+                            sizes="(max-width: 640px) 30vw, (max-width: 768px) 40vw, (max-width: 1024px) 30vw, 25vw"
                             priority
                             onError={handleImageError}
                         />
                     )}
-                    <div className="absolute top-4 left-4 right-4 flex justify-between items-start gap-2">
-                        <div className="flex flex-col gap-2">
-                            {product.category && (
-                                <Badge
-                                    variant="secondary"
-                                    className="text-xs font-medium 
-                                        bg-white dark:bg-zinc-900
-                                        text-zinc-900 dark:text-white
-                                        border border-zinc-200 dark:border-zinc-800"
-                                >
-                                    {product.category}
-                                </Badge>
-                            )}
-                            {totalStock === 0 && (
-                                <Badge
-                                    variant="destructive"
-                                    className="text-xs font-medium"
-                                >
-                                    Rupture de stock
-                                </Badge>
-                            )}
+                    
+                    {/* Badge de stock et bouton favoris */}
+                    <div className="absolute top-1.5 left-1.5 right-1.5 flex justify-between items-start">
+                        <div className={cn(
+                            "px-1.5 py-0.5 sm:px-2 h-auto backdrop-blur-sm text-[8px] sm:text-[10px] md:text-xs font-medium text-white inline-flex items-center rounded-sm",
+                            stockInfo.color
+                        )}>
+                            {stockInfo.label}
                         </div>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 rounded-full bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm
-                                border border-zinc-200 dark:border-zinc-800
-                                text-zinc-900 dark:text-white
-                                opacity-0 group-hover:opacity-100 transition-opacity
-                                hover:scale-110 hover:bg-white dark:hover:bg-zinc-900"
-                            onClick={(e) => {
-                                e.preventDefault() // Empêche la navigation vers la page produit
-                                // Ajouter ici la logique pour les favoris
-                            }}
+                        
+                        <div 
+                            onClick={toggleFavorite}
+                            className={cn(
+                                "h-6 w-6 rounded-full",
+                                "flex items-center justify-center cursor-pointer",
+                                "transition-all duration-300",
+                                isFavorite 
+                                    ? "bg-rose-500/90 text-white" 
+                                    : "bg-white/70 dark:bg-zinc-950/70 text-zinc-500 dark:text-zinc-400",
+                                "backdrop-blur-sm",
+                                "hover:scale-110",
+                                isProcessing ? "pointer-events-none opacity-50" : ""
+                            )}
                         >
-                            <Heart className="w-4 h-4" />
-                        </Button>
-                    </div>
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent 
-                        opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <div className="absolute inset-0 flex flex-col justify-end p-6">
-                            <div className="space-y-4">
-                                {product.brand && (
-                                    <span className="block font-geist text-xs tracking-wider text-white/80 uppercase">
-                                        {product.brand}
-                                    </span>
-                                )}
-                                <h3 className="font-geist text-xl text-white font-medium 
-                                    transform translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 
-                                    transition-all duration-300">
-                                    {product.name}
-                                </h3>
-                                {product.description && (
-                                    <p className="font-geist text-sm text-white/80 line-clamp-2
-                                        transform translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 
-                                        transition-all duration-300 delay-100">
-                                        {product.description}
-                                    </p>
-                                )}
-                                <div className="flex items-center gap-4
-                                    transform translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 
-                                    transition-all duration-300 delay-200">
-                                    <div className="space-y-1">
-                                        <span className="font-geist text-lg text-white font-medium">
-                                            {formatPrice(product.price)}
-                                        </span>
-                                        {product.rating && (
-                                            <div className="flex items-center gap-1">
-                                                <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                                                <span className="text-sm text-white/80">
-                                                    {product.rating.toFixed(1)}
-                                                    {product.reviews_count && (
-                                                        <span className="text-white/60 text-xs ml-1">
-                                                            ({product.reviews_count})
-                                                        </span>
-                                                    )}
-                                                </span>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                                {product.tags && product.tags.length > 0 && (
-                                    <div className="flex flex-wrap gap-2
-                                        transform translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 
-                                        transition-all duration-300 delay-300">
-                                        {product.tags.map((tag, index) => (
-                                            <Badge
-                                                key={index}
-                                                variant="outline"
-                                                className="text-[10px] text-white/60 border-white/20"
-                                            >
-                                                {tag}
-                                            </Badge>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
+                            {isProcessing ? (
+                                <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                            ) : (
+                                <svg 
+                                    className="w-3 h-3" 
+                                    viewBox="0 0 24 24"
+                                    fill={isFavorite ? "currentColor" : "none"}
+                                    stroke="currentColor"
+                                    strokeWidth="1.5"
+                                >
+                                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                                </svg>
+                            )}
                         </div>
+                    </div>
+                </div>
+                
+                {/* Nouvelle section d'informations produit en dehors de l'image */}
+                <div className="p-2 sm:p-3">
+                    <div className="flex items-start justify-between gap-1 mb-1">
+                        <h3 className="font-geist text-[10px] sm:text-xs md:text-sm font-medium truncate leading-tight text-zinc-900 dark:text-zinc-200">
+                            {product.name}
+                        </h3>
+                        {product.rating && (
+                            <div className="flex items-center gap-0.5 mt-0.5 ml-auto flex-shrink-0">
+                                <Star className="w-2 h-2 sm:w-2.5 sm:h-2.5 text-yellow-400 fill-yellow-400" />
+                                <span className="text-[8px] sm:text-[9px] md:text-[10px] text-zinc-500 dark:text-zinc-400">
+                                    {product.rating.toFixed(1)}
+                                </span>
+                            </div>
+                        )}
+                    </div>
+                    
+                    <div className="flex items-center justify-between mb-2">
+                        <span className="font-geist text-[10px] sm:text-xs md:text-sm font-medium text-zinc-900 dark:text-zinc-200">
+                            {formatPrice(product.price)}
+                        </span>
+                        {product.brand && (
+                            <span className="text-[8px] sm:text-[9px] tracking-wider text-zinc-500 dark:text-zinc-400 uppercase">
+                                {product.brand}
+                            </span>
+                        )}
+                    </div>
+                    
+                    {/* Affichage des tailles et couleurs disponibles */}
+                    <div className="flex items-center gap-2 flex-wrap">
+                        {availableSizes.length > 0 && (
+                            <div className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-950/80 rounded-sm px-1.5 py-0.5">
+                                <span className="text-[8px] sm:text-[9px] text-zinc-500 dark:text-zinc-400">
+                                    Tailles:
+                                </span>
+                                <div className="flex items-center gap-1">
+                                    {availableSizes.slice(0, 4).map((size, index) => (
+                                        <span 
+                                            key={index} 
+                                            className="text-[8px] sm:text-[9px] font-medium text-zinc-900 dark:text-zinc-200"
+                                        >
+                                            {size}
+                                        </span>
+                                    ))}
+                                    {availableSizes.length > 4 && (
+                                        <span className="text-[8px] sm:text-[9px] text-zinc-500 dark:text-zinc-400">
+                                            +{availableSizes.length - 4}
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                        
+                        {availableColors.length > 0 && (
+                            <div className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-950/80 rounded-sm px-1.5 py-0.5">
+                                <span className="text-[8px] sm:text-[9px] text-zinc-500 dark:text-zinc-400">
+                                    Couleurs:
+                                </span>
+                                <div className="flex items-center gap-0.5">
+                                    {availableColors.slice(0, 3).map((color, index) => {
+                                        const colorInfo = getColorInfo(color || '');
+                                        const isWhite = isWhiteColor(colorInfo.hex);
+                                        
+                                        return (
+                                            <span 
+                                                key={index} 
+                                                className={cn(
+                                                    "w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full border border-zinc-300 dark:border-zinc-700",
+                                                    isWhite && "border-zinc-400 dark:border-zinc-500"
+                                                )}
+                                                title={colorInfo.label}
+                                                style={{ 
+                                                    backgroundColor: colorInfo.hex.startsWith('linear-gradient') 
+                                                        ? colorInfo.hex 
+                                                        : colorInfo.hex
+                                                }}
+                                            />
+                                        );
+                                    })}
+                                    {availableColors.length > 3 && (
+                                        <span className="text-[8px] sm:text-[9px] text-zinc-500 dark:text-zinc-400">
+                                            +{availableColors.length - 3}
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </Card>

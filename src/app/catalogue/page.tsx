@@ -1,9 +1,6 @@
 import type { Metadata } from "next"
 import { Suspense } from "react"
-import ClientOnly from "@/components/ClientOnly"
-import { CatalogueContent } from "@/components/catalogue/CatalogueContent"
 import { Loader } from "@/components/ui/Loader"
-import { LocalStorageChecker } from "@/components/LocalStorageChecker"
 import { api } from "@/lib/api"
 
 type SearchParams = { [key: string]: string | string[] | undefined }
@@ -51,6 +48,23 @@ export async function generateMetadata({ searchParams }: CataloguePageProps): Pr
   }
 }
 
+// Client wrapper component
+import { CatalogueClientContent } from "@/components/catalogue/CatalogueClientContent"
+import type { Product } from "@/lib/types/product"
+import type { Category } from "@/lib/types/category"
+import type { Brand } from "@/lib/types/brand"
+
+interface CatalogueWrapperProps {
+  initialProducts: Product[]
+  initialCategories: Category[]
+  initialBrands: Brand[]
+  total: number
+}
+
+function CatalogueClientWrapper(props: CatalogueWrapperProps) {
+  return <CatalogueClientContent {...props} />
+}
+
 export default async function CataloguePage({
   searchParams,
 }: {
@@ -91,17 +105,14 @@ export default async function CataloguePage({
   ])
 
   return (
-    <ClientOnly>
-      <Suspense fallback={<Loader />}>
-        <LocalStorageChecker />
-        <CatalogueContent
-          initialProducts={productsData.products}
-          initialCategories={categories}
-          initialBrands={brands}
-          total={productsData.total}
-        />
-      </Suspense>
-    </ClientOnly>
+    <Suspense fallback={<Loader />}>
+      <CatalogueClientWrapper
+        initialProducts={productsData.products}
+        initialCategories={categories}
+        initialBrands={brands}
+        total={productsData.total}
+      />
+    </Suspense>
   )
 }
 
