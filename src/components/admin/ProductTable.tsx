@@ -1,3 +1,5 @@
+'use client'
+
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -18,6 +20,11 @@ import { CloudinaryImage } from "@/components/ui/CloudinaryImage"
 import { isCloudinaryUrl } from "@/config/cloudinary"
 import { fixCloudinaryUrl } from "@/lib/cloudinary"
 import { ProductImage } from "@/lib/types/product-image"
+import {
+    Card,
+    CardContent,
+} from "@/components/ui/card"
+import Image from "next/image"
 
 interface ProductTableProps {
     filteredProducts: Product[]
@@ -39,38 +46,6 @@ export function ProductTable({
     handleDeleteProduct,
 }: ProductTableProps) {
     const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({})
-    const [debugInfo, setDebugInfo] = useState<Record<string, any>>({})
-
-    useEffect(() => {
-        const newDebugInfo: Record<string, any> = {};
-        
-        filteredProducts.forEach(product => {
-            if (product.images && product.images.length > 0) {
-                const firstImage = product.images[0];
-                newDebugInfo[`product_${product.id}`] = {
-                    id: product.id,
-                    name: product.name,
-                    imageType: typeof firstImage,
-                    isProductImage: typeof firstImage === 'object' && firstImage !== null && 'url' in firstImage,
-                    imageUrl: typeof firstImage === 'object' && firstImage !== null && 'url' in firstImage 
-                        ? (firstImage as ProductImage).url 
-                        : (typeof firstImage === 'string' ? firstImage : 'non-string'),
-                    hasError: imageErrors[product.id] || false
-                };
-            } else {
-                newDebugInfo[`product_${product.id}`] = {
-                    id: product.id,
-                    name: product.name,
-                    imageType: 'none',
-                    hasImage: !!product.image || !!product.image_url,
-                    imageUrl: product.image || product.image_url || 'none',
-                    hasError: imageErrors[product.id] || false
-                };
-            }
-        });
-        
-        setDebugInfo(newDebugInfo);
-    }, [filteredProducts, imageErrors]);
 
     const getSortIcon = (key: keyof Product) => {
         if (!sortConfig || sortConfig.key !== key) {
@@ -150,268 +125,233 @@ export function ProductTable({
     }
 
     const getImageUrl = (product: Product): string => {
-        try {
-            // 1. Vérifier d'abord les images[] car elles sont toujours en Cloudinary
-            if (product.images && Array.isArray(product.images) && product.images.length > 0) {
-                const firstImage = product.images[0];
-                
-                // Si c'est une string et que c'est une URL Cloudinary
-                if (typeof firstImage === 'string' && firstImage.includes('cloudinary.com')) {
-                    console.log('URL Cloudinary trouvée dans images[]:', firstImage);
-                    return firstImage;
-                }
-                
-                // Si c'est un objet ProductImage avec une URL Cloudinary
-                if (typeof firstImage === 'object' && firstImage !== null && 'url' in firstImage) {
-                    const imageUrl = (firstImage as ProductImage).url;
-                    if (imageUrl.includes('cloudinary.com')) {
-                        console.log('URL Cloudinary trouvée dans ProductImage:', imageUrl);
-                        return imageUrl;
-                    }
-                }
-            }
-
-            // 2. Si pas d'URL Cloudinary dans images[], vérifier image_url
-            if (product.image_url && typeof product.image_url === 'string' && product.image_url.trim() !== '') {
-                if (product.image_url.includes('cloudinary.com')) {
-                    console.log('URL Cloudinary trouvée dans image_url:', product.image_url);
-                    return product.image_url;
-                }
-                console.log('URL non-Cloudinary trouvée dans image_url:', product.image_url);
-            }
-
-            console.log('Aucune URL Cloudinary trouvée pour le produit:', product.id);
-            return "/placeholder.png";
-        } catch (error) {
-            console.error("Erreur lors de la récupération de l'URL de l'image:", error);
-            return "/placeholder.png";
+        if (product.images?.[0]) {
+            return typeof product.images[0] === 'string' 
+                ? product.images[0] 
+                : product.images[0].url;
         }
+        return product.image_url || product.image || "/placeholder.png";
     }
 
     const handleImageError = (productId: string) => {
-        try {
-            console.error(`Erreur de chargement de l'image pour le produit ${productId}`);
-            
-            // Mettre à jour l'état pour afficher un placeholder
-            setImageErrors(prev => ({
-                ...prev,
-                [productId]: true
-            }));
-        } catch (error) {
-            console.error("Erreur lors de la gestion de l'erreur d'image:", error);
-        }
+        setImageErrors(prev => ({
+            ...prev,
+            [productId]: true
+        }));
     }
 
     return (
-        <div className="rounded-md border">
-            {process.env.NODE_ENV === 'development' && Object.keys(debugInfo).length > 0 && (
-                <div className="p-2 bg-yellow-50 text-xs border-b">
-                    <details>
-                        <summary className="cursor-pointer font-medium">Informations de débogage des images</summary>
-                        <pre className="mt-2 p-2 bg-gray-100 rounded overflow-auto max-h-40">
-                            {JSON.stringify(debugInfo, null, 2)}
-                        </pre>
-                    </details>
-                </div>
-            )}
-            
-            <ScrollArea className="h-[calc(100vh-300px)]">
-                <Table>
-                    <TableHeader className="sticky top-0 bg-background z-10">
-                        <TableRow>
-                            <TableHead className="w-[100px]">Image</TableHead>
-                            <TableHead className="min-w-[200px]">{renderSortableHeader("name", "Nom")}</TableHead>
-                            <TableHead>{renderSortableHeader("price", "Prix")}</TableHead>
-                            <TableHead>{renderSortableHeader("stock", "Stock")}</TableHead>
-                            <TableHead className="min-w-[120px]">Catégorie</TableHead>
-                            <TableHead className="min-w-[120px]">Marque</TableHead>
-                            <TableHead>Type</TableHead>
-                            <TableHead className="text-center min-w-[150px]">Statut</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {filteredProducts.length === 0 ? (
-                            <TableRow>
-                                <TableCell colSpan={9} className="h-24 text-center">
-                                    Aucun produit trouvé.
-                                </TableCell>
-                            </TableRow>
-                        ) : (
-                            filteredProducts.map((product) => (
-                                <TableRow key={product.id} className="group hover:bg-muted/50">
-                                    <TableCell>
-                                        <Link href={`/produit/${product.id}`} target="_blank">
-                                            <TooltipProvider>
-                                                <Tooltip>
-                                                    <TooltipTrigger>
-                                                        <div className="relative w-16 h-16 rounded-md overflow-hidden group-hover:ring-2 ring-primary transition-all bg-muted">
-                                                            {imageErrors[product.id] ? (
-                                                                <div className="w-full h-full flex items-center justify-center bg-muted">
-                                                                    <ImageOff className="w-6 h-6 text-muted-foreground" />
-                                                                </div>
-                                                            ) : (
-                                                                <CloudinaryImage
-                                                                    src={getImageUrl(product)}
-                                                                    alt={product.name}
-                                                                    fill={true}
-                                                                    className="w-full h-full"
-                                                                    onError={() => handleImageError(product.id.toString())}
-                                                                    fallbackSrc="/placeholder.png"
-                                                                />
-                                                            )}
-                                                            {process.env.NODE_ENV === 'development' && (
-                                                                <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white text-[6px] p-0.5 overflow-hidden">
-                                                                    ID: {product.id}
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </TooltipTrigger>
-                                                    <TooltipContent>
-                                                        <p>Voir le produit</p>
-                                                        {process.env.NODE_ENV === 'development' && (
-                                                            <div className="mt-1 pt-1 border-t text-xs max-w-[300px] break-all">
-                                                                <p className="text-[10px] text-muted-foreground">URL: {getImageUrl(product)}</p>
-                                                            </div>
-                                                        )}
-                                                    </TooltipContent>
-                                                </Tooltip>
-                                            </TooltipProvider>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredProducts.map((product) => (
+                <Card key={product.id} className="overflow-hidden">
+                    <CardContent className="p-4 space-y-4">
+                        {/* En-tête avec image et infos principales */}
+                        <div className="flex gap-3">
+                            <div className="relative w-24 h-24 rounded-md overflow-hidden flex-shrink-0 bg-muted">
+                                {imageErrors[product.id] ? (
+                                    <div className="w-full h-full flex items-center justify-center">
+                                        <ImageOff className="w-6 h-6 text-muted-foreground" />
+                                    </div>
+                                ) : (
+                                    <Link href={`/produit/${product.id}`} target="_blank">
+                                        <Image
+                                            src={getImageUrl(product)}
+                                            alt={product.name}
+                                            width={96}
+                                            height={96}
+                                            className="object-cover w-full h-full"
+                                            onError={() => handleImageError(product.id.toString())}
+                                        />
+                                    </Link>
+                                )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <div className="flex justify-between items-start gap-2">
+                                    <div className="space-y-1">
+                                        <Link 
+                                            href={`/produit/${product.id}`} 
+                                            target="_blank"
+                                            className="font-medium text-sm hover:underline line-clamp-2"
+                                        >
+                                            {product.name}
                                         </Link>
-                                    </TableCell>
-                                    <TableCell>
-                                        <div className="flex flex-col space-y-1">
-                                            <span className="font-medium line-clamp-1">{product.name}</span>
-                                            <span className="text-sm text-muted-foreground line-clamp-2">
-                                                {product.description}
-                                            </span>
-                                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                                <Calendar className="w-3 h-3" />
-                                                {formatDate(product.created_at || new Date().toISOString())}
-                                            </div>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell>
-                                        <div className="flex flex-col">
-                                            <span className="font-medium">
-                                                {formatPrice(product.price)}
-                                            </span>
-                                            {product.old_price && (
-                                                <span className="text-sm text-muted-foreground line-through">
-                                                    {formatPrice(product.old_price)}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </TableCell>
-                                    <TableCell>
-                                        <div className="flex flex-col space-y-1 min-w-[100px]">
-                                            <span className="font-medium text-center">
-                                                {product.variants?.reduce((total, variant) => total + (variant.stock || 0), 0) || 0}
-                                            </span>
-                                            {getStockStatus(product)}
-                                        </div>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Badge variant="outline" className="justify-center w-full">
-                                            {getCategoryName(product.category_id)}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Badge variant="outline" className="justify-center w-full">
-                                            {getBrandName(product.brand_id)}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell>
-                                        {getStoreTypeBadge(product.store_type)}
-                                    </TableCell>
-                                    <TableCell>
-                                        <div className="flex flex-col items-center gap-1.5">
-                                            {product.featured && (
-                                                <Badge variant="default" className="bg-amber-500/15 text-amber-500 w-full justify-center">
-                                                    <Star className="w-3 h-3 mr-1" />
-                                                    En vedette
+                                        <p className="text-xs text-muted-foreground line-clamp-2">
+                                            {product.description}
+                                        </p>
+                                    </div>
+                                    <div className="text-sm font-medium whitespace-nowrap">
+                                        {product.price.toLocaleString('fr-FR', {
+                                            style: 'currency',
+                                            currency: 'EUR'
+                                        })}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Informations détaillées */}
+                        <div className="grid grid-cols-2 gap-3 text-sm">
+                            <div>
+                                <span className="text-muted-foreground text-xs">Catégorie</span>
+                                <p>{getCategoryName(product.category_id)}</p>
+                            </div>
+                            <div>
+                                <span className="text-muted-foreground text-xs">Marque</span>
+                                <p>{getBrandName(product.brand_id)}</p>
+                            </div>
+                            <div>
+                                <span className="text-muted-foreground text-xs">Magasin</span>
+                                <div>{getStoreTypeBadge(product.store_type)}</div>
+                            </div>
+                            <div>
+                                <span className="text-muted-foreground text-xs">Stock</span>
+                                <div>{getStockStatus(product)}</div>
+                            </div>
+                            <div>
+                                <span className="text-muted-foreground text-xs">SKU</span>
+                                <p className="truncate">{product.sku || 'N/A'}</p>
+                            </div>
+                            <div>
+                                <span className="text-muted-foreground text-xs">Variantes</span>
+                                <p>{product.variants?.length || 0} variante{product.variants?.length !== 1 ? 's' : ''}</p>
+                            </div>
+                        </div>
+
+                        {/* Résumé des variantes */}
+                        {product.variants && product.variants.length > 0 && (
+                            <div className="space-y-2">
+                                <span className="text-muted-foreground text-xs">Détails des variantes</span>
+                                <div className="grid grid-cols-2 gap-2 text-xs">
+                                    <div>
+                                        <span className="text-muted-foreground">Couleurs:</span>
+                                        <div className="flex flex-wrap gap-1 mt-1">
+                                            {Array.from(new Set(product.variants.map(v => v.color))).map(color => (
+                                                <Badge key={color} variant="outline" className="text-[10px]">
+                                                    {color}
                                                 </Badge>
-                                            )}
-                                            {product.variants && product.variants.length > 0 && (
-                                                <TooltipProvider>
-                                                    <Tooltip>
-                                                        <TooltipTrigger>
-                                                            <Badge variant="outline" className="w-full justify-center">
-                                                                {product.variants.length} variante(s)
-                                                            </Badge>
-                                                        </TooltipTrigger>
-                                                        <TooltipContent>
-                                                            <div className="space-y-2">
-                                                                {product.variants.map((variant, idx) => (
-                                                                    <div key={idx} className="text-sm">
-                                                                        {variant.color} - {variant.size} ({variant.stock} en stock)
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                        </TooltipContent>
-                                                    </Tooltip>
-                                                </TooltipProvider>
-                                            )}
+                                            ))}
                                         </div>
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        <div className="flex justify-end gap-2">
-                                            <TooltipProvider>
-                                                <Tooltip>
-                                                    <TooltipTrigger asChild>
-                                                        <Link href={`/produit/${product.id}`} target="_blank">
-                                                            <Button variant="ghost" size="icon" className="hover:text-primary">
-                                                                <Eye className="h-4 w-4" />
-                                                            </Button>
-                                                        </Link>
-                                                    </TooltipTrigger>
-                                                    <TooltipContent>
-                                                        <p>Voir le produit</p>
-                                                    </TooltipContent>
-                                                </Tooltip>
-                                            </TooltipProvider>
-                                            <TooltipProvider>
-                                                <Tooltip>
-                                                    <TooltipTrigger asChild>
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            onClick={() => handleEditProduct(product)}
-                                                            className="hover:text-primary"
-                                                        >
-                                                            <Edit className="h-4 w-4" />
-                                                        </Button>
-                                                    </TooltipTrigger>
-                                                    <TooltipContent>
-                                                        <p>Modifier le produit</p>
-                                                    </TooltipContent>
-                                                </Tooltip>
-                                            </TooltipProvider>
-                                            <TooltipProvider>
-                                                <Tooltip>
-                                                    <TooltipTrigger asChild>
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            onClick={() => handleDeleteProduct(Number(product.id))}
-                                                            className="hover:text-destructive text-destructive/70"
-                                                        >
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </Button>
-                                                    </TooltipTrigger>
-                                                    <TooltipContent>
-                                                        <p>Supprimer le produit</p>
-                                                    </TooltipContent>
-                                                </Tooltip>
-                                            </TooltipProvider>
+                                    </div>
+                                    <div>
+                                        <span className="text-muted-foreground">Tailles:</span>
+                                        <div className="flex flex-wrap gap-1 mt-1">
+                                            {Array.from(new Set(product.variants.map(v => v.size))).map(size => (
+                                                <Badge key={size} variant="outline" className="text-[10px]">
+                                                    {size}
+                                                </Badge>
+                                            ))}
                                         </div>
-                                    </TableCell>
-                                </TableRow>
-                            ))
+                                    </div>
+                                    <div className="col-span-2">
+                                        <span className="text-muted-foreground">Stock par variante:</span>
+                                        <div className="grid grid-cols-2 gap-1 mt-1">
+                                            {product.variants.map(variant => (
+                                                <div key={`${variant.color}-${variant.size}`} className="flex items-center gap-1 text-[10px]">
+                                                    <span className="truncate">{variant.color} - {variant.size}:</span>
+                                                    <Badge 
+                                                        variant="secondary" 
+                                                        className={variant.stock === 0 ? "bg-red-500/15 text-red-500" : variant.stock < 5 ? "bg-yellow-500/15 text-yellow-500" : "bg-green-500/15 text-green-500"}
+                                                    >
+                                                        {variant.stock}
+                                                    </Badge>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         )}
-                    </TableBody>
-                </Table>
-            </ScrollArea>
+
+                        {/* Badges et statuts */}
+                        <div className="flex flex-wrap gap-2">
+                            {product.featured && (
+                                <Badge variant="secondary" className="bg-yellow-500/15 text-yellow-500">
+                                    <Star className="w-3 h-3 mr-1" />
+                                    Mis en avant
+                                </Badge>
+                            )}
+                            {product.new && (
+                                <Badge variant="secondary" className="bg-green-500/15 text-green-500">
+                                    Nouveau
+                                </Badge>
+                            )}
+                            {!product.active && (
+                                <Badge variant="secondary" className="bg-red-500/15 text-red-500">
+                                    Non publié
+                                </Badge>
+                            )}
+                            {product.old_price && product.old_price > product.price && (
+                                <Badge variant="secondary" className="bg-purple-500/15 text-purple-500">
+                                    Promo
+                                </Badge>
+                            )}
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex gap-2 pt-2">
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="flex-1"
+                                            onClick={() => handleEditProduct(product)}
+                                        >
+                                            <Edit className="h-4 w-4 mr-1" />
+                                            Éditer
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Modifier le produit</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button
+                                            variant="destructive"
+                                            size="sm"
+                                            className="flex-1"
+                                            onClick={() => handleDeleteProduct(product.id)}
+                                        >
+                                            <Trash2 className="h-4 w-4 mr-1" />
+                                            Supprimer
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Supprimer le produit</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Link 
+                                            href={`/produit/${product.id}`}
+                                            target="_blank"
+                                        >
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="flex-1"
+                                            >
+                                                <Eye className="h-4 w-4" />
+                                            </Button>
+                                        </Link>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Voir le produit</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        </div>
+                    </CardContent>
+                </Card>
+            ))}
         </div>
     )
 }

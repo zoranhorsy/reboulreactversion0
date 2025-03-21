@@ -422,124 +422,146 @@ export class Api {
         }
     }
 
-    async createProduct(data: Partial<Product>): Promise<Product> {
-        const productData = {
-            name: data.name,
-            price: data.price || 0,
-            description: data.description,
-            category_id: data.category_id,
-            brand: data.brand,
-            store_type: data.store_type,
-            featured: data.featured || false,
-            stock: data.stock || 0,
-            variants: data.variants || [],
-            colors: data.colors || [],
-            images: data.images || [],
-            reviews: data.reviews || [],
-            questions: data.questions || [],
-            faqs: data.faqs || [],
-            size_chart: data.size_chart || []
-        }
-
-        const response = await this.client.post("/products", productData)
-        return response.data
-    }
-
-    async updateProduct(id: string, productData: Partial<Product>): Promise<Product | null> {
+    async createProduct(productData: Partial<Product>): Promise<Product> {
         try {
-            console.log(`Tentative de mise à jour du produit avec l'ID: ${id}`)
-            console.log("Données du produit reçues:", JSON.stringify(productData, null, 2))
+            // Validation des champs requis
+            if (!productData.name?.trim()) {
+                throw new Error("Le nom du produit est requis");
+            }
+            if (!productData.price || productData.price <= 0) {
+                throw new Error("Le prix doit être supérieur à 0");
+            }
+            if (!productData.category_id) {
+                throw new Error("La catégorie est requise");
+            }
+            if (!productData.brand_id) {
+                throw new Error("La marque est requise");
+            }
+            if (!productData.stock || productData.stock < 0) {
+                throw new Error("Le stock doit être supérieur ou égal à 0");
+            }
 
-            // Créer un nouvel objet avec les champs requis et validés
-            const validatedData: Partial<Product> = {
-                name: productData.name?.trim(),
-                price: typeof productData.price === 'number' ? productData.price : parseFloat(String(productData.price)),
-                description: productData.description?.trim(),
-                category_id: typeof productData.category_id === 'number' 
-                    ? productData.category_id 
-                    : parseInt(String(productData.category_id), 10),
-                brand: productData.brand?.trim(),
+            // Nettoyage des données avant l'envoi
+            const cleanedProductData = {
+                ...productData,
+                name: productData.name.trim(),
+                description: productData.description?.trim() || '',
+                price: productData.price,
+                stock: productData.stock,
+                category_id: productData.category_id,
+                brand_id: productData.brand_id,
+                brand: productData.brand?.trim() || '',
                 store_type: productData.store_type || "adult",
                 featured: Boolean(productData.featured),
-                stock: typeof productData.stock === 'number' ? productData.stock : parseInt(String(productData.stock), 10),
-                variants: productData.variants,
-                colors: productData.colors,
-                images: productData.images
-            }
+                variants: productData.variants || [],
+                tags: productData.tags || [],
+                details: productData.details || [],
+                sku: productData.sku?.trim() || null
+            };
 
-            // Vérifier les valeurs requises
-            if (!validatedData.name || validatedData.name.length === 0) {
-                throw new Error("Le nom du produit est requis")
-            }
+            // Supprimer les champs non nécessaires
+            delete (cleanedProductData as any).colors;
+            delete (cleanedProductData as any).image_url;
+            delete (cleanedProductData as any).image;
+            delete (cleanedProductData as any).category;
+            delete (cleanedProductData as any).created_at;
+            delete (cleanedProductData as any).updated_at;
+            delete (cleanedProductData as any).weight;
 
-            if (isNaN(validatedData.price!) || validatedData.price! < 0) {
-                throw new Error("Le prix doit être un nombre positif")
-            }
-
-            if (isNaN(validatedData.category_id!)) {
-                throw new Error("La catégorie est requise")
-            }
-
-            // Gérer les tableaux optionnels
-            if (productData.variants) {
-                validatedData.variants = productData.variants.map(variant => ({
-                    color: variant.color.trim(),
-                    size: variant.size.trim(),
-                    stock: parseInt(String(variant.stock), 10)
-                }))
-            }
-
-            if (productData.colors) {
-                validatedData.colors = productData.colors.filter(color => color.trim().length > 0)
-            }
-
-            // Gérer les images
-            const imagesToUpload = productData.images?.filter((img): img is File | Blob => 
-                img instanceof File || img instanceof Blob
-            ) || []
-            const imageUrls = productData.images?.filter((img): img is string => 
-                typeof img === "string"
-            ) || []
-
-            // Si il y a des images à uploader
-            if (imagesToUpload.length > 0) {
-                const uploadedImageUrls = await this.uploadImages(imagesToUpload)
-                validatedData.images = [...imageUrls, ...uploadedImageUrls]
-            } else if (imageUrls.length > 0) {
-                validatedData.images = imageUrls
-            }
-
-            console.log("Données validées à envoyer:", JSON.stringify(validatedData, null, 2))
-
-            const response = await this.client.put(`/products/${id}`, validatedData)
-
-            if (!response.data) {
-                throw new Error("Aucune donnée reçue du serveur après la mise à jour")
-            }
-
-            // Formater la réponse
-            const updatedProduct = {
-                ...response.data,
-                category: response.data.category_id,
-                images: response.data.images || [],
-                variants: response.data.variants || [],
-                colors: response.data.colors || [],
-                featured: Boolean(response.data.featured)
-            }
-
-            return updatedProduct
-
+            const response = await this.client.post("/products", cleanedProductData);
+            return response.data;
         } catch (error) {
-            console.error(`Error updating product with ID ${id}:`, error)
+            console.error('Error creating product:', error);
+            throw new Error(error instanceof Error ? error.message : "Erreur lors de la création du produit");
+        }
+    }
+
+    async updateProduct(id: string, data: Partial<Product>): Promise<Product> {
+        try {
+            // Validation des champs requis
+            if (!data.name?.trim()) {
+                throw new Error("Le nom du produit est requis");
+            }
+            if (!data.description?.trim()) {
+                throw new Error("La description est requise");
+            }
+            if (!data.price || data.price <= 0) {
+                throw new Error("Le prix doit être supérieur à 0");
+            }
+            if (!data.category_id) {
+                throw new Error("La catégorie est requise");
+            }
+            if (!data.brand_id) {
+                throw new Error("La marque est requise");
+            }
+            if (!data.stock || data.stock < 0) {
+                throw new Error("Le stock doit être supérieur ou égal à 0");
+            }
+
+            // Log des données reçues
+            console.log('Données reçues dans updateProduct:', JSON.stringify(data, null, 2));
+
+            // Nettoyage et formatage des images
+            let formattedImages = '{}';
+            if (data.images && Array.isArray(data.images)) {
+                console.log('Images reçues:', data.images);
+                
+                // Filtrer les URLs valides et les formater pour PostgreSQL
+                const cleanedUrls = data.images
+                    .filter(url => typeof url === 'string' && url.length > 0)
+                    .map(url => {
+                        // Si l'URL n'est pas déjà une URL Cloudinary, la convertir
+                        if (!url.includes('cloudinary.com')) {
+                            return this.formatImageUrl(url);
+                        }
+                        return url;
+                    });
+
+                console.log('URLs nettoyées:', cleanedUrls);
+
+                if (cleanedUrls.length > 0) {
+                    // Formater les URLs pour PostgreSQL
+                    formattedImages = '{' + cleanedUrls.map(url => `"${url}"`).join(',') + '}';
+                }
+            }
+
+            console.log('Images formatées pour PostgreSQL:', formattedImages);
+
+            // Créer un objet avec les données validées
+            const validatedData = {
+                name: data.name.trim(),
+                description: data.description.trim(),
+                price: Number(data.price),
+                stock: Number(data.stock),
+                category_id: Number(data.category_id),
+                brand_id: Number(data.brand_id),
+                store_type: data.store_type || "adult",
+                featured: Boolean(data.featured),
+                variants: Array.isArray(data.variants) ? data.variants : [],
+                tags: Array.isArray(data.tags) ? data.tags : [],
+                details: Array.isArray(data.details) ? data.details : [],
+                sku: data.sku?.trim() || null,
+                images: formattedImages
+            };
+
+            // Convertir les images en chaîne PostgreSQL avant l'envoi
+            const finalData = {
+                ...validatedData,
+                images: formattedImages
+            };
+
+            console.log('Données finales avant envoi:', JSON.stringify(finalData, null, 2));
+
+            const response = await this.client.put(`/products/${id}`, finalData);
+            return response.data;
+        } catch (error) {
+            console.error('Error updating product:', error);
             if (error instanceof AxiosError) {
-                console.error("Server response:", error.response?.data)
-                const errorMessage = error.response?.data?.message || error.message
-                throw new Error(`Erreur lors de la mise à jour du produit: ${errorMessage}`)
+                console.error('Server error details:', error.response?.data);
+                console.error('Server error status:', error.response?.status);
+                console.error('Server error headers:', error.response?.headers);
             }
-            if (error instanceof Error) {
-                throw new Error(`Erreur lors de la mise à jour du produit: ${error.message}`)
-            }
-            throw new Error("Erreur inconnue lors de la mise à jour du produit")
+            throw error;
         }
     }
 

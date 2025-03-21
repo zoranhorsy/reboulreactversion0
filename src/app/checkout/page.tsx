@@ -97,6 +97,15 @@ export default function CheckoutPage() {
                 throw new Error('Vous devez être connecté pour passer une commande')
             }
 
+            // Vérifier le token
+            try {
+                const tokenData = JSON.parse(atob(token.split('.')[1]))
+                console.log('Token data:', tokenData)
+            } catch (e) {
+                console.error('Token invalide:', e)
+                throw new Error('Votre session a expiré. Veuillez vous reconnecter.')
+            }
+
             // Vérifier que tous les items ont des variants valides
             const invalidItems = items.filter(item => !item.variant || !item.variant.size || !item.variant.color);
             if (invalidItems.length > 0) {
@@ -104,16 +113,26 @@ export default function CheckoutPage() {
                 throw new Error(`Les articles suivants n'ont pas de variantes valides : ${invalidNames}. Veuillez retourner au panier pour les sélectionner.`);
             }
 
+            // Vérifier le format des IDs de produits
+            for (const item of items) {
+                const productId = parseInt(String(item.id).split('-')[0], 10);
+                console.log(`Vérification du produit ${item.name}:`, {
+                    id: item.id,
+                    parsedId: productId,
+                    variant: item.variant
+                });
+            }
+
             // Créer l'objet de commande
             const orderData = {
                 shipping_info: {
-                    firstName: shippingData.firstName,
-                    lastName: shippingData.lastName,
+                    first_name: shippingData.firstName,
+                    last_name: shippingData.lastName,
                     email: shippingData.email,
                     phone: shippingData.phone,
                     address: shippingData.address,
                     city: shippingData.city,
-                    postalCode: shippingData.postalCode,
+                    postal_code: shippingData.postalCode,
                     country: shippingData.country
                 },
                 items: items.map(item => {
@@ -143,7 +162,11 @@ export default function CheckoutPage() {
             }
 
             // Vérification des données avant envoi
+            console.log('Données de livraison:', shippingData)
+            console.log('Items du panier:', items)
             console.log('Envoi de la commande:', JSON.stringify(orderData, null, 2))
+            console.log('URL de l\'API:', `${process.env.NEXT_PUBLIC_API_URL}/orders`)
+            console.log('Token:', token ? 'Présent' : 'Manquant')
 
             // Envoyer la commande à l'API backend
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders`, {
@@ -155,12 +178,23 @@ export default function CheckoutPage() {
                 body: JSON.stringify(orderData)
             })
 
-            const responseData = await response.json()
+            // Log de la réponse brute pour debug
+            const responseText = await response.text()
+            console.log('Réponse brute:', responseText)
+
+            let responseData
+            try {
+                responseData = JSON.parse(responseText)
+            } catch (e) {
+                console.error('Erreur de parsing JSON:', e)
+                throw new Error('La réponse du serveur n\'est pas au format JSON valide')
+            }
 
             if (!response.ok) {
-                console.error('Réponse de l\'API:', {
+                console.error('Détails de la réponse:', {
                     status: response.status,
                     statusText: response.statusText,
+                    headers: Object.fromEntries(response.headers.entries()),
                     data: responseData
                 })
 
@@ -177,6 +211,15 @@ export default function CheckoutPage() {
                     errorMessage = responseData.message
                 } else if (responseData.error) {
                     errorMessage = responseData.error
+                }
+
+                // Gestion spécifique des erreurs de stock et de variants
+                if (errorMessage.includes('Stock insuffisant')) {
+                    throw new Error('Désolé, certains articles ne sont plus disponibles en stock. Veuillez ajuster votre panier.')
+                } else if (errorMessage.includes('Variant non trouvé')) {
+                    throw new Error('Certains articles ne sont plus disponibles dans la taille ou la couleur sélectionnée. Veuillez ajuster votre panier.')
+                } else if (errorMessage.includes('Produit non trouvé')) {
+                    throw new Error('Certains articles ne sont plus disponibles. Veuillez ajuster votre panier.')
                 }
 
                 throw new Error(errorMessage)

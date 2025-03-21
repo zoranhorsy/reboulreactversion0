@@ -17,34 +17,36 @@ import Image from 'next/image'
 export function HomeContent() {
     return (
         <main className="w-full min-w-full overflow-hidden bg-white dark:bg-zinc-950">
-            {/* Hero Section - Pleine hauteur */}
+            {/* Hero Section */}
             <HeroSection />
 
-            {/* Store Selection - Pas de padding pour un effet bord à bord */}
+            {/* Store Selection */}
             <StoreSelection />
             
-            {/* Featured Products - Fond avec motif subtil */}
-            <section className="w-full py-32 bg-zinc-50 dark:bg-zinc-900 relative">
+            {/* Featured Products */}
+            <section className="w-full py-8 bg-zinc-50 dark:bg-zinc-900 relative sm:py-12 md:py-16 lg:py-32">
                 <div className="absolute inset-0 bg-[url('/pattern.png')] opacity-[0.03] dark:opacity-[0.02]" />
                 <div className="w-full relative">
                     <FeaturedProducts />
                 </div>
             </section>
 
-            {/* Latest Collections - Fond contrasté */}
-            <section className="w-full py-32 bg-white dark:bg-zinc-950">
-                <div className="container mx-auto px-4">
+            {/* Latest Collections */}
+            <section className="w-full py-8 bg-white dark:bg-zinc-950 sm:py-12 md:py-16 lg:py-32">
+                <div className="container mx-auto px-4 sm:px-6">
                     <motion.div 
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                         transition={{ duration: 0.6 }}
-                        className="text-center mb-16"
+                        className="text-center mb-8 sm:mb-12 md:mb-16"
                     >
-                        <h2 className="font-geist text-4xl md:text-5xl font-light tracking-wide text-zinc-900 dark:text-zinc-100 mb-4">
+                        <h2 className="font-geist text-2xl font-light tracking-wide text-zinc-900 dark:text-zinc-100 mb-3 
+                            sm:text-3xl md:text-4xl lg:text-5xl sm:mb-4">
                             DERNIÈRES COLLECTIONS
                         </h2>
-                        <p className="font-geist text-lg text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto leading-relaxed">
+                        <p className="font-geist text-base text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto leading-relaxed
+                            sm:text-lg">
                             Découvrez nos dernières pièces et collections exclusives
                         </p>
                     </motion.div>
@@ -52,25 +54,27 @@ export function HomeContent() {
                 </div>
             </section>
 
-            {/* Brands Section - Fond neutre */}
-            <section className="w-full py-32 bg-zinc-50 dark:bg-zinc-900">
+            {/* Brands Section */}
+            <section className="w-full py-8 bg-zinc-50 dark:bg-zinc-900 sm:py-12 md:py-16 lg:py-32">
                 <BrandsCarousel />
             </section>
 
-            {/* Archives Section - Fond contrasté */}
-            <section className="w-full py-32 bg-white dark:bg-zinc-950">
-                <div className="container mx-auto px-4">
+            {/* Archives Section */}
+            <section className="w-full py-8 bg-white dark:bg-zinc-950 sm:py-12 md:py-16 lg:py-32">
+                <div className="container mx-auto px-4 sm:px-6">
                     <motion.div 
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                         transition={{ duration: 0.6 }}
-                        className="text-center mb-16"
+                        className="text-center mb-8 sm:mb-12 md:mb-16"
                     >
-                        <h2 className="font-geist text-4xl md:text-5xl font-light tracking-wide text-zinc-900 dark:text-zinc-100 mb-4">
+                        <h2 className="font-geist text-2xl font-light tracking-wide text-zinc-900 dark:text-zinc-100 mb-3
+                            sm:text-3xl md:text-4xl lg:text-5xl sm:mb-4">
                             NOS ARCHIVES
                         </h2>
-                        <p className="font-geist text-lg text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto leading-relaxed">
+                        <p className="font-geist text-base text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto leading-relaxed
+                            sm:text-lg">
                             Découvrez l&apos;univers REBOUL à travers notre galerie de photos
                         </p>
                     </motion.div>
@@ -78,38 +82,41 @@ export function HomeContent() {
                 </div>
             </section>
 
-            {/* Services & Concept - Fond avec motif subtil */}
-            <section className="w-full py-32 bg-zinc-50 dark:bg-zinc-900 relative overflow-hidden">
+            {/* Services & Concept */}
+            <section className="w-full py-8 bg-zinc-50 dark:bg-zinc-900 relative overflow-hidden sm:py-12 md:py-16 lg:py-32">
                 <div className="absolute inset-0 bg-[url('/pattern.png')] opacity-[0.03] dark:opacity-[0.02]" />
-                <div className="container mx-auto px-4">
+                <div className="container mx-auto px-4 sm:px-6">
                     <motion.div 
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                         transition={{ duration: 0.6 }}
-                        className="text-center mb-16"
+                        className="text-center mb-8 sm:mb-12 md:mb-16"
                     >
-                        <h2 className="font-geist text-4xl md:text-5xl font-light tracking-wide text-zinc-900 dark:text-zinc-100 mb-4">
+                        <h2 className="font-geist text-2xl font-light tracking-wide text-zinc-900 dark:text-zinc-100 mb-3
+                            sm:text-3xl md:text-4xl lg:text-5xl sm:mb-4">
                             NOS SERVICES
                         </h2>
-                        <p className="font-geist text-lg text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto leading-relaxed">
+                        <p className="font-geist text-base text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto leading-relaxed
+                            sm:text-lg">
                             REBOUL redéfinit l&apos;expérience shopping en fusionnant l&apos;élégance traditionnelle 
                             avec les tendances contemporaines
                         </p>
                     </motion.div>
                     <Advantages />
-                    <div className="mt-32 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+                    <div className="mt-16 sm:mt-20 md:mt-24 lg:mt-32 grid grid-cols-1 gap-8 items-center md:grid-cols-2 md:gap-12">
                         <motion.div 
                             initial={{ opacity: 0, x: -20 }}
                             whileInView={{ opacity: 1, x: 0 }}
                             viewport={{ once: true }}
                             transition={{ duration: 0.6 }}
-                            className="space-y-6"
+                            className="space-y-4 sm:space-y-6"
                         >
-                            <h3 className="font-geist text-3xl font-light tracking-wide text-zinc-900 dark:text-zinc-100">
+                            <h3 className="font-geist text-2xl font-light tracking-wide text-zinc-900 dark:text-zinc-100
+                                sm:text-3xl">
                                 Notre Concept
                             </h3>
-                            <p className="font-geist text-lg text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                            <p className="font-geist text-base text-zinc-600 dark:text-zinc-400 leading-relaxed sm:text-lg">
                                 Chez REBOUL, nous croyons en l&apos;alliance parfaite entre style intemporel et tendances actuelles.
                                 Notre boutique est un lieu où la mode rencontre l&apos;authenticité, offrant une expérience shopping unique
                                 à Marseille depuis plus de 30 ans.
@@ -118,7 +125,7 @@ export function HomeContent() {
                                 asChild 
                                 variant="outline" 
                                 size="lg" 
-                                className="font-geist text-xs tracking-[0.2em] uppercase font-light
+                                className="w-full sm:w-auto font-geist text-xs tracking-[0.2em] uppercase font-light
                                     bg-white dark:bg-zinc-900
                                     text-zinc-900 dark:text-zinc-100 
                                     border-zinc-200 dark:border-zinc-800
@@ -126,7 +133,7 @@ export function HomeContent() {
                                     dark:hover:bg-zinc-800 dark:hover:text-zinc-100
                                     transition-all duration-300"
                             >
-                                <Link href="/about" className="flex items-center gap-2">
+                                <Link href="/about" className="flex items-center justify-center gap-2 sm:justify-start">
                                     En savoir plus
                                     <ArrowRight className="w-4 h-4" />
                                 </Link>
@@ -137,7 +144,7 @@ export function HomeContent() {
                             whileInView={{ opacity: 1, x: 0 }}
                             viewport={{ once: true }}
                             transition={{ duration: 0.6 }}
-                            className="relative aspect-[4/3] rounded-xl overflow-hidden"
+                            className="relative aspect-[4/3] rounded-lg sm:rounded-xl overflow-hidden"
                         >
                             <Image
                                 src="/store-front.jpg"

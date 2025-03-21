@@ -19,27 +19,44 @@ const inter = Inter({ subsets: ['latin'] })
 export const metadata: Metadata = {
   title: 'Reboul',
   description: 'Administration Reboul',
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 5,
+    minimumScale: 1,
+    userScalable: true,
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
     return (
         <html lang="fr" suppressHydrationWarning>
-            <head />
-            <body className={cn("min-h-screen bg-background font-sans antialiased", fontSans.variable)}>
-                <AuthProvider>
-                    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-                        <CloudinaryProvider>
-                            <CartProvider>
-                                <FavoritesProvider>
-                                    {children}
-                                    <Footer />
-                                    <Dock />
-                                    <Toaster />
-                                </FavoritesProvider>
-                            </CartProvider>
-                        </CloudinaryProvider>
-                    </ThemeProvider>
-                </AuthProvider>
+            <head>
+                <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
+            </head>
+            <body className={cn(
+              "min-h-screen bg-background font-sans antialiased",
+              "relative w-full max-w-[100vw] overflow-x-hidden",
+              fontSans.variable
+            )}>
+                <div className="flex min-h-screen flex-col">
+                    <AuthProvider>
+                        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+                            <CloudinaryProvider>
+                                <CartProvider>
+                                    <FavoritesProvider>
+                                        <main className="flex-1">
+                                            {children}
+                                        </main>
+                                        <Footer />
+                                        <Dock />
+                                        <Toaster />
+                                    </FavoritesProvider>
+                                </CartProvider>
+                            </CloudinaryProvider>
+                        </ThemeProvider>
+                    </AuthProvider>
+                </div>
             </body>
         </html>
     )

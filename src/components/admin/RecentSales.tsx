@@ -35,24 +35,30 @@ export function RecentSales({ orders = [] }: RecentSalesProps) {
                 <CardTitle>Ventes récentes</CardTitle>
             </CardHeader>
             <CardContent>
-                <div className="space-y-8">
+                <div className="space-y-4">
                     {orders.map((order) => (
                         <div key={order.id} className="flex items-center">
-                            <Avatar className="h-9 w-9">
-                                <AvatarFallback>
+                            <Avatar className="h-8 w-8 sm:h-9 sm:w-9">
+                                <AvatarFallback className="text-xs sm:text-sm">
                                     {order.customer.split(' ').map(n => n[0]).join('')}
                                 </AvatarFallback>
                             </Avatar>
-                            <div className="ml-4 space-y-1">
-                                <p className="text-sm font-medium leading-none">{order.customer}</p>
-                                <p className="text-sm text-muted-foreground">
-                                    {new Date(order.date).toLocaleDateString()}
+                            <div className="ml-3 sm:ml-4 space-y-0.5 sm:space-y-1 flex-1 min-w-0">
+                                <p className="text-xs sm:text-sm font-medium leading-none truncate">
+                                    {order.customer}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                    {new Date(order.date).toLocaleDateString('fr-FR', {
+                                        day: 'numeric',
+                                        month: 'short'
+                                    })}
                                 </p>
                             </div>
-                            <div className="ml-auto font-medium">
+                            <div className="ml-2 sm:ml-4 text-xs sm:text-sm font-medium whitespace-nowrap">
                                 +{order.total.toLocaleString('fr-FR', {
                                     style: 'currency',
-                                    currency: 'EUR'
+                                    currency: 'EUR',
+                                    maximumFractionDigits: 0
                                 })}
                             </div>
                         </div>

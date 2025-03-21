@@ -81,55 +81,52 @@ export default function AdminPage() {
 
     return (
         <div className="min-h-screen bg-background">
-            <div className="container mx-auto py-6 space-y-6">
-                <div className="flex justify-between items-center">
-                    <h1 className="text-3xl font-bold">Administration</h1>
+            <div className="container mx-auto py-4 px-4 sm:py-6 sm:px-6 space-y-4 sm:space-y-6">
+                <div className="flex flex-col space-y-2 sm:space-y-3">
+                    <h1 className="text-2xl sm:text-3xl font-bold">Administration</h1>
+                    <p className="text-sm sm:text-base text-muted-foreground">
+                        Gérez l&apos;ensemble de votre boutique depuis cette interface.
+                    </p>
                 </div>
 
-                <p className="text-muted-foreground">
-                    L&apos;interface d&apos;administration vous permet de gérer l&apos;ensemble de votre boutique.
-                </p>
-                <p className="text-muted-foreground">
-                    Vous n&apos;avez pas encore d&apos;activité aujourd&apos;hui.
-                </p>
-                <p className="text-muted-foreground">
-                    Commencez par ajouter des produits à l&apos;aide du bouton ci-dessus.
-                </p>
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
+                    <div className="border-b">
+                        <div className="-mb-px overflow-x-auto scrollbar-none">
+                            <TabsList className="inline-flex w-max sm:w-auto gap-2 sm:gap-4 p-1">
+                                {tabs.map((tab) => {
+                                    const Icon = tab.icon
+                                    return (
+                                        <TabsTrigger
+                                            key={tab.id}
+                                            value={tab.id}
+                                            className="inline-flex items-center gap-2 px-3 py-2.5 sm:px-4 sm:py-2.5 data-[state=active]:bg-accent rounded-md transition-colors"
+                                        >
+                                            <Icon className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+                                            <span className="text-xs sm:text-sm whitespace-nowrap">{tab.label}</span>
+                                        </TabsTrigger>
+                                    )
+                                })}
+                            </TabsList>
+                        </div>
+                    </div>
 
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-                    <TabsList className="grid grid-cols-7 gap-4">
-                        {tabs.map((tab) => {
-                            const Icon = tab.icon
-                            return (
-                                <TabsTrigger
-                                    key={tab.id}
-                                    value={tab.id}
-                                    className="flex items-center gap-2"
-                                >
-                                    <Icon className="h-4 w-4" />
-                                    <span>{tab.label}</span>
-                                </TabsTrigger>
-                            )
-                        })}
-                    </TabsList>
-
-                    <TabsContent value="dashboard">
+                    <TabsContent value="dashboard" className="space-y-4 sm:space-y-6">
                         <AdminDashboard />
                     </TabsContent>
 
-                    <TabsContent value="products">
+                    <TabsContent value="products" className="space-y-4 sm:space-y-6">
                         <AdminProducts />
                     </TabsContent>
 
-                    <TabsContent value="orders">
+                    <TabsContent value="orders" className="space-y-4 sm:space-y-6">
                         <AdminOrders />
                     </TabsContent>
 
-                    <TabsContent value="users">
+                    <TabsContent value="users" className="space-y-4 sm:space-y-6">
                         <AdminUsers />
                     </TabsContent>
 
-                    <TabsContent value="archives">
+                    <TabsContent value="archives" className="space-y-4 sm:space-y-6">
                         <Card>
                             <CardHeader>
                                 <CardTitle>Gestion des archives</CardTitle>
@@ -143,11 +140,11 @@ export default function AdminPage() {
                         </Card>
                     </TabsContent>
 
-                    <TabsContent value="stats">
+                    <TabsContent value="stats" className="space-y-4 sm:space-y-6">
                         <AdminStats />
                     </TabsContent>
 
-                    <TabsContent value="settings">
+                    <TabsContent value="settings" className="space-y-4 sm:space-y-6">
                         <AdminSettings />
                     </TabsContent>
                 </Tabs>

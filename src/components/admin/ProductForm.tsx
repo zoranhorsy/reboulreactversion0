@@ -23,7 +23,44 @@ import { getCloudinaryUrl } from "@/config/cloudinary"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 
-const colors = ["Red", "Blue", "Green", "Yellow", "Black", "White"]
+interface Product {
+  id?: number;
+  name: string;
+  description: string;
+  price: number;
+  category_id: number;
+  brand_id: number;
+  stock: number;
+  images: string[];
+  variants: Variant[];
+  tags: string[];
+  details: string[];
+  size_chart: SizeChart[];
+  featured: boolean;
+  active: boolean;
+  new: boolean;
+  sku?: string;
+  store_type?: "adult" | "kids" | "sneakers" | "cpcompany";
+}
+
+const initialProduct: Product = {
+  name: "",
+  description: "",
+  price: 0,
+  category_id: 0,
+  brand_id: 0,
+  stock: 0,
+  images: [],
+  variants: [],
+  tags: [],
+  details: [],
+  size_chart: [],
+  featured: false,
+  active: true,
+  new: true,
+  sku: "",
+  store_type: "adult"
+};
 
 interface ProductFormProps {
   product: Product | null
@@ -80,32 +117,18 @@ export function ProductForm({
     name: product?.name || '',
     description: product?.description || '',
     price: product?.price || 0,
-    old_price: product?.old_price || 0,
     stock: product?.stock || 0,
     category_id: product?.category_id || 0,
-    category: product?.category || '',
     brand_id: product?.brand_id || 0,
-    brand: product?.brand || '',
-    image_url: product?.image_url || '',
-    image: product?.image || '',
-    featured: product?.featured || false,
-    active: product?.active !== undefined ? product.active : true,
     images: initialImages,
     variants: product?.variants || [],
     tags: product?.tags || [],
     details: product?.details || [],
-    reviews: product?.reviews || [],
-    questions: product?.questions || [],
-    faqs: product?.faqs || [],
     size_chart: product?.size_chart || [],
     store_type: product?.store_type || "adult",
-    colors: product?.colors || [],
-    created_at: product?.created_at || new Date().toISOString(),
-    updated_at: product?.updated_at,
+    featured: product?.featured || false,
+    active: product?.active !== undefined ? product.active : true,
     sku: product?.sku || '',
-    weight: product?.weight || 0,
-    dimensions: product?.dimensions || '',
-    material: product?.material || '',
     new: product?.new || false
   });
 
@@ -122,31 +145,18 @@ export function ProductForm({
       name: '',
       description: '',
       price: 0,
-      old_price: 0,
       stock: 0,
       category_id: 0,
-      category: '',
       brand_id: 0,
-      brand: '',
-      image_url: '',
-      image: '',
       images: [],
       variants: [],
       tags: [],
       details: [],
-      reviews: [],
-      questions: [],
-      faqs: [],
       size_chart: [],
       store_type: 'adult' as "adult" | "kids" | "sneakers" | "cpcompany",
       featured: false,
-      colors: [],
-      created_at: new Date().toISOString(),
       active: true,
       sku: '',
-      weight: 0,
-      dimensions: '',
-      material: '',
       new: false
     };
 
@@ -155,32 +165,18 @@ export function ProductForm({
       name: product.name,
       description: product.description,
       price: product.price,
-      old_price: product.old_price || 0,
       stock: product.stock,
       category_id: product.category_id,
-      category: product.category,
       brand_id: product.brand_id,
-      brand: product.brand,
-      image_url: product.image_url,
-      image: product.image,
       images: product.images,
       variants: product.variants,
       tags: product.tags,
       details: product.details,
-      reviews: product.reviews,
-      questions: product.questions,
-      faqs: product.faqs,
       size_chart: product.size_chart,
       store_type: product.store_type,
       featured: product.featured,
-      colors: product.colors,
-      created_at: product.created_at,
-      updated_at: product.updated_at,
       active: product.active !== undefined ? product.active : true,
       sku: product.sku || '',
-      weight: product.weight || 0,
-      dimensions: product.dimensions || '',
-      material: product.material || '',
       new: product.new || false
     };
   }, [product]);
@@ -309,7 +305,6 @@ export function ProductForm({
         setFormData(prev => ({
           ...prev,
           images: updatedImages,
-          image_url: updatedImages[0]
         }));
         
         setIsDirty(true);
@@ -346,7 +341,6 @@ export function ProductForm({
     setFormData(prev => ({
       ...prev,
       images: updatedImages,
-      image_url: imageUrl
     }));
 
     setIsDirty(true);
@@ -390,31 +384,53 @@ export function ProductForm({
         images: formData.images?.filter(img => typeof img === 'string' || 'url' in img).map(img => {
           if (typeof img === 'string') return img;
           return (img as ProductImage).url;
-        })
+        }) || []
       };
 
-      const response = await fetch('/api/products', {
-        method: product ? 'PUT' : 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(cleanedFormData),
-      });
+      // S'assurer que les valeurs numériques sont bien des nombres
+      cleanedFormData.price = Number(cleanedFormData.price);
+      cleanedFormData.stock = Number(cleanedFormData.stock);
+      cleanedFormData.category_id = Number(cleanedFormData.category_id);
+      cleanedFormData.brand_id = Number(cleanedFormData.brand_id);
 
-      if (!response.ok) {
-        throw new Error('Failed to save product');
-      }
+      // S'assurer que les chaînes de caractères sont bien formatées
+      cleanedFormData.name = cleanedFormData.name?.trim() || '';
+      cleanedFormData.description = cleanedFormData.description?.trim() || '';
+      cleanedFormData.sku = cleanedFormData.sku?.trim() || '';
+
+      // S'assurer que les tableaux sont bien définis
+      cleanedFormData.variants = cleanedFormData.variants || [];
+      cleanedFormData.tags = cleanedFormData.tags || [];
+      cleanedFormData.details = cleanedFormData.details || [];
+
+      // Supprimer les champs non nécessaires
+      delete (cleanedFormData as any).colors;
+      delete (cleanedFormData as any).image_url;
+      delete (cleanedFormData as any).image;
+      delete (cleanedFormData as any).category;
+      delete (cleanedFormData as any).brand;
+      delete (cleanedFormData as any).created_at;
+      delete (cleanedFormData as any).updated_at;
+      delete (cleanedFormData as any).size_chart;
+      delete (cleanedFormData as any).active;
+      delete (cleanedFormData as any).weight;
+      delete (cleanedFormData as any).new;
+
+      // Utiliser la prop onSubmit au lieu de l'appel API direct
+      await onSubmit(cleanedFormData);
 
       toast({
         title: "Succès",
         description: product ? "Produit mis à jour avec succès" : "Produit créé avec succès",
       });
-      router.push('/admin/products');
+      
+      // Rediriger vers /admin au lieu de /admin/products
+      router.push('/admin');
     } catch (error) {
       console.error('Error saving product:', error);
       toast({
         title: "Erreur",
-        description: "Une erreur est survenue lors de l'enregistrement du produit",
+        description: error instanceof Error ? error.message : "Une erreur est survenue lors de l'enregistrement du produit",
         variant: "destructive",
       });
     } finally {
@@ -424,10 +440,6 @@ export function ProductForm({
 
   const handleVariantChange = (variants: Variant[]): void => {
     handleChange("variants", variants);
-  };
-
-  const handleColorsChange = (colors: string[]): void => {
-    handleChange("colors", colors);
   };
 
   const handleTagsChange = (tags: string[]): void => {
@@ -479,23 +491,21 @@ export function ProductForm({
     const categoryId = parseInt(value, 10);
     const selectedCategory = categories.find(c => c.id === categoryId);
     handleChange("category_id", categoryId);
-    handleChange("category", selectedCategory?.name || '');
   };
 
   const handleBrandChange = (value: string): void => {
     const brandId = parseInt(value, 10);
     const selectedBrand = brands.find(b => b.id === brandId);
     handleChange("brand_id", brandId);
-    handleChange("brand", selectedBrand?.name || '');
   };
 
-  const handleTextChange = (field: keyof Pick<Product, "name" | "description" | "sku" | "dimensions" | "material">) => (
+  const handleTextChange = (field: keyof Pick<Product, "name" | "description" | "sku">) => (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ): void => {
     handleChange(field, e.target.value);
   };
 
-  const handleNumberChange = (field: keyof Pick<Product, "price" | "old_price" | "stock" | "weight">) => (
+  const handleNumberChange = (field: keyof Pick<Product, "price" | "stock">) => (
     e: React.ChangeEvent<HTMLInputElement>
   ): void => {
     const value = parseFloat(e.target.value);
@@ -522,7 +532,7 @@ export function ProductForm({
     }
   };
 
-  const handleArrayChange = (field: keyof Pick<Product, "tags" | "details" | "colors">) => (
+  const handleArrayChange = (field: keyof Pick<Product, "tags" | "details">) => (
     value: string[]
   ): void => {
     handleChange(field, value);
@@ -534,7 +544,7 @@ export function ProductForm({
     handleChange(field, value);
   };
 
-  const handleImageChange = (field: keyof Pick<Product, "image_url" | "image">) => (
+  const handleImageChange = (field: keyof Pick<Product, "images">) => (
     value: string
   ): void => {
     handleChange(field, value);
@@ -548,14 +558,14 @@ export function ProductForm({
     <form onSubmit={handleSubmit} className="space-y-6 max-h-[80vh] overflow-y-auto px-4">
       <div className="space-y-6">
         {/* Informations de base */}
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="name" className="text-sm font-medium">Nom du produit</Label>
-            <Input 
-              id="name" 
-              value={formData.name} 
-              onChange={handleTextChange("name")} 
-              required 
+            <Label htmlFor="name">Nom du produit</Label>
+            <Input
+              id="name"
+              value={formData.name}
+              onChange={handleTextChange("name")}
+              required
               className={cn(
                 "border-muted-foreground/20",
                 errors.name && "border-red-500"
@@ -566,11 +576,19 @@ export function ProductForm({
             )}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="price" className="text-sm font-medium">Prix</Label>
+            <Label htmlFor="sku">SKU</Label>
+            <Input
+              id="sku"
+              value={formData.sku || ''}
+              onChange={handleTextChange("sku")}
+              placeholder="Code unique du produit"
+              className="border-muted-foreground/20"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="price">Prix</Label>
             <Input
               id="price"
-              type="number"
-              step="0.01"
               value={formData.price.toString()}
               onChange={handleNumberChange("price")}
               required
@@ -581,6 +599,22 @@ export function ProductForm({
             />
             {errors.price && (
               <span className="text-xs text-red-500">{errors.price}</span>
+            )}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="stock">Stock</Label>
+            <Input
+              id="stock"
+              value={formData.stock.toString()}
+              onChange={handleNumberChange("stock")}
+              required
+              className={cn(
+                "border-muted-foreground/20",
+                errors.stock && "border-red-500"
+              )}
+            />
+            {errors.stock && (
+              <span className="text-xs text-red-500">{errors.stock}</span>
             )}
           </div>
         </div>
@@ -804,29 +838,22 @@ export function ProductForm({
             <Label htmlFor="featured" className="text-sm font-medium">Produit en vedette</Label>
           </div>
 
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Couleurs disponibles</Label>
-            <div className="grid grid-cols-3 gap-4">
-              {colors.map((color) => (
-                <div key={color} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`color-${color}`}
-                    checked={formData.colors?.includes(color) || false}
-                    onCheckedChange={(checked) => {
-                      const currentColors = formData.colors || []
-                      if (checked) {
-                        handleColorsChange([...currentColors, color])
-                      } else {
-                        handleColorsChange(
-                          currentColors.filter((c) => c !== color)
-                        )
-                      }
-                    }}
-                  />
-                  <Label htmlFor={`color-${color}`} className="text-sm">{color}</Label>
-                </div>
-              ))}
-            </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="active"
+              checked={formData.active}
+              onCheckedChange={(checked) => handleCheckboxChange("active")(checked)}
+            />
+            <Label htmlFor="active" className="text-sm font-medium">Produit actif</Label>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="new"
+              checked={formData.new}
+              onCheckedChange={(checked) => handleCheckboxChange("new")(checked)}
+            />
+            <Label htmlFor="new" className="text-sm font-medium">Nouveau produit</Label>
           </div>
         </div>
       </div>

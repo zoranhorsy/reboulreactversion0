@@ -28,7 +28,7 @@ export function AdminNav() {
     const pathname = usePathname()
 
     return (
-        <nav className="grid gap-1">
+        <nav className="grid gap-2">
             {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
                 const isActive = pathname === href || pathname?.startsWith(href + '/')
                 return (
@@ -36,15 +36,15 @@ export function AdminNav() {
                         key={href}
                         href={href}
                         className={cn(
-                            "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
+                            "flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-colors",
                             "hover:bg-accent",
                             isActive 
                                 ? "bg-accent font-medium text-accent-foreground" 
                                 : "text-muted-foreground"
                         )}
                     >
-                        <Icon className="w-4 h-4" />
-                        {label}
+                        <Icon className="w-5 h-5" />
+                        <span className="font-medium">{label}</span>
                     </Link>
                 )
             })}
