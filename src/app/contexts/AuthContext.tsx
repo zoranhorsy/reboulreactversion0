@@ -252,72 +252,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }
 
-  // Fonction pour s'inscrire
+  // Fonction pour s'inscrire avec approche hybride
   const register = async (username: string, email: string, password: string) => {
     logWithTime("register - Début", { email, username })
     setIsLoading(true)
     
     try {
-      // Faire une requête à /auth/register
-      const response = await fetch(`${API_URL}/auth/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ username, email, password })
+      // Utiliser le bon point d'entrée pour l'inscription
+      logWithTime("register - Tentative avec l'API réelle sur /auth/inscription")
+      const response = await axios.post(`${API_URL}/auth/inscription`, {
+        username,  // Utiliser username au lieu de name comme attendu par le backend
+        email,
+        password
       })
       
-      logWithTime("register - Réponse", { 
-        status: response.status, 
-        ok: response.ok 
-      })
+      logWithTime("register - Réponse API réelle", response.data)
       
-      if (!response.ok) {
-        throw new Error('Erreur lors de l\'inscription')
+      const { user: responseUser, token } = response.data
+
+      // Normaliser l'utilisateur
+      const normalizedUser = {
+        id: responseUser.id,
+        email: responseUser.email,
+        username: responseUser.username,
+        isAdmin: responseUser.is_admin || responseUser.isAdmin || false,
+        avatar_url: responseUser.avatar_url,
+        phone: responseUser.phone
       }
-      
-      const data = await response.json()
-      logWithTime("register - Données brutes", data)
-      
-      // Stocker le token dans localStorage
-      localStorage.setItem('token', data.token)
-      logWithTime("register - Token stocké", { 
-        tokenLength: data.token.length 
-      })
-      
-      // Décoder le token pour voir son contenu
-      const decodedToken = decodeToken(data.token)
-      logWithTime("register - Token décodé", decodedToken)
-      
-      // Convertir les données utilisateur au format attendu
-      const formattedUser: User = {
-        id: data.user?.id?.toString() || '',
-        email: data.user?.email || '',
-        username: data.user?.username || '',
-        isAdmin: data.user?.is_admin === true,
-        avatar_url: data.user?.avatar_url,
-        phone: data.user?.phone
-      }
-      
-      logWithTime("register - Utilisateur formaté", formattedUser)
+
+      // Stocker le token
+      localStorage.setItem('token', token)
       
       // Mettre à jour l'état
-      setUser(formattedUser)
+      setUser(normalizedUser)
       setIsAuthenticated(true)
-      setIsAdmin(formattedUser.isAdmin)
+      setIsAdmin(normalizedUser.isAdmin)
       
-      logWithTime("register - Redirection", { 
-        isAdmin: formattedUser.isAdmin 
-      })
-      
-      // Redirection
-      if (formattedUser.isAdmin) {
-        window.location.href = '/admin/dashboard'
-      } else {
-        window.location.href = '/'
-      }
+      return
     } catch (error) {
-      logWithTime("register - Erreur", error)
+      logWithTime("register - Erreur critique", error)
       throw error
     } finally {
       setIsLoading(false)

@@ -12,7 +12,7 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
+  "description": "Backend API pour la boutique Reboul Store, construite avec Express.js et PostgreSQL.",
   "dependencies": {
     "axios": "^1.8.1",
     "bcrypt": "^5.1.1",
@@ -47,5 +47,16 @@
       "**/__tests__/**/*.test.js"
     ],
     "verbose": true
-  }
+  },
+  "directories": {
+    "test": "tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://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@github.com/zoranhorsy/reboul-store-api.git"
+  },
+  "bugs": {
+    "url": "https://github.com/zoranhorsy/reboul-store-api/issues"
+  },
+  "homepage": "https://github.com/zoranhorsy/reboul-store-api#readme"
 }

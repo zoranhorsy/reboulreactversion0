@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/components/ui/use-toast"
-import { Eye, EyeOff } from 'lucide-react'
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card"
+import { Eye, EyeOff, Sun, Moon } from 'lucide-react'
 import { Label } from '@/components/ui/label'
+import { useTheme } from 'next-themes'
 
 // Fonction pour logger avec timestamp
 const logWithTime = (message: string, data?: any) => {
@@ -46,7 +47,14 @@ export default function Login() {
     const [showPassword, setShowPassword] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const [hasRedirected, setHasRedirected] = useState(false)
+    const [mounted, setMounted] = useState(false)
+    const { theme, setTheme } = useTheme()
     const { toast } = useToast()
+
+    // Empêcher l'hydration mismatch
+    useEffect(() => {
+        setMounted(true)
+    }, [])
 
     logWithTime("Page de connexion rendue")
 
@@ -212,68 +220,133 @@ export default function Login() {
         }
     }
 
+    // Déterminer le logo à afficher en fonction du thème
+    const logoSrc = (!mounted || theme === 'dark') ? '/images/logo_white.png' : '/images/logo_black.png'
+
+    // Fonction pour basculer entre les thèmes
+    const toggleTheme = () => {
+        const newTheme = theme === 'light' ? 'dark' : 'light'
+        if (typeof window !== 'undefined') {
+            document.documentElement.classList.toggle('dark', newTheme === 'dark')
+        }
+        setTheme(newTheme)
+    }
+
     return (
-        <div className="flex items-center justify-center min-h-screen bg-background">
-            <Card className="w-[400px] shadow-md">
-                <CardHeader className="space-y-1">
-                    <CardTitle className="text-2xl text-center">Connexion</CardTitle>
-                    <CardDescription className="text-center">
-                        Entrez vos identifiants pour accéder à votre compte
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="email">Email</Label>
-                            <Input
-                                id="email"
-                                name="email"
-                                type="email"
-                                placeholder="exemple@email.com"
-                                required
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                disabled={isLoading}
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="password">Mot de passe</Label>
-                            <div className="relative">
-                                <Input
-                                    id="password"
-                                    name="password"
-                                    type={showPassword ? "text" : "password"}
-                                    required
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    disabled={isLoading}
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                                    disabled={isLoading}
-                                >
-                                    {showPassword ? <EyeOff className="h-5 w-5 text-gray-400" /> : <Eye className="h-5 w-5 text-gray-400" />}
-                                    <span className="sr-only">{showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}</span>
-                                </button>
-                            </div>
-                        </div>
-                        <Button type="submit" className="w-full" disabled={isLoading}>
-                            {isLoading ? "Connexion en cours..." : "Se connecter"}
-                        </Button>
-                    </form>
-                    
-                    <div className="mt-4 text-center space-y-2">
-                        <p>
-                            <Link href="/mot-de-passe-oublie" className="text-primary hover:underline">Mot de passe oublié ?</Link>
-                        </p>
-                        <p>
-                            Pas encore de compte ? <Link href="/inscription" className="text-primary hover:underline">S&apos;inscrire</Link>
-                        </p>
+        <div className={`min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 ${theme === 'light' ? 'bg-gray-50' : 'bg-black'}`}>
+            {/* Bouton de changement de thème */}
+            <button
+                onClick={toggleTheme}
+                className={`absolute top-4 right-4 p-2 rounded-full ${
+                    theme === 'light' 
+                    ? 'bg-gray-200 text-gray-800 hover:bg-gray-300' 
+                    : 'bg-zinc-800 text-gray-200 hover:bg-zinc-700'
+                }`}
+                aria-label={theme === 'light' ? "Passer au mode sombre" : "Passer au mode clair"}
+                title={theme === 'light' ? "Passer au mode sombre" : "Passer au mode clair"}
+            >
+                {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+            </button>
+            
+            {/* Logo en header */}
+            <div className="w-full max-w-md mb-8 flex flex-col items-center animate-fadeIn">
+                <div className="relative w-40 h-40 sm:w-48 sm:h-48">
+                    <Image 
+                        src={logoSrc}
+                        alt="Logo Reboul" 
+                        fill 
+                        className="object-contain"
+                        priority
+                        onError={(e) => {
+                            console.error("Erreur de chargement du logo:", logoSrc)
+                            const target = e.target as HTMLImageElement
+                            target.style.display = 'none'
+                        }}
+                    />
+                </div>
+            </div>
+            
+            {/* Formulaire */}
+            <div className={`w-full max-w-md rounded-xl shadow-md p-4 sm:p-6 space-y-5 animate-fadeIn ${
+                theme === 'light' ? 'bg-white' : 'bg-black'
+            }`} style={{animationDelay: "0.1s"}}>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="space-y-1">
+                        <label htmlFor="email" className={`block text-sm ${theme === 'light' ? 'text-gray-700' : 'text-gray-300'}`}>Email</label>
+                        <Input
+                            id="email"
+                            name="email"
+                            type="email"
+                            placeholder="exemple@email.com"
+                            required
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            disabled={isLoading}
+                            className={`w-full h-12 text-base rounded-md ${
+                                theme === 'light' 
+                                ? 'bg-gray-50 border-gray-200 focus:border-blue-500 focus:ring-0' 
+                                : 'bg-zinc-900 border-zinc-800 focus:border-zinc-700 focus:ring-0'
+                            }`}
+                        />
                     </div>
-                </CardContent>
-            </Card>
+                    <div className="space-y-1">
+                        <label htmlFor="password" className={`block text-sm ${theme === 'light' ? 'text-gray-700' : 'text-gray-300'}`}>Mot de passe</label>
+                        <div className="relative">
+                            <Input
+                                id="password"
+                                name="password"
+                                type={showPassword ? "text" : "password"}
+                                required
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                disabled={isLoading}
+                                className={`w-full h-12 text-base pr-10 rounded-md ${
+                                    theme === 'light' 
+                                    ? 'bg-gray-50 border-gray-200 focus:border-blue-500 focus:ring-0' 
+                                    : 'bg-zinc-900 border-zinc-800 focus:border-zinc-700 focus:ring-0'
+                                }`}
+                                placeholder="••••••••"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute inset-y-0 right-0 pr-3 flex items-center focus:outline-none"
+                                disabled={isLoading}
+                                aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                            >
+                                {showPassword ? 
+                                    <EyeOff className={`h-5 w-5 ${theme === 'light' ? 'text-gray-400 hover:text-gray-500' : 'text-gray-500 hover:text-gray-400'}`} /> : 
+                                    <Eye className={`h-5 w-5 ${theme === 'light' ? 'text-gray-400 hover:text-gray-500' : 'text-gray-500 hover:text-gray-400'}`} />
+                                }
+                            </button>
+                        </div>
+                    </div>
+                    <Button 
+                        type="submit" 
+                        className={`w-full h-12 text-base font-medium transition-colors mt-4 ${
+                            theme === 'light'
+                            ? 'bg-blue-600 text-white hover:bg-blue-700'
+                            : 'bg-gray-200 text-black hover:bg-gray-300'
+                        }`}
+                        disabled={isLoading}
+                    >
+                        {isLoading ? "Connexion en cours..." : "Se connecter"}
+                    </Button>
+                </form>
+                
+                <div className="mt-4 space-y-2">
+                    <p className={`text-sm text-center ${theme === 'light' ? 'text-gray-600' : 'text-gray-400'}`}>
+                        <Link href="/mot-de-passe-oublie" className={`${theme === 'light' ? 'text-blue-600 hover:text-blue-800' : 'text-gray-200 hover:text-white'} transition-colors`}>
+                            Mot de passe oublié ?
+                        </Link>
+                    </p>
+                    <p className={`text-sm text-center ${theme === 'light' ? 'text-gray-600' : 'text-gray-400'}`}>
+                        Pas encore de compte ? <Link href="/inscription" className={`${theme === 'light' ? 'text-blue-600 hover:text-blue-800' : 'text-gray-200 hover:text-white'} transition-colors`}>
+                            S&apos;inscrire
+                        </Link>
+                    </p>
+                </div>
+            </div>
         </div>
     )
 }
