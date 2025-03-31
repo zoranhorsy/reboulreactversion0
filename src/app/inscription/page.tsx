@@ -155,7 +155,7 @@ export default function Register() {
             }`} style={{animationDelay: "0.1s"}}>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-1">
-                        <label htmlFor="name" className={`block text-sm ${theme === 'light' ? 'text-gray-700' : 'text-gray-300'}`}>Nom d'utilisateur</label>
+                        <label htmlFor="name" className={`block text-sm ${theme === 'light' ? 'text-gray-700' : 'text-gray-300'}`}>Nom d&apos;utilisateur</label>
                         <Input
                             id="name"
                             value={name}
@@ -166,7 +166,7 @@ export default function Register() {
                                 ? 'bg-gray-50 border-gray-200 focus:border-blue-500 focus:ring-0' 
                                 : 'bg-zinc-900 border-zinc-800 focus:border-zinc-700 focus:ring-0'
                             }`}
-                            placeholder="Votre nom d'utilisateur"
+                            placeholder="Votre nom d&apos;utilisateur"
                         />
                     </div>
                     

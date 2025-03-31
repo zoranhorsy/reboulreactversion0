@@ -10,6 +10,7 @@ import { useToast } from "@/components/ui/use-toast"
 import Link from "next/link"
 import { ShoppingCart, X, Minus, Plus } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
+import Image from 'next/image'
 
 interface CartSheetProps {
   children: React.ReactNode
@@ -90,10 +91,12 @@ export function CartSheet({ children, isOpen, onOpenChange }: CartSheetProps) {
                   <div key={item.id} className="flex gap-3 pb-4 border-b">
                     {/* Product image */}
                     <div className="w-20 h-20 relative rounded-md overflow-hidden flex-shrink-0 bg-accent/10">
-                      <img 
+                      <Image 
                         src={item.image} 
                         alt={item.name}
-                        className="object-cover w-full h-full"
+                        className="object-cover"
+                        fill
+                        sizes="80px"
                       />
                     </div>
                     

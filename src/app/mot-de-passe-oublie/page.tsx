@@ -228,10 +228,4 @@ export default function ForgotPassword() {
             </div>
         </div>
     )
-}
-
-// Page de réinitialisation du mot de passe (cette partie serait normalement dans un autre fichier)
-// Cette page serait accessible via une URL du type /reset-password/[token]
-export function ResetPasswordPage() {
-    // Implementation à venir
 } 

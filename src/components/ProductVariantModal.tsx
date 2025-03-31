@@ -42,6 +42,7 @@ import { useMediaQuery } from "@/hooks/useMediaQuery"
 import { CartItemVariant } from "@/lib/types/cart"
 import { api } from "@/lib/api"
 import { WishlistButton } from "@/components/WishlistButton"
+import Image from 'next/image'
 
 // Import du mapping des couleurs
 const colorMap: Record<string, { hex: string; label: string }> = {
@@ -278,10 +279,13 @@ export function ProductVariantModal({
           {/* Image qui remplit tout son conteneur */}
           <div className="relative bg-zinc-900">
             <div className="relative w-full aspect-square">
-              <img 
+              <Image 
                 src={images[currentImageIndex]} 
                 alt={product.name} 
-                className="object-cover w-full h-full bg-white" 
+                className="object-cover bg-white" 
+                fill
+                sizes="(max-width: 768px) 100vw, 500px"
+                priority
               />
               
               {/* Flèches de navigation plus visibles */}
