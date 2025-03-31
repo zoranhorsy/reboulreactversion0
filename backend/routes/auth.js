@@ -269,7 +269,7 @@ const validate = (validations) => {
                     // URL pour réinitialiser le mot de passe
                     // L'URL de base doit être configurée selon l'environnement
                     const baseUrl = process.env.NODE_ENV === 'production' 
-                        ? 'https://reboul-store.vercel.app' 
+                        ? (process.env.FRONTEND_URL || 'https://reboulreactversion0.vercel.app') 
                         : 'http://localhost:3000';
                     const resetUrl = `${baseUrl}/reinitialiser-mot-de-passe/${resetToken}`;
 
