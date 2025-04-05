@@ -16,7 +16,7 @@ export async function POST(request: Request) {
     // Si c'est un JSON (base64)
     if (contentType.includes('application/json')) {
       const body = await request.json();
-      const { data, upload_preset } = body;
+      const { data, upload_preset, folder } = body;
 
       if (!data) {
         return NextResponse.json(
@@ -25,12 +25,12 @@ export async function POST(request: Request) {
         );
       }
 
-      console.log('Uploading base64 image to Cloudinary...');
+      console.log('Uploading base64 image to Cloudinary...', { folder });
       
       // Upload l'image vers Cloudinary
       const uploadResponse = await cloudinary.uploader.upload(data, {
         upload_preset: upload_preset || process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || 'ml_default',
-        folder: 'reboul-store/products',
+        folder: folder || 'reboul-store/products',
       });
 
       console.log('Image uploadée sur Cloudinary:', uploadResponse.secure_url);
@@ -44,6 +44,7 @@ export async function POST(request: Request) {
     else if (contentType.includes('multipart/form-data')) {
       const formData = await request.formData();
       const files = formData.getAll('images') as File[];
+      const folder = formData.get('folder') as string;
       
       if (files.length === 0) {
         return NextResponse.json(
@@ -52,7 +53,7 @@ export async function POST(request: Request) {
         );
       }
       
-      console.log(`Uploading ${files.length} files to Cloudinary...`);
+      console.log(`Uploading ${files.length} files to Cloudinary...`, { folder });
       
       const uploadPromises = files.map(async (file) => {
         // Convertir le fichier en ArrayBuffer
@@ -64,7 +65,7 @@ export async function POST(request: Request) {
           cloudinary.uploader.upload_stream(
             {
               upload_preset: process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || 'ml_default',
-              folder: 'reboul-store/products',
+              folder: folder || 'reboul-store/products',
               filename_override: file.name,
             },
             (error, result) => {

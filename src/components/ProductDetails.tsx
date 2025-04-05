@@ -276,25 +276,30 @@ export function ProductDetails({
                   onClick={() => onColorChange(color)}
                   aria-label={`Sélectionner couleur ${colorInfo.label}`}
                   className={cn(
-                    "relative w-9 h-9 rounded-full flex items-center justify-center",
-                    "transition-all duration-200 ease-in-out hover:scale-110",
+                    "relative px-3 py-2 rounded-md flex items-center justify-center",
+                    "transition-all duration-200 ease-in-out border",
                     "focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary",
+                    selectedColor === color 
+                      ? "border-primary bg-primary/10 font-medium" 
+                      : "border-border hover:border-primary/50",
                   )}
                 >
-                  <span
-                    className={cn(
-                      "w-7 h-7 rounded-full border",
-                      selectedColor === color && "ring-2 ring-primary ring-offset-2",
-                      isWhite && "border-zinc-300 dark:border-zinc-600"
-                    )}
-                    style={{ 
-                      backgroundColor: colorInfo.hex.startsWith('linear-gradient') 
-                        ? colorInfo.hex 
-                        : colorInfo.hex
-                    }}
-                  />
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={cn(
+                        "w-4 h-4 rounded border",
+                        isWhite && "border-zinc-300 dark:border-zinc-600"
+                      )}
+                      style={{ 
+                        backgroundColor: colorInfo.hex.startsWith('linear-gradient') 
+                          ? colorInfo.hex 
+                          : colorInfo.hex
+                      }}
+                    />
+                    <span className="text-sm">{colorInfo.label}</span>
+                  </div>
                   {selectedColor === color && (
-                    <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[8px] text-white">
+                    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[8px] text-white">
                       ✓
                     </span>
                   )}

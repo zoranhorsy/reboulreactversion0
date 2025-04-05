@@ -442,29 +442,15 @@ export class Api {
 
     async createProduct(productData: Partial<Product>): Promise<Product> {
         try {
-            // Validation des champs requis
-            if (!productData.name?.trim()) {
-                throw new Error("Le nom du produit est requis");
-            }
-            if (!productData.price || productData.price <= 0) {
-                throw new Error("Le prix doit être supérieur à 0");
-            }
-            if (!productData.category_id) {
-                throw new Error("La catégorie est requise");
-            }
-            if (!productData.brand_id) {
-                throw new Error("La marque est requise");
-            }
-
             // Nettoyage des données avant l'envoi
             const cleanedProductData = {
                 ...productData,
-                name: productData.name.trim(),
-                description: productData.description?.trim() || '',
-                price: productData.price,
-                category_id: productData.category_id,
-                brand_id: productData.brand_id,
-                brand: productData.brand?.trim() || '',
+                name: productData.name || "",
+                description: productData.description || "",
+                price: Number(productData.price) || 0,
+                category_id: Number(productData.category_id) || 0,
+                brand_id: Number(productData.brand_id) || 0,
+                brand: productData.brand || "",
                 store_type: productData.store_type || "adult",
                 featured: Boolean(productData.featured),
                 active: Boolean(productData.active),
@@ -472,11 +458,11 @@ export class Api {
                 variants: productData.variants || [],
                 tags: productData.tags || [],
                 details: productData.details || [],
-                sku: productData.sku?.trim() || null,
-                store_reference: productData.store_reference?.trim() || null,
+                sku: productData.sku || null,
+                store_reference: productData.store_reference || null,
                 weight: productData.weight || null,
-                dimensions: productData.dimensions?.trim() || null,
-                material: productData.material?.trim() || null
+                dimensions: productData.dimensions || null,
+                material: productData.material || null
             };
 
             // Supprimer les champs non nécessaires
@@ -499,66 +485,78 @@ export class Api {
 
     async updateProduct(id: string, data: Partial<Product>): Promise<Product> {
         try {
-            // Validation des champs requis
-            if (!data.name?.trim()) {
-                throw new Error("Le nom du produit est requis");
-            }
-            if (!data.description?.trim()) {
-                throw new Error("La description est requise");
-            }
-            if (!data.price || data.price <= 0) {
-                throw new Error("Le prix doit être supérieur à 0");
-            }
-            if (!data.category_id) {
-                throw new Error("La catégorie est requise");
-            }
-            if (!data.brand_id) {
-                throw new Error("La marque est requise");
-            }
-
             // Log des données reçues
             console.log('Données reçues dans updateProduct:', JSON.stringify(data, null, 2));
 
-            // Créer un objet avec les données validées
-            const validatedData = {
-                name: data.name.trim(),
-                description: data.description.trim(),
-                price: Number(data.price),
-                category_id: Number(data.category_id),
-                brand_id: Number(data.brand_id),
-                store_type: data.store_type || "adult",
-                featured: Boolean(data.featured),
-                active: Boolean(data.active),
-                new: Boolean(data.new),
-                variants: Array.isArray(data.variants) ? data.variants : [],
-                tags: Array.isArray(data.tags) ? data.tags : [],
-                details: Array.isArray(data.details) ? data.details : [],
-                sku: data.sku?.trim() || null,
-                store_reference: data.store_reference?.trim() || null,
-                // Conserver les informations techniques
-                weight: data.weight || null,
-                dimensions: data.dimensions?.trim() || null,
-                material: data.material?.trim() || null,
-                // Envoyer les images directement comme un tableau
-                images: Array.isArray(data.images) 
-                    ? data.images.filter(url => typeof url === 'string' && url.includes('cloudinary.com'))
-                    : [],
-                // Utiliser la première image comme image_url
-                image_url: Array.isArray(data.images) && data.images.length > 0 
-                    ? data.images[0] 
-                    : data.image_url
+            // Créer un objet avec les données minimales nécessaires
+            const validatedData: Record<string, any> = {
+                name: String(data.name || "").trim(),
+                description: String(data.description || "").trim(),
+                price: Number(data.price) || 0,
+                category_id: Number(data.category_id) || 1,  // Valeur par défaut à 1 au lieu de 0
+                brand_id: Number(data.brand_id) || 1,       // Valeur par défaut à 1 au lieu de 0
+                store_type: data.store_type?.trim() || "adult",  // Valeur par défaut à "adult"
+                active: true
             };
 
+            // Ajouter les champs optionnels seulement s'ils ont des valeurs valides
+            if (data.variants && Array.isArray(data.variants)) {
+                const cleanedVariants = data.variants.filter(v => 
+                    v.size && v.size !== "undefined" && 
+                    v.color && v.color !== "undefined" &&
+                    v.stock >= 0
+                );
+                if (cleanedVariants.length > 0) {
+                    validatedData.variants = cleanedVariants;
+                }
+            }
+
+            if (Array.isArray(data.tags) && data.tags.length > 0) {
+                validatedData.tags = data.tags;
+            }
+
+            if (Array.isArray(data.details) && data.details.length > 0) {
+                validatedData.details = data.details;
+            }
+
+            if (data.featured !== undefined) {
+                validatedData.featured = Boolean(data.featured);
+            }
+
+            if (data.new !== undefined) {
+                validatedData.new = Boolean(data.new);
+            }
+
+            if (data.sku) {
+                validatedData.sku = String(data.sku).trim();
+            }
+
+            console.log('URL de la requête:', `${this.RAILWAY_BASE_URL}/api/products/${id}`);
             console.log('Données finales avant envoi:', JSON.stringify(validatedData, null, 2));
 
-            const response = await this.client.put(`/products/${id}`, validatedData);
-            return response.data;
+            // Utiliser fetch directement au lieu de axios
+            const token = getToken();
+            const response = await fetch(`${this.RAILWAY_BASE_URL}/api/products/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': token ? `Bearer ${token}` : '',
+                },
+                body: JSON.stringify(validatedData)
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Server response:', errorText);
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            return result;
         } catch (error) {
             console.error('Error updating product:', error);
-            if (error instanceof AxiosError) {
-                console.error('Server error details:', error.response?.data);
-                console.error('Server error status:', error.response?.status);
-                console.error('Server error headers:', error.response?.headers);
+            if (error instanceof Error) {
+                console.error('Error message:', error.message);
             }
             throw error;
         }
@@ -1681,21 +1679,14 @@ export class Api {
         }
     }
 
-    async updateArchive(id: string, data: FormData): Promise<any> {
+    async updateArchive(id: string, data: any): Promise<any> {
         try {
             console.log('Mise à jour de l\'archive:', id);
-            console.log('Données envoyées:', {
-                title: data.get('title'),
-                description: data.get('description'),
-                category: data.get('category'),
-                date: data.get('date'),
-                active: data.get('active'),
-                hasImage: data.has('image')
-            });
+            console.log('Données envoyées:', data);
 
             const response = await this.client.put(`/archives/${id}`, data, {
                 headers: { 
-                    'Content-Type': 'multipart/form-data',
+                    'Content-Type': 'application/json',
                     'Authorization': `Bearer ${getToken()}`
                 }
             });
@@ -1712,15 +1703,24 @@ export class Api {
         }
     }
 
-    async createArchive(data: FormData): Promise<any> {
+    async createArchive(data: any): Promise<any> {
         try {
+            console.log('Création d\'archive avec les données:', data);
             const response = await this.client.post('/archives', data, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            })
-            return response.data
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${getToken()}`
+                }
+            });
+            console.log('Réponse reçue:', response.data);
+            return response.data;
         } catch (error) {
-            this.handleError(error, "Erreur lors de la création de l'archive")
-            throw error
+            console.error('Erreur détaillée lors de la création:', error);
+            if (error instanceof AxiosError) {
+                console.error('Réponse du serveur:', error.response?.data);
+            }
+            this.handleError(error, "Erreur lors de la création de l'archive");
+            throw error;
         }
     }
 

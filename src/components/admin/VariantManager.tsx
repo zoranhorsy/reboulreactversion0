@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label"
 import { Plus, X, AlertCircle } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { productColors } from "@/config/productColors";
 
 interface Variant {
     size: string;
@@ -21,15 +22,36 @@ interface VariantManagerProps {
 const SIZES = {
     standard: ["XS", "S", "M", "L", "XL", "XXL"],
     italian: ["IT 38", "IT 40", "IT 42", "IT 44", "IT 46", "IT 48", "IT 50", "IT 52", "IT 54", "IT 56", "IT 58", "IT 60"],
-    shoes: ["EU 35", "EU 36", "EU 37", "EU 38", "EU 39", "EU 40", "EU 41", "EU 42", "EU 43", "EU 44", "EU 45", "EU 46", "EU 47", "EU 48"]
+    shoes_kids: [
+        "EU 16", "EU 16.5", "EU 17", "EU 17.5",
+        "EU 18", "EU 18.5", "EU 19", "EU 19.5",
+        "EU 20", "EU 20.5", "EU 21", "EU 21.5",
+        "EU 22", "EU 22.5", "EU 23", "EU 23.5",
+        "EU 24", "EU 24.5", "EU 25", "EU 25.5",
+        "EU 26", "EU 26.5", "EU 27", "EU 27.5",
+        "EU 28", "EU 28.5", "EU 29", "EU 29.5",
+        "EU 30", "EU 30.5", "EU 31", "EU 31.5",
+        "EU 32", "EU 32.5", "EU 33", "EU 33.5",
+        "EU 34", "EU 34.5", "EU 35"
+    ],
+    shoes: [
+        "EU 35", "EU 35 1/3", "EU 35.5", "EU 35 2/3",
+        "EU 36", "EU 36 1/3", "EU 36.5", "EU 36 2/3",
+        "EU 37", "EU 37 1/3", "EU 37.5", "EU 37 2/3",
+        "EU 38", "EU 38 1/3", "EU 38.5", "EU 38 2/3",
+        "EU 39", "EU 39 1/3", "EU 39.5", "EU 39 2/3",
+        "EU 40", "EU 40 1/3", "EU 40.5", "EU 40 2/3",
+        "EU 41", "EU 41 1/3", "EU 41.5", "EU 41 2/3",
+        "EU 42", "EU 42 1/3", "EU 42.5", "EU 42 2/3",
+        "EU 43", "EU 43 1/3", "EU 43.5", "EU 43 2/3",
+        "EU 44", "EU 44 1/3", "EU 44.5", "EU 44 2/3",
+        "EU 45", "EU 45 1/3", "EU 45.5", "EU 45 2/3",
+        "EU 46", "EU 46 1/3", "EU 46.5", "EU 46 2/3",
+        "EU 47", "EU 47 1/3", "EU 47.5", "EU 47 2/3"
+    ]
 };
 
-// Liste des couleurs prédéfinies
-const COLORS = [
-    "Noir", "Blanc", "Gris", "Bleu marine", "Bleu ciel", "Bleu", "Rouge", "Vert", "Jaune", "Orange", 
-    "Rose", "Violet", "Marron", "Beige", "Crème", "Kaki", "Olive", "Turquoise", "Corail", "Bordeaux",
-    "Camel", "Argenté", "Doré", "Bronze", "Lavande", "Menthe", "Sable", "Taupe", "Anthracite", "Indigo"
-];
+// Liste des couleurs prédéfinies est maintenant importée de productColors.ts
 
 export function VariantManager({ variants, onChange }: VariantManagerProps) {
     const [newVariant, setNewVariant] = useState<Variant>({ size: '', color: '', stock: 0 });
@@ -128,7 +150,14 @@ export function VariantManager({ variants, onChange }: VariantManagerProps) {
                                         </SelectGroup>
                                         
                                         <SelectGroup>
-                                            <SelectLabel>Tailles de chaussures (EU)</SelectLabel>
+                                            <SelectLabel>Tailles de chaussures Enfant (EU)</SelectLabel>
+                                            {SIZES.shoes_kids.map(size => (
+                                                <SelectItem key={size} value={size}>{size}</SelectItem>
+                                            ))}
+                                        </SelectGroup>
+                                        
+                                        <SelectGroup>
+                                            <SelectLabel>Tailles de chaussures Adulte (EU)</SelectLabel>
                                             {SIZES.shoes.map(size => (
                                                 <SelectItem key={size} value={size}>{size}</SelectItem>
                                             ))}
@@ -136,6 +165,7 @@ export function VariantManager({ variants, onChange }: VariantManagerProps) {
                                         
                                         {!SIZES.standard.includes(variant.size) && 
                                          !SIZES.italian.includes(variant.size) && 
+                                         !SIZES.shoes_kids.includes(variant.size) && 
                                          !SIZES.shoes.includes(variant.size) && 
                                          variant.size && (
                                             <SelectGroup>
@@ -154,12 +184,20 @@ export function VariantManager({ variants, onChange }: VariantManagerProps) {
                                     <SelectContent>
                                         <SelectGroup>
                                             <SelectLabel>Couleurs standard</SelectLabel>
-                                            {COLORS.map(color => (
-                                                <SelectItem key={color} value={color}>{color}</SelectItem>
+                                            {productColors.map(color => (
+                                                <SelectItem key={color.name} value={color.name}>
+                                                    <div className="flex items-center">
+                                                        <div 
+                                                            className="w-3 h-3 rounded-full mr-2 border border-border/40" 
+                                                            style={{ backgroundColor: color.value }}
+                                                        />
+                                                        {color.name}
+                                                    </div>
+                                                </SelectItem>
                                             ))}
                                         </SelectGroup>
                                         
-                                        {!COLORS.includes(variant.color) && variant.color && (
+                                        {!productColors.some(c => c.name === variant.color) && variant.color && (
                                             <SelectGroup>
                                                 <SelectLabel>Valeur personnalisée</SelectLabel>
                                                 <SelectItem value={variant.color}>{variant.color}</SelectItem>
@@ -235,7 +273,14 @@ export function VariantManager({ variants, onChange }: VariantManagerProps) {
                                     </SelectGroup>
                                     
                                     <SelectGroup>
-                                        <SelectLabel>Tailles de chaussures (EU)</SelectLabel>
+                                        <SelectLabel>Tailles de chaussures Enfant (EU)</SelectLabel>
+                                        {SIZES.shoes_kids.map(size => (
+                                            <SelectItem key={size} value={size}>{size}</SelectItem>
+                                        ))}
+                                    </SelectGroup>
+                                    
+                                    <SelectGroup>
+                                        <SelectLabel>Tailles de chaussures Adulte (EU)</SelectLabel>
                                         {SIZES.shoes.map(size => (
                                             <SelectItem key={size} value={size}>{size}</SelectItem>
                                         ))}
@@ -275,8 +320,16 @@ export function VariantManager({ variants, onChange }: VariantManagerProps) {
                                 <SelectContent>
                                     <SelectGroup>
                                         <SelectLabel>Couleurs standard</SelectLabel>
-                                        {COLORS.map(color => (
-                                            <SelectItem key={color} value={color}>{color}</SelectItem>
+                                        {productColors.map(color => (
+                                            <SelectItem key={color.name} value={color.name}>
+                                                <div className="flex items-center">
+                                                    <div 
+                                                        className="w-3 h-3 rounded-full mr-2 border border-border/40" 
+                                                        style={{ backgroundColor: color.value }}
+                                                    />
+                                                    {color.name}
+                                                </div>
+                                            </SelectItem>
                                         ))}
                                     </SelectGroup>
                                     <SelectItem value="custom">Autre (personnalisé)</SelectItem>

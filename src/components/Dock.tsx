@@ -99,6 +99,17 @@ export function Dock() {
   const { theme, setTheme } = useTheme()
   const { user, logout } = useAuth()
 
+  useEffect(() => {
+    const handleOpenCart = () => {
+      setIsCartOpen(true)
+    }
+
+    window.addEventListener('openCart', handleOpenCart)
+    return () => {
+      window.removeEventListener('openCart', handleOpenCart)
+    }
+  }, [])
+
   const menuItems = [
     { id: 'home', href: "/", icon: Home, label: "Accueil" },
     { id: 'catalogue', href: "/catalogue", icon: ShoppingBag, label: "Catalogue" },
@@ -296,7 +307,7 @@ export function Dock() {
             <motion.div 
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
-              className="absolute -right-0.5 -top-0.5 bg-red-500/90 text-white text-[9px] rounded-full h-3 min-w-[12px] px-1 flex items-center justify-center"
+              className="absolute right-0 top-0 bg-red-500/90 text-white text-[8px] rounded-full h-3.5 min-w-[14px] px-0.5 flex items-center justify-center border border-black/10"
             >
               {itemCount}
             </motion.div>

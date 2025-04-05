@@ -16,7 +16,7 @@ interface Archive {
     title: string
     description: string
     category: 'store' | 'shooting' | 'event'
-    image_path: string
+    image_paths: string[]
     date: string
     active: boolean
     display_order: number
@@ -31,6 +31,11 @@ const CATEGORIES = [
 
 const getImageUrl = (path: string): string => {
     if (!path) return '/placeholder.png'
+    
+    // Si c'est déjà une URL Cloudinary, la retourner telle quelle
+    if (path.includes('cloudinary.com')) {
+        return path
+    }
     
     const RAILWAY_BASE_URL = 'https://reboul-store-api-production.up.railway.app'
     
@@ -57,6 +62,7 @@ export function Archives() {
     const [selectedImage, setSelectedImage] = useState<Archive | null>(null)
     const [currentIndex, setCurrentIndex] = useState(0)
     const carouselRef = useRef<HTMLDivElement>(null)
+    const [selectedImageIndex, setSelectedImageIndex] = useState(0)
 
     // Charger les archives depuis l'API
     useEffect(() => {
@@ -128,6 +134,13 @@ export function Archives() {
             goToPrevious();
         }
     };
+
+    // Réinitialiser l'index quand on ouvre le modal
+    useEffect(() => {
+        if (selectedImage) {
+            setSelectedImageIndex(0);
+        }
+    }, [selectedImage]);
 
     if (isLoading) {
         return (
@@ -208,7 +221,7 @@ export function Archives() {
                                         <div className="relative w-full h-full rounded-lg sm:rounded-xl overflow-hidden cursor-pointer"
                                             onClick={() => setSelectedImage(filteredItems[currentIndex])}>
                                             <Image
-                                                src={getImageUrl(filteredItems[currentIndex].image_path)}
+                                                src={getImageUrl(filteredItems[currentIndex].image_paths[0])}
                                                 alt={filteredItems[currentIndex].title}
                                                 fill
                                                 className="object-cover"
@@ -292,7 +305,7 @@ export function Archives() {
                             onClick={() => setCurrentIndex(index)}
                         >
                             <Image
-                                src={getImageUrl(item.image_path)}
+                                src={getImageUrl(item.image_paths[0])}
                                 alt={item.title}
                                 fill
                                 className="object-cover"
@@ -325,27 +338,84 @@ export function Archives() {
                             exit={{ opacity: 0, scale: 0.95 }}
                             transition={{ duration: 0.3 }}
                         >
-                            {/* Boutons de navigation - plus gros sur mobile pour faciliter l'interaction */}
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation()
-                                    handleLightboxPreviousImage()
-                                }}
-                                className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 z-50 p-3 rounded-full bg-black/70 text-white hover:bg-black/90 transition-colors"
-                                aria-label="Image précédente"
-                            >
-                                <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
-                            </button>
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation()
-                                    handleLightboxNextImage()
-                                }}
-                                className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 z-50 p-3 rounded-full bg-black/70 text-white hover:bg-black/90 transition-colors"
-                                aria-label="Image suivante"
-                            >
-                                <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
-                            </button>
+                            {/* Navigation entre les images de la même archive */}
+                            {selectedImage.image_paths.length > 1 && (
+                                <>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedImageIndex((prev) => 
+                                                prev > 0 ? prev - 1 : selectedImage.image_paths.length - 1
+                                            );
+                                        }}
+                                        className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 z-50 p-3 rounded-full bg-black/70 text-white hover:bg-black/90 transition-colors"
+                                        aria-label="Image précédente"
+                                    >
+                                        <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+                                    </button>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedImageIndex((prev) => 
+                                                (prev + 1) % selectedImage.image_paths.length
+                                            );
+                                        }}
+                                        className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 z-50 p-3 rounded-full bg-black/70 text-white hover:bg-black/90 transition-colors"
+                                        aria-label="Image suivante"
+                                    >
+                                        <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
+                                    </button>
+                                </>
+                            )}
+
+                            {/* Image */}
+                            <Image
+                                src={getImageUrl(selectedImage.image_paths[selectedImageIndex])}
+                                alt={selectedImage.title}
+                                fill
+                                className="object-contain sm:object-cover"
+                                priority
+                                sizes="100vw"
+                            />
+
+                            {/* Indicateurs de position */}
+                            <div className="absolute top-4 left-4 z-50 bg-black/70 text-white text-xs py-1.5 px-3 rounded-full">
+                                {selectedImage.image_paths.length > 1 ? (
+                                    <>{selectedImageIndex + 1} / {selectedImage.image_paths.length}</>
+                                ) : (
+                                    <>{filteredItems.findIndex(item => item.id === selectedImage.id) + 1} / {filteredItems.length}</>
+                                )}
+                            </div>
+
+                            {/* Miniatures des images de l'archive en cours */}
+                            {selectedImage.image_paths.length > 1 && (
+                                <div className="absolute bottom-20 left-0 right-0 flex justify-center gap-2 px-4">
+                                    {selectedImage.image_paths.map((path, index) => (
+                                        <button
+                                            key={index}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setSelectedImageIndex(index);
+                                            }}
+                                            className={cn(
+                                                "w-12 h-12 rounded-md overflow-hidden border-2 transition-all",
+                                                selectedImageIndex === index 
+                                                    ? "border-white scale-110" 
+                                                    : "border-transparent opacity-70 hover:opacity-100"
+                                            )}
+                                        >
+                                            <div className="relative w-full h-full">
+                                                <Image
+                                                    src={getImageUrl(path)}
+                                                    alt={`${selectedImage.title} - Image ${index + 1}`}
+                                                    fill
+                                                    className="object-cover"
+                                                />
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
 
                             {/* Bouton de fermeture */}
                             <button
@@ -355,16 +425,6 @@ export function Archives() {
                             >
                                 <X className="w-5 h-5 sm:w-6 sm:h-6" />
                             </button>
-
-                            {/* Image */}
-                            <Image
-                                src={getImageUrl(selectedImage.image_path)}
-                                alt={selectedImage.title}
-                                fill
-                                className="object-contain sm:object-cover"
-                                priority
-                                sizes="100vw"
-                            />
 
                             {/* Informations - simplifié et plus compact sur mobile */}
                             <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 md:p-8 bg-gradient-to-t from-black/90 via-black/70 to-transparent">
@@ -389,11 +449,6 @@ export function Archives() {
                                         {selectedImage.description}
                                     </p>
                                 </motion.div>
-                            </div>
-
-                            {/* Indicateurs de position */}
-                            <div className="absolute top-4 left-4 z-50 bg-black/70 text-white text-xs py-1.5 px-3 rounded-full">
-                                {filteredItems.findIndex(item => item.id === selectedImage.id) + 1} / {filteredItems.length}
                             </div>
                         </motion.div>
                     )}

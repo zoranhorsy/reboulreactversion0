@@ -132,15 +132,19 @@ export function ProductTable({
 
     const getImageUrl = (product: Product): string => {
         if (product.images?.[0]) {
-            if (typeof product.images[0] === 'string') {
+            if (typeof product.images[0] === 'string' && product.images[0].trim() !== '') {
                 return product.images[0];
             } else if (typeof product.images[0] === 'object' && product.images[0] !== null) {
-                if ('url' in product.images[0]) {
+                if ('url' in product.images[0] && product.images[0].url && product.images[0].url.trim() !== '') {
                     return product.images[0].url;
                 }
             }
         }
-        return product.image_url || product.image || "/placeholder.png";
+        // S'assurer de retourner une URL valide même si l'image est vide
+        return (product.image_url && product.image_url.trim() !== '') || 
+               (product.image && product.image.trim() !== '') 
+               ? (product.image_url || product.image) 
+               : "/placeholder.png";
     }
 
     const handleImageError = (productId: string) => {
@@ -163,9 +167,15 @@ export function ProductTable({
         if (!variants || variants.length === 0) return <></>;
 
         // Trier les variants pour un affichage plus cohérent
-        const sortedVariants = [...variants].sort((a, b) => (
-            a.color.localeCompare(b.color) || a.size.localeCompare(b.size)
-        ));
+        const sortedVariants = [...variants].sort((a, b) => {
+            // Vérifier si les propriétés existent avant de les comparer
+            const colorA = a.color || '';
+            const colorB = b.color || '';
+            const sizeA = a.size || '';
+            const sizeB = b.size || '';
+            
+            return colorA.localeCompare(colorB) || sizeA.localeCompare(sizeB);
+        });
         
         return (
             <div className="mt-1.5 bg-white/50 rounded-lg border border-border/40 overflow-hidden">
@@ -213,7 +223,7 @@ export function ProductTable({
                                 ) : (
                                     <Link href={`/produit/${product.id}`} target="_blank">
                                         <Image
-                                            src={getImageUrl(product)}
+                                            src={getImageUrl(product) || "/placeholder.png"}
                                             alt={product.name}
                                             width={96}
                                             height={96}

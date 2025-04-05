@@ -12,11 +12,11 @@ import { useTheme } from 'next-themes'
 export function HeroSection() {
     const heroRef = useRef(null)
     const { resolvedTheme } = useTheme()
-    const [logoSource, setLogoSource] = useState("/images/logo_white.png")
+    const [logoSource, setLogoSource] = useState("/images/logotype_w.png")
 
     useEffect(() => {
         if (resolvedTheme) {
-            setLogoSource(resolvedTheme === 'dark' ? "/images/logo_white.png" : "/images/logo_black.png")
+            setLogoSource(resolvedTheme === 'dark' ? "/images/logotype_w.png" : "/images/logotype_b.png")
         }
     }, [resolvedTheme])
 

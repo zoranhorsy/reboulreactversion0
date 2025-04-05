@@ -36,6 +36,7 @@ export const uploadImage = async (file: File): Promise<CloudinaryUploadResult> =
       body: JSON.stringify({
         data: base64Data,
         upload_preset: process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || 'ml_default',
+        folder: 'reboul-store/archives', // Spécifier le dossier pour les archives
       }),
     });
 

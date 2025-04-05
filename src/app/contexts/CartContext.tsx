@@ -39,6 +39,7 @@ interface CartContextType {
   setLastOrder: (order: OrderDetails) => void;
   clearLastOrder: () => void;
   itemCount: number;
+  openCart: () => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined)
@@ -150,6 +151,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.removeItem('lastOrder')
     }, [])
 
+    const openCart = useCallback(() => {
+        const event = new CustomEvent('openCart')
+        window.dispatchEvent(event)
+    }, [])
+
     const contextValue: CartContextType = {
         items,
         addItem,
@@ -161,6 +167,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setLastOrder: setLastOrderWithStorage,
         clearLastOrder,
         itemCount,
+        openCart,
     }
 
     return <CartContext.Provider value={contextValue}>{children}</CartContext.Provider>

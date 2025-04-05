@@ -4,21 +4,21 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/app/contexts/AuthContext'
 import { AdminDashboard } from '@/components/admin/AdminDashboard'
-import { Loader2, ShieldAlert, Package, ShoppingCart, Users, Settings, Home, BarChart2, Image } from 'lucide-react'
+import { Loader2, ShieldAlert, Package, ShoppingCart, Users, Home, BarChart2, Image, ChevronRight, X, Ticket, Archive } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AdminProducts } from '@/components/admin/AdminProducts'
 import { AdminOrders } from '@/components/admin/AdminOrders'
 import { AdminUsers } from '@/components/admin/AdminUsers'
 import { AdminStats } from '@/components/admin/AdminStats'
-import { AdminSettings } from '@/components/admin/AdminSettings'
 import { ArchiveManager } from '@/components/admin/ArchiveManager'
+import { PromoManagement } from '@/components/admin/PromoManagement'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog"
 
 export default function AdminPage() {
     const { user, isLoading } = useAuth()
     const router = useRouter()
-    const [activeTab, setActiveTab] = useState('dashboard')
+    const [activeCard, setActiveCard] = useState<string | null>(null)
 
     useEffect(() => {
         if (!isLoading && !user) {
@@ -69,19 +69,72 @@ export default function AdminPage() {
         )
     }
 
-    const tabs = [
-        { id: 'dashboard', label: 'Tableau de bord', icon: Home },
-        { id: 'products', label: 'Produits', icon: Package },
-        { id: 'orders', label: 'Commandes', icon: ShoppingCart },
-        { id: 'users', label: 'Utilisateurs', icon: Users },
-        { id: 'archives', label: 'Archives', icon: Image },
-        { id: 'stats', label: 'Statistiques', icon: BarChart2 },
-        { id: 'settings', label: 'Paramètres', icon: Settings },
+    const cards = [
+        {
+            id: 'products',
+            title: 'Produits',
+            description: 'Gérez votre catalogue de produits',
+            icon: <Package className="w-6 h-6" />,
+            color: 'from-primary/2 to-primary/5',
+            content: <AdminProducts />
+        },
+        {
+            id: 'orders',
+            title: 'Commandes',
+            description: 'Suivez et gérez les commandes',
+            icon: <ShoppingCart className="w-6 h-6" />,
+            color: 'from-primary/2 to-primary/5',
+            content: <AdminOrders />
+        },
+        {
+            id: 'users',
+            title: 'Utilisateurs',
+            description: 'Gérez les comptes utilisateurs',
+            icon: <Users className="w-6 h-6" />,
+            color: 'from-primary/2 to-primary/5',
+            content: <AdminUsers />
+        },
+        {
+            id: 'archives',
+            title: 'Archives',
+            description: 'Gérez vos photos d\'archives',
+            icon: <Archive className="w-6 h-6" />,
+            color: 'from-primary/2 to-primary/5',
+            content: (
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Gestion des archives</CardTitle>
+                        <CardDescription>
+                            Gérez les photos d&apos;archives de votre boutique
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <ArchiveManager />
+                    </CardContent>
+                </Card>
+            )
+        },
+        {
+            id: 'stats',
+            title: 'Statistiques',
+            description: 'Analysez les performances',
+            icon: <BarChart2 className="w-6 h-6" />,
+            color: 'from-primary/2 to-primary/5',
+            content: <AdminStats />
+        },
+        {
+            id: 'promos',
+            title: 'Codes promo',
+            description: 'Gérez vos codes promo',
+            icon: <Ticket className="w-6 h-6" />,
+            color: 'from-primary/2 to-primary/5',
+            content: <PromoManagement />
+        }
     ]
 
     return (
         <div className="min-h-screen bg-background">
-            <div className="container mx-auto py-4 px-4 sm:py-6 sm:px-6 space-y-4 sm:space-y-6">
+            <div className="container mx-auto py-4 px-4 sm:py-6 sm:px-6 space-y-6">
                 <div className="flex flex-col space-y-2 sm:space-y-3">
                     <h1 className="text-2xl sm:text-3xl font-bold">Administration</h1>
                     <p className="text-sm sm:text-base text-muted-foreground">
@@ -89,65 +142,50 @@ export default function AdminPage() {
                     </p>
                 </div>
 
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
-                    <div className="border-b">
-                        <div className="-mb-px overflow-x-auto scrollbar-none">
-                            <TabsList className="inline-flex w-max sm:w-auto gap-2 sm:gap-4 p-1">
-                                {tabs.map((tab) => {
-                                    const Icon = tab.icon
-                                    return (
-                                        <TabsTrigger
-                                            key={tab.id}
-                                            value={tab.id}
-                                            className="inline-flex items-center gap-2 px-3 py-2.5 sm:px-4 sm:py-2.5 data-[state=active]:bg-accent rounded-md transition-colors"
-                                        >
-                                            <Icon className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
-                                            <span className="text-xs sm:text-sm whitespace-nowrap">{tab.label}</span>
-                                        </TabsTrigger>
-                                    )
-                                })}
-                            </TabsList>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                    {cards.map(card => (
+                        <button
+                            key={card.id}
+                            onClick={() => setActiveCard(card.id)}
+                            className="group relative flex flex-col items-start p-4 rounded-lg border bg-card hover:shadow-md transition-all duration-200"
+                        >
+                            <div className={`absolute inset-0 bg-gradient-to-br ${card.color} rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200`} />
+                            <div className="relative z-10 w-full">
+                                <div className="p-2.5 rounded-lg bg-primary/5 text-primary mb-3">
+                                    {card.icon}
+                                </div>
+                                <h3 className="text-base font-medium mb-1.5 text-foreground">{card.title}</h3>
+                                <p className="text-xs text-muted-foreground mb-3">{card.description}</p>
+                                <div className="flex items-center text-xs text-primary/80">
+                                    <span>Voir plus</span>
+                                    <ChevronRight className="w-3.5 h-3.5 ml-1 group-hover:translate-x-1 transition-transform" />
+                                </div>
+                            </div>
+                        </button>
+                    ))}
+                </div>
+
+                <div className="mt-6">
+                    <AdminDashboard />
+                </div>
+
+                <Dialog open={!!activeCard} onOpenChange={() => setActiveCard(null)}>
+                    <DialogContent className="max-w-[95vw] lg:max-w-[90vw] max-h-[95vh] overflow-y-auto p-0">
+                        <DialogHeader className="px-6 py-4 border-b">
+                            <div className="flex items-center justify-between">
+                                <DialogTitle className="text-xl">
+                                    {cards.find(card => card.id === activeCard)?.title}
+                                </DialogTitle>
+                                <DialogClose className="rounded-full p-2 hover:bg-accent transition-colors">
+                                    <X className="h-4 w-4" />
+                                </DialogClose>
+                            </div>
+                        </DialogHeader>
+                        <div className="p-6">
+                            {cards.find(card => card.id === activeCard)?.content}
                         </div>
-                    </div>
-
-                    <TabsContent value="dashboard" className="space-y-4 sm:space-y-6">
-                        <AdminDashboard />
-                    </TabsContent>
-
-                    <TabsContent value="products" className="space-y-4 sm:space-y-6">
-                        <AdminProducts />
-                    </TabsContent>
-
-                    <TabsContent value="orders" className="space-y-4 sm:space-y-6">
-                        <AdminOrders />
-                    </TabsContent>
-
-                    <TabsContent value="users" className="space-y-4 sm:space-y-6">
-                        <AdminUsers />
-                    </TabsContent>
-
-                    <TabsContent value="archives" className="space-y-4 sm:space-y-6">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Gestion des archives</CardTitle>
-                                <CardDescription>
-                                    Gérez les photos d&apos;archives de votre boutique
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <ArchiveManager />
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
-
-                    <TabsContent value="stats" className="space-y-4 sm:space-y-6">
-                        <AdminStats />
-                    </TabsContent>
-
-                    <TabsContent value="settings" className="space-y-4 sm:space-y-6">
-                        <AdminSettings />
-                    </TabsContent>
-                </Tabs>
+                    </DialogContent>
+                </Dialog>
             </div>
         </div>
     )

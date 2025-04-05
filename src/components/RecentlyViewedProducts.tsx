@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo, memo } from 'react'
 import { motion } from 'framer-motion'
 import { FeaturedProductCard } from './products/FeaturedProductCard'
 import { Button } from '@/components/ui/button'
@@ -11,52 +11,79 @@ interface RecentlyViewedProductsProps {
     currentProductId: string
 }
 
-export function RecentlyViewedProducts({ currentProductId }: RecentlyViewedProductsProps) {
+// Composant interne avec mémorisation
+const RecentlyViewedProductsComponent = ({ currentProductId }: RecentlyViewedProductsProps) => {
     const [recentProducts, setRecentProducts] = useState<Product[]>([])
     const [currentPage, setCurrentPage] = useState(0)
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
 
-    const productsPerPage = 32
+    const productsPerPage = 8
     const totalPages = Math.ceil(recentProducts.length / productsPerPage)
 
+    // Utilisez useEffect avec un tableau de dépendances vide pour s'exécuter une seule fois
     useEffect(() => {
+        // Variable pour suivre si le composant est monté
+        let isMounted = true;
+        let isDataFetched = false;
+        
         // Récupérer les IDs des produits récemment consultés depuis le localStorage
         const recentlyViewed = JSON.parse(localStorage.getItem('recentlyViewed') || '[]')
         
         // Ajouter le produit actuel à la liste
         if (!recentlyViewed.includes(currentProductId)) {
-            const updatedRecentlyViewed = [currentProductId, ...recentlyViewed].slice(0, 32)
+            const updatedRecentlyViewed = [currentProductId, ...recentlyViewed].slice(0, 16) // Limiter à 16 produits
             localStorage.setItem('recentlyViewed', JSON.stringify(updatedRecentlyViewed))
         }
 
         const fetchRecentProducts = async () => {
+            // Si déjà chargé, ne pas recharger
+            if (recentProducts.length > 0 || isDataFetched) {
+                return;
+            }
+            
+            isDataFetched = true;
             setIsLoading(true)
             setError(null)
             try {
                 const response = await fetchProducts()
-                if (!response || !response.products || response.products.length === 0) {
-                    throw new Error("No products found")
-                }
                 
-                // Filtrer et trier les produits selon l'ordre dans recentlyViewed
-                const recentlyViewedProducts = response.products
-                    .filter(product => recentlyViewed.includes(product.id))
-                    .sort((a, b) => recentlyViewed.indexOf(a.id) - recentlyViewed.indexOf(b.id))
-                    .filter(product => product.id !== currentProductId)
-                    .slice(0, 32)
+                // Ne mettre à jour l'état que si le composant est toujours monté
+                if (isMounted) {
+                    if (!response || !response.products || response.products.length === 0) {
+                        throw new Error("No products found")
+                    }
+                    
+                    // Filtrer et trier les produits selon l'ordre dans recentlyViewed
+                    const recentlyViewedProducts = response.products
+                        .filter(product => recentlyViewed.includes(product.id))
+                        .sort((a, b) => recentlyViewed.indexOf(a.id) - recentlyViewed.indexOf(b.id))
+                        .filter(product => product.id !== currentProductId)
+                        .slice(0, 16) // Limiter à 16 produits pour améliorer les performances
 
-                setRecentProducts(recentlyViewedProducts)
+                    setRecentProducts(recentlyViewedProducts)
+                }
             } catch (error) {
-                console.error("Error fetching recent products:", error)
-                setError("Failed to load recent products")
+                if (isMounted) {
+                    console.error("Error fetching recent products:", error)
+                    setError("Failed to load recent products")
+                }
             } finally {
-                setIsLoading(false)
+                if (isMounted) {
+                    setIsLoading(false)
+                }
             }
         }
 
+        // Charger les produits une seule fois
         fetchRecentProducts()
-    }, [currentProductId])
+        
+        // Nettoyer à la démontage
+        return () => {
+            isMounted = false;
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
 
     const handlePrevious = () => {
         setCurrentPage((prev) => (prev > 0 ? prev - 1 : totalPages - 1))
@@ -65,6 +92,12 @@ export function RecentlyViewedProducts({ currentProductId }: RecentlyViewedProdu
     const handleNext = () => {
         setCurrentPage((prev) => (prev < totalPages - 1 ? prev + 1 : 0))
     }
+
+    // Calculer les produits visibles de façon mémorisée
+    const visibleProducts = useMemo(() => {
+        const startIndex = currentPage * productsPerPage
+        return recentProducts.slice(startIndex, startIndex + productsPerPage)
+    }, [recentProducts, currentPage, productsPerPage])
 
     if (isLoading) {
         return (
@@ -86,9 +119,6 @@ export function RecentlyViewedProducts({ currentProductId }: RecentlyViewedProdu
     if (error || recentProducts.length === 0) {
         return null
     }
-
-    const startIndex = currentPage * productsPerPage
-    const visibleProducts = recentProducts.slice(startIndex, startIndex + productsPerPage)
 
     return (
         <div className="relative">
@@ -121,49 +151,13 @@ export function RecentlyViewedProducts({ currentProductId }: RecentlyViewedProdu
             )}
 
             {/* Products Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 mb-4">
-                {visibleProducts.slice(0, 8).map((product, index) => (
-                    <motion.div
-                        key={product.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5, delay: index * 0.1 }}
-                    >
-                        <FeaturedProductCard product={product} />
-                    </motion.div>
-                ))}
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 mb-4">
-                {visibleProducts.slice(8, 16).map((product, index) => (
-                    <motion.div
-                        key={product.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5, delay: index * 0.1 }}
-                    >
-                        <FeaturedProductCard product={product} />
-                    </motion.div>
-                ))}
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 mb-4">
-                {visibleProducts.slice(16, 24).map((product, index) => (
-                    <motion.div
-                        key={product.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5, delay: index * 0.1 }}
-                    >
-                        <FeaturedProductCard product={product} />
-                    </motion.div>
-                ))}
-            </div>
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
-                {visibleProducts.slice(24, 32).map((product, index) => (
+                {visibleProducts.map((product, index) => (
                     <motion.div
                         key={product.id}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5, delay: index * 0.1 }}
+                        transition={{ duration: 0.3, delay: Math.min(index * 0.05, 0.5) }}
                     >
                         <FeaturedProductCard product={product} />
                     </motion.div>
@@ -188,4 +182,7 @@ export function RecentlyViewedProducts({ currentProductId }: RecentlyViewedProdu
             )}
         </div>
     )
-} 
+}
+
+// Exporte le composant mémorisé
+export const RecentlyViewedProducts = memo(RecentlyViewedProductsComponent) 

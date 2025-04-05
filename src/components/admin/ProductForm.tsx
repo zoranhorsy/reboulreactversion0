@@ -260,45 +260,13 @@ export function ProductForm({
         setFormData(prev => ({ ...prev, showTechnicalDetails: true }));
       }
     }
+    // Définir isDirty à true au chargement initial pour permettre la soumission
+    setIsDirty(true);
   }, [product, defaultFormData]);
 
   const validateForm = (): boolean => {
-    const newErrors: Record<string, string> = {};
-    
-    if (!formData.name?.trim()) {
-      newErrors.name = "Le nom du produit est requis";
-    }
-    if (!formData.description?.trim()) {
-      newErrors.description = "La description est requise";
-    }
-    if (!formData.price || formData.price <= 0) {
-      newErrors.price = "Le prix doit être supérieur à 0";
-    }
-    if (!formData.category_id) {
-      newErrors.category_id = "La catégorie est requise";
-    }
-    if (!formData.brand_id) {
-      newErrors.brand_id = "La marque est requise";
-    }
-    if (!formData.images || formData.images.length === 0) {
-      newErrors.images = "Au moins une image est requise";
-    }
-    if (!formData.store_type) {
-      newErrors.store_type = "Le type de magasin est requis";
-    }
-
-    // Validation des variants si nécessaire
-    if (formData.variants && formData.variants.length > 0) {
-      const hasInvalidVariant = formData.variants.some(
-        variant => !variant.size || !variant.color || variant.stock < 0
-      );
-      if (hasInvalidVariant) {
-        newErrors.variants = "Certains variants sont invalides";
-      }
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    // Désactiver toutes les validations en retournant toujours true
+    return true;
   };
 
   const handleChange = (
@@ -309,6 +277,7 @@ export function ProductForm({
       ...prev,
       [field]: value,
     }));
+    // Toujours définir isDirty à true pour permettre la soumission
     setIsDirty(true);
     // Effacer l'erreur du champ modifié
     if (errors[field]) {
@@ -490,15 +459,6 @@ export function ProductForm({
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     
-    if (!validateForm()) {
-      toast({
-        title: "Erreur",
-        description: "Veuillez corriger les erreurs dans le formulaire",
-        variant: "destructive",
-      });
-      return;
-    }
-
     try {
       setIsSubmitting(true);
       
@@ -727,7 +687,6 @@ export function ProductForm({
                     id="name"
                     value={formData.name}
                     onChange={handleTextChange("name")}
-                    required
                     className={cn(
                       "border-input/40 w-full rounded-lg focus:border-primary focus:ring-1 focus:ring-primary h-9 bg-white/50",
                       errors.name && "border-red-500 focus:border-red-500 focus:ring-red-500"
@@ -781,7 +740,6 @@ export function ProductForm({
                       id="price"
                       value={formData.price.toString()}
                       onChange={handleNumberChange("price")}
-                      required
                       type="number"
                       step="0.01"
                       min="0"
@@ -819,7 +777,6 @@ export function ProductForm({
                 id="description"
                 value={formData.description}
                 onChange={handleTextChange("description")}
-                required
                 placeholder="Description détaillée du produit"
                 className={cn(
                   "min-h-[60px] sm:min-h-[100px] border-input/40 resize-none w-full rounded-lg focus:border-primary focus:ring-1 focus:ring-primary bg-white/50",
@@ -934,6 +891,36 @@ export function ProductForm({
                         <SelectItem value="Coupe droite">Coupe droite</SelectItem>
                         <SelectItem value="Taille haute">Taille haute</SelectItem>
                         <SelectItem value="Taille mi-haute">Taille mi-haute</SelectItem>
+                      </SelectGroup>
+
+                      <SelectSeparator className="my-1" />
+                      <SelectGroup>
+                        <SelectLabel>Tailles Chaussures (EU)</SelectLabel>
+                        <SelectItem value="EU 35">EU 35</SelectItem>
+                        <SelectItem value="EU 35.5">EU 35.5</SelectItem>
+                        <SelectItem value="EU 36">EU 36</SelectItem>
+                        <SelectItem value="EU 36.5">EU 36.5</SelectItem>
+                        <SelectItem value="EU 37">EU 37</SelectItem>
+                        <SelectItem value="EU 37.5">EU 37.5</SelectItem>
+                        <SelectItem value="EU 38">EU 38</SelectItem>
+                        <SelectItem value="EU 38.5">EU 38.5</SelectItem>
+                        <SelectItem value="EU 39">EU 39</SelectItem>
+                        <SelectItem value="EU 39.5">EU 39.5</SelectItem>
+                        <SelectItem value="EU 40">EU 40</SelectItem>
+                        <SelectItem value="EU 40.5">EU 40.5</SelectItem>
+                        <SelectItem value="EU 41">EU 41</SelectItem>
+                        <SelectItem value="EU 41.5">EU 41.5</SelectItem>
+                        <SelectItem value="EU 42">EU 42</SelectItem>
+                        <SelectItem value="EU 42.5">EU 42.5</SelectItem>
+                        <SelectItem value="EU 43">EU 43</SelectItem>
+                        <SelectItem value="EU 43.5">EU 43.5</SelectItem>
+                        <SelectItem value="EU 44">EU 44</SelectItem>
+                        <SelectItem value="EU 44.5">EU 44.5</SelectItem>
+                        <SelectItem value="EU 45">EU 45</SelectItem>
+                        <SelectItem value="EU 45.5">EU 45.5</SelectItem>
+                        <SelectItem value="EU 46">EU 46</SelectItem>
+                        <SelectItem value="EU 46.5">EU 46.5</SelectItem>
+                        <SelectItem value="EU 47">EU 47</SelectItem>
                       </SelectGroup>
                       
                       <SelectSeparator className="my-1" />
@@ -1336,7 +1323,7 @@ export function ProductForm({
         <Button 
           type="submit" 
           form="product-form"
-          disabled={isSubmitting || isUploading || !isDirty}
+          disabled={isSubmitting || isUploading}
           className={cn(
             "transition-all duration-200 rounded-full h-8 sm:h-9 px-4 sm:px-5 font-medium",
             isDirty && !isSubmitting && "animate-pulse bg-primary hover:bg-primary/90 shadow-md",

@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { LogOut, Camera, Bell, BellOff, MapPin, ShoppingBag, Star, Settings, Shield, Heart, Package, User } from 'lucide-react'
+import { LogOut, Camera, Bell, BellOff, MapPin, ShoppingBag, Star, Settings, Shield, Heart, Package, User, ChevronDown, ChevronRight } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -18,9 +18,9 @@ import { updateUserInfo, uploadUserAvatar, deleteAccount, updateNotificationSett
 import { AdminDashboard } from '@/components/admin/AdminDashboard'
 import { UserOrders } from '@/components/UserOrders'
 import { ShippingAddresses } from '@/components/ShippingAddresses'
-import { UserReviews } from '@/components/UserReviews'
 import { FavoritesSection } from "@/components/profile/FavoritesSection"
 import OrderHistory from "@/components/OrderHistory"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
 // Types
 interface UserInfo {
@@ -57,7 +57,7 @@ export default function UserProfile() {
         marketing: false,
         security: true
     })
-    const [activeTab, setActiveTab] = useState('info')
+    const [activeCard, setActiveCard] = useState<string | null>(null)
     const [isAvatarLoading, setIsAvatarLoading] = useState(false)
     const [isNotificationsLoading, setIsNotificationsLoading] = useState(true)
     const [passwordForm, setPasswordForm] = useState<PasswordForm>({
@@ -67,6 +67,7 @@ export default function UserProfile() {
     })
     const [changingPassword, setChangingPassword] = useState(false)
     const [isEditing, setIsEditing] = useState(false)
+    const sectionsRef = useRef<{ [key: string]: HTMLDivElement | null }>({})
 
     const loadNotificationSettings = useCallback(async () => {
         try {
@@ -284,28 +285,279 @@ export default function UserProfile() {
         }
     }
 
-    const tabs = [
-        { id: 'info', label: 'Profil', icon: <Settings className="w-4 h-4" /> },
-        { id: 'orders', label: 'Commandes', icon: <ShoppingBag className="w-4 h-4" /> },
-        { id: 'addresses', label: 'Adresses', icon: <MapPin className="w-4 h-4" /> },
-        { id: 'reviews', label: 'Avis', icon: <Star className="w-4 h-4" /> },
-        { id: 'favorites', label: 'Favoris', icon: <Heart className="w-4 h-4" /> },
-        ...(user?.isAdmin ? [{ id: 'admin', label: 'Admin', icon: <Shield className="w-4 h-4" /> }] : [])
+    const cards = [
+        {
+            id: 'info',
+            title: 'Profil',
+            description: 'Gérez vos informations personnelles',
+            icon: <Settings className="w-6 h-6" />,
+            color: 'from-primary/2 to-primary/5',
+            content: (
+                <div className="space-y-6">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-xl sm:text-2xl">Informations personnelles</CardTitle>
+                            <CardDescription>
+                                Gérez vos informations personnelles et vos préférences
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <form onSubmit={handleSubmit} className="space-y-4">
+                                <div className="grid grid-cols-1 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="firstName">Prénom</Label>
+                                        <Input
+                                            id="firstName"
+                                            name="firstName"
+                                            value={userInfo.name.split(' ')[0]}
+                                            onChange={handleInfoChange}
+                                            placeholder="Votre prénom"
+                                            disabled={!isEditing}
+                                            className="w-full"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="lastName">Nom</Label>
+                                        <Input
+                                            id="lastName"
+                                            name="lastName"
+                                            value={userInfo.name.split(' ')[1]}
+                                            onChange={handleInfoChange}
+                                            placeholder="Votre nom"
+                                            disabled={!isEditing}
+                                            className="w-full"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="email">Email</Label>
+                                        <Input
+                                            id="email"
+                                            name="email"
+                                            type="email"
+                                            value={userInfo.email}
+                                            onChange={handleInfoChange}
+                                            placeholder="votre@email.com"
+                                            disabled={!isEditing}
+                                            className="w-full"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="phone">Téléphone</Label>
+                                        <Input
+                                            id="phone"
+                                            name="phone"
+                                            type="tel"
+                                            value={userInfo.phone}
+                                            onChange={handleInfoChange}
+                                            placeholder="Votre numéro de téléphone"
+                                            disabled={!isEditing}
+                                            className="w-full"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="flex justify-end gap-3 sm:gap-4">
+                                    {isEditing ? (
+                                        <>
+                                            <Button
+                                                variant="outline"
+                                                onClick={() => setIsEditing(false)}
+                                                type="button"
+                                                className="px-4 sm:px-6"
+                                            >
+                                                Annuler
+                                            </Button>
+                                            <Button type="submit" className="px-4 sm:px-6">
+                                                Enregistrer
+                                            </Button>
+                                        </>
+                                    ) : (
+                                        <Button
+                                            variant="outline"
+                                            onClick={() => setIsEditing(true)}
+                                            type="button"
+                                            className="px-4 sm:px-6"
+                                        >
+                                            Modifier
+                                        </Button>
+                                    )}
+                                </div>
+                            </form>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-xl sm:text-2xl">Changer le mot de passe</CardTitle>
+                            <CardDescription>
+                                Mettez à jour votre mot de passe
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <form onSubmit={handlePasswordSubmit} className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="currentPassword">Mot de passe actuel</Label>
+                                    <Input
+                                        id="currentPassword"
+                                        name="currentPassword"
+                                        type="password"
+                                        value={passwordForm.currentPassword}
+                                        onChange={handlePasswordChange}
+                                        className="w-full bg-background"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="newPassword">Nouveau mot de passe</Label>
+                                    <Input
+                                        id="newPassword"
+                                        name="newPassword"
+                                        type="password"
+                                        value={passwordForm.newPassword}
+                                        onChange={handlePasswordChange}
+                                        className="w-full bg-background"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
+                                    <Input
+                                        id="confirmPassword"
+                                        name="confirmPassword"
+                                        type="password"
+                                        value={passwordForm.confirmPassword}
+                                        onChange={handlePasswordChange}
+                                        className="w-full bg-background"
+                                    />
+                                </div>
+                                <Button type="submit" disabled={changingPassword} className="w-full sm:w-auto">
+                                    {changingPassword ? 'Modification...' : 'Changer le mot de passe'}
+                                </Button>
+                            </form>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-xl sm:text-2xl">Notifications</CardTitle>
+                            <CardDescription>
+                                Gérez vos préférences de notifications
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            {isNotificationsLoading ? (
+                                <div className="space-y-4">
+                                    {[1, 2, 3, 4].map((i) => (
+                                        <div key={i} className="flex items-center justify-between">
+                                            <div className="space-y-0.5">
+                                                <Skeleton className="h-4 w-32" />
+                                                <Skeleton className="h-3 w-48" />
+                                            </div>
+                                            <Skeleton className="h-6 w-10" />
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="space-y-6">
+                                    <div className="flex items-center justify-between">
+                                        <div className="space-y-0.5">
+                                            <Label>Notifications par email</Label>
+                                            <p className="text-sm text-muted-foreground">
+                                                Recevez des notifications par email
+                                            </p>
+                                        </div>
+                                        <Switch
+                                            checked={notifications.email}
+                                            onCheckedChange={() => handleNotificationChange('email')}
+                                        />
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <div className="space-y-0.5">
+                                            <Label>Notifications push</Label>
+                                            <p className="text-sm text-muted-foreground">
+                                                Recevez des notifications sur votre navigateur
+                                            </p>
+                                        </div>
+                                        <Switch
+                                            checked={notifications.push}
+                                            onCheckedChange={() => handleNotificationChange('push')}
+                                        />
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <div className="space-y-0.5">
+                                            <Label>Offres marketing</Label>
+                                            <p className="text-sm text-muted-foreground">
+                                                Recevez des offres promotionnelles
+                                            </p>
+                                        </div>
+                                        <Switch
+                                            checked={notifications.marketing}
+                                            onCheckedChange={() => handleNotificationChange('marketing')}
+                                        />
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <div className="space-y-0.5">
+                                            <Label>Alertes de sécurité</Label>
+                                            <p className="text-sm text-muted-foreground">
+                                                Recevez des alertes de sécurité importantes
+                                            </p>
+                                        </div>
+                                        <Switch
+                                            checked={notifications.security}
+                                            onCheckedChange={() => handleNotificationChange('security')}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </div>
+            )
+        },
+        {
+            id: 'orders',
+            title: 'Commandes',
+            description: 'Consultez votre historique de commandes',
+            icon: <ShoppingBag className="w-6 h-6" />,
+            color: 'from-primary/2 to-primary/5',
+            content: <OrderHistory />
+        },
+        {
+            id: 'addresses',
+            title: 'Adresses',
+            description: 'Gérez vos adresses de livraison',
+            icon: <MapPin className="w-6 h-6" />,
+            color: 'from-primary/2 to-primary/5',
+            content: <ShippingAddresses />
+        },
+        {
+            id: 'favorites',
+            title: 'Favoris',
+            description: 'Vos produits favoris',
+            icon: <Heart className="w-6 h-6" />,
+            color: 'from-primary/2 to-primary/5',
+            content: <FavoritesSection />
+        },
+        ...(user?.isAdmin ? [{
+            id: 'admin',
+            title: 'Administration',
+            description: 'Panneau d\'administration',
+            icon: <Shield className="w-6 h-6" />,
+            color: 'from-primary/2 to-primary/5',
+            content: <AdminDashboard />
+        }] : [])
     ]
 
     return (
-        <div className="container max-w-6xl mx-auto px-4 py-16">
-            <Card className="border-none shadow-none bg-transparent">
-                <CardHeader>
-                    <div className="flex items-center gap-6">
+        <div className="container max-w-6xl mx-auto px-4 py-8 sm:py-16">
+            <Card className="border-none shadow-none bg-transparent mb-8">
+                <CardHeader className="px-0 sm:px-6">
+                    <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
                         <div className="relative">
-                            <Avatar className="w-24 h-24">
+                            <Avatar className="w-20 h-20 sm:w-24 sm:h-24">
                                 {isAvatarLoading ? (
-                                    <Skeleton className="w-24 h-24 rounded-full" />
+                                    <Skeleton className="w-20 h-20 sm:w-24 sm:h-24 rounded-full" />
                                 ) : (
                                     <>
                                         <AvatarImage src={userInfo.avatar_url} />
-                                        <AvatarFallback className="text-2xl">
+                                        <AvatarFallback className="text-xl sm:text-2xl">
                                             {userInfo.name?.charAt(0)}
                                         </AvatarFallback>
                                     </>
@@ -313,10 +565,10 @@ export default function UserProfile() {
                             </Avatar>
                             <label 
                                 htmlFor="avatar-upload" 
-                                className="absolute bottom-0 right-0 p-2 bg-background rounded-full border cursor-pointer
+                                className="absolute bottom-0 right-0 p-1.5 sm:p-2 bg-background rounded-full border cursor-pointer
                                     hover:bg-primary/5 transition-colors"
                             >
-                                <Camera className="w-4 h-4" />
+                                <Camera className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                                 <input
                                     id="avatar-upload"
                                     type="file"
@@ -326,277 +578,50 @@ export default function UserProfile() {
                                 />
                             </label>
                         </div>
-                        <div>
-                            <CardTitle className="text-3xl font-light">{userInfo.name}</CardTitle>
-                            <CardDescription className="text-lg">{userInfo.email}</CardDescription>
+                        <div className="text-center sm:text-left">
+                            <CardTitle className="text-2xl sm:text-3xl font-light">{userInfo.name}</CardTitle>
+                            <CardDescription className="text-base sm:text-lg">{userInfo.email}</CardDescription>
                         </div>
                     </div>
                 </CardHeader>
-                <CardContent className="mt-6">
-                    <Tabs value={activeTab} onValueChange={setActiveTab}>
-                        <TabsList className="w-full justify-start border-b rounded-none p-0 h-auto mb-6">
-                            {tabs.map(tab => (
-                                <TabsTrigger
-                                    key={tab.id}
-                                    value={tab.id}
-                                    className="flex items-center gap-2 px-4 py-3 data-[state=active]:border-b-2 
-                                        data-[state=active]:border-primary rounded-none"
-                                >
-                                    {tab.icon}
-                                    {tab.label}
-                                </TabsTrigger>
-                            ))}
-                        </TabsList>
-
-                        <TabsContent value="info" className="mt-6">
-                            <div className="space-y-6">
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle>Informations personnelles</CardTitle>
-                                        <CardDescription>
-                                            Gérez vos informations personnelles et vos préférences
-                                        </CardDescription>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <form onSubmit={handleSubmit} className="space-y-4">
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="firstName">Prénom</Label>
-                                                    <Input
-                                                        id="firstName"
-                                                        name="firstName"
-                                                        value={userInfo.name.split(' ')[0]}
-                                                        onChange={handleInfoChange}
-                                                        placeholder="Votre prénom"
-                                                        disabled={!isEditing}
-                                                    />
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="lastName">Nom</Label>
-                                                    <Input
-                                                        id="lastName"
-                                                        name="lastName"
-                                                        value={userInfo.name.split(' ')[1]}
-                                                        onChange={handleInfoChange}
-                                                        placeholder="Votre nom"
-                                                        disabled={!isEditing}
-                                                    />
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="email">Email</Label>
-                                                    <Input
-                                                        id="email"
-                                                        name="email"
-                                                        type="email"
-                                                        value={userInfo.email}
-                                                        onChange={handleInfoChange}
-                                                        placeholder="votre@email.com"
-                                                        disabled={!isEditing}
-                                                    />
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="phone">Téléphone</Label>
-                                                    <Input
-                                                        id="phone"
-                                                        name="phone"
-                                                        type="tel"
-                                                        value={userInfo.phone}
-                                                        onChange={handleInfoChange}
-                                                        placeholder="Votre numéro de téléphone"
-                                                        disabled={!isEditing}
-                                                    />
-                                                </div>
-                                            </div>
-                                            <div className="flex justify-end gap-4">
-                                                {isEditing ? (
-                                                    <>
-                                                        <Button
-                                                            variant="outline"
-                                                            onClick={() => setIsEditing(false)}
-                                                            type="button"
-                                                        >
-                                                            Annuler
-                                                        </Button>
-                                                        <Button type="submit">Enregistrer</Button>
-                                                    </>
-                                                ) : (
-                                                    <Button
-                                                        variant="outline"
-                                                        onClick={() => setIsEditing(true)}
-                                                        type="button"
-                                                    >
-                                                        Modifier
-                                                    </Button>
-                                                )}
-                                            </div>
-                                        </form>
-                                    </CardContent>
-                                </Card>
-
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle>Changer le mot de passe</CardTitle>
-                                        <CardDescription>
-                                            Mettez à jour votre mot de passe
-                                        </CardDescription>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <form onSubmit={handlePasswordSubmit} className="space-y-4">
-                                            <div className="space-y-2">
-                                                <Label htmlFor="currentPassword">Mot de passe actuel</Label>
-                                                <Input
-                                                    id="currentPassword"
-                                                    name="currentPassword"
-                                                    type="password"
-                                                    value={passwordForm.currentPassword}
-                                                    onChange={handlePasswordChange}
-                                                    className="bg-background"
-                                                />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label htmlFor="newPassword">Nouveau mot de passe</Label>
-                                                <Input
-                                                    id="newPassword"
-                                                    name="newPassword"
-                                                    type="password"
-                                                    value={passwordForm.newPassword}
-                                                    onChange={handlePasswordChange}
-                                                    className="bg-background"
-                                                />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
-                                                <Input
-                                                    id="confirmPassword"
-                                                    name="confirmPassword"
-                                                    type="password"
-                                                    value={passwordForm.confirmPassword}
-                                                    onChange={handlePasswordChange}
-                                                    className="bg-background"
-                                                />
-                                            </div>
-                                            <Button type="submit" disabled={changingPassword}>
-                                                {changingPassword ? 'Modification...' : 'Changer le mot de passe'}
-                                            </Button>
-                                        </form>
-                                    </CardContent>
-                                </Card>
-
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle>Notifications</CardTitle>
-                                        <CardDescription>
-                                            Gérez vos préférences de notifications
-                                        </CardDescription>
-                                    </CardHeader>
-                                    <CardContent className="space-y-4">
-                                        {isNotificationsLoading ? (
-                                            <div className="space-y-4">
-                                                {[1, 2, 3, 4].map((i) => (
-                                                    <div key={i} className="flex items-center justify-between">
-                                                        <div className="space-y-0.5">
-                                                            <Skeleton className="h-4 w-32" />
-                                                            <Skeleton className="h-3 w-48" />
-                                                        </div>
-                                                        <Skeleton className="h-6 w-10" />
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            <>
-                                                <div className="flex items-center justify-between">
-                                                    <div className="space-y-0.5">
-                                                        <Label>Notifications par email</Label>
-                                                        <p className="text-sm text-muted-foreground">
-                                                            Recevez des notifications par email
-                                                        </p>
-                                                    </div>
-                                                    <Switch
-                                                        checked={notifications.email}
-                                                        onCheckedChange={() => handleNotificationChange('email')}
-                                                    />
-                                                </div>
-                                                <div className="flex items-center justify-between">
-                                                    <div className="space-y-0.5">
-                                                        <Label>Notifications push</Label>
-                                                        <p className="text-sm text-muted-foreground">
-                                                            Recevez des notifications sur votre navigateur
-                                                        </p>
-                                                    </div>
-                                                    <Switch
-                                                        checked={notifications.push}
-                                                        onCheckedChange={() => handleNotificationChange('push')}
-                                                    />
-                                                </div>
-                                                <div className="flex items-center justify-between">
-                                                    <div className="space-y-0.5">
-                                                        <Label>Offres marketing</Label>
-                                                        <p className="text-sm text-muted-foreground">
-                                                            Recevez des offres promotionnelles
-                                                        </p>
-                                                    </div>
-                                                    <Switch
-                                                        checked={notifications.marketing}
-                                                        onCheckedChange={() => handleNotificationChange('marketing')}
-                                                    />
-                                                </div>
-                                                <div className="flex items-center justify-between">
-                                                    <div className="space-y-0.5">
-                                                        <Label>Alertes de sécurité</Label>
-                                                        <p className="text-sm text-muted-foreground">
-                                                            Recevez des alertes de sécurité importantes
-                                                        </p>
-                                                    </div>
-                                                    <Switch
-                                                        checked={notifications.security}
-                                                        onCheckedChange={() => handleNotificationChange('security')}
-                                                    />
-                                                </div>
-                                            </>
-                                        )}
-                                    </CardContent>
-                                </Card>
-                            </div>
-                        </TabsContent>
-
-                        <TabsContent value="orders">
-                            <OrderHistory />
-                        </TabsContent>
-
-                        <TabsContent value="addresses">
-                            <ShippingAddresses />
-                        </TabsContent>
-
-                        <TabsContent value="reviews">
-                            <UserReviews />
-                        </TabsContent>
-
-                        <TabsContent value="favorites">
-                            <FavoritesSection />
-                        </TabsContent>
-
-                        {user?.isAdmin && (
-                            <TabsContent value="admin">
-                                <AdminDashboard />
-                            </TabsContent>
-                        )}
-                    </Tabs>
-                </CardContent>
             </Card>
 
-            <Card className="mt-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-8">
+                {cards.map(card => (
+                    <button
+                        key={card.id}
+                        onClick={() => setActiveCard(card.id)}
+                        className="group relative flex flex-col items-start p-4 rounded-lg border bg-card hover:shadow-md transition-all duration-200"
+                    >
+                        <div className={`absolute inset-0 bg-gradient-to-br ${card.color} rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200`} />
+                        <div className="relative z-10 w-full">
+                            <div className="p-2.5 rounded-lg bg-primary/5 text-primary mb-3">
+                                {card.icon}
+                            </div>
+                            <h3 className="text-base font-medium mb-1.5 text-foreground">{card.title}</h3>
+                            <p className="text-xs text-muted-foreground mb-3">{card.description}</p>
+                            <div className="flex items-center text-xs text-primary/80">
+                                <span>Voir plus</span>
+                                <ChevronRight className="w-3.5 h-3.5 ml-1 group-hover:translate-x-1 transition-transform" />
+                            </div>
+                        </div>
+                    </button>
+                ))}
+            </div>
+
+            <Card className="mt-8">
                 <CardHeader>
-                    <CardTitle>Actions rapides</CardTitle>
+                    <CardTitle className="text-xl sm:text-2xl">Actions rapides</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="flex gap-4">
-                        <Button variant="outline" onClick={handleLogout} className="gap-2">
+                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                        <Button variant="outline" onClick={handleLogout} className="w-full sm:w-auto gap-2">
                             <LogOut className="w-4 h-4" />
                             Se déconnecter
                         </Button>
                         <AlertDialog>
                             <AlertDialogTrigger asChild>
-                                <Button variant="destructive" className="gap-2">
+                                <Button variant="destructive" className="w-full sm:w-auto gap-2">
                                     <Shield className="w-4 h-4" />
                                     Supprimer le compte
                                 </Button>
@@ -619,6 +644,19 @@ export default function UserProfile() {
                     </div>
                 </CardContent>
             </Card>
+
+            <Dialog open={!!activeCard} onOpenChange={() => setActiveCard(null)}>
+                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>
+                            {cards.find(card => card.id === activeCard)?.title}
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="mt-4">
+                        {cards.find(card => card.id === activeCard)?.content}
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     )
 } 

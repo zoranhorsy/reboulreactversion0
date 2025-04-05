@@ -1,7 +1,5 @@
 const db = require('../db');
 const { AppError } = require('../middleware/errorHandler');
-const path = require('path');
-const fs = require('fs').promises;
 
 // Obtenir toutes les archives actives (pour l'affichage public)
 exports.getAllActiveArchives = async (req, res) => {
@@ -63,39 +61,48 @@ exports.createArchive = async (req, res) => {
             });
         }
 
-        const { title, description, category, date, active } = req.body;
-        let image_path = null;
+        console.log('Données reçues pour la création:', req.body);
+        console.log('Headers:', req.headers);
 
-        if (req.file) {
-            const imageFolder = `/archives/${category}`;
-            const publicPath = path.join(process.cwd(), 'public', imageFolder);
-            await fs.mkdir(publicPath, { recursive: true });
-            
-            const fileName = `${Date.now()}-${req.file.originalname}`;
-            image_path = `${imageFolder}/${fileName}`;
-            
-            await fs.writeFile(
-                path.join(process.cwd(), 'public', image_path),
-                req.file.buffer
-            );
+        const { title, description, category, date, active, image_paths } = req.body;
+
+        // Vérifier que tous les champs requis sont présents
+        if (!title || !description || !category || !date || !image_paths || !Array.isArray(image_paths)) {
+            console.error('Champs manquants ou invalides:', { title, description, category, date, image_paths });
+            return res.status(400).json({
+                status: 'error',
+                message: 'Tous les champs sont requis et image_paths doit être un tableau'
+            });
         }
 
+        console.log('Tentative d\'insertion avec les valeurs:', {
+            title,
+            description,
+            category,
+            date,
+            active,
+            image_paths
+        });
+
         const result = await db.query(
-            `INSERT INTO archives (title, description, category, image_path, date, active)
+            `INSERT INTO archives (title, description, category, date, active, image_paths)
              VALUES ($1, $2, $3, $4, $5, $6)
              RETURNING *`,
-            [title, description, category, image_path, date, active]
+            [title, description, category, date, active, image_paths]
         );
+
+        console.log('Archive créée avec succès:', result.rows[0]);
 
         res.status(201).json({
             status: 'success',
             data: result.rows[0]
         });
     } catch (error) {
-        console.error('Erreur lors de la création de l\'archive:', error);
+        console.error('Erreur détaillée lors de la création de l\'archive:', error);
         res.status(500).json({
             status: 'error',
-            message: 'Erreur lors de la création de l\'archive'
+            message: 'Erreur lors de la création de l\'archive',
+            error: error.message
         });
     }
 };
@@ -111,33 +118,14 @@ exports.updateArchive = async (req, res) => {
         }
 
         const { id } = req.params;
-        const { title, description, category, date, active } = req.body;
-        let image_path = null;
+        const { title, description, category, date, active, image_paths } = req.body;
 
-        if (req.file) {
-            // Supprimer l'ancienne image si elle existe
-            const oldImage = await db.query(
-                'SELECT image_path FROM archives WHERE id = $1',
-                [id]
-            );
-            
-            if (oldImage.rows[0]?.image_path) {
-                const oldPath = path.join(process.cwd(), 'public', oldImage.rows[0].image_path);
-                await fs.unlink(oldPath).catch(() => {});
-            }
-
-            // Sauvegarder la nouvelle image
-            const imageFolder = `/archives/${category}`;
-            const publicPath = path.join(process.cwd(), 'public', imageFolder);
-            await fs.mkdir(publicPath, { recursive: true });
-            
-            const fileName = `${Date.now()}-${req.file.originalname}`;
-            image_path = `${imageFolder}/${fileName}`;
-            
-            await fs.writeFile(
-                path.join(process.cwd(), 'public', image_path),
-                req.file.buffer
-            );
+        // Vérifier que image_paths est un tableau s'il est fourni
+        if (image_paths !== undefined && !Array.isArray(image_paths)) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'image_paths doit être un tableau'
+            });
         }
 
         const result = await db.query(
@@ -145,12 +133,12 @@ exports.updateArchive = async (req, res) => {
              SET title = COALESCE($1, title),
                  description = COALESCE($2, description),
                  category = COALESCE($3, category),
-                 image_path = COALESCE($4, image_path),
+                 image_paths = COALESCE($4, image_paths),
                  date = COALESCE($5, date),
                  active = COALESCE($6, active)
              WHERE id = $7
              RETURNING *`,
-            [title, description, category, image_path, date, active, id]
+            [title, description, category, image_paths, date, active, id]
         );
 
         if (result.rows.length === 0) {
@@ -185,12 +173,6 @@ exports.deleteArchive = async (req, res) => {
 
         const { id } = req.params;
         
-        // Récupérer l'image avant la suppression
-        const image = await db.query(
-            'SELECT image_path FROM archives WHERE id = $1',
-            [id]
-        );
-
         // Supprimer l'archive de la base de données
         const result = await db.query(
             'DELETE FROM archives WHERE id = $1 RETURNING *',
@@ -202,12 +184,6 @@ exports.deleteArchive = async (req, res) => {
                 status: 'error',
                 message: 'Archive non trouvée'
             });
-        }
-
-        // Supprimer l'image du système de fichiers
-        if (image.rows[0]?.image_path) {
-            const imagePath = path.join(process.cwd(), 'public', image.rows[0].image_path);
-            await fs.unlink(imagePath).catch(() => {});
         }
 
         res.json({

@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useMemo, memo } from "react"
 import { motion } from "framer-motion"
 import { FeaturedProductCard } from "./products/FeaturedProductCard"
 import { Button } from "@/components/ui/button"
@@ -13,41 +13,68 @@ interface SimilarProductsProps {
     categoryId?: string
 }
 
-export function SimilarProducts({ currentProductId, brandId, categoryId }: SimilarProductsProps) {
+// Utilisation de memo pour éviter les re-rendus inutiles
+const SimilarProductsComponent = ({ currentProductId, brandId, categoryId }: SimilarProductsProps) => {
     const [similarProducts, setSimilarProducts] = useState<Product[]>([])
     const [currentPage, setCurrentPage] = useState(0)
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
 
-    const productsPerPage = 32
+    const productsPerPage = 8
     const totalPages = Math.ceil(similarProducts.length / productsPerPage)
 
+    // Utilisez useEffect avec un tableau de dépendances vide pour ne s'exécuter qu'une seule fois
     useEffect(() => {
+        // Variable pour suivre si le composant est monté
+        let isMounted = true;
+        let isDataFetched = false;
+        
         const fetchSimilarProducts = async () => {
+            // Si déjà chargé, ne pas recharger
+            if (similarProducts.length > 0 || isDataFetched) {
+                return;
+            }
+            
+            isDataFetched = true;
             setIsLoading(true)
             setError(null)
             try {
                 const response = await fetchProducts({
                     ...(brandId && { brand_id: brandId }),
                     ...(categoryId && { category_id: categoryId }),
-                    limit: "64"
+                    limit: "24"
                 })
-                if (!response || !response.products || response.products.length === 0) {
-                    throw new Error("No products found")
+                // Ne mettre à jour l'état que si le composant est toujours monté
+                if (isMounted) {
+                    if (!response || !response.products || response.products.length === 0) {
+                        throw new Error("No products found")
+                    }
+                    const filteredProducts = response.products
+                        .filter((product) => product.id !== currentProductId)
+                        .slice(0, 24)
+                    setSimilarProducts(filteredProducts)
                 }
-                const filteredProducts = response.products
-                    .filter((product) => product.id !== currentProductId)
-                setSimilarProducts(filteredProducts)
             } catch (error) {
-                console.error("Error fetching similar products:", error)
-                setError("Failed to load similar products")
+                if (isMounted) {
+                    console.error("Error fetching similar products:", error)
+                    setError("Failed to load similar products")
+                }
             } finally {
-                setIsLoading(false)
+                if (isMounted) {
+                    setIsLoading(false)
+                }
             }
         }
 
+        // Charger les produits une seule fois
         fetchSimilarProducts()
-    }, [currentProductId, brandId, categoryId])
+        
+        // Nettoyer à la démontage
+        return () => {
+            isMounted = false;
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
 
     const handlePrevious = () => {
         setCurrentPage((prev) => (prev > 0 ? prev - 1 : totalPages - 1))
@@ -56,6 +83,12 @@ export function SimilarProducts({ currentProductId, brandId, categoryId }: Simil
     const handleNext = () => {
         setCurrentPage((prev) => (prev < totalPages - 1 ? prev + 1 : 0))
     }
+
+    // Calculer les produits visibles de façon mémorisée pour éviter les re-calculs inutiles
+    const visibleProducts = useMemo(() => {
+        const startIndex = currentPage * productsPerPage
+        return similarProducts.slice(startIndex, startIndex + productsPerPage)
+    }, [similarProducts, currentPage, productsPerPage])
 
     if (isLoading) {
         return (
@@ -77,9 +110,6 @@ export function SimilarProducts({ currentProductId, brandId, categoryId }: Simil
     if (error || similarProducts.length === 0) {
         return null
     }
-
-    const startIndex = currentPage * productsPerPage
-    const visibleProducts = similarProducts.slice(startIndex, startIndex + productsPerPage)
 
     return (
         <div className="relative">
@@ -112,49 +142,13 @@ export function SimilarProducts({ currentProductId, brandId, categoryId }: Simil
             )}
 
             {/* Products Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 mb-4">
-                {visibleProducts.slice(0, 8).map((product, index) => (
-                    <motion.div
-                        key={product.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5, delay: index * 0.1 }}
-                    >
-                        <FeaturedProductCard product={product} />
-                    </motion.div>
-                ))}
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 mb-4">
-                {visibleProducts.slice(8, 16).map((product, index) => (
-                    <motion.div
-                        key={product.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5, delay: index * 0.1 }}
-                    >
-                        <FeaturedProductCard product={product} />
-                    </motion.div>
-                ))}
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 mb-4">
-                {visibleProducts.slice(16, 24).map((product, index) => (
-                    <motion.div
-                        key={product.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5, delay: index * 0.1 }}
-                    >
-                        <FeaturedProductCard product={product} />
-                    </motion.div>
-                ))}
-            </div>
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
-                {visibleProducts.slice(24, 32).map((product, index) => (
+                {visibleProducts.map((product, index) => (
                     <motion.div
                         key={product.id}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5, delay: index * 0.1 }}
+                        transition={{ duration: 0.3, delay: Math.min(index * 0.05, 0.5) }}
                     >
                         <FeaturedProductCard product={product} />
                     </motion.div>
@@ -180,4 +174,7 @@ export function SimilarProducts({ currentProductId, brandId, categoryId }: Simil
         </div>
     )
 }
+
+// Exporte le composant mémorisé
+export const SimilarProducts = memo(SimilarProductsComponent)
 

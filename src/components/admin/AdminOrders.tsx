@@ -28,6 +28,16 @@ const statusColors: Record<string, string> = {
     cancelled: "bg-red-100 text-red-800",
 }
 
+interface ShippingAddress {
+    street?: string;
+    address?: string;
+    postal_code?: string;
+    city: string;
+    country: string;
+    phone?: string;
+    email?: string;
+}
+
 export function AdminOrders() {
     const [orders, setOrders] = useState<Order[]>([])
     const [filteredOrders, setFilteredOrders] = useState<Order[]>([])
@@ -75,47 +85,46 @@ export function AdminOrders() {
                         try {
                             console.log(`Récupération des détails pour la commande #${order.id}`);
                             const orderDetails = await api.getOrderById(order.id.toString());
-                            console.log(`Détails récupérés pour la commande #${order.id}:`, orderDetails);
+                            if (!orderDetails) {
+                                console.error(`Aucun détail trouvé pour la commande #${order.id}`);
+                                return;
+                            }
+                            console.log(`Détails complets de la commande #${order.id}:`, {
+                                orderDetails,
+                                shipping_address: orderDetails.shipping_address
+                            });
                             
-                            // Loguer les items pour voir leur structure
-                            if (orderDetails && orderDetails.items) {
-                                console.log(`Commande #${order.id} - Structure des items:`, orderDetails.items.map(item => ({
-                                    id: item.id,
-                                    product_name: item.product_name,
-                                    product_id: item.product_id
-                                })));
-                                
-                                // Récupérer les détails des produits pour obtenir les SKU et références
-                                const itemsWithProductDetails = await Promise.all(
-                                    orderDetails.items.map(async (item) => {
-                                        try {
-                                            // Récupérer les détails du produit
-                                            const productId = item.product_id;
-                                            if (productId) {
-                                                console.log(`Récupération des détails du produit #${productId}`);
-                                                const productDetails = await api.getProductById(productId.toString());
-                                                console.log(`Détails du produit #${productId}:`, productDetails);
-                                                
-                                                if (productDetails) {
-                                                    return {
-                                                        ...item,
-                                                        product_details: productDetails
-                                                    };
-                                                }
-                                            }
-                                            return item;
-                                        } catch (error) {
-                                            console.error(`Erreur lors de la récupération des détails du produit pour l'item #${item.id}:`, error);
-                                            return item;
-                                        }
-                                    })
-                                );
-                                
-                                // Mettre à jour les items avec les détails des produits
-                                orderDetails.items = itemsWithProductDetails;
+                            // Vérifier shipping_address
+                            let shippingAddress = null;
+                            
+                            if (orderDetails.shipping_address) {
+                                shippingAddress = orderDetails.shipping_address;
                             }
                             
-                            return orderDetails || order;
+                            // Parser l'adresse si c'est une chaîne
+                            if (typeof shippingAddress === 'string') {
+                                try {
+                                    shippingAddress = JSON.parse(shippingAddress);
+                                    console.log(`Adresse parsée pour la commande #${order.id}:`, shippingAddress);
+                                } catch (err) {
+                                    console.error(`Erreur de parsing de l'adresse pour la commande #${order.id}:`, err);
+                                    shippingAddress = null;
+                                }
+                            }
+                            
+                            // Vérifier si l'adresse est un objet valide
+                            if (shippingAddress && typeof shippingAddress === 'object') {
+                                console.log(`Adresse finale pour la commande #${order.id}:`, shippingAddress);
+                            } else {
+                                console.log(`Pas d'adresse valide trouvée pour la commande #${order.id}`);
+                                shippingAddress = null;
+                            }
+                            
+                            return {
+                                ...order,
+                                ...orderDetails,
+                                shipping_address: shippingAddress
+                            };
                         } catch (error) {
                             console.error(`Erreur lors de la récupération des détails pour la commande #${order.id}:`, error);
                             return order;
@@ -123,27 +132,10 @@ export function AdminOrders() {
                     })
                 );
                 
-                console.log('Commandes avec détails:', ordersWithDetails);
-                
-                // Adapter les données pour que shipping_info soit converti en shipping_address
-                // et variant_info soit converti en variant pour les items
-                const adaptedOrders = ordersWithDetails.map(order => {
-                    let adaptedOrder = { ...order };
-                    
-                    // Adapter les items pour remapper variant_info vers variant
-                    if (adaptedOrder.items && adaptedOrder.items.length > 0) {
-                        console.log(`Commande #${order.id} a ${adaptedOrder.items.length} articles adaptés:`, adaptedOrder.items);
-                    } else {
-                        console.warn(`Pas d&apos;items trouvés pour la commande #${order.id} à adapter`);
-                    }
-                    
-                    return adaptedOrder;
-                });
-                
-                console.log('Commandes adaptées:', adaptedOrders.length);
-                console.log('Exemple de commande adaptée:', adaptedOrders[0]);
-                setOrders(adaptedOrders);
-                setFilteredOrders(adaptedOrders);
+                console.log('Commandes avec détails complets:', ordersWithDetails);
+                const validOrders = ordersWithDetails.filter((order): order is Order => order !== undefined);
+                setOrders(validOrders);
+                setFilteredOrders(validOrders);
             } else {
                 setOrders([]);
                 setFilteredOrders([]);
@@ -262,39 +254,49 @@ export function AdminOrders() {
         return `${Number(amount).toFixed(2)} €`
     }
 
-    const validateShippingAddress = (address: any) => {
-        if (!address) return false
+    const validateShippingAddress = (address: unknown): address is ShippingAddress => {
+        if (!address) {
+            console.log('Adresse manquante (null ou undefined)')
+            return false
+        }
         
         console.log('Validating address:', address)
         console.log('Address type:', typeof address)
         
         // Si l'adresse est une chaîne JSON, essayer de la parser
+        let parsedAddress: unknown = address
         if (typeof address === 'string') {
             try {
-                address = JSON.parse(address)
-                console.log('Parsed address from string:', address)
+                parsedAddress = JSON.parse(address)
+                console.log('Adresse parsée depuis la chaîne:', parsedAddress)
             } catch (err) {
-                console.error('Failed to parse address string:', err)
+                console.error('Échec du parsing de la chaîne d\'adresse:', err)
                 return false
             }
         }
         
+        // Vérifier si l'adresse est un objet
+        if (!parsedAddress || typeof parsedAddress !== 'object' || parsedAddress === null) {
+            console.error('L\'adresse n\'est pas un objet valide:', parsedAddress)
+            return false
+        }
+
+        const addr = parsedAddress as Record<string, unknown>
+        
         // Vérifier les champs requis
         const hasRequiredFields = 
-            !!address.street && 
-            !!address.postal_code && 
-            !!address.city && 
-            !!address.country
+            !!(addr.street || addr.address) && // Accepter soit street soit address
+            typeof addr.city === 'string' && 
+            typeof addr.country === 'string'
         
         if (!hasRequiredFields) {
             console.warn('Adresse incomplète:', {
                 missingFields: {
-                    street: !address.street,
-                    postal_code: !address.postal_code,
-                    city: !address.city,
-                    country: !address.country
+                    street: !(addr.street || addr.address),
+                    city: typeof addr.city !== 'string',
+                    country: typeof addr.country !== 'string'
                 },
-                address
+                address: addr
             })
             return false
         }
@@ -324,21 +326,36 @@ export function AdminOrders() {
                             Cette commande nécessite une adresse de livraison pour être expédiée.
                         </p>
                     </div>
-                    <div className="text-xs text-muted-foreground bg-red-50 p-2 rounded-md">
-                        <p className="font-medium">Informations à compléter :</p>
-                        <ul className="list-disc list-inside mt-1 space-y-0.5">
-                            <li>Adresse complète</li>
-                            <li>Code postal</li>
-                            <li>Ville</li>
-                            <li>Pays</li>
-                            <li>Numéro de téléphone</li>
-                        </ul>
-                    </div>
                 </div>
             )
         }
 
-        if (!validateShippingAddress(order.shipping_address)) {
+        // Si l'adresse est une chaîne JSON, essayer de la parser
+        let address: unknown = order.shipping_address
+        if (typeof address === 'string') {
+            try {
+                address = JSON.parse(address)
+            } catch (err) {
+                console.error('Échec du parsing de l\'adresse:', err)
+                return (
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                            <Badge variant="destructive" className="bg-red-100 text-red-800">
+                                Format d&apos;adresse invalide
+                            </Badge>
+                        </div>
+                        <div className="text-sm">
+                            <p className="text-red-600 font-medium">Erreur de format</p>
+                            <p className="text-muted-foreground text-xs mt-1">
+                                L&apos;adresse de livraison n&apos;est pas dans un format valide.
+                            </p>
+                        </div>
+                    </div>
+                )
+            }
+        }
+
+        if (!validateShippingAddress(address)) {
             return (
                 <div className="space-y-2">
                     <div className="flex items-center gap-2">
@@ -355,20 +372,17 @@ export function AdminOrders() {
                     <div className="text-xs text-muted-foreground bg-yellow-50 p-2 rounded-md">
                         <p className="font-medium">Champs manquants :</p>
                         <ul className="list-disc list-inside mt-1 space-y-0.5">
-                            {!order.shipping_address.street && <li>Adresse</li>}
-                            {!order.shipping_address.postal_code && <li>Code postal</li>}
-                            {!order.shipping_address.city && <li>Ville</li>}
-                            {!order.shipping_address.country && <li>Pays</li>}
+                            {!(address as ShippingAddress).street && !(address as ShippingAddress).address && <li>Adresse</li>}
+                            {!(address as ShippingAddress).city && <li>Ville</li>}
+                            {!(address as ShippingAddress).country && <li>Pays</li>}
                         </ul>
                     </div>
                 </div>
             )
         }
 
-        // Obtenir les bonnes valeurs d'adresse, en tenant compte des deux formats possibles
-        const streetAddress = order.shipping_address.street
-        const postalCode = order.shipping_address.postal_code
-        
+        const validatedAddress = address as ShippingAddress
+
         return (
             <div className="space-y-2">
                 <div className="flex items-center gap-2">
@@ -377,9 +391,12 @@ export function AdminOrders() {
                     </Badge>
                 </div>
                 <div className="text-sm">
-                    <p className="font-medium">{streetAddress}</p>
-                    <p>{postalCode} {order.shipping_address.city}</p>
-                    <p className="text-muted-foreground">{order.shipping_address.country}</p>
+                    <p className="font-medium">{validatedAddress.street || validatedAddress.address}</p>
+                    <p>{validatedAddress.postal_code || ''} {validatedAddress.city}</p>
+                    <p className="text-muted-foreground">{validatedAddress.country}</p>
+                    {validatedAddress.phone && (
+                        <p className="text-muted-foreground mt-2">Tél: {validatedAddress.phone}</p>
+                    )}
                 </div>
             </div>
         )

@@ -47,12 +47,13 @@ export function AdminDashboard() {
 
     useEffect(() => {
         const fetchData = async () => {
-            console.log('AdminDashboard - Starting data fetch');
-            console.log('AdminDashboard - User:', user);
-
             if (!user?.isAdmin) {
-                console.log('AdminDashboard - User is not admin, redirecting...');
                 router.push('/connexion')
+                return
+            }
+
+            // Si on a déjà des stats et qu'on est admin, pas besoin de recharger
+            if (stats && user.isAdmin) {
                 return
             }
 
@@ -61,9 +62,6 @@ export function AdminDashboard() {
 
             try {
                 const token = localStorage.getItem('token')
-                console.log('Token:', token ? `${token.substring(0, 10)}...` : 'No token')
-                
-                console.log('BACKEND_URL:', BACKEND_URL)
                 
                 const response = await fetch(`${BACKEND_URL}/admin/dashboard/stats`, {
                     headers: {
@@ -73,12 +71,8 @@ export function AdminDashboard() {
                     credentials: 'include'
                 })
                 
-                console.log('Response status:', response.status)
-                console.log('Response headers:', response.headers)
-                
                 if (!response.ok) {
                     if (response.status === 401) {
-                        console.log('Unauthorized - clearing token')
                         localStorage.removeItem('token')
                         router.push('/connexion')
                         return
@@ -87,7 +81,6 @@ export function AdminDashboard() {
                 }
                 
                 const data = await response.json()
-                console.log('Response data:', data)
                 
                 if (!data || typeof data !== 'object') {
                     throw new Error('Invalid data format received')
@@ -102,10 +95,8 @@ export function AdminDashboard() {
             }
         }
 
-        if (user) {
-            fetchData()
-        }
-    }, [user, router, toast])
+        fetchData()
+    }, [user?.isAdmin, router, stats]) // Dépendances optimisées
 
     if (isLoading) {
         return (
@@ -145,18 +136,18 @@ export function AdminDashboard() {
     }
 
     return (
-        <div className="space-y-4 sm:space-y-6">
+        <div className="space-y-4">
             {/* Stats Cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
-                <Card className="col-span-2 sm:col-span-1">
+            <div className="grid grid-cols-2 gap-3">
+                <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-xs sm:text-sm font-medium">
+                        <CardTitle className="text-sm font-medium">
                             Chiffre d&apos;affaires
                         </CardTitle>
                         <ShoppingCart className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-lg sm:text-2xl font-bold">
+                        <div className="text-xl font-bold">
                             {stats.totalRevenue.toLocaleString('fr-FR', {
                                 style: 'currency',
                                 currency: 'EUR',
@@ -168,64 +159,68 @@ export function AdminDashboard() {
 
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-xs sm:text-sm font-medium">
+                        <CardTitle className="text-sm font-medium">
                             Commandes
                         </CardTitle>
                         <Package className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-lg sm:text-2xl font-bold">{stats.totalOrders}</div>
+                        <div className="text-xl font-bold">{stats.totalOrders}</div>
                     </CardContent>
                 </Card>
 
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-xs sm:text-sm font-medium">
+                        <CardTitle className="text-sm font-medium">
                             Produits
                         </CardTitle>
                         <Package className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-lg sm:text-2xl font-bold">{stats.totalProducts}</div>
+                        <div className="text-xl font-bold">{stats.totalProducts}</div>
                     </CardContent>
                 </Card>
 
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-xs sm:text-sm font-medium">
+                        <CardTitle className="text-sm font-medium">
                             Utilisateurs
                         </CardTitle>
                         <Users className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-lg sm:text-2xl font-bold">{stats.totalUsers}</div>
+                        <div className="text-xl font-bold">{stats.totalUsers}</div>
                     </CardContent>
                 </Card>
             </div>
 
             {/* Charts */}
-            <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-7">
-                <Card className="col-span-1 md:col-span-2 lg:col-span-4">
-                    <CardHeader>
-                        <CardTitle className="text-sm sm:text-base">Aperçu des ventes</CardTitle>
-                        <CardDescription className="text-xs sm:text-sm">
+            <div className="grid gap-4">
+                <Card>
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-base">Aperçu des ventes</CardTitle>
+                        <CardDescription className="text-sm">
                             Évolution des ventes sur les 7 derniers jours
                         </CardDescription>
                     </CardHeader>
-                    <CardContent className="pl-2">
-                        <Overview data={stats.weeklySales} />
+                    <CardContent className="pl-0">
+                        <div className="h-[300px]">
+                            <Overview data={stats.weeklySales} />
+                        </div>
                     </CardContent>
                 </Card>
                 
-                <Card className="col-span-1 md:col-span-2 lg:col-span-3">
-                    <CardHeader>
-                        <CardTitle className="text-sm sm:text-base">Dernières commandes</CardTitle>
-                        <CardDescription className="text-xs sm:text-sm">
+                <Card>
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-base">Dernières commandes</CardTitle>
+                        <CardDescription className="text-sm">
                             Les commandes les plus récentes
                         </CardDescription>
                     </CardHeader>
-                    <CardContent>
-                        <RecentSales orders={stats.recentOrders} />
+                    <CardContent className="p-0">
+                        <div className="overflow-x-auto">
+                            <RecentSales orders={stats.recentOrders} />
+                        </div>
                     </CardContent>
                 </Card>
             </div>

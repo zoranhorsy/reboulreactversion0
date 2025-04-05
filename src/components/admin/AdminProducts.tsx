@@ -125,59 +125,28 @@ export function AdminProducts() {
         try {
             console.log('handleProductSubmit received data:', productData);
 
-            // Validation des données requises
-            if (!productData.name?.trim()) {
-                throw new Error("Le nom du produit est requis");
-            }
-            if (!productData.description?.trim()) {
-                throw new Error("La description est requise");
-            }
-            if (!productData.price || productData.price <= 0) {
-                throw new Error("Le prix doit être supérieur à 0");
-            }
-            if (!productData.category_id) {
-                throw new Error("La catégorie est requise");
-            }
-            if (!productData.brand_id) {
-                throw new Error("La marque est requise");
-            }
-
             // Nettoyage et formatage des images
             let formattedImages: string[] = [];
-            if (productData.images) {
-                // Si images est une chaîne (format PostgreSQL), la convertir en tableau
-                if (typeof productData.images === 'string') {
-                    try {
-                        // Enlever les accolades et les guillemets, puis diviser par les virgules
-                        const imagesStr = productData.images as string;
-                        formattedImages = imagesStr
-                            .replace(/[{}]/g, '')
-                            .split(',')
-                            .map(url => url.replace(/"/g, '').trim())
-                            .filter(url => url.length > 0);
-                    } catch (e) {
-                        console.error('Error parsing images string:', e);
-                        formattedImages = [];
+            
+            if (productData.images && Array.isArray(productData.images)) {
+                formattedImages = productData.images.reduce((acc: string[], img) => {
+                    if (typeof img === 'string') {
+                        acc.push(img);
+                    } else if (typeof img === 'object' && img !== null && 'url' in img) {
+                        acc.push(img.url);
                     }
-                } else if (Array.isArray(productData.images)) {
-                    // Si c'est déjà un tableau, le nettoyer
-                    formattedImages = productData.images
-                        .filter(img => typeof img === 'string' || (typeof img === 'object' && img !== null && 'url' in img))
-                        .map(img => {
-                            if (typeof img === 'string') return img;
-                            return (img as { url: string }).url;
-                        })
-                        .filter(url => url && url.length > 0);
-                }
+                    return acc;
+                }, []);
             }
 
             // Nettoyage des données avant l'envoi
             const cleanedProductData = {
-                name: productData.name.trim(),
-                description: productData.description.trim(),
-                price: Number(productData.price),
-                category_id: Number(productData.category_id),
-                brand_id: Number(productData.brand_id),
+                ...productData,
+                name: productData.name || "",
+                description: productData.description || "",
+                price: Number(productData.price) || 0,
+                category_id: Number(productData.category_id) || 0,
+                brand_id: Number(productData.brand_id) || 0,
                 store_type: productData.store_type || "adult",
                 featured: Boolean(productData.featured),
                 active: Boolean(productData.active),
@@ -185,11 +154,11 @@ export function AdminProducts() {
                 variants: Array.isArray(productData.variants) ? productData.variants : [],
                 tags: Array.isArray(productData.tags) ? productData.tags : [],
                 details: Array.isArray(productData.details) ? productData.details : [],
-                sku: productData.sku?.trim() || null,
-                store_reference: productData.store_reference?.trim() || null,
+                sku: productData.sku || null,
+                store_reference: productData.store_reference || null,
                 weight: productData.weight || null,
-                dimensions: productData.dimensions?.trim() || null,
-                material: productData.material?.trim() || null,
+                dimensions: productData.dimensions || null,
+                material: productData.material || null,
                 images: formattedImages
             };
 

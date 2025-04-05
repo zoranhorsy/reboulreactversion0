@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react'
 import { useParams, useRouter, notFound } from 'next/navigation'
 import { useToast } from "@/components/ui/use-toast"
 import { getProductById, Product as APIProduct } from '@/lib/api'
-import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { ErrorDisplay } from '@/components/ErrorDisplay'
 import { useCart } from '@/app/contexts/CartContext'
 import { type CartItem } from '@/lib/types/cart'
@@ -58,11 +57,19 @@ export default function ProductPage() {
     const [quantity, setQuantity] = useState(1)
     const [isWishlist, setIsWishlist] = useState(false)
     const { toast } = useToast()
-    const { addItem } = useCart()
+    const { addItem, openCart } = useCart()
     const { addToFavorites, removeFromFavorites, isFavorite } = useFavorites();
 
     useEffect(() => {
+        // Variable pour suivre si le composant est monté
+        let isMounted = true;
+        
         const fetchProductData = async () => {
+            // Si le produit est déjà chargé avec le bon ID, ne pas recharger
+            if (product && product.id === id) {
+                return;
+            }
+            
             setIsLoading(true)
             setError(null)
             try {
@@ -71,7 +78,7 @@ export default function ProductPage() {
                     return
                 }
                 const fetchedProduct = await getProductById(id)
-                if (fetchedProduct) {
+                if (isMounted && fetchedProduct) {
                     console.log('Produit récupéré:', fetchedProduct);
                     
                     // Traitement des images
@@ -99,22 +106,30 @@ export default function ProductPage() {
                     if (isFavorite(fetchedProduct.id)) {
                         setIsWishlist(true);
                     }
-                    
-                    // Ne pas présélectionner de taille ou de couleur
-                    // Laisser l'utilisateur choisir librement
-                } else {
+                } else if (isMounted) {
                     notFound()
                 }
             } catch (error) {
-                console.error('Error fetching product:', error)
-                notFound()
+                if (isMounted) {
+                    console.error('Error fetching product:', error)
+                    notFound()
+                }
             } finally {
-                setIsLoading(false)
+                if (isMounted) {
+                    setIsLoading(false)
+                }
             }
         }
 
         fetchProductData()
-    }, [id, toast, isFavorite])
+        
+        // Nettoyage explicite pour éviter tout effet de bord
+        return () => {
+            isMounted = false;
+        };
+    // Suppression de toute dépendance qui pourrait causer des rechargements, 
+    // puisque ce useEffect ne devrait s'exécuter qu'une fois au chargement ou quand l'id change
+    }, [id, isFavorite, product])
 
     const handleAddToCart = () => {
         if (!product) {
@@ -149,6 +164,7 @@ export default function ProductPage() {
                 });
                 
                 setQuantity(1);
+                openCart();
                 return;
             }
             
@@ -187,6 +203,7 @@ export default function ProductPage() {
                     });
                     
                     setQuantity(1);
+                    openCart();
                     return;
                 } else {
                     throw new Error("Aucune variante disponible en stock");
@@ -235,24 +252,8 @@ export default function ProductPage() {
                 description: `${product.name} (${selectedSize}, ${selectedColor}) × ${quantity} a été ajouté à votre panier.`,
             });
 
-            // Rafraîchir les données du produit (stock) sans recharger la page
-            const refreshProduct = async () => {
-                try {
-                    const refreshedProduct = await getProductById(product.id.toString());
-                    if (refreshedProduct) {
-                        setProduct({
-                            ...refreshedProduct,
-                            quantity: 1,
-                            images: product.images // Garder les images traitées
-                        });
-                    }
-                } catch (err) {
-                    console.error("Erreur lors du rafraîchissement des données du produit:", err);
-                }
-            };
-            refreshProduct();
-
             setQuantity(1);
+            openCart();
         } catch (error) {
             console.error("ProductPage - Error adding to cart:", error);
             toast({
@@ -322,7 +323,13 @@ export default function ProductPage() {
     }
 
     if (isLoading) {
-        return <LoadingSpinner />
+        return (
+            <div className="flex justify-center items-center p-8">
+                <div className="text-center">
+                    <p className="text-sm text-muted-foreground">Chargement du produit...</p>
+                </div>
+            </div>
+        )
     }
 
     if (error) {
@@ -446,7 +453,12 @@ export default function ProductPage() {
                             Voir plus <ChevronRight className="w-4 h-4 ml-1" />
                         </Link>
                     </div>
-                    <SimilarProducts currentProductId={product.id} />
+                    {product && (
+                        <SimilarProducts 
+                            currentProductId={product.id} 
+                            key={`similar-${product.id}`} 
+                        />
+                    )}
                 </div>
 
                 {/* Produits récemment consultés */}
@@ -466,7 +478,12 @@ export default function ProductPage() {
                             </Tooltip>
                         </TooltipProvider>
                     </div>
-                    <RecentlyViewedProducts currentProductId={product.id} />
+                    {product && (
+                        <RecentlyViewedProducts 
+                            currentProductId={product.id} 
+                            key={`recent-${product.id}`}
+                        />
+                    )}
                 </div>
 
                 {/* Appel à l'action mobile */}
