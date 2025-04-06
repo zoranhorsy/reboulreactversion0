@@ -333,7 +333,9 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
               <div className="flex items-center gap-2 overflow-hidden mt-2">
                 <span className="text-xs font-medium text-muted-foreground">Couleurs:</span>
                 <div className="flex items-center gap-1.5">
-                  {Array.from(new Set(product.variants.map(v => v.color.toLowerCase())))
+                  {Array.from(new Set(product.variants
+                    .filter(v => v.color)
+                    .map(v => v.color.toLowerCase())))
                     .slice(0, 3)
                     .map((color, index) => {
                       const colorInfo = getColorInfo(color)
@@ -349,9 +351,13 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
                         />
                       )
                     })}
-                  {Array.from(new Set(product.variants.map(v => v.color.toLowerCase()))).length > 3 && (
+                  {Array.from(new Set(product.variants
+                    .filter(v => v.color)
+                    .map(v => v.color.toLowerCase()))).length > 3 && (
                     <span className="text-xs text-muted-foreground">
-                      +{Array.from(new Set(product.variants.map(v => v.color.toLowerCase()))).length - 3}
+                      +{Array.from(new Set(product.variants
+                        .filter(v => v.color)
+                        .map(v => v.color.toLowerCase()))).length - 3}
                     </span>
                   )}
                 </div>
