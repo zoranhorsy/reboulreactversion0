@@ -40,22 +40,20 @@ export function ProductGallery({
     const thumbnailsContainerRef = useRef<HTMLDivElement>(null)
     
     // Filtrer les images valides (non en erreur)
-    const validImages = images.filter((_, index) => !imageErrors[index])
+    const validImages = images
+        .map(img => {
+            if (typeof img === 'string') return img;
+            if (typeof img === 'object' && img !== null && 'url' in img) return img.url;
+            if (img instanceof File || img instanceof Blob) return URL.createObjectURL(img);
+            return null;
+        })
+        .filter((url): url is string => url !== null && !imageErrors[images.indexOf(url)]);
     
     // Log pour déboguer les images
     useEffect(() => {
         console.log('ProductGallery - Images reçues:', images);
-        console.log('ProductGallery - Nombre d\'images:', images.length);
-        
-        // Vérifier chaque image
-        images.forEach((image, index) => {
-            console.log(`Image ${index}:`, typeof image, image);
-            
-            // Tester l'URL de l'image
-            const url = getImageUrl(image);
-            console.log(`URL de l'image ${index}:`, url);
-        });
-    }, [images]);
+        console.log('ProductGallery - Images valides:', validImages);
+    }, [images, validImages]);
     
     // Masquer les contrôles après un délai d'inactivité
     useEffect(() => {
@@ -116,72 +114,29 @@ export function ProductGallery({
         }
     }, [currentIndex])
 
-    // Si aucune image n'est disponible, afficher un placeholder
-    if (!images || images.length === 0) {
+    // Si aucune image n'est disponible ou si toutes les images sont en erreur, afficher un placeholder
+    if (!validImages.length) {
         return (
-            <div className="aspect-square w-full bg-muted/20 rounded-lg flex items-center justify-center">
-                <span className="text-muted-foreground">Aucune image disponible</span>
+            <div className="relative aspect-square w-full bg-muted/20 rounded-lg flex flex-col items-center justify-center gap-2">
+                <ImageOff className="w-8 h-8 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">Aucune image disponible</span>
+                {productName && (
+                    <div className="absolute top-2 left-2">
+                        <Badge variant="secondary" className="text-xs">
+                            {productName}
+                        </Badge>
+                    </div>
+                )}
             </div>
         )
     }
 
     const getImageUrl = (image: string | File | Blob | ProductImage): string => {
-        // Fonction pour vérifier si une URL est valide
-        const isValidUrl = (url: string): boolean => {
-            if (!url) return false;
-            // Vérifier si c'est une URL absolue
-            if (url.startsWith('http://') || url.startsWith('https://')) return true;
-            // Vérifier si c'est une URL relative
-            if (url.startsWith('/')) return true;
-            return false;
-        };
-        
-        // Log pour déboguer
-        console.log('getImageUrl - Type d\'image:', typeof image);
-        
-        try {
-            // Vérifier si c'est un objet ProductImage
-            if (typeof image === 'object' && image !== null && 'url' in image && 'publicId' in image) {
-                const url = image.url;
-                console.log('ProductImage détecté, URL:', url);
-                if (isValidUrl(url)) return url;
-            }
-            // Vérifier si c'est une chaîne de caractères
-            else if (typeof image === 'string') {
-                console.log('String détecté:', image);
-                if (isValidUrl(image)) return image;
-            }
-            // Vérifier si c'est un File ou Blob
-            else if (image instanceof File || image instanceof Blob) {
-                console.log('File/Blob détecté');
-                return URL.createObjectURL(image);
-            }
-            // Cas où l'image est un objet mais pas un ProductImage standard
-            else if (typeof image === 'object' && image !== null) {
-                console.log('Objet non standard détecté:', image);
-                // Essayer de trouver une propriété URL
-                if ('url' in image) {
-                    const url = (image as any).url;
-                    console.log('URL trouvée dans l\'objet:', url);
-                    if (typeof url === 'string' && isValidUrl(url)) return url;
-                }
-                // Essayer de trouver d'autres propriétés qui pourraient contenir une URL
-                const possibleUrlProps = ['src', 'source', 'path', 'href'];
-                for (const prop of possibleUrlProps) {
-                    if (prop in image) {
-                        const url = (image as any)[prop];
-                        console.log(`Propriété ${prop} trouvée:`, url);
-                        if (typeof url === 'string' && isValidUrl(url)) return url;
-                    }
-                }
-            }
-        } catch (error) {
-            console.error('Erreur dans getImageUrl:', error);
-        }
-        
-        console.log('Aucune URL valide trouvée, utilisation du placeholder');
-        return "/placeholder.png";
-    }
+        if (typeof image === 'string') return image;
+        if (typeof image === 'object' && image !== null && 'url' in image) return image.url;
+        if (image instanceof File || image instanceof Blob) return URL.createObjectURL(image);
+        return '';
+    };
 
     const handleImageError = (index: number) => {
         setImageErrors(prev => ({
@@ -220,186 +175,69 @@ export function ProductGallery({
     return (
         <>
             <div className="space-y-6">
-                {/* Carousel principal */}
-                <div className="relative overflow-hidden rounded-xl bg-background">
-                    {/* Badges */}
-                    <div className="absolute top-4 left-4 z-10 flex flex-col gap-2">
-                        {brand && (
-                            <Badge variant="secondary" className="px-3 py-1.5 text-xs font-medium tracking-wider bg-white/90 text-black">
-                                {brand}
-                            </Badge>
-                        )}
-                        {isNew && (
-                            <Badge variant="default" className="px-3 py-1.5 text-xs font-medium tracking-wider bg-blue-500 text-white">
-                                Nouveau
-                            </Badge>
-                        )}
-                        {isFeatured && (
-                            <Badge variant="default" className="px-3 py-1.5 text-xs font-medium tracking-wider bg-amber-500 text-white">
-                                Vedette
-                            </Badge>
-                        )}
-                        {discount && discount > 0 && (
-                            <Badge variant="destructive" className="px-3 py-1.5 text-xs font-medium tracking-wider">
-                                -{discount}%
-                            </Badge>
-                        )}
-                    </div>
-                    
-                    {/* Bouton plein écran */}
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="absolute top-4 right-4 z-10 bg-white/80 hover:bg-white/90 text-black"
-                        onClick={toggleFullscreen}
-                    >
-                        <Maximize2 className="h-4 w-4" />
-                    </Button>
-                    
-                    {/* Carousel d'images */}
-                    <div 
-                        className="relative aspect-square overflow-hidden"
-                        onTouchStart={handleTouchStart}
-                        onTouchMove={handleTouchMove}
-                        onTouchEnd={handleTouchEnd}
-                    >
-                        <div 
-                            ref={mainImageRef}
+                {/* Image principale */}
+                <div 
+                    className={cn(
+                        "relative aspect-square w-full overflow-hidden rounded-lg bg-muted/20",
+                        isFullscreen && "fixed inset-0 z-50 h-screen w-screen rounded-none bg-background/95 backdrop-blur-sm"
+                    )}
+                    ref={mainImageRef}
+                    onMouseMove={handleZoomMove}
+                    onMouseLeave={() => setIsZoomed(false)}
+                >
+                    {validImages[currentIndex] && (
+                        <Image
+                            src={validImages[currentIndex]}
+                            alt={`${productName} - Image ${currentIndex + 1}`}
+                            fill
+                            priority={currentIndex === 0}
                             className={cn(
-                                "relative w-full h-full",
-                                isZoomed ? "cursor-zoom-out" : "cursor-zoom-in"
+                                "object-cover transition-all duration-300",
+                                isZoomed && "scale-150"
                             )}
-                            onClick={toggleZoom}
-                            onMouseMove={handleZoomMove}
-                        >
-                            <AnimatePresence initial={false} mode="wait">
-                                <motion.div
-                                    key={currentIndex}
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    exit={{ opacity: 0 }}
-                                    transition={{ duration: 0.3 }}
-                                    className="absolute inset-0"
-                                >
-                                    {imageErrors[currentIndex] ? (
-                                        <div className="w-full h-full flex items-center justify-center bg-muted">
-                                            <ImageOff className="w-12 h-12 text-muted-foreground" />
-                                        </div>
-                                    ) : (
-                                        <Image
-                                            src={getImageUrl(images[currentIndex])}
-                                            alt={`${productName} - Image ${currentIndex + 1}`}
-                                            fill={true}
-                                            priority={true}
-                                            className={cn(
-                                                "object-cover transition-all duration-300",
-                                                isZoomed ? "scale-[2.5]" : "scale-100"
-                                            )}
-                                            style={
-                                                isZoomed 
-                                                    ? { 
-                                                        transformOrigin: `${zoomPosition.x * 100}% ${zoomPosition.y * 100}%`,
-                                                    } 
-                                                    : {}
-                                            }
-                                            onError={() => handleImageError(currentIndex)}
-                                        />
-                                    )}
-                                </motion.div>
-                            </AnimatePresence>
-                        </div>
-                        
-                        {/* Indicateur de position */}
-                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 text-white text-xs px-3 py-1 rounded-full">
-                            {currentIndex + 1} / {images.length}
-                        </div>
-                        
-                        {/* Boutons de navigation */}
-                        {images.length > 1 && (
-                            <>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white/90 text-black rounded-full h-10 w-10 shadow-md"
-                                    onClick={handlePrevious}
-                                >
-                                    <ChevronLeft className="h-5 w-5" />
-                                </Button>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white/90 text-black rounded-full h-10 w-10 shadow-md"
-                                    onClick={handleNext}
-                                >
-                                    <ChevronRight className="h-5 w-5" />
-                                </Button>
-                            </>
-                        )}
-                    </div>
-                </div>
+                            style={
+                                isZoomed
+                                    ? {
+                                          transformOrigin: `${zoomPosition.x * 100}% ${
+                                              zoomPosition.y * 100
+                                          }%`,
+                                      }
+                                    : undefined
+                            }
+                            onError={() => handleImageError(currentIndex)}
+                        />
+                    )}
 
-                {/* Miniatures en carousel */}
-                {images.length > 1 && (
-                    <div className="relative px-8">
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="absolute left-0 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background/90 z-10 rounded-full h-8 w-8 shadow-sm"
-                            onClick={handlePrevious}
-                            disabled={images.length <= 5}
-                        >
-                            <ChevronLeft className="h-4 w-4" />
-                        </Button>
-                        
+                    {/* Miniatures */}
+                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2">
                         <div 
+                            className="flex gap-2 overflow-x-auto px-4 pb-2 max-w-[calc(100vw-2rem)]"
                             ref={thumbnailsContainerRef}
-                            className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide scroll-smooth"
                         >
-                            {images.map((image, index) => (
+                            {validImages.map((imgUrl, index) => (
                                 <button
                                     key={index}
-                                    data-index={index}
-                                    className={cn(
-                                        "relative min-w-[80px] aspect-square overflow-hidden rounded-lg transition-all duration-200 flex-shrink-0",
-                                        currentIndex === index 
-                                            ? "ring-2 ring-primary scale-95" 
-                                            : "ring-1 ring-muted-foreground/10 hover:ring-primary/50 hover:scale-95"
-                                    )}
                                     onClick={() => setCurrentIndex(index)}
+                                    className={cn(
+                                        "relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-md border-2",
+                                        currentIndex === index
+                                            ? "border-primary"
+                                            : "border-transparent hover:border-primary/50"
+                                    )}
+                                    data-index={index}
                                 >
-                                    {imageErrors[index] ? (
-                                        <div className="w-full h-full flex items-center justify-center bg-muted">
-                                            <ImageOff className="w-4 h-4 text-muted-foreground" />
-                                        </div>
-                                    ) : (
-                                        <div className="relative w-full h-full">
-                                            <Image
-                                                src={getImageUrl(image)}
-                                                alt={`${productName} - Miniature ${index + 1}`}
-                                                fill={true}
-                                                className="object-cover"
-                                                onError={() => handleImageError(index)}
-                                            />
-                                        </div>
-                                    )}
-                                    {currentIndex === index && (
-                                        <div className="absolute inset-0 bg-primary/10 border border-primary" />
-                                    )}
+                                    <Image
+                                        src={imgUrl}
+                                        alt={`${productName} - Miniature ${index + 1}`}
+                                        fill
+                                        className="object-cover"
+                                        onError={() => handleImageError(index)}
+                                    />
                                 </button>
                             ))}
                         </div>
-                        
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="absolute right-0 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background/90 z-10 rounded-full h-8 w-8 shadow-sm"
-                            onClick={handleNext}
-                            disabled={images.length <= 5}
-                        >
-                            <ChevronRight className="h-4 w-4" />
-                        </Button>
                     </div>
-                )}
+                </div>
             </div>
 
             {/* Fullscreen modal */}

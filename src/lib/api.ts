@@ -421,22 +421,59 @@ export class Api {
 
     async getProductById(id: string): Promise<Product | null> {
         try {
-            const response = await this.client.get(`/products/${id}`)
-            if (!response.data) return null
-            
-            // Format all image URLs in the response
-            return {
+            console.log('Appel API getProductById:', id);
+            const response = await this.client.get(`/products/${id}`);
+            console.log('Réponse API brute:', response.data);
+
+            if (!response.data) {
+                console.log('Pas de données dans la réponse');
+                return null;
+            }
+
+            // Vérifier et nettoyer les données du produit
+            const cleanProduct = {
                 ...response.data,
+                // S'assurer que l'ID est une chaîne
+                id: String(response.data.id),
+                // Nettoyer le nom et la description
+                name: response.data.name?.trim() || '',
+                description: response.data.description?.trim() || '',
+                // Convertir le prix en nombre
+                price: typeof response.data.price === 'string' 
+                    ? parseFloat(response.data.price) 
+                    : Number(response.data.price) || 0,
+                // Nettoyer la marque
+                brand: response.data.brand?.trim() || '',
+                // Nettoyer et filtrer les images
                 image_url: this.formatImageUrl(response.data.image_url),
                 image: this.formatImageUrl(response.data.image),
                 images: Array.isArray(response.data.images)
-                    ? response.data.images.map((img: string | File | Blob) => 
-                        typeof img === 'string' ? this.formatImageUrl(img) : img)
-                    : []
-            }
+                    ? response.data.images
+                        .filter((img: string | File | Blob) => 
+                            img && 
+                            typeof img === 'string' && 
+                            img.trim() !== '' && 
+                            img !== '  ' && 
+                            img !== 'undefined'
+                        )
+                        .map((img: string) => this.formatImageUrl(img))
+                    : [],
+                // S'assurer que variants est un tableau
+                variants: Array.isArray(response.data.variants) 
+                    ? response.data.variants 
+                    : [],
+                // Convertir les booléens
+                featured: Boolean(response.data.featured),
+                active: Boolean(response.data.active),
+                new: Boolean(response.data.new)
+            };
+
+            console.log('Produit nettoyé:', cleanProduct);
+            return cleanProduct;
         } catch (error) {
-            this.handleError(error, `Error fetching product with ID ${id}`)
-            return null
+            console.error('Erreur détaillée dans getProductById:', error);
+            this.handleError(error, `Error fetching product with ID ${id}`);
+            return null;
         }
     }
 
@@ -529,6 +566,31 @@ export class Api {
 
             if (data.sku) {
                 validatedData.sku = String(data.sku).trim();
+            }
+
+            // Ajouter les images si elles existent
+            if (data.images && Array.isArray(data.images)) {
+                validatedData.images = data.images.map(img => {
+                    if (typeof img === 'string') {
+                        return img;
+                    }
+                    if (typeof img === 'object' && img !== null && 'url' in img) {
+                        return img.url;
+                    }
+                    return null;
+                }).filter((url): url is string => 
+                    url !== null && typeof url === 'string' && url.trim() !== ''
+                );
+            }
+
+            // S'assurer que les images sont envoyées comme un tableau de chaînes
+            if (validatedData.images) {
+                validatedData.images = validatedData.images.map((img: { url: string } | string) => {
+                    if (typeof img === 'object' && img !== null && 'url' in img) {
+                        return img.url;
+                    }
+                    return String(img);
+                });
             }
 
             console.log('URL de la requête:', `${this.RAILWAY_BASE_URL}/api/products/${id}`);

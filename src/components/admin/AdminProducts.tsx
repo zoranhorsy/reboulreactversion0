@@ -129,14 +129,15 @@ export function AdminProducts() {
             let formattedImages: string[] = [];
             
             if (productData.images && Array.isArray(productData.images)) {
-                formattedImages = productData.images.reduce((acc: string[], img) => {
+                formattedImages = productData.images.map(img => {
                     if (typeof img === 'string') {
-                        acc.push(img);
-                    } else if (typeof img === 'object' && img !== null && 'url' in img) {
-                        acc.push(img.url);
+                        return img;
                     }
-                    return acc;
-                }, []);
+                    if (typeof img === 'object' && img !== null && 'url' in img) {
+                        return img.url;
+                    }
+                    return null;
+                }).filter((url): url is string => url !== null);
             }
 
             // Nettoyage des données avant l'envoi

@@ -65,8 +65,10 @@ export default function ProductPage() {
         let isMounted = true;
         
         const fetchProductData = async () => {
+            console.log('Début du chargement du produit, ID:', id);
             // Si le produit est déjà chargé avec le bon ID, ne pas recharger
             if (product && product.id === id) {
+                console.log('Produit déjà chargé:', product);
                 return;
             }
             
@@ -74,10 +76,14 @@ export default function ProductPage() {
             setError(null)
             try {
                 if (!id) {
+                    console.log('ID manquant');
                     notFound()
                     return
                 }
+                console.log('Appel de getProductById avec ID:', id);
                 const fetchedProduct = await getProductById(id)
+                console.log('Réponse de getProductById:', fetchedProduct);
+                
                 if (isMounted && fetchedProduct) {
                     console.log('Produit récupéré:', fetchedProduct);
                     
@@ -93,6 +99,8 @@ export default function ProductPage() {
                         }) 
                         : [];
                     
+                    console.log('Images traitées:', processedImages);
+                    
                     // Mise à jour du produit
                     const updatedProduct = {
                         ...fetchedProduct,
@@ -100,6 +108,7 @@ export default function ProductPage() {
                         quantity: 1
                     };
                     
+                    console.log('Produit mis à jour:', updatedProduct);
                     setProduct(updatedProduct);
                     
                     // Vérifier si le produit est dans les favoris
@@ -107,15 +116,18 @@ export default function ProductPage() {
                         setIsWishlist(true);
                     }
                 } else if (isMounted) {
+                    console.log('Produit non trouvé ou composant démonté');
                     notFound()
                 }
             } catch (error) {
+                console.error('Erreur détaillée:', error);
                 if (isMounted) {
                     console.error('Error fetching product:', error)
                     notFound()
                 }
             } finally {
                 if (isMounted) {
+                    console.log('Fin du chargement');
                     setIsLoading(false)
                 }
             }
@@ -125,10 +137,9 @@ export default function ProductPage() {
         
         // Nettoyage explicite pour éviter tout effet de bord
         return () => {
+            console.log('Nettoyage du composant');
             isMounted = false;
         };
-    // Suppression de toute dépendance qui pourrait causer des rechargements, 
-    // puisque ce useEffect ne devrait s'exécuter qu'une fois au chargement ou quand l'id change
     }, [id, isFavorite, product])
 
     const handleAddToCart = () => {
@@ -324,20 +335,57 @@ export default function ProductPage() {
 
     if (isLoading) {
         return (
-            <div className="flex justify-center items-center p-8">
-                <div className="text-center">
-                    <p className="text-sm text-muted-foreground">Chargement du produit...</p>
+            <div className="min-h-screen bg-background">
+                <div className="container mx-auto px-4">
+                    <div className="flex flex-col items-center justify-center min-h-[50vh] p-8">
+                        <div className="text-center space-y-4">
+                            <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto"></div>
+                            <p className="text-sm text-muted-foreground">Chargement du produit...</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         )
     }
 
     if (error) {
-        return <ErrorDisplay message={error} />
+        return (
+            <div className="min-h-screen bg-background">
+                <div className="container mx-auto px-4">
+                    <div className="flex flex-col items-center justify-center min-h-[50vh] p-8">
+                        <div className="text-center space-y-4">
+                            <p className="text-lg font-medium text-destructive">Une erreur est survenue</p>
+                            <p className="text-sm text-muted-foreground">{error}</p>
+                            <Button onClick={() => window.location.reload()} variant="outline">
+                                <RefreshCw className="w-4 h-4 mr-2" />
+                                Réessayer
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )
     }
 
     if (!product) {
-        return notFound()
+        return (
+            <div className="min-h-screen bg-background">
+                <div className="container mx-auto px-4">
+                    <div className="flex flex-col items-center justify-center min-h-[50vh] p-8">
+                        <div className="text-center space-y-4">
+                            <p className="text-lg font-medium">Produit non trouvé</p>
+                            <p className="text-sm text-muted-foreground">Le produit que vous recherchez n&apos;existe pas ou a été supprimé.</p>
+                            <Link href="/catalogue">
+                                <Button>
+                                    <ArrowLeft className="w-4 h-4 mr-2" />
+                                    Retour au catalogue
+                                </Button>
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )
     }
 
     const breadcrumbItems = [
@@ -410,7 +458,9 @@ export default function ProductPage() {
                     {/* Galerie d'images */}
                     <div className="w-full mb-6 lg:mb-0">
                         <ProductGallery 
-                            images={product.images} 
+                            images={product.images?.filter(img => 
+                                typeof img === 'string' && img.trim() !== '' && img !== '  ' && img !== 'undefined'
+                            ) || []} 
                             productName={product.name}
                             brand={product.brand}
                             isNew={Boolean(product.new)}

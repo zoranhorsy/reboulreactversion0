@@ -347,44 +347,81 @@ export function ProductForm({
 
     try {
       setIsUploading(true);
+      console.log('Début de l\'upload des images...');
+
+      // Obtenir la signature du serveur
+      const timestamp = Math.round(new Date().getTime() / 1000);
+      const signatureResponse = await fetch('/api/cloudinary/signature', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          timestamp,
+          folder: 'reboul-store'
+        }),
+      });
+
+      if (!signatureResponse.ok) {
+        throw new Error('Impossible d\'obtenir la signature pour l\'upload');
+      }
+
+      const { signature } = await signatureResponse.json();
 
       const uploadPromises = Array.from(files).map(async (file) => {
-        const timestamp = Math.round(new Date().getTime() / 1000);
-        const folder = "reboul-store";
-        
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('api_key', '699182784731453');
-        formData.append('timestamp', timestamp.toString());
-        formData.append('folder', folder);
+        try {
+          const formData = new FormData();
+          formData.append('file', file);
+          formData.append('api_key', '699182784731453');
+          formData.append('timestamp', timestamp.toString());
+          formData.append('folder', 'reboul-store');
+          formData.append('signature', signature);
 
-        // Générer la signature
-        const stringToSign = `folder=${folder}&timestamp=${timestamp}xaIN--yBARtEJKm410UT5ICpraw`;
-        const signature = await generateSHA1(stringToSign);
-        formData.append('signature', signature);
+          console.log('Envoi du fichier:', {
+            name: file.name,
+            size: file.size,
+            type: file.type,
+            timestamp
+          });
 
-        const response = await fetch(
-          'https://api.cloudinary.com/v1_1/dxen69pdo/upload',
-          {
-            method: 'POST',
-            body: formData,
+          const response = await fetch(
+            'https://api.cloudinary.com/v1_1/dxen69pdo/image/upload',
+            {
+              method: 'POST',
+              body: formData,
+            }
+          );
+
+          if (!response.ok) {
+            const errorData = await response.text();
+            console.error('Erreur Cloudinary:', errorData);
+            throw new Error(`Upload failed: ${errorData}`);
           }
-        );
 
-        if (!response.ok) {
-          throw new Error('Upload failed');
+          const data = await response.json();
+          console.log('Réponse Cloudinary:', data);
+          // Retourner uniquement l'URL sécurisée
+          return data.secure_url;
+        } catch (error) {
+          console.error('Erreur lors de l\'upload d\'une image:', error);
+          throw error;
         }
-
-        const data = await response.json();
-        return data.secure_url;
       });
 
       const uploadedUrls = await Promise.all(uploadPromises);
       const validUrls = uploadedUrls.filter(url => url);
 
+      console.log('URLs des images uploadées:', validUrls);
+
       if (validUrls.length) {
         const existingImages = formData.images || [];
-        const updatedImages = [...existingImages, ...validUrls];
+        // S'assurer que toutes les images sont des URLs simples
+        const updatedImages = [
+          ...existingImages.map(img => typeof img === 'string' ? img : (img && 'url' in img ? img.url : '')).filter(url => url),
+          ...validUrls
+        ];
+        
+        console.log('Mise à jour du state avec les nouvelles images:', updatedImages);
         
         setFormData(prev => ({
           ...prev,
@@ -398,24 +435,15 @@ export function ProductForm({
         });
       }
     } catch (error) {
-      console.error('Error uploading images:', error);
+      console.error('Erreur détaillée lors de l\'upload:', error);
       toast({
         title: "Erreur",
-        description: "Erreur lors du téléchargement des images",
+        description: error instanceof Error ? error.message : "Une erreur est survenue lors de l'upload des images",
         variant: "destructive",
       });
     } finally {
       setIsUploading(false);
     }
-  };
-
-  // Fonction utilitaire pour générer le hash SHA1
-  const generateSHA1 = async (message: string): Promise<string> => {
-    const msgBuffer = new TextEncoder().encode(message);
-    const hashBuffer = await crypto.subtle.digest('SHA-1', msgBuffer);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    return hashHex;
   };
 
   const handleImageRemove = (index: number): void => {
@@ -462,25 +490,17 @@ export function ProductForm({
     try {
       setIsSubmitting(true);
       
-      // Nettoyer et formater les images
-      const cleanedImages = formData.images?.reduce((acc: string[], img) => {
-        let imageUrl = '';
-        if (typeof img === 'string') {
-          imageUrl = img;
-        } else if (typeof img === 'object' && img !== null && 'url' in img) {
-          imageUrl = img.url;
-        }
-        if (imageUrl) {
-          acc.push(imageUrl);
-        }
-        return acc;
-      }, []) || [];
+      // Nettoyer et formater les images pour n'avoir que des URLs simples
+      const cleanedImages = (formData.images || []).map(img => {
+        if (typeof img === 'string') return img;
+        if (img && typeof img === 'object' && 'url' in img) return img.url;
+        return null;
+      }).filter((url): url is string => typeof url === 'string' && url.trim() !== '');
 
       // Créer une copie de formData sans la propriété showTechnicalDetails
       const { showTechnicalDetails, ...productData } = formData;
 
       // Préparer les données du produit
-      // Créer un objet temporaire avec toutes les propriétés requises sauf id
       const tempProductData = {
         name: productData.name?.trim() || "",
         description: productData.description?.trim() || "",
