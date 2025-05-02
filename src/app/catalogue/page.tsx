@@ -1,7 +1,11 @@
 import type { Metadata } from "next"
 import { Suspense } from "react"
-import { Loader } from "@/components/ui/Loader"
+import { LoaderComponent } from "@/components/ui/Loader"
 import { api } from "@/lib/api"
+import { CatalogueClientContent } from "@/components/catalogue/CatalogueClientContent"
+import type { Product } from "@/lib/types/product"
+import type { Category } from "@/lib/types/category"
+import type { Brand } from "@/lib/types/brand"
 
 type SearchParams = { [key: string]: string | string[] | undefined }
 
@@ -48,12 +52,6 @@ export async function generateMetadata({ searchParams }: CataloguePageProps): Pr
   }
 }
 
-// Client wrapper component
-import { CatalogueClientContent } from "@/components/catalogue/CatalogueClientContent"
-import type { Product } from "@/lib/types/product"
-import type { Category } from "@/lib/types/category"
-import type { Brand } from "@/lib/types/brand"
-
 interface CatalogueWrapperProps {
   initialProducts: Product[]
   initialCategories: Category[]
@@ -76,7 +74,7 @@ export default async function CataloguePage({
     return value
   }
 
-  const queryParams: Record<string, string> = {
+  const queryParams: Record<string, string | number> = {
     page: ensureString(searchParams.page) || "1",
     limit: ensureString(searchParams.limit) || "12",
     category_id: ensureString(searchParams.category_id),
@@ -87,11 +85,15 @@ export default async function CataloguePage({
     size: ensureString(searchParams.size),
     minPrice: ensureString(searchParams.minPrice) || "0",
     maxPrice: ensureString(searchParams.maxPrice) || "10000",
-    store_type: ensureString(searchParams.store_type),
+    store_type: "reboul",
     featured: ensureString(searchParams.featured) || "false"
   }
 
-  // Nettoyer les paramètres vides
+  const brandId = ensureString(searchParams.brand_id);
+  if (brandId) {
+    queryParams.brand_id = Number(brandId);
+  }
+
   Object.keys(queryParams).forEach(key => {
     if (!queryParams[key]) {
       delete queryParams[key]
@@ -105,7 +107,7 @@ export default async function CataloguePage({
   ])
 
   return (
-    <Suspense fallback={<Loader />}>
+    <Suspense fallback={<LoaderComponent />}>
       <CatalogueClientWrapper
         initialProducts={productsData.products}
         initialCategories={categories}

@@ -154,23 +154,38 @@ export const FilterComponent = ({
     onFilterChange({ category_id: newCategories.join(",") })
   }
 
-  const toggleBrand = (brandName: string) => {
-    const newBrands = selectedBrands.includes(brandName)
-      ? selectedBrands.filter(name => name !== brandName)
-      : [...selectedBrands, brandName]
-    
-    setSelectedBrands(newBrands)
-    onFilterChange({ brand: newBrands.join(",") })
+  // Fonction simplifiée pour sélectionner une seule marque à la fois
+  const toggleBrand = (brand: { id: number; name: string }) => {
+    // Si la marque est déjà sélectionnée, la désélectionner
+    if (selectedBrands.includes(brand.id.toString())) {
+      setSelectedBrands([]);
+      // Utiliser brand_id = 0 pour réinitialiser le filtre (une valeur qui n'existe pas)
+      onFilterChange({ brand_id: "" });
+    } else {
+      // Sélectionner la marque spécifique
+      setSelectedBrands([brand.id.toString()]);
+      // Envoyer l'ID de la marque directement, pas sous forme de chaîne
+      onFilterChange({ brand_id: brand.id.toString() });
+    }
   }
 
   // Initialiser selectedBrands à partir des filtres existants
   useEffect(() => {
-    if (filters.brand) {
-      setSelectedBrands(filters.brand.split(","))
+    if (filters.brand_id) {
+      setSelectedBrands(filters.brand_id.toString().split(","))
     } else {
       setSelectedBrands([])
     }
-  }, [filters.brand])
+  }, [filters.brand_id])
+
+  // Initialiser selectedCategories à partir des filtres existants
+  useEffect(() => {
+    if (filters.category_id) {
+      setSelectedCategories(filters.category_id.split(","))
+    } else {
+      setSelectedCategories([])
+    }
+  }, [filters.category_id])
 
   const resetFilters = () => {
     // Réinitialiser les états locaux
@@ -186,7 +201,7 @@ export const FilterComponent = ({
       minPrice: "",
       maxPrice: "",
       category_id: "",
-      brand: "",
+      brand_id: "",
       color: "",
       size: "",
       sort: "",
@@ -327,11 +342,11 @@ export const FilterComponent = ({
           <div className="space-y-1.5 max-h-[200px] overflow-y-auto pr-1">
             <div className="flex flex-wrap gap-1.5">
               {brands.map((brand) => {
-                const isSelected = selectedBrands.includes(brand.name)
+                const isSelected = selectedBrands.includes(brand.id.toString())
                 return (
                   <button
                     key={brand.id}
-                    onClick={() => toggleBrand(brand.name)}
+                    onClick={() => toggleBrand(brand)}
                     className={cn(
                       "px-2.5 py-1.5 text-xs font-medium rounded-full transition-all",
                       "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
@@ -353,7 +368,7 @@ export const FilterComponent = ({
 
         {/* Couleurs */}
         <FilterSection title="Couleurs" section="colors">
-          <div className="flex flex-wrap gap-2 pt-1.5">
+          <div className="flex flex-wrap gap-1.5 pt-1.5">
             {colors.map((color) => {
               const colorInfo = getColorInfo(color)
               const isSelected = filters.color === color
@@ -363,23 +378,16 @@ export const FilterComponent = ({
                   key={color}
                   onClick={() => onFilterChange({ color: isSelected ? "" : color })}
                   className={cn(
-                    "group h-8 w-8 rounded-full overflow-hidden flex items-center justify-center focus:outline-none",
-                    "transition-transform transform hover:scale-110",
-                    "focus-visible:ring-2 focus-visible:ring-primary",
-                    isSelected && "ring-2 ring-primary shadow-md"
+                    "px-2.5 py-1.5 text-xs font-medium rounded-full transition-all",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                    isSelected
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted hover:bg-muted/80 text-muted-foreground"
                   )}
-                  style={{
-                    background: colorInfo.hex,
-                    border: isWhiteColor(color) ? "1px solid #e2e8f0" : "none",
-                  }}
                   title={colorInfo.label}
                 >
-                  {isSelected && (
-                    <Check className={cn(
-                      "h-4 w-4 opacity-100 transition-opacity",
-                      isWhiteColor(color) ? "text-black" : "text-white"
-                    )} />
-                  )}
+                  {colorInfo.label}
+                  {isSelected && <Check className="ml-1 h-3 w-3 inline" />}
                 </button>
               )
             })}

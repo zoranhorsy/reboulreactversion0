@@ -4,8 +4,16 @@ import React, { useState, useEffect, useMemo, memo } from "react"
 import { motion } from "framer-motion"
 import { FeaturedProductCard } from "./products/FeaturedProductCard"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { ChevronLeft, ChevronRight, ArrowLeftRight } from "lucide-react"
 import { fetchProducts, Product } from "@/lib/api"
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel"
+import useEmblaCarousel from 'embla-carousel-react'
 
 interface SimilarProductsProps {
     currentProductId: string
@@ -13,24 +21,23 @@ interface SimilarProductsProps {
     categoryId?: string
 }
 
-// Utilisation de memo pour éviter les re-rendus inutiles
 const SimilarProductsComponent = ({ currentProductId, brandId, categoryId }: SimilarProductsProps) => {
     const [similarProducts, setSimilarProducts] = useState<Product[]>([])
-    const [currentPage, setCurrentPage] = useState(0)
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
+    const [emblaRef] = useEmblaCarousel({
+        dragFree: true,
+        containScroll: "trimSnaps",
+        slidesToScroll: 2
+    })
 
-    const productsPerPage = 8
-    const totalPages = Math.ceil(similarProducts.length / productsPerPage)
+    const productsPerRow = 4 // Nombre de produits par ligne
 
-    // Utilisez useEffect avec un tableau de dépendances vide pour ne s'exécuter qu'une seule fois
     useEffect(() => {
-        // Variable pour suivre si le composant est monté
         let isMounted = true;
         let isDataFetched = false;
         
         const fetchSimilarProducts = async () => {
-            // Si déjà chargé, ne pas recharger
             if (similarProducts.length > 0 || isDataFetched) {
                 return;
             }
@@ -44,7 +51,6 @@ const SimilarProductsComponent = ({ currentProductId, brandId, categoryId }: Sim
                     ...(categoryId && { category_id: categoryId }),
                     limit: "24"
                 })
-                // Ne mettre à jour l'état que si le composant est toujours monté
                 if (isMounted) {
                     if (!response || !response.products || response.products.length === 0) {
                         throw new Error("No products found")
@@ -66,33 +72,23 @@ const SimilarProductsComponent = ({ currentProductId, brandId, categoryId }: Sim
             }
         }
 
-        // Charger les produits une seule fois
         fetchSimilarProducts()
         
-        // Nettoyer à la démontage
         return () => {
             isMounted = false;
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [])
+    }, [brandId, categoryId, currentProductId, similarProducts.length])
 
-    const handlePrevious = () => {
-        setCurrentPage((prev) => (prev > 0 ? prev - 1 : totalPages - 1))
-    }
-
-    const handleNext = () => {
-        setCurrentPage((prev) => (prev < totalPages - 1 ? prev + 1 : 0))
-    }
-
-    // Calculer les produits visibles de façon mémorisée pour éviter les re-calculs inutiles
-    const visibleProducts = useMemo(() => {
-        const startIndex = currentPage * productsPerPage
-        return similarProducts.slice(startIndex, startIndex + productsPerPage)
-    }, [similarProducts, currentPage, productsPerPage])
+    // Diviser les produits en deux rangées
+    const rows = useMemo(() => {
+        const row1 = similarProducts.slice(0, Math.ceil(similarProducts.length / 2));
+        const row2 = similarProducts.slice(Math.ceil(similarProducts.length / 2));
+        return [row1, row2];
+    }, [similarProducts]);
 
     if (isLoading) {
         return (
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {[...Array(8)].map((_, i) => (
                     <div key={i} className="space-y-4 animate-pulse">
                         <div className="relative aspect-[3/4] rounded-xl bg-accent/5" />
@@ -112,69 +108,46 @@ const SimilarProductsComponent = ({ currentProductId, brandId, categoryId }: Sim
     }
 
     return (
-        <div className="relative">
-            {/* Navigation Arrows */}
-            {totalPages > 1 && (
-                <>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={handlePrevious}
-                        className="absolute -left-16 top-1/2 -translate-y-1/2 h-12 w-12 rounded-full 
-                            bg-background/80 backdrop-blur-sm border border-border/5 
-                            text-muted-foreground hover:text-primary hover:bg-accent/5 
-                            transition-colors opacity-0 lg:opacity-100"
-                    >
-                        <ChevronLeft className="h-5 w-5" />
-                    </Button>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={handleNext}
-                        className="absolute -right-16 top-1/2 -translate-y-1/2 h-12 w-12 rounded-full 
-                            bg-background/80 backdrop-blur-sm border border-border/5 
-                            text-muted-foreground hover:text-primary hover:bg-accent/5 
-                            transition-colors opacity-0 lg:opacity-100"
-                    >
-                        <ChevronRight className="h-5 w-5" />
-                    </Button>
-                </>
-            )}
-
-            {/* Products Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
-                {visibleProducts.map((product, index) => (
-                    <motion.div
-                        key={product.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.3, delay: Math.min(index * 0.05, 0.5) }}
-                    >
-                        <FeaturedProductCard product={product} />
-                    </motion.div>
-                ))}
+        <div className="space-y-6 -mx-4 sm:-mx-6 px-4 sm:px-6">
+            <div className="flex items-center gap-2 text-muted-foreground">
+                <ArrowLeftRight className="w-4 h-4" />
+                <span className="text-sm">Faites glisser pour voir plus</span>
             </div>
-
-            {/* Page Indicators */}
-            {totalPages > 1 && (
-                <div className="flex justify-center mt-8 gap-2">
-                    {[...Array(totalPages)].map((_, i) => (
-                        <button
-                            key={i}
-                            onClick={() => setCurrentPage(i)}
-                            className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                                i === currentPage 
-                                    ? 'bg-primary scale-125' 
-                                    : 'bg-border hover:bg-primary/50'
-                            }`}
-                        />
-                    ))}
+            {rows.map((row, rowIndex) => (
+                <div key={rowIndex} className="relative group">
+                    <Carousel
+                        opts={{
+                            align: "start",
+                            loop: false,
+                            skipSnaps: false,
+                            dragFree: true
+                        }}
+                        className="w-full"
+                    >
+                        <CarouselContent className="-ml-2 md:-ml-4">
+                            {row.map((product, index) => (
+                                <CarouselItem 
+                                    key={product.id} 
+                                    className="pl-2 md:pl-4 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/4"
+                                >
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ duration: 0.3, delay: Math.min(index * 0.05, 0.5) }}
+                                    >
+                                        <FeaturedProductCard product={product} />
+                                    </motion.div>
+                                </CarouselItem>
+                            ))}
+                        </CarouselContent>
+                        <CarouselPrevious className="opacity-0 group-hover:opacity-100 transition-opacity hidden sm:flex -left-12 h-12 w-12" />
+                        <CarouselNext className="opacity-0 group-hover:opacity-100 transition-opacity hidden sm:flex -right-12 h-12 w-12" />
+                    </Carousel>
                 </div>
-            )}
+            ))}
         </div>
     )
 }
 
-// Exporte le composant mémorisé
 export const SimilarProducts = memo(SimilarProductsComponent)
 

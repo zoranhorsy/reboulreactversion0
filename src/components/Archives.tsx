@@ -163,9 +163,25 @@ export function Archives() {
     }
 
     return (
-        <div className="space-y-6">
-            {/* Filtres avec animation - redesign pour meilleure visibilité mobile */}
-            <div className="mb-4 sm:mb-6">
+        <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12 md:py-16 lg:py-20">
+            {/* Titre et description */}
+            <motion.div 
+                className="text-center mb-8 sm:mb-12"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6 }}
+            >
+                <h2 className="text-2xl sm:text-3xl md:text-4xl font-medium text-zinc-900 dark:text-zinc-100 mb-4">
+                    Nos Archives
+                </h2>
+                <p className="text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto">
+                    Découvrez l&apos;univers REBOUL à travers notre galerie de photos
+                </p>
+            </motion.div>
+
+            {/* Filtres */}
+            <div className="mb-8 sm:mb-12">
                 <motion.div 
                     className="flex flex-wrap gap-2 -mx-2 px-2 sm:mx-0 sm:px-0 sm:justify-center sm:gap-3"
                     initial={{ opacity: 0, y: 20 }}
@@ -179,14 +195,14 @@ export function Archives() {
                                 key={category.id}
                                 onClick={() => setSelectedCategory(category.id)}
                                 className={cn(
-                                    "px-4 py-2.5 rounded-lg text-sm whitespace-nowrap transition-all duration-300",
-                                    "shadow-sm",
+                                    "px-4 py-2.5 rounded-lg text-sm whitespace-nowrap",
                                     "flex items-center justify-center gap-2",
                                     "w-[calc(50%-4px)] sm:w-auto",
                                     "sm:px-5 sm:py-2.5 sm:rounded-full",
+                                    "transition-all duration-300",
                                     selectedCategory === category.id
-                                        ? "bg-primary text-white dark:text-zinc-900 font-medium"
-                                        : "bg-zinc-100 dark:bg-zinc-800/90 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-200 dark:hover:bg-zinc-700"
+                                        ? "bg-white text-zinc-900 font-medium shadow-lg"
+                                        : "bg-zinc-900/90 text-white border border-white/20 hover:bg-zinc-800 hover:border-white/40"
                                 )}
                                 whileTap={{ scale: 0.97 }}
                             >
@@ -198,262 +214,222 @@ export function Archives() {
                 </motion.div>
             </div>
 
-            {/* Carousel principal */}
-            <div className="relative w-full mt-2 sm:mt-6 mb-6">
-                {filteredItems.length > 0 && (
-                    <>
-                        <div 
-                            ref={carouselRef}
-                            className="relative w-full overflow-hidden rounded-lg sm:rounded-xl"
-                            onTouchStart={handleTouchStart}
-                            onTouchEnd={handleTouchEnd}
-                        >
-                            <div className="relative aspect-[4/5] md:aspect-[16/9] w-full">
-                                <AnimatePresence mode="wait">
-                                    <motion.div
-                                        key={currentIndex}
-                                        initial={{ opacity: 0, x: 100 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        exit={{ opacity: 0, x: -100 }}
-                                        transition={{ duration: 0.3 }}
-                                        className="absolute inset-0"
-                                    >
-                                        <div className="relative w-full h-full rounded-lg sm:rounded-xl overflow-hidden cursor-pointer"
-                                            onClick={() => setSelectedImage(filteredItems[currentIndex])}>
-                                            <Image
-                                                src={getImageUrl(filteredItems[currentIndex].image_paths[0])}
-                                                alt={filteredItems[currentIndex].title}
-                                                fill
-                                                className="object-cover"
-                                                sizes="100vw"
-                                                priority
-                                            />
-                                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-95">
-                                                <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6 md:p-8 text-white">
-                                                    <h3 className="text-xl sm:text-2xl font-medium mb-2">{filteredItems[currentIndex].title}</h3>
-                                                    <p className="text-sm sm:text-base opacity-90 mb-3 line-clamp-3">{filteredItems[currentIndex].description}</p>
-                                                    <div className="flex items-center gap-2 text-sm opacity-75">
-                                                        <Calendar className="w-4 h-4" />
-                                                        {format(new Date(filteredItems[currentIndex].date), 'd MMMM yyyy', { locale: fr })}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </motion.div>
-                                </AnimatePresence>
-                            </div>
-                            
-                            {/* Navigation buttons - plus grands sur mobile */}
-                            <button
-                                onClick={goToPrevious}
-                                className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 z-10 p-3 sm:p-3 rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors"
-                                aria-label="Image précédente"
+            {/* Contenu principal */}
+            <div className="space-y-6">
+                {/* Carousel principal */}
+                <div className="relative w-full mt-2 sm:mt-6 mb-8">
+                    {filteredItems.length > 0 && (
+                        <>
+                            <div 
+                                ref={carouselRef}
+                                className="relative w-full overflow-hidden rounded-2xl"
+                                onTouchStart={handleTouchStart}
+                                onTouchEnd={handleTouchEnd}
                             >
-                                <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
-                            </button>
-                            <button
-                                onClick={goToNext}
-                                className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 z-10 p-3 sm:p-3 rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors"
-                                aria-label="Image suivante"
-                            >
-                                <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
-                            </button>
-                        </div>
-
-                        {/* Pagination indicators */}
-                        <div className="flex justify-center gap-1.5 mt-4">
-                            {filteredItems.slice(0, 7).map((_, idx) => (
-                                <button
-                                    key={idx}
-                                    onClick={() => setCurrentIndex(idx)}
-                                    className={cn(
-                                        "w-2 h-2 rounded-full transition-all duration-300",
-                                        currentIndex === idx
-                                            ? "bg-primary scale-100 w-4"
-                                            : "bg-zinc-300 dark:bg-zinc-700 scale-90"
-                                    )}
-                                    aria-label={`Aller à l'image ${idx + 1}`}
-                                />
-                            ))}
-                            {filteredItems.length > 7 && (
-                                <div className="w-2 h-2 rounded-full bg-zinc-300 dark:bg-zinc-700 scale-90" />
-                            )}
-                        </div>
-                        
-                        {/* Image count indicator - amélioré pour la visibilité */}
-                        <div className="absolute top-4 right-4 z-10 bg-black/70 text-white text-sm py-1.5 px-3 rounded-full">
-                            {currentIndex + 1} / {filteredItems.length}
-                        </div>
-                    </>
-                )}
-            </div>
-
-            {/* Vignettes - version simplifiée pour mobile */}
-            {filteredItems.length > 1 && (
-                <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-3 mt-2">
-                    {filteredItems.slice(0, 4).map((item, index) => (
-                        <div 
-                            key={item.id}
-                            className={cn(
-                                "relative aspect-square rounded-md overflow-hidden cursor-pointer",
-                                "border-2",
-                                "shadow-sm",
-                                currentIndex === index 
-                                    ? "border-primary" 
-                                    : "border-transparent"
-                            )}
-                            onClick={() => setCurrentIndex(index)}
-                        >
-                            <Image
-                                src={getImageUrl(item.image_paths[0])}
-                                alt={item.title}
-                                fill
-                                className="object-cover"
-                                sizes="(max-width: 640px) 25vw, (max-width: 768px) 25vw, 16vw"
-                            />
-                        </div>
-                    ))}
-                    {filteredItems.length > 4 && (
-                        <div 
-                            className="relative aspect-square rounded-md overflow-hidden cursor-pointer bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shadow-sm"
-                            onClick={() => setSelectedImage(filteredItems[0])}
-                        >
-                            <div className="text-center">
-                                <p className="text-sm font-medium">+{filteredItems.length - 4}</p>
-                                <p className="text-xs">Voir tout</p>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            )}
-
-            {/* Modal de visualisation - adapté pour mobile */}
-            <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
-                <DialogContent className="max-w-full sm:max-w-xl md:max-w-3xl lg:max-w-5xl p-0 overflow-hidden bg-transparent border-none mx-2 sm:mx-4">
-                    {selectedImage && (
-                        <motion.div 
-                            className="relative aspect-square sm:aspect-[3/2] rounded-lg overflow-hidden bg-black"
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                            transition={{ duration: 0.3 }}
-                        >
-                            {/* Navigation entre les images de la même archive */}
-                            {selectedImage.image_paths.length > 1 && (
-                                <>
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setSelectedImageIndex((prev) => 
-                                                prev > 0 ? prev - 1 : selectedImage.image_paths.length - 1
-                                            );
-                                        }}
-                                        className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 z-50 p-3 rounded-full bg-black/70 text-white hover:bg-black/90 transition-colors"
-                                        aria-label="Image précédente"
-                                    >
-                                        <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
-                                    </button>
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setSelectedImageIndex((prev) => 
-                                                (prev + 1) % selectedImage.image_paths.length
-                                            );
-                                        }}
-                                        className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 z-50 p-3 rounded-full bg-black/70 text-white hover:bg-black/90 transition-colors"
-                                        aria-label="Image suivante"
-                                    >
-                                        <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
-                                    </button>
-                                </>
-                            )}
-
-                            {/* Image */}
-                            <Image
-                                src={getImageUrl(selectedImage.image_paths[selectedImageIndex])}
-                                alt={selectedImage.title}
-                                fill
-                                className="object-contain sm:object-cover"
-                                priority
-                                sizes="100vw"
-                            />
-
-                            {/* Indicateurs de position */}
-                            <div className="absolute top-4 left-4 z-50 bg-black/70 text-white text-xs py-1.5 px-3 rounded-full">
-                                {selectedImage.image_paths.length > 1 ? (
-                                    <>{selectedImageIndex + 1} / {selectedImage.image_paths.length}</>
-                                ) : (
-                                    <>{filteredItems.findIndex(item => item.id === selectedImage.id) + 1} / {filteredItems.length}</>
-                                )}
-                            </div>
-
-                            {/* Miniatures des images de l'archive en cours */}
-                            {selectedImage.image_paths.length > 1 && (
-                                <div className="absolute bottom-20 left-0 right-0 flex justify-center gap-2 px-4">
-                                    {selectedImage.image_paths.map((path, index) => (
-                                        <button
-                                            key={index}
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setSelectedImageIndex(index);
-                                            }}
-                                            className={cn(
-                                                "w-12 h-12 rounded-md overflow-hidden border-2 transition-all",
-                                                selectedImageIndex === index 
-                                                    ? "border-white scale-110" 
-                                                    : "border-transparent opacity-70 hover:opacity-100"
-                                            )}
+                                <div className="relative aspect-[4/5] md:aspect-[16/9] w-full">
+                                    <AnimatePresence mode="wait">
+                                        <motion.div
+                                            key={currentIndex}
+                                            initial={{ opacity: 0, x: 100 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            exit={{ opacity: 0, x: -100 }}
+                                            transition={{ duration: 0.4, ease: [0.215, 0.61, 0.355, 1] }}
+                                            className="absolute inset-0"
                                         >
-                                            <div className="relative w-full h-full">
+                                            <div className="relative w-full h-full rounded-2xl overflow-hidden cursor-pointer shadow-xl"
+                                                onClick={() => setSelectedImage(filteredItems[currentIndex])}>
                                                 <Image
-                                                    src={getImageUrl(path)}
-                                                    alt={`${selectedImage.title} - Image ${index + 1}`}
+                                                    src={getImageUrl(filteredItems[currentIndex].image_paths[0])}
+                                                    alt={filteredItems[currentIndex].title}
                                                     fill
                                                     className="object-cover"
+                                                    sizes="100vw"
+                                                    priority
+                                                    quality={95}
                                                 />
+                                                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent">
+                                                    <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8 md:p-10 text-white">
+                                                        <h3 className="text-2xl sm:text-3xl font-medium mb-3 tracking-wide">{filteredItems[currentIndex].title}</h3>
+                                                        <p className="text-sm sm:text-base opacity-90 mb-4 line-clamp-3">{filteredItems[currentIndex].description}</p>
+                                                        <div className="flex items-center gap-2 text-sm opacity-75">
+                                                            <Calendar className="w-4 h-4" />
+                                                            {format(new Date(filteredItems[currentIndex].date), 'd MMMM yyyy', { locale: fr })}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {/* Bordure intérieure avec effet de brillance */}
+                                                <div className="absolute inset-[10px] rounded-xl border border-white/10 
+                                                    hover:border-white/30 transition-all duration-700 ease-out z-40" />
                                             </div>
-                                        </button>
-                                    ))}
+                                        </motion.div>
+                                    </AnimatePresence>
                                 </div>
-                            )}
-
-                            {/* Bouton de fermeture */}
-                            <button
-                                onClick={() => setSelectedImage(null)}
-                                className="absolute top-3 right-3 sm:top-4 sm:right-4 z-50 p-3 rounded-full bg-black/70 text-white hover:bg-black/90 transition-colors"
-                                aria-label="Fermer"
-                            >
-                                <X className="w-5 h-5 sm:w-6 sm:h-6" />
-                            </button>
-
-                            {/* Informations - simplifié et plus compact sur mobile */}
-                            <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 md:p-8 bg-gradient-to-t from-black/90 via-black/70 to-transparent">
-                                <motion.div 
-                                    className="space-y-1 sm:space-y-2"
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ duration: 0.3, delay: 0.2 }}
+                                
+                                {/* Navigation buttons */}
+                                <button
+                                    onClick={goToPrevious}
+                                    className="absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 z-10 p-3 sm:p-4 rounded-full 
+                                        bg-white text-zinc-900
+                                        hover:bg-zinc-100
+                                        transition-colors duration-200
+                                        shadow-lg"
+                                    aria-label="Image précédente"
                                 >
-                                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2">
-                                        <h2 className="text-xl sm:text-2xl font-medium text-white">
-                                            {selectedImage.title}
-                                        </h2>
-                                        <div className="flex items-center gap-1.5 text-white/75">
-                                            <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                                            <span className="text-xs sm:text-sm">
-                                                {format(new Date(selectedImage.date), 'd MMM yyyy', { locale: fr })}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <p className="text-white/90 text-sm sm:text-base line-clamp-3 sm:line-clamp-none">
-                                        {selectedImage.description}
-                                    </p>
-                                </motion.div>
+                                    <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+                                </button>
+                                <button
+                                    onClick={goToNext}
+                                    className="absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 z-10 p-3 sm:p-4 rounded-full 
+                                        bg-white text-zinc-900
+                                        hover:bg-zinc-100
+                                        transition-colors duration-200
+                                        shadow-lg"
+                                    aria-label="Image suivante"
+                                >
+                                    <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
+                                </button>
                             </div>
-                        </motion.div>
+
+                            {/* Pagination indicators */}
+                            <div className="flex justify-center gap-2 mt-6">
+                                {filteredItems.slice(0, 7).map((_, idx) => (
+                                    <button
+                                        key={idx}
+                                        onClick={() => setCurrentIndex(idx)}
+                                        className={cn(
+                                            "rounded-full transition-all duration-300",
+                                            currentIndex === idx
+                                                ? "bg-primary w-6 h-2.5 shadow-sm shadow-primary/20"
+                                                : "bg-zinc-300 dark:bg-zinc-700 w-2.5 h-2.5 hover:bg-zinc-400"
+                                        )}
+                                        aria-label={`Aller à l'image ${idx + 1}`}
+                                    />
+                                ))}
+                                {filteredItems.length > 7 && (
+                                    <div className="w-2.5 h-2.5 rounded-full bg-zinc-300 dark:bg-zinc-700" />
+                                )}
+                            </div>
+                            
+                            {/* Image count indicator */}
+                            <div className="absolute top-5 right-5 z-10 
+                                bg-white text-zinc-900
+                                text-sm py-1.5 px-4 rounded-full
+                                shadow-lg">
+                                {currentIndex + 1} / {filteredItems.length}
+                            </div>
+                        </>
                     )}
-                </DialogContent>
-            </Dialog>
+                </div>
+
+                {/* Vignettes - version simplifiée pour mobile */}
+                {filteredItems.length > 1 && (
+                    <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 sm:gap-4 mt-4">
+                        {filteredItems.slice(0, 4).map((item, index) => (
+                            <div 
+                                key={item.id}
+                                className={cn(
+                                    "relative aspect-square rounded-xl overflow-hidden cursor-pointer",
+                                    "border-2 shadow-md",
+                                    "transition-all duration-300 hover:scale-105",
+                                    currentIndex === index 
+                                        ? "border-primary shadow-primary/20" 
+                                        : "border-transparent"
+                                )}
+                                onClick={() => setCurrentIndex(index)}
+                            >
+                                <Image
+                                    src={getImageUrl(item.image_paths[0])}
+                                    alt={item.title}
+                                    fill
+                                    className="object-cover"
+                                    sizes="(max-width: 640px) 25vw, (max-width: 768px) 25vw, 16vw"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300" />
+                            </div>
+                        ))}
+                        {filteredItems.length > 4 && (
+                            <div 
+                                className="relative aspect-square rounded-xl overflow-hidden cursor-pointer bg-zinc-100 dark:bg-zinc-800 
+                                    flex items-center justify-center shadow-md hover:shadow-lg hover:scale-105 transition-all duration-300
+                                    border border-zinc-200 dark:border-zinc-700"
+                                onClick={() => setSelectedImage(filteredItems[0])}
+                            >
+                                <div className="text-center">
+                                    <p className="text-sm font-medium">+{filteredItems.length - 4}</p>
+                                    <p className="text-xs mt-1">Voir tout</p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Modal de visualisation - adapté pour mobile */}
+                <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
+                    <DialogContent className="max-w-full sm:max-w-xl md:max-w-3xl lg:max-w-5xl p-0 overflow-hidden bg-transparent border-none mx-2 sm:mx-4">
+                        {selectedImage && (
+                            <motion.div 
+                                className="relative aspect-square sm:aspect-[3/2] rounded-2xl overflow-hidden bg-black"
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.95 }}
+                                transition={{ duration: 0.3 }}
+                            >
+                                {/* Navigation buttons in modal */}
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSelectedImageIndex((prev) => 
+                                            prev > 0 ? prev - 1 : selectedImage.image_paths.length - 1
+                                        );
+                                    }}
+                                    className="absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 z-50 p-3 sm:p-4 rounded-full 
+                                        bg-black text-white hover:bg-zinc-900
+                                        transition-colors duration-200"
+                                    aria-label="Image précédente"
+                                >
+                                    <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+                                </button>
+
+                                {/* Close button */}
+                                <button
+                                    onClick={() => setSelectedImage(null)}
+                                    className="absolute top-5 right-5 z-50 p-3 rounded-full 
+                                        bg-black text-white hover:bg-zinc-900
+                                        transition-colors duration-200"
+                                    aria-label="Fermer"
+                                >
+                                    <X className="w-5 h-5 sm:w-6 sm:h-6" />
+                                </button>
+
+                                {/* Image info */}
+                                <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8 bg-gradient-to-t from-black to-transparent">
+                                    <motion.div 
+                                        className="space-y-2 sm:space-y-3"
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ duration: 0.3, delay: 0.2 }}
+                                    >
+                                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
+                                            <h2 className="text-xl sm:text-2xl md:text-3xl font-medium text-white">
+                                                {selectedImage.title}
+                                            </h2>
+                                            <div className="flex items-center gap-1.5 text-white/90 bg-black/50 px-3 py-1.5 rounded-full self-start">
+                                                <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                                                <span className="text-xs sm:text-sm">
+                                                    {format(new Date(selectedImage.date), 'd MMM yyyy', { locale: fr })}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <p className="text-white/90 text-sm sm:text-base max-w-3xl">
+                                            {selectedImage.description}
+                                        </p>
+                                    </motion.div>
+                                </div>
+                            </motion.div>
+                        )}
+                    </DialogContent>
+                </Dialog>
+            </div>
         </div>
     )
 } 

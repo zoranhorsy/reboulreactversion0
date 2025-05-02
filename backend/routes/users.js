@@ -172,16 +172,44 @@ router.get('/favorites', authMiddleware, async (req, res) => {
             });
         }
 
-        const { rows } = await pool.query(`
-            SELECT p.*, f.created_at as favorited_at
+        // Récupérer les favoris des produits normaux
+        const regularProducts = await pool.query(`
+            SELECT 
+                f.id as favorite_id,
+                f.is_corner_product,
+                f.created_at as favorited_at,
+                p.*
             FROM favorites f
             JOIN products p ON f.product_id = p.id
-            WHERE f.user_id = $1
-            ORDER BY f.created_at DESC
+            WHERE f.user_id = $1 AND f.is_corner_product = false
         `, [userId]);
 
-        console.log('Favoris trouvés:', rows.length);
-        res.json(rows);
+        // Récupérer les favoris des produits The Corner
+        const cornerProducts = await pool.query(`
+            SELECT 
+                f.id as favorite_id,
+                f.is_corner_product,
+                f.created_at as favorited_at,
+                cp.*
+            FROM favorites f
+            JOIN corner_products cp ON f.corner_product_id = cp.id
+            WHERE f.user_id = $1 AND f.is_corner_product = true
+        `, [userId]);
+
+        // Combiner les résultats
+        const allProducts = [
+            ...regularProducts.rows.map(row => ({
+                ...row,
+                is_corner_product: false
+            })),
+            ...cornerProducts.rows.map(row => ({
+                ...row,
+                is_corner_product: true
+            }))
+        ].sort((a, b) => new Date(b.favorited_at).getTime() - new Date(a.favorited_at).getTime());
+
+        console.log('Favoris trouvés:', allProducts.length);
+        res.json(allProducts);
     } catch (error) {
         console.error('Erreur détaillée lors de la récupération des favoris:', error);
         res.status(500).json({ 
@@ -215,12 +243,13 @@ router.post('/favorites', authMiddleware, async (req, res) => {
         console.log('User:', req.user);
         console.log('Body:', req.body);
         
-        const { product_id } = req.body;
+        const { product_id, corner_product_id, is_corner_product } = req.body;
         const userId = req.user.id;
 
-        if (!product_id) {
-            console.log('Erreur: product_id manquant');
-            return res.status(400).json({ message: 'product_id est requis' });
+        // Vérifier qu'au moins un ID est fourni
+        if (!product_id && !corner_product_id) {
+            console.log('Erreur: aucun ID de produit fourni');
+            return res.status(400).json({ message: 'Un ID de produit est requis' });
         }
 
         if (!userId) {
@@ -228,13 +257,56 @@ router.post('/favorites', authMiddleware, async (req, res) => {
             return res.status(400).json({ message: 'Utilisateur non authentifié' });
         }
 
+        // Vérifier la cohérence des données
+        if (is_corner_product && !corner_product_id) {
+            return res.status(400).json({ message: 'corner_product_id est requis pour un produit The Corner' });
+        }
+        if (!is_corner_product && !product_id) {
+            return res.status(400).json({ message: 'product_id est requis pour un produit normal' });
+        }
+
+        // Vérifier si le produit existe dans la bonne table
+        const productExists = await pool.query(
+            is_corner_product 
+                ? 'SELECT id FROM corner_products WHERE id = $1'
+                : 'SELECT id FROM products WHERE id = $1',
+            [is_corner_product ? corner_product_id : product_id]
+        );
+
+        if (productExists.rows.length === 0) {
+            return res.status(404).json({ 
+                message: is_corner_product 
+                    ? 'Produit The Corner non trouvé' 
+                    : 'Produit non trouvé'
+            });
+        }
+
+        // Insérer dans la table favorites avec la nouvelle structure
         const { rows } = await pool.query(
-            'INSERT INTO favorites (user_id, product_id) VALUES ($1, $2) RETURNING *',
-            [userId, product_id]
+            `INSERT INTO favorites (
+                user_id, 
+                product_id, 
+                corner_product_id, 
+                is_corner_product
+            ) VALUES (
+                $1, 
+                $2,
+                $3,
+                $4
+            ) RETURNING *`,
+            [
+                userId,
+                is_corner_product ? null : product_id,
+                is_corner_product ? corner_product_id : null,
+                is_corner_product || false
+            ]
         );
 
         console.log('Résultat de l\'insertion:', rows[0]);
-        res.status(201).json(rows[0]);
+        res.status(201).json({
+            success: true,
+            data: rows[0]
+        });
     } catch (error) {
         console.error('Erreur détaillée lors de l\'ajout aux favoris:', error);
         if (error.code === '23505') {
@@ -246,21 +318,36 @@ router.post('/favorites', authMiddleware, async (req, res) => {
     }
 });
 
-router.delete('/favorites/:productId', authMiddleware, async (req, res) => {
+router.delete('/favorites', authMiddleware, async (req, res) => {
     try {
-        const { productId } = req.params;
+        const { product_id, is_corner_product } = req.query;
         const userId = req.user.id;
 
+        if (!product_id) {
+            return res.status(400).json({ message: 'product_id est requis' });
+        }
+
+        // Supprimer le favori en tenant compte du type de produit
         const { rows } = await pool.query(
-            'DELETE FROM favorites WHERE user_id = $1 AND product_id = $2 RETURNING *',
-            [userId, productId]
+            `DELETE FROM favorites 
+            WHERE user_id = $1 
+            AND (
+                (is_corner_product = true AND corner_product_id = $2) OR
+                (is_corner_product = false AND product_id = $2)
+            )
+            RETURNING *`,
+            [userId, product_id]
         );
 
         if (rows.length === 0) {
             return res.status(404).json({ message: 'Favori non trouvé' });
         }
 
-        res.json({ message: 'Produit retiré des favoris' });
+        res.json({ 
+            success: true,
+            message: 'Produit retiré des favoris',
+            data: rows[0]
+        });
     } catch (error) {
         console.error('Erreur lors de la suppression des favoris:', error);
         res.status(500).json({ message: 'Erreur serveur' });

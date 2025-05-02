@@ -4,7 +4,7 @@ import React, { useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
 
-export function Loader() {
+export function LoaderComponent() {
     const containerRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
@@ -43,8 +43,8 @@ export function Loader() {
                 <Image
                     src="/images/logo_black.png"
                     alt="Reboul Logo"
-                    layout="fill"
-                    objectFit="contain"
+                    fill
+                    className="object-contain"
                 />
             </motion.div>
             <motion.div

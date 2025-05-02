@@ -3,28 +3,28 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Edit, Trash2, ArrowUpDown, Eye, Package, Star, Calendar, ImageOff } from "lucide-react"
+import { Edit, Trash2, ArrowUpDown, Eye, Package, CheckCircle, XCircle, ImageOff, X, Save } from "lucide-react"
 import { type Product, type Variant } from "@/lib/types/product"
 import { type Category } from "@/lib/types/category"
 import Link from "next/link"
-import { formatPrice, convertToCloudinaryUrl } from "@/lib/utils"
+import { formatPrice } from "@/lib/utils"
 import {
     Tooltip,
     TooltipContent,
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { useState, useEffect } from "react"
-import { CloudinaryImage } from "@/components/ui/CloudinaryImage"
-import { isCloudinaryUrl } from "@/config/cloudinary"
-import { fixCloudinaryUrl } from "@/lib/cloudinary"
-import { ProductImage } from "@/lib/types/product-image"
 import {
-    Card,
-    CardContent,
-} from "@/components/ui/card"
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog"
+import { useState, useEffect } from "react"
 import Image from "next/image"
+import VariantManager from "./VariantManager"
 
 interface ProductTableProps {
     filteredProducts: Product[]
@@ -48,6 +48,16 @@ export function ProductTable({
     handleToggleActive,
 }: ProductTableProps) {
     const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({})
+    const [activeProductVariants, setActiveProductVariants] = useState<Product | null>(null)
+    const [editedVariants, setEditedVariants] = useState<Variant[]>([])
+    const [isSaving, setSaving] = useState(false)
+
+    // Met à jour les variants modifiés lorsqu'un nouveau produit est sélectionné
+    useEffect(() => {
+        if (activeProductVariants) {
+            setEditedVariants(activeProductVariants.variants ? [...activeProductVariants.variants] : [])
+        }
+    }, [activeProductVariants])
 
     const getSortIcon = (key: keyof Product) => {
         if (!sortConfig || sortConfig.key !== key) {
@@ -66,10 +76,6 @@ export function ProductTable({
         </div>
     )
 
-    const isSortableKey = (key: string): key is keyof Product => {
-        return ['name', 'price', 'stock', 'category_id', 'brand_id', 'store_type', 'store_reference', 'created_at'].includes(key);
-    }
-
     const getCategoryName = (categoryId: number) => {
         const category = categories.find(cat => cat.id === categoryId)
         return category ? category.name : "Non catégorisé"
@@ -85,23 +91,23 @@ export function ProductTable({
 
         if (totalStock === 0) {
             return (
-                <Badge variant="destructive" className="w-full justify-center">
+                <Badge variant="destructive" className="whitespace-nowrap">
                     <Package className="w-3 h-3 mr-1" />
                     Rupture
                 </Badge>
             )
         } else if (totalStock < 5) {
             return (
-                <Badge variant="secondary" className="w-full justify-center bg-yellow-500/15 text-yellow-500">
+                <Badge variant="secondary" className="whitespace-nowrap bg-yellow-500/15 text-yellow-500">
                     <Package className="w-3 h-3 mr-1" />
-                    Stock faible
+                    Stock faible ({totalStock})
                 </Badge>
             )
         } else {
             return (
-                <Badge variant="secondary" className="w-full justify-center bg-green-500/15 text-green-500">
+                <Badge variant="secondary" className="whitespace-nowrap bg-green-500/15 text-green-500">
                     <Package className="w-3 h-3 mr-1" />
-                    En stock
+                    En stock ({totalStock})
                 </Badge>
             )
         }
@@ -110,24 +116,16 @@ export function ProductTable({
     const getStoreTypeBadge = (type: string) => {
         switch (type) {
             case "adult":
-                return <Badge variant="secondary" className="bg-blue-500/15 text-blue-500">Adulte</Badge>
+                return <Badge variant="outline" className="text-blue-500">Adulte</Badge>
             case "kids":
-                return <Badge variant="secondary" className="bg-pink-500/15 text-pink-500">Enfant</Badge>
+                return <Badge variant="outline" className="text-pink-500">Enfant</Badge>
             case "sneakers":
-                return <Badge variant="secondary" className="bg-purple-500/15 text-purple-500">Sneakers</Badge>
+                return <Badge variant="outline" className="text-purple-500">Sneakers</Badge>
             case "cpcompany":
-                return <Badge variant="secondary" className="bg-orange-500/15 text-orange-500">C.P COMPANY</Badge>
+                return <Badge variant="outline" className="text-orange-500">C.P COMPANY</Badge>
             default:
-                return <Badge variant="secondary">Inconnu</Badge>
+                return <Badge variant="outline">Inconnu</Badge>
         }
-    }
-
-    const formatDate = (date: string) => {
-        return new Date(date).toLocaleDateString("fr-FR", {
-            year: "numeric",
-            month: "short",
-            day: "numeric"
-        })
     }
 
     const getImageUrl = (product: Product): string => {
@@ -140,7 +138,6 @@ export function ProductTable({
                 }
             }
         }
-        // S'assurer de retourner une URL valide même si l'image est vide
         return (product.image_url && product.image_url.trim() !== '') || 
                (product.image && product.image.trim() !== '') 
                ? (product.image_url || product.image) 
@@ -154,279 +151,405 @@ export function ProductTable({
         }));
     }
 
-    // Fonction pour calculer le stock total d'un produit
-    const getTotalStock = (product: Product): number => {
-        if (product.variants && product.variants.length > 0) {
-            return product.variants.reduce((total, variant) => total + (Number(variant.stock) || 0), 0);
+    const handleVariantsChange = (newVariants: Variant[]) => {
+        setEditedVariants(newVariants);
+    };
+
+    const handleSaveVariants = async () => {
+        if (!activeProductVariants) return;
+        
+        setSaving(true);
+        try {
+            // Simuler une opération d'enregistrement
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Mise à jour du produit (à connecter à votre API)
+            console.log("Variants mis à jour:", editedVariants);
+            
+            // Mettre à jour le produit dans l'état local
+            const updatedProduct = {
+                ...activeProductVariants,
+                variants: editedVariants
+            };
+            
+            // Fermer la modal
+            setActiveProductVariants(null);
+            
+            // Afficher une confirmation de succès (à implémenter)
+            alert("Variantes mises à jour avec succès!");
+        } catch (error) {
+            console.error("Erreur lors de la mise à jour des variantes:", error);
+            alert("Une erreur est survenue lors de la mise à jour des variantes.");
+        } finally {
+            setSaving(false);
         }
-        return 0; // Si pas de variants, pas de stock
     }
 
-    // Fonction pour afficher le tableau des stocks par variant
-    const getStockDetailsTable = (variants: Variant[]): JSX.Element => {
-        if (!variants || variants.length === 0) return <></>;
-
-        // Trier les variants pour un affichage plus cohérent
-        const sortedVariants = [...variants].sort((a, b) => {
-            // Vérifier si les propriétés existent avant de les comparer
-            const colorA = a.color || '';
-            const colorB = b.color || '';
-            const sizeA = a.size || '';
-            const sizeB = b.size || '';
-            
-            return colorA.localeCompare(colorB) || sizeA.localeCompare(sizeB);
+    // Ajouter une fonction pour formater la date
+    const formatDate = (dateString: string) => {
+        if (!dateString) return "N/A";
+        const date = new Date(dateString);
+        return date.toLocaleDateString('fr-FR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
         });
+    };
+
+    // Ajouter une fonction pour calculer la marge
+    const calculateMargin = (price: number, cost: number) => {
+        if (!cost || cost <= 0) return "N/A";
+        const margin = ((price - cost) / price) * 100;
+        return `${margin.toFixed(1)}%`;
+    };
+
+    // Tronquer la description pour qu'elle ne soit pas trop longue
+    const truncateDescription = (description: string, length: number = 60) => {
+        if (!description) return "";
+        return description.length > length 
+            ? description.substring(0, length) + "..." 
+            : description;
+    };
+
+    // Formatter les tags ou caractéristiques pour un affichage compact
+    const formatItemsList = (items: string[] | undefined, limit: number = 3) => {
+        if (!items || items.length === 0) return null;
+        
+        const visibleItems = items.slice(0, limit);
+        const remainingCount = items.length - limit;
         
         return (
-            <div className="mt-1.5 bg-white/50 rounded-lg border border-border/40 overflow-hidden">
-                <div className="text-[10px] font-medium bg-muted/30 p-1 grid grid-cols-3">
-                    <div>Couleur</div>
-                    <div>Taille</div>
-                    <div className="text-right">Stock</div>
-                </div>
-                <div className="max-h-28 overflow-y-auto">
-                    {sortedVariants.map((variant, idx) => (
-                        <div 
-                            key={`${variant.color}-${variant.size}-${idx}`} 
-                            className="text-[9px] p-1 grid grid-cols-3 border-t border-border/20 first:border-0"
-                        >
-                            <div className="truncate">{variant.color}</div>
-                            <div className="truncate">{variant.size}</div>
-                            <div className="text-right font-medium">
-                                {variant.stock > 0 ? (
-                                    <span className={variant.stock < 3 ? "text-yellow-500" : "text-green-500"}>
-                                        {variant.stock}
-                                    </span>
-                                ) : (
-                                    <span className="text-red-500">0</span>
-                                )}
-                            </div>
-                        </div>
-                    ))}
-                </div>
+            <div className="flex flex-wrap gap-1 mt-1">
+                {visibleItems.map((item, idx) => (
+                    <Badge key={idx} variant="outline" className="text-[10px] px-1 py-0 h-4">
+                        {item}
+                    </Badge>
+                ))}
+                {remainingCount > 0 && (
+                    <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 bg-muted/20">
+                        +{remainingCount}
+                    </Badge>
+                )}
             </div>
         );
     };
 
     return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
-            {filteredProducts.map((product) => (
-                <Card key={product.id} className="overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200">
-                    <CardContent className="p-3 sm:p-4 space-y-3 sm:space-y-4">
-                        {/* En-tête avec image et infos principales */}
-                        <div className="flex gap-2 sm:gap-3">
-                            <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-md overflow-hidden flex-shrink-0 bg-muted">
-                                {imageErrors[product.id] ? (
-                                    <div className="w-full h-full flex items-center justify-center">
-                                        <ImageOff className="w-5 h-5 sm:w-6 sm:h-6 text-muted-foreground" />
-                                    </div>
-                                ) : (
-                                    <Link href={`/produit/${product.id}`} target="_blank">
-                                        <Image
-                                            src={getImageUrl(product) || "/placeholder.png"}
-                                            alt={product.name}
-                                            width={96}
-                                            height={96}
-                                            className="object-cover w-full h-full"
-                                            onError={() => handleImageError(product.id.toString())}
-                                        />
-                                    </Link>
-                                )}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <div className="flex justify-between items-start gap-1 sm:gap-2">
-                                    <div className="space-y-0.5 sm:space-y-1">
-                                        <Link 
-                                            href={`/produit/${product.id}`} 
-                                            target="_blank"
-                                            className="font-medium text-xs sm:text-sm hover:underline line-clamp-2"
-                                        >
-                                            {product.name}
+        <div className="border rounded-md overflow-hidden">
+            <Table className="w-full">
+                <TableHeader>
+                    <TableRow className="bg-muted/50">
+                        <TableHead className="w-[60px]">Image</TableHead>
+                        <TableHead onClick={() => handleSort('name')} className="cursor-pointer">
+                            {renderSortableHeader('name', 'Produit')}
+                        </TableHead>
+                        <TableHead onClick={() => handleSort('store_reference')} className="w-[120px] cursor-pointer hidden sm:table-cell">
+                            {renderSortableHeader('store_reference', 'Référence')}
+                        </TableHead>
+                        <TableHead className="hidden md:table-cell" onClick={() => handleSort('store_type')}>
+                            {renderSortableHeader('store_type', 'Type')}
+                        </TableHead>
+                        <TableHead className="hidden xl:table-cell">Tags</TableHead>
+                        <TableHead onClick={() => handleSort('price')} className="cursor-pointer w-[90px] text-right">
+                            {renderSortableHeader('price', 'Prix')}
+                        </TableHead>
+                        <TableHead className="w-[100px] hidden md:table-cell">Catégorie</TableHead>
+                        <TableHead className="w-[100px] hidden md:table-cell">Marque</TableHead>
+                        <TableHead className="w-[90px] text-center">Stock</TableHead>
+                        <TableHead className="w-[80px] text-center hidden md:table-cell">Statut</TableHead>
+                        <TableHead className="w-[100px] text-right">Actions</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {filteredProducts.length > 0 ? filteredProducts.map((product) => (
+                        <TableRow key={product.id} className="group hover:bg-muted/30 transition-colors">
+                            <TableCell className="align-middle p-2">
+                                <div className="w-[50px] h-[50px] relative rounded-md overflow-hidden border border-border">
+                                    {imageErrors[product.id] ? (
+                                        <div className="w-full h-full flex items-center justify-center bg-muted">
+                                            <ImageOff className="w-4 h-4 text-muted-foreground" />
+                                        </div>
+                                    ) : (
+                                        <Link href={`/produit/${product.id}`} target="_blank">
+                                            <Image
+                                                src={getImageUrl(product)}
+                                                alt={product.name}
+                                                width={50}
+                                                height={50}
+                                                className="object-cover w-full h-full"
+                                                onError={() => handleImageError(product.id.toString())}
+                                            />
                                         </Link>
-                                        <p className="text-[10px] sm:text-xs text-muted-foreground line-clamp-2">
-                                            {product.description}
-                                        </p>
+                                    )}
+                                </div>
+                            </TableCell>
+                            <TableCell className="align-middle font-medium p-2">
+                                <div className="flex flex-col">
+                                    <Link href={`/produit/${product.id}`} target="_blank" className="hover:text-primary hover:underline transition-colors font-medium">
+                                        {product.name}
+                                    </Link>
+                                    
+                                    {product.description && (
+                                        <div className="text-xs text-muted-foreground mt-1 line-clamp-1">
+                                            {truncateDescription(product.description)}
+                                        </div>
+                                    )}
+                                    
+                                    <div className="flex flex-wrap gap-1 mt-1.5">
+                                        {product.featured && (
+                                            <Badge className="text-[10px] px-1 h-4 bg-amber-500/15 text-amber-500 whitespace-nowrap">
+                                                Mis en avant
+                                            </Badge>
+                                        )}
+                                        {product.new && (
+                                            <Badge className="text-[10px] px-1 h-4 bg-blue-500/15 text-blue-500 whitespace-nowrap">
+                                                Nouveau
+                                            </Badge>
+                                        )}
                                     </div>
-                                    <div className="text-xs sm:text-sm font-medium whitespace-nowrap">
-                                        {product.price.toLocaleString('fr-FR', {
+                                </div>
+                            </TableCell>
+                            <TableCell className="align-middle hidden sm:table-cell p-2">
+                                <div className="font-mono text-xs">
+                                    {product.store_reference || "—"}
+                                </div>
+                                {product.sku && (
+                                    <div className="font-mono text-[10px] text-muted-foreground mt-1">
+                                        SKU: {product.sku}
+                                    </div>
+                                )}
+                            </TableCell>
+                            <TableCell className="align-middle text-sm hidden md:table-cell">
+                                {getStoreTypeBadge(product.store_type)}
+                            </TableCell>
+                            <TableCell className="align-middle hidden xl:table-cell">
+                                <div className="space-y-2">
+                                    {product.tags && product.tags.length > 0 && (
+                                        <div>
+                                            <span className="text-[10px] text-muted-foreground font-medium">Tags:</span>
+                                            {formatItemsList(product.tags)}
+                                        </div>
+                                    )}
+                                    {product.details && product.details.length > 0 && (
+                                        <div>
+                                            <span className="text-[10px] text-muted-foreground font-medium">Caractéristiques:</span>
+                                            {formatItemsList(product.details)}
+                                        </div>
+                                    )}
+                                </div>
+                            </TableCell>
+                            <TableCell className="align-middle text-right p-2">
+                                <div className="font-medium">
+                                    {product.price.toLocaleString('fr-FR', {
+                                        style: 'currency',
+                                        currency: 'EUR'
+                                    })}
+                                </div>
+                                {product.old_price && product.old_price > product.price && (
+                                    <div className="text-xs text-muted-foreground line-through">
+                                        {product.old_price.toLocaleString('fr-FR', {
                                             style: 'currency',
                                             currency: 'EUR'
                                         })}
                                     </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Informations détaillées */}
-                        <div className="grid grid-cols-2 gap-2 sm:gap-3 text-xs sm:text-sm">
-                            <div>
-                                <span className="text-muted-foreground text-[10px] sm:text-xs">Catégorie</span>
-                                <p className="truncate">{getCategoryName(product.category_id)}</p>
-                            </div>
-                            <div>
-                                <span className="text-muted-foreground text-[10px] sm:text-xs">Marque</span>
-                                <p className="truncate">{getBrandName(product.brand_id)}</p>
-                            </div>
-                            <div>
-                                <span className="text-muted-foreground text-[10px] sm:text-xs">Magasin</span>
-                                <div>{getStoreTypeBadge(product.store_type)}</div>
-                            </div>
-                            <div>
-                                <span className="text-muted-foreground text-[10px] sm:text-xs">Stock total</span>
-                                <div className="flex items-center gap-1">
-                                    {getStockStatus(product)}
-                                    <span className="font-medium">
-                                        {getTotalStock(product)}
-                                    </span>
-                                </div>
-                            </div>
-                            <div>
-                                <span className="text-muted-foreground text-[10px] sm:text-xs">SKU</span>
-                                <p className="truncate">{product.sku || 'N/A'}</p>
-                            </div>
-                            <div>
-                                <span className="text-muted-foreground text-[10px] sm:text-xs">Réf. Magasin</span>
-                                <p className="truncate">{product.store_reference || 'N/A'}</p>
-                            </div>
-                        </div>
-
-                        {/* Caractéristiques et tags */}
-                        <div className="flex flex-col gap-2 sm:gap-3 text-xs sm:text-sm mt-2 border-t border-border/20 pt-2">
-                            {/* Caractéristiques */}
-                            {product.details && product.details.length > 0 && (
-                                <div>
-                                    <span className="text-muted-foreground text-[10px] sm:text-xs">Caractéristiques</span>
-                                    <div className="flex flex-wrap gap-1 mt-1">
-                                        {product.details.map((detail, idx) => (
-                                            <Badge key={`detail-${idx}`} variant="outline" className="text-[9px] bg-white/60 px-1.5 py-0 h-4">
-                                                {detail}
-                                            </Badge>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-                            
-                            {/* Tags */}
-                            {product.tags && product.tags.length > 0 && (
-                                <div>
-                                    <span className="text-muted-foreground text-[10px] sm:text-xs">Tags</span>
-                                    <div className="flex flex-wrap gap-1 mt-1">
-                                        {product.tags.map((tag, idx) => (
-                                            <Badge key={`tag-${idx}`} variant="secondary" className="text-[9px] bg-blue-100/50 text-blue-600 px-1.5 py-0 h-4">
-                                                {tag}
-                                            </Badge>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Résumé des variantes avec stock détaillé */}
-                        {product.variants && product.variants.length > 0 && (
-                            <div className="space-y-1.5 sm:space-y-2">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-muted-foreground text-[10px] sm:text-xs">Détails des variantes et stocks</span>
-                                    <span className="text-[10px] font-medium">
-                                        {product.variants.length} variante{product.variants.length !== 1 ? 's' : ''}
-                                    </span>
-                                </div>
+                                )}
                                 
-                                {/* Tableau des stocks par variant */}
-                                {getStockDetailsTable(product.variants)}
-                            </div>
-                        )}
-
-                        {/* Badges et statuts */}
-                        <div className="flex flex-wrap gap-1 sm:gap-2">
-                            {product.featured && (
-                                <Badge variant="secondary" className="bg-yellow-500/15 text-yellow-500 text-[9px] sm:text-[10px] px-1.5 py-0 h-4 sm:h-5">
-                                    <Star className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5 sm:mr-1" />
-                                    Mis en avant
+                                {/* La propriété cost_price n'existe pas dans le type Product */}
+                                
+                            </TableCell>
+                            <TableCell className="align-middle text-sm hidden md:table-cell p-2">
+                                <Badge variant="outline" className="whitespace-nowrap font-normal">
+                                    {getCategoryName(product.category_id)}
                                 </Badge>
-                            )}
-                            {product.new && (
-                                <Badge variant="secondary" className="bg-green-500/15 text-green-500 text-[9px] sm:text-[10px] px-1.5 py-0 h-4 sm:h-5">
-                                    Nouveau
+                            </TableCell>
+                            <TableCell className="align-middle text-sm hidden md:table-cell p-2">
+                                <Badge variant="outline" className="bg-blue-500/5 text-blue-600 border-blue-200 whitespace-nowrap font-normal">
+                                    {getBrandName(product.brand_id)}
                                 </Badge>
-                            )}
-                            {product.active ? (
-                                <Badge variant="secondary" className="bg-blue-500/15 text-blue-500 text-[9px] sm:text-[10px] px-1.5 py-0 h-4 sm:h-5">
-                                    Actif
-                                </Badge>
-                            ) : (
-                                <Badge variant="secondary" className="bg-red-500/15 text-red-500 text-[9px] sm:text-[10px] px-1.5 py-0 h-4 sm:h-5">
-                                    Non publié
-                                </Badge>
-                            )}
-                            {product.old_price && product.old_price > product.price && (
-                                <Badge variant="secondary" className="bg-purple-500/15 text-purple-500 text-[9px] sm:text-[10px] px-1.5 py-0 h-4 sm:h-5">
-                                    Promo
-                                </Badge>
-                            )}
-                            {product._actiontype === "delete" && (
-                                <Badge variant="secondary" className="bg-red-500/15 text-red-500 text-[9px] sm:text-[10px] px-1.5 py-0 h-4 sm:h-5">
-                                    Supprimé
-                                </Badge>
-                            )}
-                            {product._actiontype === "archive" && (
-                                <Badge variant="secondary" className="bg-orange-500/15 text-orange-500 text-[9px] sm:text-[10px] px-1.5 py-0 h-4 sm:h-5">
-                                    Archivé
-                                </Badge>
-                            )}
-                        </div>
-
-                        {/* Actions */}
-                        <div className="flex gap-1 sm:gap-2 pt-1 sm:pt-2">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="flex-1 h-7 sm:h-8 text-[10px] sm:text-xs"
-                                onClick={() => handleEditProduct(product)}
-                            >
-                                <Edit className="h-3 w-3 sm:h-4 sm:w-4 mr-0.5 sm:mr-1" />
-                                Éditer
-                            </Button>
-
-                            <Button
-                                variant={product.active ? "secondary" : "outline"}
-                                size="sm"
-                                className="flex-1 h-7 sm:h-8 text-[10px] sm:text-xs"
-                                onClick={() => handleToggleActive(product)}
-                            >
-                                {product.active ? "Désactiver" : "Activer"}
-                            </Button>
-
-                            <Button
-                                variant="destructive"
-                                size="sm"
-                                className="flex-1 h-7 sm:h-8 text-[10px] sm:text-xs"
-                                onClick={() => handleDeleteProduct(Number(product.id))}
-                            >
-                                <Trash2 className="h-3 w-3 sm:h-4 sm:w-4 mr-0.5 sm:mr-1" />
-                                Supprimer
-                            </Button>
-
-                            <Link 
-                                href={`/produit/${product.id}`}
-                                target="_blank"
-                            >
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-7 sm:h-8 w-7 sm:w-8 p-0"
+                            </TableCell>
+                            <TableCell className="align-middle text-center p-2">
+                                <Button 
+                                    variant="ghost" 
+                                    className="p-0 h-auto hover:bg-transparent"
+                                    onClick={() => setActiveProductVariants(product)}
                                 >
-                                    <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
+                                    {getStockStatus(product)}
                                 </Button>
-                            </Link>
+                                
+                                {/* La propriété stock_updated_at n'existe pas dans le type Product */}
+                                
+                            </TableCell>
+                            <TableCell className="align-middle text-center hidden md:table-cell p-2">
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <div>
+                                                {product.active ? (
+                                                    <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-200">
+                                                        <CheckCircle className="w-3 h-3 mr-1" />
+                                                        Actif
+                                                    </Badge>
+                                                ) : (
+                                                    <Badge variant="outline" className="bg-red-500/10 text-red-500 border-red-200">
+                                                        <XCircle className="w-3 h-3 mr-1" />
+                                                        Inactif
+                                                    </Badge>
+                                                )}
+                                            </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="top">
+                                            <p>Cliquez sur le bouton toggle pour {product.active ? "désactiver" : "activer"}</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            </TableCell>
+                            <TableCell className="align-middle p-2">
+                                <div className="flex justify-end items-center gap-1">
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-8 w-8"
+                                                    onClick={() => handleToggleActive(product)}
+                                                >
+                                                    {product.active ? <XCircle className="h-4 w-4 text-red-500" /> : <CheckCircle className="h-4 w-4 text-green-500" />}
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>{product.active ? "Désactiver" : "Activer"}</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                    
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-8 w-8"
+                                                    onClick={() => handleEditProduct(product)}
+                                                >
+                                                    <Edit className="h-4 w-4" />
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>Modifier</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Link href={`/produit/${product.id}`} target="_blank">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8"
+                                                    >
+                                                        <Eye className="h-4 w-4" />
+                                                    </Button>
+                                                </Link>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>Voir</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                                                    onClick={() => handleDeleteProduct(Number(product.id))}
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>Supprimer</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                </div>
+                            </TableCell>
+                        </TableRow>
+                    )) : (
+                        <TableRow>
+                            <TableCell colSpan={10} className="text-center h-24">
+                                <div className="flex flex-col items-center justify-center text-muted-foreground">
+                                    <Package className="h-6 w-6 mb-2 opacity-50" />
+                                    <p>Aucun produit trouvé</p>
+                                </div>
+                            </TableCell>
+                        </TableRow>
+                    )}
+                </TableBody>
+            </Table>
+
+            {/* Modal pour afficher et modifier les variantes avec VariantManager */}
+            <Dialog open={!!activeProductVariants} onOpenChange={(open) => !open && setActiveProductVariants(null)}>
+                <DialogContent className="sm:max-w-[800px] p-0 max-h-[90vh] overflow-hidden flex flex-col bg-zinc-900 text-white border-zinc-800">
+                    <DialogHeader className="p-4 border-b border-zinc-800">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <DialogTitle className="text-xl text-white">Gestion des variantes</DialogTitle>
+                                <DialogDescription className="mt-1 text-zinc-400">
+                                    {activeProductVariants?.name}
+                                </DialogDescription>
+                            </div>
+                            <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-8 w-8 absolute right-4 top-4 text-white hover:bg-zinc-800" 
+                                onClick={() => setActiveProductVariants(null)}
+                            >
+                                <X className="h-4 w-4" />
+                                <span className="sr-only">Fermer</span>
+                            </Button>
                         </div>
-                    </CardContent>
-                </Card>
-            ))}
-            {filteredProducts.length === 0 && (
-                <div className="col-span-full p-8 text-center">
-                    <p className="text-muted-foreground">Aucun produit trouvé</p>
-                </div>
-            )}
+                    </DialogHeader>
+                    
+                    <div className="p-4 overflow-y-auto flex-grow bg-zinc-900">
+                        {activeProductVariants && (
+                            <VariantManager 
+                                variants={editedVariants} 
+                                onChange={handleVariantsChange} 
+                            />
+                        )}
+                    </div>
+                    
+                    <DialogFooter className="p-4 border-t border-zinc-800 bg-zinc-900">
+                        <div className="flex justify-between w-full">
+                            <Button 
+                                variant="outline" 
+                                onClick={() => setActiveProductVariants(null)}
+                                className="border-zinc-700 hover:bg-zinc-800 hover:text-white text-zinc-300"
+                            >
+                                Annuler
+                            </Button>
+                            <Button 
+                                onClick={handleSaveVariants}
+                                disabled={isSaving}
+                                className="flex items-center bg-white text-black hover:bg-zinc-200"
+                            >
+                                {isSaving ? 'Enregistrement...' : (
+                                    <>
+                                        <Save className="h-4 w-4 mr-2" />
+                                        Enregistrer
+                                    </>
+                                )}
+                            </Button>
+                        </div>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }

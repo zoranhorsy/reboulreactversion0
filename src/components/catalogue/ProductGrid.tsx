@@ -7,6 +7,12 @@ import { ChevronLeft, ChevronRight, Grid, List } from "lucide-react"
 import type { Product } from "@/lib/api"
 import { cn } from "@/lib/utils"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Heart } from "lucide-react"
+import { Card, CardContent, CardFooter } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import Image from "next/image"
+import Link from "next/link"
+import { Pagination } from "@/components/ui/pagination"
 
 interface ProductGridProps {
   products: Product[]
@@ -36,9 +42,6 @@ const ProductGrid = memo(function ProductGrid({
   const [viewMode, setViewMode] = useState<"grid" | "list">(initialViewMode)
   const productsCount = Array.isArray(products) ? products.length : 0
   
-  // On mobile, calcul du nombre d'articles à afficher par ligne
-  const productsPerRow = viewMode === "grid" ? 2 : 1
-
   const handleViewModeChange = (mode: "grid" | "list") => {
     setViewMode(mode)
   }
@@ -48,9 +51,9 @@ const ProductGrid = memo(function ProductGrid({
       <div className="space-y-6">
         <div
           className={cn(
-            "grid gap-3 sm:gap-4 md:gap-6",
+            "grid gap-4 sm:gap-6",
             viewMode === "grid" 
-              ? "grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4" 
+              ? "grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4" 
               : "grid-cols-1"
           )}
           aria-live="polite"
@@ -91,11 +94,11 @@ const ProductGrid = memo(function ProductGrid({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Controls header */}
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-3">
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-3">
-          <div className="hidden sm:flex items-center gap-1 border rounded">
+          <div className="flex items-center gap-1 border rounded">
             <Button
               variant={viewMode === "grid" ? "secondary" : "ghost"}
               size="sm"
@@ -115,12 +118,12 @@ const ProductGrid = memo(function ProductGrid({
               <span className="sr-only">Affichage en liste</span>
             </Button>
           </div>
-          <p className="hidden sm:block text-xs sm:text-sm text-muted-foreground">
+          <p className="text-xs sm:text-sm text-muted-foreground">
             {totalProducts} article{totalProducts > 1 ? "s" : ""}
           </p>
         </div>
 
-        <div className="hidden sm:flex items-center gap-2">
+        <div className="flex items-center gap-2">
           <Select
             value={limit.toString()}
             onValueChange={(value) => _onFilterChange({ limit: value, page: "1" })}
@@ -156,10 +159,10 @@ const ProductGrid = memo(function ProductGrid({
       {/* Grille de produits */}
       <div
         className={cn(
-          "grid gap-3 sm:gap-4 md:gap-6",
+          "grid gap-4 sm:gap-6",
           viewMode === "grid" 
-            ? "grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4" 
-            : "grid-cols-1 gap-y-4"
+            ? "grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4" 
+            : "grid-cols-1 gap-y-6"
         )}
         aria-live="polite"
       >
@@ -170,88 +173,12 @@ const ProductGrid = memo(function ProductGrid({
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex flex-col items-center space-y-3 pt-6 sm:flex-row sm:justify-between sm:space-y-0 border-t">
-          <div className="flex items-center text-xs sm:text-sm text-muted-foreground">
-            <span>
-              Affichage <span className="font-medium text-foreground">{(page - 1) * limit + 1}</span>
-              {" "}-{" "}
-              <span className="font-medium text-foreground">
-                {Math.min(page * limit, totalProducts)}
-              </span>
-              {" "}sur{" "}
-              <span className="font-medium text-foreground">{totalProducts}</span>
-            </span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 w-8 p-0 sm:h-9 sm:w-9"
-              onClick={() => onPageChange(page - 1)}
-              disabled={page <= 1}
-            >
-              <ChevronLeft className="h-4 w-4" />
-              <span className="sr-only">Page précédente</span>
-            </Button>
-            <div className="flex items-center justify-center">
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                let pageNum: number
-                
-                // Logic to show relevant page numbers around current page
-                if (totalPages <= 5) {
-                  pageNum = i + 1
-                } else if (page <= 3) {
-                  pageNum = i + 1
-                } else if (page >= totalPages - 2) {
-                  pageNum = totalPages - 4 + i
-                } else {
-                  pageNum = page - 2 + i
-                }
-                
-                return (
-                  <Button
-                    key={pageNum}
-                    variant={page === pageNum ? "default" : "outline"}
-                    size="sm"
-                    className={cn(
-                      "h-8 w-8 p-0 sm:h-9 sm:w-9",
-                      "mx-0.5",
-                      page === pageNum && "pointer-events-none"
-                    )}
-                    onClick={() => onPageChange(pageNum)}
-                  >
-                    {pageNum}
-                    <span className="sr-only">Page {pageNum}</span>
-                  </Button>
-                )
-              })}
-              
-              {totalPages > 5 && page < totalPages - 2 && (
-                <>
-                  <span className="mx-1">...</span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-8 w-8 p-0 sm:h-9 sm:w-9 mx-0.5"
-                    onClick={() => onPageChange(totalPages)}
-                  >
-                    {totalPages}
-                    <span className="sr-only">Dernière page</span>
-                  </Button>
-                </>
-              )}
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 w-8 p-0 sm:h-9 sm:w-9"
-              onClick={() => onPageChange(page + 1)}
-              disabled={page >= totalPages}
-            >
-              <ChevronRight className="h-4 w-4" />
-              <span className="sr-only">Page suivante</span>
-            </Button>
-          </div>
+        <div className="flex justify-center pt-8">
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={onPageChange}
+          />
         </div>
       )}
     </div>

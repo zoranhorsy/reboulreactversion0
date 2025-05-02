@@ -1,4 +1,4 @@
-'use client'
+"use client"
 
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
@@ -17,7 +17,11 @@ import {
   Minus,
   Plus,
   Star,
-  Tag
+  Tag,
+  ChevronRight,
+  Info,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react'
 import { 
   Tooltip,
@@ -36,7 +40,8 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer"
 import { cn } from '@/lib/utils'
-import type { Product, Variant } from '@/lib/api'
+import type { Product } from '@/lib/api'
+import type { Variant } from '@/lib/types/product'
 import { ProductImage } from '@/lib/types/product-image'
 import { SizeGuide } from '@/components/SizeGuide'
 import { SocialShare } from '@/components/SocialShare'
@@ -50,6 +55,10 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion'
 import { getColorInfo, isWhiteColor } from '@/config/productColors'
+import { Calendar } from 'lucide-react'
+import { Card, CardContent } from "@/components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { ProductTechnicalSpecs } from '@/components/ProductTechnicalSpecs'
 
 // Fonction pour transformer le type de magasin en nom d'affichage
 const getStoreDisplayName = (storeType: string | undefined): string => {
@@ -105,7 +114,7 @@ export function checkProductStock(product: Product, size: string, color: string)
   
   // Sinon, vérifier si la variante sélectionnée a du stock
   const selectedVariant = product.variants.find(
-    (v: Variant) => v.size === size && v.color === color
+    (variant, index, array) => variant.size === size && variant.color === color
   )
   return selectedVariant ? selectedVariant.stock > 0 : false
 }
@@ -118,7 +127,7 @@ export function getVariantStock(product: Product, size: string, color: string): 
   if (!size || !color) return 0;
   
   const selectedVariant = product.variants.find(
-    (v: Variant) => v.size === size && v.color === color
+    (variant, index, array) => variant.size === size && variant.color === color
   )
   return selectedVariant ? selectedVariant.stock : 0;
 }
@@ -143,6 +152,8 @@ export function ProductDetails({
   isWishlist,
 }: ProductDetailsProps) {
   const [showSizeGuide, setShowSizeGuide] = useState(false);
+  const [showTechSpecs, setShowTechSpecs] = useState(false);
+  const [expandedDetails, setExpandedDetails] = useState<string[]>([])
   
   const variants = product.variants || [];
   const colors = Array.from(new Set(variants.map(v => v.color)));
@@ -158,340 +169,285 @@ export function ProductDetails({
     ? Math.round(((oldPrice - product.price) / oldPrice) * 100) 
     : null;
 
+  // Détermine si c'est un produit ASICS
+  const isAsicsProduct = 
+    product.tags?.some(tag => tag.toLowerCase() === 'asics') ||
+    product.name?.toLowerCase().includes('asics') ||
+    product.brand.toLowerCase() === 'asics';
+
+  const toggleDetail = (detailId: string) => {
+    setExpandedDetails(prev => 
+      prev.includes(detailId) 
+        ? prev.filter(id => id !== detailId)
+        : [...prev, detailId]
+    )
+  }
+
   return (
-    <div className="space-y-6">
-      {/* En-tête produit avec badges et prix */}
+    <div className="flex flex-col gap-6">
+      {/* En-tête du produit */}
       <div className="space-y-4">
-        <div className="space-y-2">
-          {/* Nom du produit */}
-          <h1 className="text-3xl font-light tracking-tight">{product.name}</h1>
-          
-          {/* Prix et réduction */}
-          <div className="flex items-baseline gap-3 mt-1">
-            <p className="text-2xl font-medium">
-              {formatPrice(product.price)}
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+              {product.name}
+            </h1>
+            <p className="text-lg text-muted-foreground mt-1">
+              {product.brand}
             </p>
-            {oldPrice && (
-              <p className="text-lg text-muted-foreground line-through">
-                {formatPrice(oldPrice)}
-              </p>
-            )}
-            {discount && discount > 0 && (
-              <Badge variant="destructive" className="px-3 py-1.5 text-xs font-medium tracking-wider">
-                -{discount}%
-              </Badge>
-            )}
           </div>
-          
-          {/* Tags du produit */}
-          {product.tags && product.tags.length > 0 && (
-            <div className="flex flex-wrap items-center gap-2 mt-2">
-              {product.tags.map((tag, index) => (
-                <div key={index} className="flex items-center px-3 py-1 rounded-full text-sm bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200">
-                  <Tag className="h-3 w-3 mr-1" />
-                  <span>{tag}</span>
-                </div>
-              ))}
+          <div className="text-right">
+            <div className="text-2xl font-bold">
+              {formatPrice(product.price)}
             </div>
-          )}
-          
-          {/* Référence, SKU et Type de magasin */}
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground mt-3">
-            {product.sku && (
-              <div className="flex items-center gap-1">
-                <span className="font-medium">SKU:</span> {product.sku}
-              </div>
-            )}
-            {(product as any).store_reference && (
-              <div className="flex items-center gap-1">
-                <span className="font-medium">Réf. Magasin:</span> {(product as any).store_reference}
-              </div>
-            )}
-            {product.store_type && (
-              <div className="flex items-center gap-1">
-                <span className="font-medium">Boutique:</span> {getStoreDisplayName(product.store_type)}
+            {product.old_price && (
+              <div className="text-sm text-muted-foreground line-through">
+                {formatPrice(product.old_price)}
               </div>
             )}
           </div>
-          
-          {/* Informations de livraison */}
-          {product.price && product.price >= 100 ? (
-            <div className="flex items-center gap-2 text-green-600 mt-2">
-              <Truck className="w-4 h-4" />
-              <span className="text-sm font-medium">Livraison gratuite</span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2 text-muted-foreground mt-2">
-              <Truck className="w-4 h-4" />
-              <span className="text-sm">Livraison à partir de 4,99€</span>
-            </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          {product.new && (
+            <Badge variant="default">Nouveau</Badge>
           )}
-          
-          {/* Description du produit */}
-          <div className="mt-4 text-sm text-muted-foreground">
-            <p>{product.description}</p>
-          </div>
-          
-          {/* Caractéristiques */}
-          {product.details && product.details.length > 0 && (
-            <div className="mt-4">
-              <h3 className="text-sm font-medium mb-2">Caractéristiques:</h3>
-              <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
-                {product.details.map((detail, index) => (
-                  <li key={index}>{detail}</li>
-                ))}
-              </ul>
-            </div>
+          {product.featured && (
+            <Badge variant="secondary">En vedette</Badge>
           )}
+          <Badge 
+            variant="outline" 
+            className={cn(
+              "font-medium",
+              currentVariantStock === 0 && "text-destructive border-destructive",
+              currentVariantStock && currentVariantStock <= 5 && "text-orange-500 border-orange-500",
+              currentVariantStock && currentVariantStock > 5 && "text-green-500 border-green-500"
+            )}
+          >
+            {currentVariantStock === 0 && "Rupture de stock"}
+            {currentVariantStock && currentVariantStock <= 5 && "Plus que quelques exemplaires"}
+            {currentVariantStock && currentVariantStock > 5 && "En stock"}
+          </Badge>
         </div>
       </div>
-      
-      <Separator className="bg-border/10" />
-      
+
+      <Separator />
+
       {/* Sélection des variantes */}
       <div className="space-y-6">
-        {/* Sélecteur de couleurs */}
+        {/* Tailles */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium">Couleur: <span className="text-muted-foreground">{selectedColor ? getColorInfo(selectedColor).label : 'Sélectionnez une couleur'}</span></h3>
-            {/* Information sur le stock */}
-            {selectedSize && selectedColor && (
-              <span className={`text-xs ${isInStock ? 'text-green-500' : 'text-red-500'}`}>
-                {isInStock 
-                  ? currentVariantStock > 5 ? 'En stock' : `Plus que ${currentVariantStock} en stock` 
-                  : 'Rupture de stock'}
-              </span>
-            )}
+            <label className="text-sm font-medium">
+              Taille
+            </label>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-xs"
+              onClick={() => setShowSizeGuide(true)}
+            >
+              Guide des tailles
+              <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
           </div>
-          
-          {/* Options de couleurs */}
           <div className="flex flex-wrap gap-2">
-            {colors.map(color => {
-              const colorInfo = getColorInfo(color);
-              const isWhite = isWhiteColor(colorInfo.hex);
-              
+            {sizes.map((size) => {
+              const isAvailable = variants.some(
+                v => v.size === size && v.stock > 0
+              )
               return (
-                <button
-                  key={color}
-                  onClick={() => onColorChange(color)}
-                  aria-label={`Sélectionner couleur ${colorInfo.label}`}
-                  className={cn(
-                    "relative px-3 py-2 rounded-md flex items-center justify-center",
-                    "transition-all duration-200 ease-in-out border",
-                    "focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary",
-                    selectedColor === color 
-                      ? "border-primary bg-primary/10 font-medium" 
-                      : "border-border hover:border-primary/50",
-                  )}
-                >
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={cn(
-                        "w-4 h-4 rounded border",
-                        isWhite && "border-zinc-300 dark:border-zinc-600"
-                      )}
-                      style={{ 
-                        backgroundColor: colorInfo.hex.startsWith('linear-gradient') 
-                          ? colorInfo.hex 
-                          : colorInfo.hex
-                      }}
-                    />
-                    <span className="text-sm">{colorInfo.label}</span>
-                  </div>
-                  {selectedColor === color && (
-                    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[8px] text-white">
-                      ✓
-                    </span>
-                  )}
-                </button>
+                <TooltipProvider key={size}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant={selectedSize === size ? "default" : "outline"}
+                        size="sm"
+                        className={cn(
+                          "h-9 min-w-[2.5rem]",
+                          !isAvailable && "opacity-50 cursor-not-allowed"
+                        )}
+                        onClick={() => isAvailable && onSizeChange(size)}
+                        disabled={!isAvailable}
+                      >
+                        {size}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {isAvailable ? "Disponible" : "Rupture de stock"}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               )
             })}
           </div>
         </div>
-        
-        {/* Sélection de taille */}
-        {sizes.length > 0 && (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-medium">Taille</label>
-              <Button 
-                variant="link" 
-                size="sm" 
-                className="h-auto p-0 text-xs"
-                onClick={() => setShowSizeGuide(true)}
-              >
-                Guide des tailles
-              </Button>
-            </div>
-            <div className="grid grid-cols-4 gap-2">
-              {!selectedColor ? (
-                <div className="col-span-4 text-center py-3 text-sm text-muted-foreground bg-muted/30 rounded-md">
-                  Veuillez d&apos;abord sélectionner une couleur
-                </div>
-              ) : (
-                sizes.map((size) => {
-                  // Vérifier si la taille est disponible pour la couleur sélectionnée
-                  const isSizeAvailable = variants.some(v => v.size === size && v.color === selectedColor && v.stock > 0);
-                  
-                  // Ne pas afficher les tailles indisponibles pour la couleur sélectionnée
-                  if (!isSizeAvailable) return null;
-                  
-                  return (
-                    <button
-                      key={size}
-                      onClick={() => onSizeChange(size)}
-                      className={cn(
-                        "h-12 rounded-md border-2 transition-all duration-200 flex items-center justify-center",
-                        selectedSize === size 
-                          ? "border-primary bg-primary/5 font-medium" 
-                          : "border-border hover:border-primary/50 hover:bg-primary/5",
-                      )}
-                    >
-                      {size}
-                    </button>
-                  );
-                })
-              )}
-            </div>
-            
-            {/* Indicateur de stock */}
-            <div className="flex items-center gap-2 text-sm">
-              {!selectedSize || !selectedColor ? (
-                <>
-                  <Check className="w-4 h-4 text-green-500" />
-                  <span className="text-muted-foreground">
-                    Sélectionnez une taille et une couleur pour voir la disponibilité
-                  </span>
-                </>
-              ) : isInStock ? (
-                <>
-                  <Check className="w-4 h-4 text-green-500" />
-                  <span className="text-green-600">
-                    En stock ({currentVariantStock} disponible{currentVariantStock > 1 ? 's' : ''})
-                  </span>
-                </>
-              ) : (
-                <>
-                  <AlertCircle className="w-4 h-4 text-destructive" />
-                  <span className="text-destructive">Rupture de stock</span>
-                </>
-              )}
+
+        {/* Couleurs */}
+        {selectedSize && (
+          <div className="space-y-4">
+            <label className="text-sm font-medium">
+              Couleur
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {colors.map((color) => {
+                const isAvailable = variants.some(
+                  v => v.size === selectedSize && v.color === color && v.stock > 0
+                )
+                return (
+                  <TooltipProvider key={color}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant={selectedColor === color ? "default" : "outline"}
+                          size="sm"
+                          className={cn(
+                            "h-9",
+                            !isAvailable && "opacity-50 cursor-not-allowed"
+                          )}
+                          onClick={() => isAvailable && onColorChange(color)}
+                          disabled={!isAvailable}
+                        >
+                          {color}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {isAvailable ? "Disponible" : "Rupture de stock"}
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )
+              })}
             </div>
           </div>
         )}
-        
-        {/* Sélection de quantité */}
-        <div className="space-y-3">
-          <label className="text-sm font-medium">Quantité</label>
-          <div className="flex items-center">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => quantity > 1 && onQuantityChange(quantity - 1)}
-              disabled={quantity <= 1}
-              className="h-10 w-10 rounded-r-none"
+
+        {/* Quantité */}
+        {selectedSize && selectedColor && currentVariantStock && currentVariantStock > 0 && (
+          <div className="space-y-4">
+            <label className="text-sm font-medium">
+              Quantité
+            </label>
+            <Select
+              value={quantity.toString()}
+              onValueChange={(value) => onQuantityChange(parseInt(value))}
             >
-              <Minus className="h-4 w-4" />
-            </Button>
-            <div className="h-10 px-4 flex items-center justify-center border-y border-input min-w-[4rem]">
-              {quantity}
-            </div>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => quantity < (currentVariantStock || 10) && onQuantityChange(quantity + 1)}
-              disabled={quantity >= (currentVariantStock || 10)}
-              className="h-10 w-10 rounded-l-none"
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
-            
-            <div className="ml-4 text-sm text-muted-foreground">
-              {currentVariantStock > 0 && (
-                <span>Maximum: {currentVariantStock}</span>
-              )}
-            </div>
+              <SelectTrigger className="w-24">
+                <SelectValue placeholder="Qté" />
+              </SelectTrigger>
+              <SelectContent>
+                {Array.from({ length: Math.min(currentVariantStock, 10) }, (_, i) => (
+                  <SelectItem key={i + 1} value={(i + 1).toString()}>
+                    {i + 1}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-        </div>
+        )}
       </div>
-      
-      <Separator className="bg-border/10" />
-      
-      {/* Boutons d'action */}
-      <div className="space-y-4">
-        <Button 
-          size="lg" 
-          className="w-full text-base font-medium tracking-wide h-14"
+
+      {/* Actions */}
+      <div className="flex flex-col gap-4">
+        <Button
+          size="lg"
+          className="w-full"
           onClick={onAddToCart}
-          disabled={!isInStock}
+          disabled={isInStock && (!selectedSize || !selectedColor || !currentVariantStock)}
         >
-          <ShoppingBag className="w-5 h-5 mr-2" />
+          <ShoppingBag className="h-5 w-5 mr-2" />
           Ajouter au panier
         </Button>
-        
+
         <div className="flex gap-4">
-          <Button
-            variant="outline"
-            size="lg"
-            className="flex-1 font-medium"
-            onClick={onToggleWishlist}
-          >
-            <Heart 
-              className={cn(
-                "w-5 h-5 mr-2 transition-colors", 
-                isWishlist ? "fill-red-500 text-red-500" : ""
-              )} 
-            />
-            Favoris
-          </Button>
-          <Button
-            variant="outline"
-            size="lg"
-            className="flex-1 font-medium"
-            onClick={onShare}
-          >
-            <Share2 className="w-5 h-5 mr-2" />
-            Partager
-          </Button>
+          {onToggleWishlist && (
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={onToggleWishlist}
+            >
+              <Heart className={cn(
+                "h-5 w-5 mr-2",
+                isWishlist && "fill-current text-red-500"
+              )} />
+              {isWishlist ? "Retirer des favoris" : "Ajouter aux favoris"}
+            </Button>
+          )}
+          
+          {onShare && (
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={onShare}
+            >
+              <Share2 className="h-5 w-5 mr-2" />
+              Partager
+            </Button>
+          )}
         </div>
       </div>
-      
-      {/* Avantages d'achat */}
-      <div className="mt-8 space-y-4">
-        <h3 className="font-medium">Pourquoi nous choisir</h3>
-        <div className="grid grid-cols-1 gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-full bg-background/50 flex items-center justify-center border border-border">
-              <ShieldCheck className="w-5 h-5" />
-            </div>
-            <div>
-              <h4 className="text-sm font-medium">Garantie authentique</h4>
-              <p className="text-xs text-muted-foreground">Tous nos produits sont 100% authentiques</p>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-full bg-background/50 flex items-center justify-center border border-border">
-              <Truck className="w-5 h-5" />
-            </div>
-            <div>
-              <h4 className="text-sm font-medium">Livraison rapide</h4>
-              <p className="text-xs text-muted-foreground">Livraison gratuite à partir de 100€</p>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-full bg-background/50 flex items-center justify-center border border-border">
-              <RefreshCw className="w-5 h-5" />
-            </div>
-            <div>
-              <h4 className="text-sm font-medium">Retours sous 30 jours</h4>
-              <p className="text-xs text-muted-foreground">Retours gratuits en boutique ou à domicile</p>
-            </div>
+
+      <Separator />
+
+      {/* Description */}
+      {product.description && (
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold">Description</h2>
+          <div className="text-sm text-muted-foreground space-y-2">
+            {product.description}
           </div>
         </div>
-      </div>
-      
+      )}
+
+      {/* Caractéristiques techniques */}
+      {product.details && product.details.length > 0 && (
+        <ProductTechnicalSpecs 
+          specs={product.details.map(detail => {
+            const [name, ...descriptionParts] = detail.split(':')
+            const value = descriptionParts.join(':').trim()
+            return {
+              code: name.slice(0, 2).toUpperCase(),
+              title: name.trim(),
+              value: value,
+              description: value
+            }
+          })}
+        />
+      )}
+
+      {/* Informations de livraison */}
+      <Card>
+        <CardContent className="grid gap-4 p-6">
+          <div className="flex items-center gap-4">
+            <Truck className="h-5 w-5 text-muted-foreground" />
+            <div>
+              <h3 className="font-medium">Livraison gratuite</h3>
+              <p className="text-sm text-muted-foreground">
+                Pour toute commande supérieure à 100€
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            <RefreshCw className="h-5 w-5 text-muted-foreground" />
+            <div>
+              <h3 className="font-medium">Retours gratuits</h3>
+              <p className="text-sm text-muted-foreground">
+                Sous 30 jours
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            <ShieldCheck className="h-5 w-5 text-muted-foreground" />
+            <div>
+              <h3 className="font-medium">Paiement sécurisé</h3>
+              <p className="text-sm text-muted-foreground">
+                Vos données sont protégées
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Guide des tailles (Drawer) */}
       <Drawer open={showSizeGuide} onOpenChange={setShowSizeGuide}>
         <DrawerContent>

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { Dock } from '@/components/Dock'
-import { Loader } from '@/components/ui/Loader'
+import { LoaderComponent } from '@/components/ui/Loader'
 
 const DynamicBodyAttributes = dynamic(() => import('@/components/DynamicBodyAttributes'), { ssr: false })
 const GsapInitializer = dynamic(() => import('@/components/GsapInitializer'), { ssr: false })
@@ -22,7 +22,7 @@ export default function ClientWrapper() {
     return (
         <>
             <DynamicBodyAttributes />
-            <Loader />
+            <LoaderComponent />
             <GsapInitializer />
             <Dock />
         </>

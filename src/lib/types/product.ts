@@ -1,5 +1,13 @@
 import { ProductImage } from "./product-image"
 
+export interface Variant {
+  id: number
+  size: string
+  color: string
+  stock: number
+  price?: number
+}
+
 export interface Product {
   id: string
   name: string
@@ -35,12 +43,8 @@ export interface Product {
   old_price?: number
   _actiontype?: string
   deleted?: boolean
-}
-
-export interface Variant {
-  color: string
-  size: string
-  stock: number
+  has_variants?: boolean
+  is_corner_product?: boolean
 }
 
 export interface Review {

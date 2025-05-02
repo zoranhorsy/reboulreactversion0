@@ -17,19 +17,28 @@ export function WishlistButton({ product, variant = 'ghost', size = 'icon' }: Wi
   const { addToFavorites, removeFromFavorites, isFavorite } = useFavorites()
   const isProductFavorite = isFavorite(product.id)
 
-  const handleClick = () => {
-    if (isProductFavorite) {
-      removeFromFavorites(product.id)
+  const handleClick = async () => {
+    try {
+      if (isProductFavorite) {
+        await removeFromFavorites(product.id, product.store_type || 'main')
+        toast({
+          title: 'Produit retiré des favoris',
+          description: `${product.name} a été retiré de vos favoris.`
+        })
+      } else {
+        await addToFavorites(product.id, product.store_type || 'main')
+        toast({
+          title: 'Produit ajouté aux favoris',
+          description: `${product.name} a été ajouté à vos favoris.`
+        })
+      }
+    } catch (error) {
+      console.error('Erreur lors de la gestion des favoris:', error);
       toast({
-        title: 'Produit retiré des favoris',
-        description: `${product.name} a été retiré de vos favoris.`
-      })
-    } else {
-      addToFavorites(product)
-      toast({
-        title: 'Produit ajouté aux favoris',
-        description: `${product.name} a été ajouté à vos favoris.`
-      })
+        title: 'Erreur',
+        description: error instanceof Error ? error.message : 'Une erreur est survenue lors de la gestion des favoris',
+        variant: 'destructive'
+      });
     }
   }
 

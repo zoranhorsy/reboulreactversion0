@@ -15,6 +15,7 @@ const defaultFilters: FilterState = {
   limit: "12",
   category_id: "",
   brand: "",
+  brand_id: "",
   search: "",
   sort: "",
   color: "",

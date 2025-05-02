@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { useToast } from "@/components/ui/use-toast"
-import { api, type Product, type Category, type Brand, toggleProductActive, getToken } from "@/lib/api"
+import { api, type Product, type Category, type Brand, toggleProductActive, getToken, login } from "@/lib/api"
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Plus, Search, Trash2 } from "lucide-react"
 import ProductForm from "@/components/admin/ProductForm"
@@ -16,6 +16,76 @@ import { CategoryManager } from "@/components/admin/CategoryManager"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AxiosError } from "axios"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
+import { Label } from "@/components/ui/label"
+
+// Simple login component for admin area
+function AdminLoginForm() {
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [isLoggingIn, setIsLoggingIn] = useState(false);
+    const { toast } = useToast();
+
+    const handleLogin = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsLoggingIn(true);
+        try {
+            const result = await login(email, password);
+            if (result?.token) {
+                toast({
+                    title: "Connexion réussie",
+                    description: "Vous êtes maintenant connecté"
+                });
+                window.location.reload(); // Reload to update UI
+            } else {
+                throw new Error("Erreur de connexion");
+            }
+        } catch (error) {
+            toast({
+                title: "Erreur de connexion",
+                description: error instanceof Error ? error.message : "Impossible de se connecter",
+                variant: "destructive"
+            });
+        } finally {
+            setIsLoggingIn(false);
+        }
+    };
+
+    return (
+        <Card className="w-full max-w-md mx-auto">
+            <CardHeader>
+                <CardTitle>Connexion Admin</CardTitle>
+                <CardDescription>Connectez-vous pour gérer les produits</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <form onSubmit={handleLogin} className="space-y-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="email">Email</Label>
+                        <Input 
+                            id="email" 
+                            type="email" 
+                            value={email} 
+                            onChange={(e) => setEmail(e.target.value)}
+                            required
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="password">Mot de passe</Label>
+                        <Input 
+                            id="password" 
+                            type="password" 
+                            value={password} 
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                        />
+                    </div>
+                    <Button type="submit" className="w-full" disabled={isLoggingIn}>
+                        {isLoggingIn ? "Connexion en cours..." : "Se connecter"}
+                    </Button>
+                </form>
+            </CardContent>
+        </Card>
+    );
+}
 
 export function AdminProducts() {
     const [products, setProducts] = useState<Product[]>([])
@@ -37,6 +107,13 @@ export function AdminProducts() {
     const { toast } = useToast()
     const [deletingProductId, setDeletingProductId] = useState<number | null>(null)
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+    // Check authentication status
+    useEffect(() => {
+        const token = getToken();
+        setIsAuthenticated(!!token);
+    }, []);
 
     const loadProducts = useCallback(async () => {
         setIsLoading(true)
@@ -122,9 +199,8 @@ export function AdminProducts() {
     }
 
     const handleProductSubmit = async (productData: Product) => {
+        console.log("handleProductSubmit called with data:", JSON.stringify(productData, null, 2));
         try {
-            console.log('handleProductSubmit received data:', productData);
-
             // Nettoyage et formatage des images
             let formattedImages: string[] = [];
             
@@ -139,6 +215,7 @@ export function AdminProducts() {
                     return null;
                 }).filter((url): url is string => url !== null);
             }
+            console.log("Formatted images:", formattedImages);
 
             // Nettoyage des données avant l'envoi
             const cleanedProductData = {
@@ -162,37 +239,72 @@ export function AdminProducts() {
                 material: productData.material || null,
                 images: formattedImages
             };
+            console.log("Cleaned product data:", JSON.stringify(cleanedProductData, null, 2));
 
-            console.log('Cleaned product data before API call:', JSON.stringify(cleanedProductData, null, 2));
+            // Suppression des champs non nécessaires ou problématiques
+            delete (cleanedProductData as any).created_at;
+            delete (cleanedProductData as any).updated_at;
+            delete (cleanedProductData as any)._actiontype;
+            delete (cleanedProductData as any).imagesText;
+            delete (cleanedProductData as any).reviews_count;
+            delete (cleanedProductData as any).rating;
+            delete (cleanedProductData as any).id; // Supprime l'ID pour la création
+            delete (cleanedProductData as any).reviews;
+            delete (cleanedProductData as any).questions;
+            delete (cleanedProductData as any).faqs;
+            delete (cleanedProductData as any).size_chart;
+            delete (cleanedProductData as any).image;
+            delete (cleanedProductData as any).image_url;
+            delete (cleanedProductData as any).brand;
+            delete (cleanedProductData as any).category;
+
+            console.log("Final data to be sent to API:", JSON.stringify(cleanedProductData, null, 2));
 
             let updatedProduct;
-            if (editingProduct) {
-                console.log('Updating product with ID:', editingProduct.id);
-                updatedProduct = await api.updateProduct(editingProduct.id, cleanedProductData);
-                toast({
-                    title: "Succès",
-                    description: "Le produit a été mis à jour avec succès.",
-                });
-            } else {
-                console.log('Creating new product');
-                updatedProduct = await api.createProduct(cleanedProductData);
-                toast({
-                    title: "Succès",
-                    description: "Le produit a été créé avec succès.",
-                });
+            try {
+                if (editingProduct) {
+                    console.log("Updating product with ID:", editingProduct.id);
+                    updatedProduct = await api.updateProduct(editingProduct.id, cleanedProductData);
+                    toast({
+                        title: "Succès",
+                        description: "Le produit a été mis à jour avec succès.",
+                    });
+                } else {
+                    console.log("Creating new product");
+                    const token = getToken();
+                    console.log("Auth token exists:", !!token);
+                    
+                    updatedProduct = await api.createProduct(cleanedProductData);
+                    toast({
+                        title: "Succès",
+                        description: "Le produit a été créé avec succès.",
+                    });
+                }
+                
+                // Recharger les produits après la mise à jour
+                await loadProducts();
+                
+                // Fermer le dialogue et réinitialiser l'état
+                setIsDialogOpen(false);
+                setEditingProduct(null);
+            } catch (error) {
+                console.error("API error details:", error);
+                if (error instanceof AxiosError) {
+                    toast({
+                        title: "Erreur API",
+                        description: `${error.response?.data?.message || "Erreur de serveur"} (${error.response?.status})`,
+                        variant: "destructive",
+                    });
+                } else {
+                    toast({
+                        title: "Erreur",
+                        description: error instanceof Error ? error.message : "Une erreur est survenue lors de l'enregistrement du produit.",
+                        variant: "destructive",
+                    });
+                }
             }
-            
-            // Recharger les produits après la mise à jour
-            await loadProducts();
-            
-            // Fermer le dialogue et réinitialiser l'état
-            setIsDialogOpen(false);
-            setEditingProduct(null);
         } catch (error) {
-            console.error('Error saving product:', error);
-            if (error instanceof AxiosError) {
-                console.error('Server error details:', error.response?.data);
-            }
+            console.error("Outer error in handleProductSubmit:", error);
             toast({
                 title: "Erreur",
                 description: error instanceof Error ? error.message : "Une erreur est survenue lors de l'enregistrement du produit.",
@@ -217,54 +329,39 @@ export function AdminProducts() {
     }
 
     const directDeleteProduct = async (productId: number): Promise<boolean> => {
-        console.log(`Tentative de suppression directe du produit ID: ${productId}`);
-        
         try {
             const token = getToken();
             const url = `https://reboul-store-api-production.up.railway.app/api/products/${productId}`;
-            console.log(`URL de suppression: ${url}`);
             
-            // Première tentative avec Content-Type
-            console.log("Première tentative avec Content-Type");
+            // Tentative DELETE standard
             let response = await fetch(url, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': token ? `Bearer ${token}` : '',
-                },
-            });
-            
-            console.log(`Réponse suppression directe (tentative 1):`, {
-                status: response.status,
-                statusText: response.statusText,
-                ok: response.ok
+                }
             });
             
             if (response.ok) {
                 return true;
             }
             
-            // Seconde tentative sans Content-Type (certaines API le préfèrent pour DELETE)
-            console.log("Seconde tentative sans Content-Type");
+            // Tentative avec POST et _method=DELETE
             response = await fetch(url, {
-                method: 'DELETE',
+                method: 'POST',
                 headers: {
+                    'Content-Type': 'application/json',
                     'Authorization': token ? `Bearer ${token}` : '',
+                    'X-HTTP-Method-Override': 'DELETE'
                 },
-            });
-            
-            console.log(`Réponse suppression directe (tentative 2):`, {
-                status: response.status,
-                statusText: response.statusText,
-                ok: response.ok
+                body: JSON.stringify({ _method: 'DELETE' })
             });
             
             if (response.ok) {
                 return true;
             }
             
-            // Troisième tentative avec la méthode POST et _method=DELETE (méthode commune pour contourner les contraintes)
-            console.log("Troisième tentative avec POST et _method=DELETE");
+            // Dernière tentative explicite
             response = await fetch(url, {
                 method: 'POST',
                 headers: {
@@ -274,30 +371,17 @@ export function AdminProducts() {
                 body: JSON.stringify({ _method: 'DELETE' })
             });
             
-            console.log(`Réponse suppression directe (tentative 3):`, {
-                status: response.status,
-                statusText: response.statusText,
-                ok: response.ok
-            });
-            
             if (response.ok) {
                 return true;
             }
             
-            // Essayer de lire la réponse en cas d'erreur
-            const responseText = await response.text();
-            console.error(`Échec de toutes les tentatives de suppression directe (${response.status}):`, responseText);
-            
             return false;
         } catch (error) {
-            console.error("Erreur lors de la suppression directe:", error);
             return false;
         }
     };
 
     const bypassDeleteProduct = async (productId: number): Promise<boolean> => {
-        console.log(`MÉTHODE DE CONTOURNEMENT: Suppression du produit ID: ${productId}`);
-        
         try {
             // Obtenir le token
             const token = getToken();
@@ -321,19 +405,11 @@ export function AdminProducts() {
                 })
             });
             
-            console.log(`CONTOURNEMENT - Réponse:`, {
-                status: response.status,
-                statusText: response.statusText,
-                ok: response.ok
-            });
-            
             // Si PATCH ne fonctionne pas, essayons de désactiver le produit en dernier recours
             if (!response.ok) {
-                console.log("PATCH échoué, essai de désactivation du produit comme alternative");
                 const deactivateResponse = await api.toggleProductActive(productId.toString(), false);
                 
                 if (deactivateResponse) {
-                    console.log("Produit désactivé avec succès comme alternative à la suppression");
                     return true;
                 }
                 
@@ -342,20 +418,17 @@ export function AdminProducts() {
             
             return true;
         } catch (error) {
-            console.error("Erreur avec la méthode de contournement:", error);
             return false;
         }
     };
 
     const confirmDelete = async () => {
         if (!deletingProductId) {
-            console.error("ID du produit à supprimer manquant");
             return;
         }
         
         try {
             setIsLoading(true);
-            console.log(`Suppression du produit avec l'ID: ${deletingProductId}`);
             
             // Utiliser la méthode deleteProduct mise à jour qui utilise PUT avec _actionType="delete"
             const success = await api.deleteProduct(deletingProductId.toString());
@@ -370,11 +443,8 @@ export function AdminProducts() {
                 throw new Error("La suppression a échoué");
             }
         } catch (error) {
-            console.error("Erreur lors de la suppression:", error);
-            
             // En cas d'échec, tenter de simplement désactiver le produit
             try {
-                console.log("Tentative de désactivation comme solution de secours...");
                 const disableResult = await api.toggleProductActive(deletingProductId.toString(), false);
                 
                 if (disableResult) {
@@ -387,7 +457,6 @@ export function AdminProducts() {
                     throw new Error("Même la désactivation a échoué");
                 }
             } catch (fallbackError) {
-                console.error("Échec de toutes les méthodes:", fallbackError);
                 toast({
                     title: "Erreur",
                     description: "Impossible de supprimer ou désactiver le produit. Veuillez réessayer plus tard.",
@@ -420,9 +489,6 @@ export function AdminProducts() {
             // Recharger les produits pour mettre à jour l'interface
             await loadProducts();
         } catch (error) {
-            console.error("Erreur lors de la modification de l'état du produit:", error);
-            console.log("Tentative avec la méthode de secours...");
-            
             try {
                 // Méthode de secours avec les champs minimaux requis
                 await api.updateProduct(product.id.toString(), {
@@ -442,8 +508,6 @@ export function AdminProducts() {
                 // Recharger les produits
                 await loadProducts();
             } catch (fallbackError) {
-                console.error("Échec également avec la méthode de secours:", fallbackError);
-                
                 // Afficher un message d'erreur plus détaillé
                 const errorMessage = error instanceof Error 
                     ? error.message 
@@ -473,21 +537,20 @@ export function AdminProducts() {
                 if (result.purgedCount > 0) {
                     toast({
                         title: "Purge partielle",
-                        description: `${result.purgedCount} produits ont été purgés, mais des erreurs sont survenues pour ${result.errors.length} produits.`,
+                        description: `${result.purgedCount} produits ont été purgés, mais certains produits n'ont pas pu être traités.`,
                     });
                 } else {
                     toast({
                         title: "Échec de la purge",
-                        description: "Aucun produit n'a pu être purgé. Consultez la console pour plus de détails.",
+                        description: "Aucun produit n'a pu être purgé. Veuillez réessayer plus tard.",
                         variant: "destructive",
                     });
                 }
             }
             
-            // Recharger les produits après la purge
+            // Rafraîchir la liste après la purge
             await loadProducts();
         } catch (error) {
-            console.error("Erreur lors de la purge:", error);
             toast({
                 title: "Erreur",
                 description: "Une erreur est survenue lors de la purge des produits supprimés.",
@@ -500,216 +563,224 @@ export function AdminProducts() {
 
     return (
         <div className="space-y-6">
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList>
-                    <TabsTrigger value="products">Produits</TabsTrigger>
-                    <TabsTrigger value="categories">Catégories</TabsTrigger>
-                    <TabsTrigger value="brands">Marques</TabsTrigger>
-                </TabsList>
+            {!isAuthenticated ? (
+                <div className="my-8">
+                    <AdminLoginForm />
+                </div>
+            ) : (
+                <>
+                    <Tabs value={activeTab} onValueChange={setActiveTab}>
+                        <TabsList>
+                            <TabsTrigger value="products">Produits</TabsTrigger>
+                            <TabsTrigger value="categories">Catégories</TabsTrigger>
+                            <TabsTrigger value="brands">Marques</TabsTrigger>
+                        </TabsList>
 
-                <TabsContent value="products" className="space-y-4">
-                    <Card>
-                        <CardHeader className="p-4 sm:p-6">
-                            <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 sm:items-center sm:justify-between">
-                                <div>
-                                    <CardTitle className="text-base sm:text-lg md:text-xl">Gestion des produits</CardTitle>
-                                    <CardDescription className="text-xs sm:text-sm md:text-base">
-                                        Gérez votre catalogue de produits
-                                    </CardDescription>
-                                </div>
-                                <div className="flex gap-2 sm:gap-3">
-                                    <Dialog 
-                                        open={isDialogOpen} 
-                                        onOpenChange={(open) => {
-                                            if (!open) handleCloseDialog()
-                                            setIsDialogOpen(open)
-                                        }}
-                                    >
-                                        <DialogTrigger asChild>
-                                            <Button 
-                                                onClick={handleAddProduct}
-                                                size="sm"
-                                                className="h-8 sm:h-9 text-xs sm:text-sm px-2 sm:px-3 w-full sm:w-auto"
+                        <TabsContent value="products" className="space-y-4">
+                            <Card>
+                                <CardHeader className="p-4 sm:p-6">
+                                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 sm:items-center sm:justify-between">
+                                        <div>
+                                            <CardTitle className="text-base sm:text-lg md:text-xl">Gestion des produits</CardTitle>
+                                            <CardDescription className="text-xs sm:text-sm md:text-base">
+                                                Gérez votre catalogue de produits
+                                            </CardDescription>
+                                        </div>
+                                        <div className="flex gap-2 sm:gap-3">
+                                            <Dialog 
+                                                open={isDialogOpen} 
+                                                onOpenChange={(open) => {
+                                                    if (!open) handleCloseDialog()
+                                                    setIsDialogOpen(open)
+                                                }}
                                             >
-                                                <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                                                <span className="whitespace-nowrap">
-                                                    Ajouter
-                                                    <span className="hidden sm:inline"> un produit</span>
-                                                </span>
+                                                <DialogTrigger asChild>
+                                                    <Button 
+                                                        onClick={handleAddProduct}
+                                                        size="sm"
+                                                        className="h-8 sm:h-9 text-xs sm:text-sm px-2 sm:px-3 w-full sm:w-auto"
+                                                    >
+                                                        <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                                                        <span className="whitespace-nowrap">
+                                                            Ajouter
+                                                            <span className="hidden sm:inline"> un produit</span>
+                                                        </span>
+                                                    </Button>
+                                                </DialogTrigger>
+                                                <DialogContent className="w-[calc(100%-2rem)] sm:max-w-2xl lg:max-w-4xl mx-auto overflow-y-auto max-h-[90vh]">
+                                                    <DialogTitle className="text-base sm:text-lg md:text-xl">
+                                                        {editingProduct ? "Modifier le produit" : "Ajouter un produit"}
+                                                    </DialogTitle>
+                                                    <ProductForm
+                                                        product={editingProduct}
+                                                        onSubmit={handleProductSubmit}
+                                                        categories={categories}
+                                                        brands={brands}
+                                                    />
+                                                </DialogContent>
+                                            </Dialog>
+                                            <Button 
+                                                variant="outline" 
+                                                onClick={purgeDeletedProducts} 
+                                                className="text-xs sm:text-sm h-8 sm:h-9"
+                                                disabled={isLoading}
+                                            >
+                                                <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-2 text-red-500" />
+                                                Vider la corbeille
                                             </Button>
-                                        </DialogTrigger>
-                                        <DialogContent className="w-[calc(100%-2rem)] sm:max-w-2xl lg:max-w-4xl mx-auto overflow-y-auto max-h-[90vh]">
-                                            <DialogTitle className="text-base sm:text-lg md:text-xl">
-                                                {editingProduct ? "Modifier le produit" : "Ajouter un produit"}
-                                            </DialogTitle>
-                                            <ProductForm
-                                                product={editingProduct}
-                                                onSubmit={handleProductSubmit}
-                                                categories={categories}
-                                                brands={brands}
+                                        </div>
+                                    </div>
+                                </CardHeader>
+                                <CardContent className="p-4 sm:p-6">
+                                    <div className="flex flex-col gap-3 sm:gap-4 mb-3 sm:mb-4">
+                                        <div className="relative w-full">
+                                            <Search className="absolute left-2 top-2.5 h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
+                                            <Input
+                                                placeholder="Rechercher un produit..."
+                                                value={searchTerm}
+                                                onChange={(e) => handleSearch(e.target.value)}
+                                                className="pl-7 sm:pl-8 w-full h-8 sm:h-9 text-xs sm:text-sm"
                                             />
-                                        </DialogContent>
-                                    </Dialog>
-                                    <Button 
-                                        variant="outline" 
-                                        onClick={purgeDeletedProducts} 
-                                        className="text-xs sm:text-sm h-8 sm:h-9"
-                                        disabled={isLoading}
-                                    >
-                                        <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-2 text-red-500" />
-                                        Vider la corbeille
-                                    </Button>
-                                </div>
-                            </div>
-                        </CardHeader>
-                        <CardContent className="p-4 sm:p-6">
-                            <div className="flex flex-col gap-3 sm:gap-4 mb-3 sm:mb-4">
-                                <div className="relative w-full">
-                                    <Search className="absolute left-2 top-2.5 h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
-                                    <Input
-                                        placeholder="Rechercher un produit..."
-                                        value={searchTerm}
-                                        onChange={(e) => handleSearch(e.target.value)}
-                                        className="pl-7 sm:pl-8 w-full h-8 sm:h-9 text-xs sm:text-sm"
-                                    />
-                                </div>
-                                <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
-                                    <select
-                                        className="h-8 sm:h-9 rounded-md border border-input bg-background px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                                        value={activeFilters.category}
-                                        onChange={(e) => handleFilterChange('category', e.target.value)}
-                                    >
-                                        <option value="">Toutes les catégories</option>
-                                        {categories.map((category) => (
-                                            <option key={category.id} value={category.id.toString()}>
-                                                {category.name}
-                                            </option>
-                                        ))}
-                                    </select>
+                                        </div>
+                                        <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+                                            <select
+                                                className="h-8 sm:h-9 rounded-md border border-input bg-background px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                                                value={activeFilters.category}
+                                                onChange={(e) => handleFilterChange('category', e.target.value)}
+                                            >
+                                                <option value="">Toutes les catégories</option>
+                                                {categories.map((category) => (
+                                                    <option key={category.id} value={category.id.toString()}>
+                                                        {category.name}
+                                                    </option>
+                                                ))}
+                                            </select>
 
-                                    <select
-                                        className="h-8 sm:h-9 rounded-md border border-input bg-background px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                                        value={activeFilters.brand}
-                                        onChange={(e) => handleFilterChange('brand', e.target.value)}
-                                    >
-                                        <option value="">Toutes les marques</option>
-                                        {brands.map((brand) => (
-                                            <option key={brand.id} value={brand.id.toString()}>
-                                                {brand.name}
-                                            </option>
-                                        ))}
-                                    </select>
+                                            <select
+                                                className="h-8 sm:h-9 rounded-md border border-input bg-background px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                                                value={activeFilters.brand}
+                                                onChange={(e) => handleFilterChange('brand', e.target.value)}
+                                            >
+                                                <option value="">Toutes les marques</option>
+                                                {brands.map((brand) => (
+                                                    <option key={brand.id} value={brand.id.toString()}>
+                                                        {brand.name}
+                                                    </option>
+                                                ))}
+                                            </select>
 
-                                    <select
-                                        className="h-8 sm:h-9 rounded-md border border-input bg-background px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                                        value={activeFilters.store_type}
-                                        onChange={(e) => handleFilterChange('store_type', e.target.value)}
-                                    >
-                                        <option value="">Tous les magasins</option>
-                                        <option value="adult">Adulte</option>
-                                        <option value="kids">Enfant</option>
-                                        <option value="sneakers">Sneakers</option>
-                                        <option value="cpcompany">THE CORNER</option>
-                                    </select>
+                                            <select
+                                                className="h-8 sm:h-9 rounded-md border border-input bg-background px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                                                value={activeFilters.store_type}
+                                                onChange={(e) => handleFilterChange('store_type', e.target.value)}
+                                            >
+                                                <option value="">Tous les magasins</option>
+                                                <option value="adult">Adulte</option>
+                                                <option value="kids">Enfant</option>
+                                                <option value="sneakers">Sneakers</option>
+                                                <option value="cpcompany">THE CORNER</option>
+                                            </select>
 
-                                    <Input
-                                        className="h-8 sm:h-9 text-xs sm:text-sm"
-                                        placeholder="Filtrer par réf. magasin"
-                                        value={activeFilters.store_reference}
-                                        onChange={(e) => handleFilterChange('store_reference', e.target.value)}
-                                    />
+                                            <Input
+                                                className="h-8 sm:h-9 text-xs sm:text-sm"
+                                                placeholder="Filtrer par réf. magasin"
+                                                value={activeFilters.store_reference}
+                                                onChange={(e) => handleFilterChange('store_reference', e.target.value)}
+                                            />
 
-                                    {(activeFilters.category || activeFilters.brand || activeFilters.store_type || activeFilters.store_reference) && (
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            className="h-8 sm:h-9 text-xs sm:text-sm whitespace-nowrap"
-                                            onClick={() => {
-                                                setActiveFilters({ category: '', brand: '', store_type: '', store_reference: '' })
-                                                filterProducts(searchTerm, { category: '', brand: '', store_type: '', store_reference: '' })
-                                            }}
-                                        >
-                                            Réinitialiser les filtres
-                                        </Button>
-                                    )}
-                                </div>
-                            </div>
-                            <div className="rounded-md border">
-                                <ProductTable
-                                    filteredProducts={filteredProducts}
-                                    categories={categories}
-                                    brands={brands}
-                                    sortConfig={sortConfig}
-                                    handleSort={(key) => handleSort(key, sortConfig, setSortConfig, products, 'all', setFilteredProducts)}
-                                    handleEditProduct={handleEdit}
-                                    handleDeleteProduct={handleDelete}
-                                    handleToggleActive={handleToggleActive}
-                                />
-                            </div>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
+                                            {(activeFilters.category || activeFilters.brand || activeFilters.store_type || activeFilters.store_reference) && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="h-8 sm:h-9 text-xs sm:text-sm whitespace-nowrap"
+                                                    onClick={() => {
+                                                        setActiveFilters({ category: '', brand: '', store_type: '', store_reference: '' })
+                                                        filterProducts(searchTerm, { category: '', brand: '', store_type: '', store_reference: '' })
+                                                    }}
+                                                >
+                                                    Réinitialiser les filtres
+                                                </Button>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="rounded-md border">
+                                        <ProductTable
+                                            filteredProducts={filteredProducts}
+                                            categories={categories}
+                                            brands={brands}
+                                            sortConfig={sortConfig}
+                                            handleSort={(key) => handleSort(key, sortConfig, setSortConfig, products, 'all', setFilteredProducts)}
+                                            handleEditProduct={handleEdit}
+                                            handleDeleteProduct={handleDelete}
+                                            handleToggleActive={handleToggleActive}
+                                        />
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
 
-                <TabsContent value="categories">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Gestion des catégories</CardTitle>
-                            <CardDescription>
-                                Gérez les catégories de produits
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <CategoryManager onUpdate={loadCategories} />
-                        </CardContent>
-                    </Card>
-                </TabsContent>
+                        <TabsContent value="categories">
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Gestion des catégories</CardTitle>
+                                    <CardDescription>
+                                        Gérez les catégories de produits
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <CategoryManager onUpdate={loadCategories} />
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
 
-                <TabsContent value="brands">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Gestion des marques</CardTitle>
-                            <CardDescription>
-                                Gérez les marques de produits
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <BrandManager onUpdate={loadBrands} />
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-            </Tabs>
+                        <TabsContent value="brands">
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Gestion des marques</CardTitle>
+                                    <CardDescription>
+                                        Gérez les marques de produits
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <BrandManager onUpdate={loadBrands} />
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+                    </Tabs>
 
-            {/* Dialog for delete confirmation */}
-            <AlertDialog 
-                open={isDeleteDialogOpen} 
-                onOpenChange={setIsDeleteDialogOpen}
-            >
-                <AlertDialogContent className="max-w-md">
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            Êtes-vous sûr de vouloir supprimer ce produit ? Cette action est irréversible.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel 
-                            onClick={() => {
-                                setIsDeleteDialogOpen(false)
-                                setDeletingProductId(null)
-                            }}
-                            className="text-xs sm:text-sm h-8 sm:h-9"
-                        >
-                            Annuler
-                        </AlertDialogCancel>
-                        <AlertDialogAction 
-                            onClick={confirmDelete}
-                            className="bg-destructive text-xs sm:text-sm h-8 sm:h-9"
-                        >
-                            Supprimer
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
+                    {/* Dialog for delete confirmation */}
+                    <AlertDialog 
+                        open={isDeleteDialogOpen} 
+                        onOpenChange={setIsDeleteDialogOpen}
+                    >
+                        <AlertDialogContent className="max-w-md">
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    Êtes-vous sûr de vouloir supprimer ce produit ? Cette action est irréversible.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel 
+                                    onClick={() => {
+                                        setIsDeleteDialogOpen(false)
+                                        setDeletingProductId(null)
+                                    }}
+                                    className="text-xs sm:text-sm h-8 sm:h-9"
+                                >
+                                    Annuler
+                                </AlertDialogCancel>
+                                <AlertDialogAction 
+                                    onClick={confirmDelete}
+                                    className="bg-destructive text-xs sm:text-sm h-8 sm:h-9"
+                                >
+                                    Supprimer
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                </>
+            )}
         </div>
     )
 } 

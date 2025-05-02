@@ -2,13 +2,21 @@
 
 import React, { useState, useRef, useEffect } from 'react'
 import Image from 'next/image'
-import { ChevronLeft, ChevronRight, X, ImageOff, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, X, ImageOff, ZoomIn, ZoomOut, Maximize2, Expand } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Dialog, DialogContent } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogTrigger, DialogClose } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ProductImage } from "@/lib/types/product-image"
 import { Badge } from "@/components/ui/badge"
+import { 
+  Carousel, 
+  CarouselContent, 
+  CarouselItem, 
+  CarouselNext, 
+  CarouselPrevious,
+  CarouselApi
+} from '@/components/ui/carousel'
 
 interface ProductGalleryProps {
     images: (string | File | Blob | ProductImage)[]
@@ -17,6 +25,8 @@ interface ProductGalleryProps {
     isNew?: boolean
     isFeatured?: boolean
     discount?: number
+    aspectRatio?: 'square' | 'portrait' | 'landscape'
+    className?: string
 }
 
 export function ProductGallery({ 
@@ -25,7 +35,9 @@ export function ProductGallery({
     brand, 
     isNew = false, 
     isFeatured = false,
-    discount
+    discount,
+    aspectRatio = 'square',
+    className
 }: ProductGalleryProps) {
     const [currentIndex, setCurrentIndex] = useState(0)
     const [isZoomed, setIsZoomed] = useState(false)
@@ -35,6 +47,9 @@ export function ProductGallery({
     const [showControls, setShowControls] = useState(true)
     const [touchStart, setTouchStart] = useState(0)
     const [touchEnd, setTouchEnd] = useState(0)
+    const [api, setApi] = useState<CarouselApi>()
+    const [showZoomPreview, setShowZoomPreview] = useState(false)
+    const [zoomedImage, setZoomedImage] = useState<string | null>(null)
     
     const mainImageRef = useRef<HTMLDivElement>(null)
     const thumbnailsContainerRef = useRef<HTMLDivElement>(null)
@@ -67,8 +82,14 @@ export function ProductGallery({
     }, [isFullscreen, zoomPosition])
     
     // Réactiver les contrôles lors du mouvement de la souris
-    const handleMouseMove = () => {
-        setShowControls(true)
+    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+        if (!showZoomPreview) return
+
+        const rect = e.currentTarget.getBoundingClientRect()
+        const x = ((e.clientX - rect.left) / rect.width) * 100
+        const y = ((e.clientY - rect.top) / rect.height) * 100
+        
+        setZoomPosition({ x, y })
     }
     
     // Gestion du swipe sur mobile
@@ -115,22 +136,6 @@ export function ProductGallery({
     }, [currentIndex])
 
     // Si aucune image n'est disponible ou si toutes les images sont en erreur, afficher un placeholder
-    if (!validImages.length) {
-        return (
-            <div className="relative aspect-square w-full bg-muted/20 rounded-lg flex flex-col items-center justify-center gap-2">
-                <ImageOff className="w-8 h-8 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">Aucune image disponible</span>
-                {productName && (
-                    <div className="absolute top-2 left-2">
-                        <Badge variant="secondary" className="text-xs">
-                            {productName}
-                        </Badge>
-                    </div>
-                )}
-            </div>
-        )
-    }
-
     const getImageUrl = (image: string | File | Blob | ProductImage): string => {
         if (typeof image === 'string') return image;
         if (typeof image === 'object' && image !== null && 'url' in image) return image.url;
@@ -172,71 +177,147 @@ export function ProductGallery({
         if (isZoomed) setIsZoomed(false);
     }
 
+    const calculateAspectRatio = () => {
+        switch (aspectRatio) {
+            case 'portrait':
+                return 'aspect-[3/4]'
+            case 'landscape':
+                return 'aspect-[4/3]'
+            case 'square':
+            default:
+                return 'aspect-square'
+        }
+    }
+
+    // Effet pour gérer l'API du carousel
+    useEffect(() => {
+        if (!api) {
+            return
+        }
+
+        setCurrentIndex(api.selectedScrollSnap() || 0)
+
+        api.on('select', () => {
+            setCurrentIndex(api.selectedScrollSnap() || 0)
+        })
+    }, [api])
+
+    const handleImageClick = (imageUrl: string) => {
+        setZoomedImage(imageUrl)
+    }
+
+    // Afficher un placeholder si aucune image valide
+    if (!validImages.length) {
+        return (
+            <div className="relative aspect-square w-full bg-muted/20 rounded-lg flex flex-col items-center justify-center gap-2">
+                <ImageOff className="w-8 h-8 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">Aucune image disponible</span>
+                {productName && (
+                    <div className="absolute top-2 left-2">
+                        <Badge variant="secondary" className="text-xs">
+                            {productName}
+                        </Badge>
+                    </div>
+                )}
+            </div>
+        )
+    }
+
     return (
         <>
-            <div className="space-y-6">
-                {/* Image principale */}
-                <div 
-                    className={cn(
-                        "relative aspect-square w-full overflow-hidden rounded-lg bg-muted/20",
-                        isFullscreen && "fixed inset-0 z-50 h-screen w-screen rounded-none bg-background/95 backdrop-blur-sm"
-                    )}
-                    ref={mainImageRef}
-                    onMouseMove={handleZoomMove}
-                    onMouseLeave={() => setIsZoomed(false)}
-                >
-                    {validImages[currentIndex] && (
-                        <Image
-                            src={validImages[currentIndex]}
-                            alt={`${productName} - Image ${currentIndex + 1}`}
-                            fill
-                            priority={currentIndex === 0}
-                            className={cn(
-                                "object-cover transition-all duration-300",
-                                isZoomed && "scale-150"
-                            )}
-                            style={
-                                isZoomed
-                                    ? {
-                                          transformOrigin: `${zoomPosition.x * 100}% ${
-                                              zoomPosition.y * 100
-                                          }%`,
-                                      }
-                                    : undefined
-                            }
-                            onError={() => handleImageError(currentIndex)}
-                        />
-                    )}
-
-                    {/* Miniatures */}
-                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2">
-                        <div 
-                            className="flex gap-2 overflow-x-auto px-4 pb-2 max-w-[calc(100vw-2rem)]"
-                            ref={thumbnailsContainerRef}
-                        >
-                            {validImages.map((imgUrl, index) => (
-                                <button
-                                    key={index}
-                                    onClick={() => setCurrentIndex(index)}
+            <div className={cn('space-y-4', className)}>
+                {/* Main Image Carousel */}
+                <Carousel setApi={setApi} className="w-full">
+                    <CarouselContent>
+                        {images.map((image, index) => (
+                            <CarouselItem key={index}>
+                                <div 
                                     className={cn(
-                                        "relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-md border-2",
-                                        currentIndex === index
-                                            ? "border-primary"
-                                            : "border-transparent hover:border-primary/50"
+                                        'relative overflow-hidden rounded-xl border border-border/40',
+                                        calculateAspectRatio()
                                     )}
-                                    data-index={index}
+                                    onMouseEnter={() => setIsZoomed(true)}
+                                    onMouseLeave={() => setIsZoomed(false)}
+                                    onMouseMove={handleMouseMove}
                                 >
                                     <Image
-                                        src={imgUrl}
-                                        alt={`${productName} - Miniature ${index + 1}`}
+                                        src={getImageUrl(image)}
+                                        alt={`${productName} - Image ${index + 1}`}
                                         fill
+                                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                                         className="object-cover"
-                                        onError={() => handleImageError(index)}
+                                        priority={index === 0}
                                     />
-                                </button>
-                            ))}
-                        </div>
+                                    {isZoomed && (
+                                        <div className="absolute top-2 right-2 z-10 flex gap-2">
+                                            <Dialog>
+                                                <DialogTrigger asChild>
+                                                    <Button 
+                                                        variant="secondary" 
+                                                        size="icon"
+                                                        className="h-8 w-8 rounded-full bg-background/80 backdrop-blur-sm hover:bg-background"
+                                                        onClick={() => handleImageClick(getImageUrl(image))}
+                                                    >
+                                                        <Expand className="h-4 w-4" />
+                                                    </Button>
+                                                </DialogTrigger>
+                                                <DialogContent className="max-w-5xl">
+                                                    <div className="relative flex aspect-square items-center justify-center overflow-hidden rounded-lg">
+                                                        <Image
+                                                            src={getImageUrl(image)}
+                                                            alt={`${productName} - Image ${index + 1}`}
+                                                            fill
+                                                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 80vw"
+                                                            className="object-contain"
+                                                        />
+                                                    </div>
+                                                    <DialogClose className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
+                                                        <Button variant="ghost" size="icon">
+                                                            <span>×</span>
+                                                            <span className="sr-only">Close</span>
+                                                        </Button>
+                                                    </DialogClose>
+                                                </DialogContent>
+                                            </Dialog>
+                                        </div>
+                                    )}
+                                </div>
+                            </CarouselItem>
+                        ))}
+                    </CarouselContent>
+                    <div className="absolute -left-4 top-1/2 -translate-y-1/2">
+                        <CarouselPrevious className="h-10 w-10 bg-background border shadow-md" />
                     </div>
+                    <div className="absolute -right-4 top-1/2 -translate-y-1/2">
+                        <CarouselNext className="h-10 w-10 bg-background border shadow-md" />
+                    </div>
+                </Carousel>
+
+                {/* Thumbnails */}
+                <div className="flex overflow-x-auto space-x-2 pb-1">
+                    {images.map((image, index) => (
+                        <button
+                            key={index}
+                            className={cn(
+                                'relative rounded-md overflow-hidden border-2 flex-shrink-0 w-16 h-16 cursor-pointer transition-all duration-200',
+                                currentIndex === index 
+                                    ? 'border-primary ring-2 ring-primary/20'
+                                    : 'border-border hover:border-primary/50'
+                            )}
+                            onClick={() => api?.scrollTo(index)}
+                        >
+                            <Image
+                                src={getImageUrl(image)}
+                                alt={`${productName} - Miniature ${index + 1}`}
+                                fill
+                                sizes="(max-width: 768px) 64px, 64px"
+                                className={cn(
+                                    'object-cover transition-opacity duration-300',
+                                    currentIndex !== index && 'group-hover:opacity-75'
+                                )}
+                            />
+                        </button>
+                    ))}
                 </div>
             </div>
 
@@ -364,7 +445,7 @@ export function ProductGallery({
                                             {images.map((image, index) => (
                                                 <button
                                                     key={index}
-                                                    onClick={() => setCurrentIndex(index)}
+                                                    onClick={() => api?.scrollTo(index)}
                                                     className={`
                                                         relative w-16 aspect-[4/3] rounded-lg overflow-hidden
                                                         ${currentIndex === index 

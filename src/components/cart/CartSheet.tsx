@@ -107,26 +107,26 @@ export function CartSheet({ children, isOpen, onOpenChange }: CartSheetProps) {
   }, [promoCode, subtotal, applyPromoCode, appliedPromo, toast])
 
   const content = (
-    <Card className="border border-white/5 bg-background/50 backdrop-blur-md shadow-lg h-full">
+    <Card className="border border-white/5 bg-background/50 backdrop-blur-md shadow-lg h-full text-zinc-900 dark:text-white">
       <CardHeader className="px-3 py-2 sm:px-4 sm:py-3 border-b border-border/20 flex-shrink-0">
         <CardTitle className="text-base sm:text-lg flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="drag-handle flex items-center p-1 rounded hover:bg-accent/10 cursor-move">
-              <GripVertical className="h-4 w-4 text-muted-foreground pointer-events-none" />
+              <GripVertical className="h-4 w-4 text-zinc-600 dark:text-white" />
             </div>
-            <span className="select-none pointer-events-none">Votre panier</span>
+            <span className="select-none pointer-events-none dark:text-white">Votre panier</span>
           </div>
           <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8 opacity-60 hover:opacity-100" onClick={() => onOpenChange(false)}>
-            <X className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <X className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-zinc-600 dark:text-white" />
           </Button>
         </CardTitle>
       </CardHeader>
     
       {cartItems.length === 0 ? (
         <CardContent className="p-4 sm:p-6 text-center">
-          <ShoppingCart className="w-10 h-10 sm:w-12 sm:h-12 mx-auto text-muted-foreground mb-3 sm:mb-4 opacity-15" />
-          <p className="text-sm sm:text-base font-medium mb-1">Votre panier est vide</p>
-          <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4">Ajoutez des articles pour les retrouver ici</p>
+          <ShoppingCart className="w-10 h-10 sm:w-12 sm:h-12 mx-auto text-zinc-400 dark:text-white/40 mb-3 sm:mb-4 opacity-15" />
+          <p className="text-sm sm:text-base font-medium mb-1 dark:text-white">Votre panier est vide</p>
+          <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-300 mb-3 sm:mb-4">Ajoutez des articles pour les retrouver ici</p>
           <Button asChild onClick={() => onOpenChange(false)} className="w-full text-xs sm:text-sm" size="sm">
             <Link href="/catalogue">Continuer mes achats</Link>
           </Button>
@@ -151,21 +151,21 @@ export function CartSheet({ children, isOpen, onOpenChange }: CartSheetProps) {
                   {/* Product details */}
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between">
-                      <h3 className="font-medium text-xs sm:text-sm truncate">{item.name}</h3>
+                      <h3 className="font-medium text-xs sm:text-sm truncate dark:text-white">{item.name}</h3>
                       <button 
                         onClick={() => removeItem(item.id)}
-                        className="text-muted-foreground hover:text-foreground ml-1 sm:ml-2 flex-shrink-0 opacity-60 hover:opacity-100"
+                        className="text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300 ml-1 sm:ml-2 flex-shrink-0 opacity-60 hover:opacity-100"
                       >
                         <X className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                       </button>
                     </div>
                     
-                    <div className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 sm:mt-1 space-y-0">
+                    <div className="text-[10px] sm:text-xs text-zinc-500 dark:text-zinc-300 mt-0.5 sm:mt-1 space-y-0">
                       {item.variant.size && (
-                        <p>Taille: <span className="font-medium text-foreground/80">{item.variant.size}</span></p>
+                        <p>Taille: <span className="font-medium text-zinc-700 dark:text-white">{item.variant.size}</span></p>
                       )}
                       {item.variant.color && (
-                        <p>Couleur: <span className="font-medium text-foreground/80">{item.variant.colorLabel || item.variant.color}</span></p>
+                        <p>Couleur: <span className="font-medium text-zinc-700 dark:text-white">{item.variant.colorLabel || item.variant.color}</span></p>
                       )}
                     </div>
                     
@@ -174,23 +174,23 @@ export function CartSheet({ children, isOpen, onOpenChange }: CartSheetProps) {
                         <Button 
                           variant="outline" 
                           size="icon" 
-                          className="h-4.5 w-4.5 sm:h-5 sm:w-5 bg-background/50"
+                          className="h-4.5 w-4.5 sm:h-5 sm:w-5 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300"
                           onClick={() => item.quantity > 1 ? updateQuantity(item.id, item.quantity - 1) : removeItem(item.id)}
                         >
                           <Minus className="h-2 w-2 sm:h-2.5 sm:w-2.5" />
                         </Button>
-                        <span className="w-5 sm:w-6 text-center text-[10px] sm:text-xs">{item.quantity}</span>
+                        <span className="w-5 sm:w-6 text-center text-[10px] sm:text-xs text-zinc-900 dark:text-zinc-100">{item.quantity}</span>
                         <Button 
                           variant="outline" 
                           size="icon" 
-                          className="h-4.5 w-4.5 sm:h-5 sm:w-5 bg-background/50"
+                          className="h-4.5 w-4.5 sm:h-5 sm:w-5 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300"
                           onClick={() => updateQuantity(item.id, item.quantity + 1)}
                           disabled={item.quantity >= item.variant.stock}
                         >
                           <Plus className="h-2 w-2 sm:h-2.5 sm:w-2.5" />
                         </Button>
                       </div>
-                      <div className="font-medium text-[10px] sm:text-sm">
+                      <div className="font-medium text-[10px] sm:text-sm dark:text-white">
                         {new Intl.NumberFormat('fr-FR', {
                           style: 'currency',
                           currency: 'EUR'
@@ -207,8 +207,8 @@ export function CartSheet({ children, isOpen, onOpenChange }: CartSheetProps) {
           <CardFooter className="border-t border-border/20 p-3 sm:p-4 space-y-3 sm:space-y-4 flex flex-col flex-shrink-0">
             <div className="space-y-1.5 sm:space-y-2 w-full">
               <div className="flex justify-between text-xs sm:text-sm">
-                <span className="text-muted-foreground">Sous-total</span>
-                <span>
+                <span className="text-zinc-500 dark:text-zinc-300">Sous-total</span>
+                <span className="text-zinc-700 dark:text-white">
                   {new Intl.NumberFormat('fr-FR', {
                     style: 'currency',
                     currency: 'EUR'
@@ -216,8 +216,8 @@ export function CartSheet({ children, isOpen, onOpenChange }: CartSheetProps) {
                 </span>
               </div>
               <div className="flex justify-between text-xs sm:text-sm">
-                <span className="text-muted-foreground">Frais de livraison</span>
-                <span>
+                <span className="text-zinc-500 dark:text-zinc-300">Frais de livraison</span>
+                <span className="text-zinc-700 dark:text-white">
                   {new Intl.NumberFormat('fr-FR', {
                     style: 'currency',
                     currency: 'EUR'
@@ -237,8 +237,8 @@ export function CartSheet({ children, isOpen, onOpenChange }: CartSheetProps) {
               )}
               <Separator className="bg-border/20" />
               <div className="flex justify-between text-sm sm:text-base font-medium">
-                <span>Total</span>
-                <span>
+                <span className="dark:text-white">Total</span>
+                <span className="dark:text-white">
                   {new Intl.NumberFormat('fr-FR', {
                     style: 'currency',
                     currency: 'EUR'
@@ -259,7 +259,7 @@ export function CartSheet({ children, isOpen, onOpenChange }: CartSheetProps) {
                   <Button 
                     onClick={handleApplyPromoCode}
                     disabled={isApplyingPromo}
-                    className="flex-shrink-0 h-7 sm:h-8 text-[10px] sm:text-xs bg-primary/80 hover:bg-primary/90"
+                    className="flex-shrink-0 h-7 sm:h-8 text-[10px] sm:text-xs bg-zinc-900 dark:bg-zinc-100 hover:bg-zinc-800 dark:hover:bg-zinc-200 text-zinc-50 dark:text-zinc-900"
                     size="sm"
                   >
                     {isApplyingPromo ? "..." : "Appliquer"}
@@ -289,14 +289,14 @@ export function CartSheet({ children, isOpen, onOpenChange }: CartSheetProps) {
                 </div>
               )}
               
-              <Button className="w-full mb-2 text-xs sm:text-sm h-7 sm:h-9 bg-primary/80 hover:bg-primary/90" asChild>
+              <Button className="w-full mb-2 text-xs sm:text-sm h-7 sm:h-9 bg-zinc-900 dark:bg-zinc-100 hover:bg-zinc-800 dark:hover:bg-zinc-200 text-zinc-50 dark:text-zinc-900 hover:text-white dark:hover:text-black" asChild>
                 <Link href="/checkout" onClick={() => onOpenChange(false)}>Passer à la caisse</Link>
               </Button>
               
               <div className="flex gap-1.5 sm:gap-2">
                 <Button 
                   variant="outline" 
-                  className="flex-1 text-[10px] sm:text-xs h-7 sm:h-8 bg-background/50"
+                  className="flex-1 text-[10px] sm:text-xs h-7 sm:h-8 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300"
                   size="sm"
                   onClick={() => onOpenChange(false)}
                 >
@@ -304,7 +304,7 @@ export function CartSheet({ children, isOpen, onOpenChange }: CartSheetProps) {
                 </Button>
                 <Button 
                   variant="outline"
-                  className="flex-1 text-[10px] sm:text-xs h-7 sm:h-8 bg-background/50"
+                  className="flex-1 text-[10px] sm:text-xs h-7 sm:h-8 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300"
                   size="sm"
                   onClick={() => {
                     clearCart()

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Dock } from '@/components/Dock'
-import { Loader } from '@/components/ui/Loader'
+import { LoaderComponent } from '@/components/ui/Loader'
 import { Footer } from '@/components/Footer'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
@@ -21,7 +21,7 @@ export function ClientInitializer() {
 
     return (
         <>
-            <Loader />
+            <LoaderComponent />
             <Dock />
             <Footer />
         </>

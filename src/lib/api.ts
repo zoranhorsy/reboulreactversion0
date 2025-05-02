@@ -186,9 +186,59 @@ export interface Settings {
   taxRate: number;
 }
 
+export interface CollectionStats {
+  [storeType: string]: {
+    total: number;
+    new: number;
+  }
+}
+
 export const getToken = () => {
     try {
-        return localStorage.getItem('token') || '';
+        const token = localStorage.getItem('token') || '';
+        console.log('Token retrieved:', token ? 'Present (length: ' + token.length + ')' : 'Missing');
+        
+        if (token) {
+            try {
+                // Check if the token is a valid JWT
+                const parts = token.split('.');
+                if (parts.length !== 3) {
+                    console.warn('Token does not appear to be a valid JWT (not 3 parts)');
+                } else {
+                    // Try to decode the middle part to check expiration
+                    const base64Url = parts[1];
+                    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                    const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
+                        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                    }).join(''));
+                    
+                    const payload = JSON.parse(jsonPayload);
+                    console.log('Token payload:', payload);
+                    
+                    // Check token expiration
+                    if (payload.exp) {
+                        const expirationTime = payload.exp * 1000; // convert to milliseconds
+                        const currentTime = Date.now();
+                        const isExpired = currentTime > expirationTime;
+                        
+                        console.log('Token expiration info:', {
+                            expiresAt: new Date(expirationTime),
+                            currentTime: new Date(currentTime),
+                            isExpired
+                        });
+                        
+                        if (isExpired) {
+                            console.warn('Token is expired!');
+                            // You might want to handle token refresh here
+                        }
+                    }
+                }
+            } catch (tokenError) {
+                console.warn('Error checking token:', tokenError);
+            }
+        }
+        
+        return token;
     } catch (e) {
         console.error('Erreur lors de la récupération du token:', e);
         return '';
@@ -212,6 +262,11 @@ export const getImagePath = (path: string): string => {
   // Pour les chemins relatifs
   const cleanPath = path.startsWith('/') ? path : `/${path}`
   return `https://reboul-store-api-production.up.railway.app${cleanPath}`
+}
+
+// Ajouter cette interface après les autres interfaces, avant la classe Api
+export interface ProductWithFiles extends Partial<Product> {
+    files?: File[];
 }
 
 export class Api {
@@ -342,23 +397,26 @@ export class Api {
 
     async fetchProducts(params: Record<string, string | number> = {}): Promise<{ products: Product[]; total: number }> {
         try {
-            const transformedParams = { ...params }
-            if (transformedParams.category && transformedParams.category !== 'all') {
-                transformedParams.category_id = transformedParams.category
-                delete transformedParams.category
+            // Conserver tous les paramètres tels quels sans filtrage superflu
+            const transformedParams = { ...params };
+            
+            // Convertir explicitement le brand_id en nombre si présent
+            if (transformedParams.brand_id) {
+                console.log("Brand ID avant transformation:", transformedParams.brand_id);
+                transformedParams.brand_id = Number(transformedParams.brand_id);
+                console.log("Brand ID après transformation:", transformedParams.brand_id);
             }
-
-            const activeParams = Object.entries(transformedParams).reduce(
-                (acc, [key, value]) => {
-                    if (key === "store_type" || (value && value !== "all" && value !== "" && value !== "false")) {
-                        acc[key] = String(value)
-                    }
-                    return acc
-                },
-                {} as Record<string, string>,
-            )
-
-            const response = await this.client.get("/products", { params: activeParams })
+            
+            // Pour compatibilité, s'assurer que category_id est correctement défini
+            if (transformedParams.category && transformedParams.category !== 'all') {
+                transformedParams.category_id = transformedParams.category;
+                delete transformedParams.category;
+            }
+            
+            console.log("Paramètres de filtrage envoyés à l'API:", transformedParams);
+            
+            // Envoyer directement les paramètres sans le filtrage qui supprimait les valeurs numériques
+            const response = await this.client.get("/products", { params: transformedParams });
 
             if (!response.data || !Array.isArray(response.data.data)) {
                 throw new Error("Format de réponse API inattendu")
@@ -398,9 +456,12 @@ export class Api {
                 return normalizedProduct
             })
 
+            // Récupérer le nombre total d'éléments depuis la pagination fournie par le backend
+            const totalItems = response.data.pagination?.totalItems || filteredData.length;
+
             return {
                 products,
-                total: products.length,
+                total: totalItems, // Utiliser le nombre total d'éléments du backend
             }
         } catch (error) {
             this.handleError(error, "Erreur lors de la récupération des produits")
@@ -479,44 +540,98 @@ export class Api {
 
     async createProduct(productData: Partial<Product>): Promise<Product> {
         try {
+            console.log('createProduct called with data:', JSON.stringify(productData, null, 2));
+            
             // Nettoyage des données avant l'envoi
             const cleanedProductData = {
-                ...productData,
                 name: productData.name || "",
                 description: productData.description || "",
                 price: Number(productData.price) || 0,
                 category_id: Number(productData.category_id) || 0,
                 brand_id: Number(productData.brand_id) || 0,
-                brand: productData.brand || "",
                 store_type: productData.store_type || "adult",
                 featured: Boolean(productData.featured),
-                active: Boolean(productData.active),
-                new: Boolean(productData.new),
-                variants: productData.variants || [],
-                tags: productData.tags || [],
-                details: productData.details || [],
-                sku: productData.sku || null,
-                store_reference: productData.store_reference || null,
-                weight: productData.weight || null,
-                dimensions: productData.dimensions || null,
-                material: productData.material || null
+                active: Boolean(productData.active), 
+                new: Boolean(productData.new)
             };
 
-            // Supprimer les champs non nécessaires
-            delete (cleanedProductData as any).colors;
-            delete (cleanedProductData as any).image_url;
-            delete (cleanedProductData as any).image;
-            delete (cleanedProductData as any).category;
-            delete (cleanedProductData as any).created_at;
-            delete (cleanedProductData as any).updated_at;
+            // Ajouter les champs optionnels
+            if (productData.variants && Array.isArray(productData.variants)) {
+                console.log('Variants reçus avant nettoyage:', JSON.stringify(productData.variants, null, 2));
+                
+                const cleanedVariants = productData.variants.filter(v => 
+                    v && typeof v === 'object' &&
+                    v.size && typeof v.size === 'string' && v.size.trim() !== '' && 
+                    v.color && typeof v.color === 'string' && v.color.trim() !== '' &&
+                    typeof v.stock === 'number' && v.stock >= 0
+                ).map(v => ({
+                    size: String(v.size).trim(),
+                    color: String(v.color).trim(),
+                    stock: Number(v.stock) || 0
+                }));
+                
+                console.log('Variants après nettoyage:', JSON.stringify(cleanedVariants, null, 2));
+                
+                if (cleanedVariants.length > 0) {
+                    (cleanedProductData as any).variants = cleanedVariants;
+                }
+            }
+            
+            if (productData.tags && Array.isArray(productData.tags)) {
+                (cleanedProductData as any).tags = productData.tags;
+            }
+            
+            if (productData.details && Array.isArray(productData.details)) {
+                (cleanedProductData as any).details = productData.details;
+            }
+            
+            if (productData.sku) {
+                (cleanedProductData as any).sku = productData.sku;
+            }
+            
+            if (productData.store_reference) {
+                (cleanedProductData as any).store_reference = productData.store_reference;
+            }
+            
+            if (productData.images && Array.isArray(productData.images)) {
+                (cleanedProductData as any).images = productData.images;
+            }
 
-            console.log('Données nettoyées pour création de produit:', JSON.stringify(cleanedProductData, null, 2));
+            console.log('Données simplifiées pour création de produit:', JSON.stringify(cleanedProductData, null, 2));
 
-            const response = await this.client.post("/products", cleanedProductData);
-            return response.data;
+            // Vérifier l'authentification
+            const token = getToken();
+            if (!token) {
+                console.error("Pas de token d'authentification");
+                throw new Error("Vous devez être connecté pour créer un produit");
+            }
+            
+            console.log('Token d\'authentification présent:', !!token);
+            
+            // Envoyer directement au serveur
+            const response = await fetch(`${this.RAILWAY_BASE_URL}/api/products`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(cleanedProductData)
+            });
+            
+            console.log('Response status:', response.status);
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Server response error:', errorText);
+                throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+            }
+            
+            const result = await response.json();
+            console.log('Création réussie, réponse du serveur:', result);
+            return result;
         } catch (error) {
             console.error('Error creating product:', error);
-            throw new Error(error instanceof Error ? error.message : "Erreur lors de la création du produit");
+            throw error;
         }
     }
 
@@ -538,11 +653,21 @@ export class Api {
 
             // Ajouter les champs optionnels seulement s'ils ont des valeurs valides
             if (data.variants && Array.isArray(data.variants)) {
+                console.log('Variants reçus avant nettoyage:', JSON.stringify(data.variants, null, 2));
+                
                 const cleanedVariants = data.variants.filter(v => 
-                    v.size && v.size !== "undefined" && 
-                    v.color && v.color !== "undefined" &&
-                    v.stock >= 0
-                );
+                    v && typeof v === 'object' &&
+                    v.size && typeof v.size === 'string' && v.size.trim() !== '' && 
+                    v.color && typeof v.color === 'string' && v.color.trim() !== '' &&
+                    typeof v.stock === 'number' && v.stock >= 0
+                ).map(v => ({
+                    size: String(v.size).trim(),
+                    color: String(v.color).trim(),
+                    stock: Number(v.stock) || 0
+                }));
+                
+                console.log('Variants après nettoyage:', JSON.stringify(cleanedVariants, null, 2));
+                
                 if (cleanedVariants.length > 0) {
                     validatedData.variants = cleanedVariants;
                 }
@@ -566,6 +691,11 @@ export class Api {
 
             if (data.sku) {
                 validatedData.sku = String(data.sku).trim();
+            }
+
+            // Ajout de la prise en charge du champ store_reference
+            if (data.store_reference) {
+                validatedData.store_reference = String(data.store_reference).trim();
             }
 
             // Ajouter les images si elles existent
@@ -939,15 +1069,42 @@ export class Api {
 
     async login(email: string, password: string): Promise<{ user: User; token: string } | null> {
         try {
-            const response = await this.client.post("/auth/login", { email, password })
-            const { user, token } = response.data
-            if (typeof window !== "undefined") {
-                localStorage.setItem("token", token)
+            console.log(`Attempting login for user: ${email}`);
+            const response = await this.client.post("/auth/login", { email, password });
+            console.log("Login response:", response.data);
+            
+            const { user, token } = response.data;
+            if (!token) {
+                console.error("No token received in login response");
+                throw new Error("No authentication token received");
             }
-            return { user, token }
+            
+            console.log("Login successful, storing token");
+            if (typeof window !== "undefined") {
+                // Store in localStorage for persistent sessions
+                localStorage.setItem("token", token);
+                
+                // Also store in sessionStorage as a backup
+                try {
+                    sessionStorage.setItem("token_backup", token);
+                } catch (storageError) {
+                    console.warn("Could not store token in sessionStorage:", storageError);
+                }
+                
+                console.log("Token stored successfully");
+            }
+            
+            return { user, token };
         } catch (error) {
-            this.handleError(error, "Error during login")
-            return null
+            console.error("Login error:", error);
+            if (error instanceof AxiosError) {
+                console.error("API response:", {
+                    status: error.response?.status,
+                    data: error.response?.data
+                });
+            }
+            this.handleError(error, "Error during login");
+            return null;
         }
     }
 
@@ -1631,56 +1788,60 @@ export class Api {
         }
     }
 
-    async addToFavorites(productId: number | string): Promise<void> {
+    async addToFavorites(productId: string, storeType: string = 'main'): Promise<any> {
         try {
             const token = getToken();
             if (!token) {
-                throw new Error('Vous devez être connecté pour ajouter des favoris');
+                throw new Error('Non authentifié');
             }
 
-            // Convertir l'ID en nombre si c'est une chaîne
-            const numericId = typeof productId === 'string' ? parseInt(productId, 10) : productId;
-            
-            // S'assurer que l'ID est valide
-            if (isNaN(numericId)) {
-                throw new Error('ID de produit invalide');
-            }
+            console.log('Ajout aux favoris:', { productId, storeType });
 
-            const response = await this.client.post('/users/favorites', { 
-                product_id: numericId
+            const isCornerProduct = storeType === 'corner';
+            const response = await this.client.post('/users/favorites', {
+                product_id: productId,
+                is_corner_product: isCornerProduct,
+                corner_product_id: isCornerProduct ? productId : null
             }, {
                 headers: {
-                    'Authorization': `Bearer ${token}`
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
                 }
             });
 
-            if (!response.data) {
-                throw new Error('Réponse invalide du serveur');
-            }
+            console.log('Réponse de l\'API:', response.data);
+            return response.data;
         } catch (error) {
             console.error('Erreur détaillée lors de l\'ajout aux favoris:', error);
             if (error instanceof AxiosError) {
-                console.error('Données de la réponse:', error.response?.data);
+                console.error('Réponse du serveur:', error.response?.data);
             }
             this.handleError(error, "Erreur lors de l'ajout aux favoris");
             throw error;
         }
     }
 
-    async removeFromFavorites(productId: number | string): Promise<void> {
+    async removeFromFavorites(productId: string, storeType: string = 'main'): Promise<void> {
         try {
             const token = getToken();
             if (!token) {
-                throw new Error('Vous devez être connecté pour gérer vos favoris');
+                throw new Error('Non authentifié');
             }
 
-            await this.client.delete(`/users/favorites/${productId}`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
+            console.log('Suppression des favoris:', { productId, storeType });
+
+            await this.client.delete('/users/favorites', {
+                params: {
+                    product_id: productId,
+                    is_corner_product: storeType === 'corner'
                 }
             });
         } catch (error) {
-            this.handleError(error, "Erreur lors de la suppression des favoris");
+            console.error('Erreur détaillée lors de la suppression des favoris:', error);
+            if (error instanceof AxiosError) {
+                console.error('Réponse du serveur:', error.response?.data);
+            }
+            this.handleError(error, 'Erreur lors de la suppression des favoris');
             throw error;
         }
     }
@@ -1967,6 +2128,326 @@ export class Api {
             };
         }
     }
+
+    /**
+     * Récupère les statistiques des collections (nombre total de produits et nouveautés par store_type)
+     */
+    async fetchCollectionStats(): Promise<CollectionStats> {
+        try {
+            console.log('Tentative avec l\'endpoint /collections/stats...');
+            
+            // Essayer d'abord l'endpoint dédié
+            try {
+                const response = await fetch(`${this.RAILWAY_BASE_URL}/collections/stats`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(getToken() ? { 'Authorization': `Bearer ${getToken()}` } : {})
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Endpoint /collections/stats indisponible: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // Si la réponse contient des données (pas d'erreur), les utiliser
+                if (!data.error) {
+                    console.log("Statistiques des collections récupérées depuis l'endpoint dédié:", data);
+                    return data;
+                }
+                
+                // Si la réponse contient une erreur mais des données de démonstration, les utiliser temporairement
+                if (data.error && data.demoData) {
+                    console.warn("Utilisation des données de démonstration de l'API en attendant la correction du backend");
+                    return data.demoData;
+                }
+                
+                // Sinon, passer au fallback
+                throw new Error(data.error || "Format de réponse incorrect");
+                
+            } catch (endpointError) {
+                console.warn('Endpoint dédié indisponible ou erroné, calcul côté client...');
+                throw endpointError; // Passer au calcul côté client
+            }
+            
+        } catch (error) {
+            console.warn("Fallback: calcul des statistiques côté client");
+            
+            // Calcul des statistiques côté client en fallback
+            try {
+                console.log('Récupération des produits pour calcul côté client...');
+                
+                // Récupérer tous les produits
+                const productsResponse = await this.client.get('/products', {
+                    params: { limit: 1000 }
+                });
+                
+                if (!productsResponse.data || !productsResponse.data.data || !Array.isArray(productsResponse.data.data)) {
+                    throw new Error("Format de réponse API inattendu");
+                }
+                
+                // Filtrer les produits supprimés
+                const validProducts = productsResponse.data.data.filter((product: Product) => 
+                    product._actiontype !== "hardDelete" && 
+                    product._actiontype !== "delete" && 
+                    product._actiontype !== "permDelete" &&
+                    product.store_type !== "deleted" &&
+                    (typeof product.name !== 'string' || !product.name.startsWith('[SUPPRIMÉ]'))
+                );
+                
+                console.log(`${validProducts.length} produits valides pour calculer les statistiques`);
+                
+                // Calculer les statistiques par store_type
+                const stats = validProducts.reduce((acc: CollectionStats, product: Product) => {
+                    const storeType = product.store_type || 'other';
+                    
+                    if (!acc[storeType]) {
+                        acc[storeType] = { total: 0, new: 0 };
+                    }
+                    
+                    // Incrémenter le compteur total
+                    acc[storeType].total += 1;
+                    
+                    // Si le produit est marqué comme nouveau, incrémenter le compteur de nouveautés
+                    if (product.new === true) {
+                        acc[storeType].new += 1;
+                    }
+                    
+                    return acc;
+                }, {} as CollectionStats);
+                
+                // S'assurer que toutes les catégories connues sont présentes dans les stats
+                const knownTypes = ['adult', 'kids', 'sneakers', 'cpcompany'];
+                knownTypes.forEach(type => {
+                    if (!stats[type]) {
+                        stats[type] = { total: 0, new: 0 };
+                    }
+                });
+                
+                console.log('Statistiques des collections calculées côté client:', stats);
+                return stats;
+                
+            } catch (fallbackError) {
+                console.error("Erreur lors du calcul côté client:", fallbackError);
+                this.handleError(fallbackError, "Erreur lors du calcul des statistiques");
+                
+                // En dernier recours, utiliser les données de démonstration
+                const demoStats = {
+                    adult: { total: 178, new: 12 },
+                    kids: { total: 94, new: 8 },
+                    sneakers: { total: 67, new: 0 },
+                    cpcompany: { total: 42, new: 0 }
+                };
+                
+                console.info("Utilisation des données de démonstration (dernier recours)");
+                return demoStats;
+            }
+        }
+    }
+
+    // Méthodes pour les produits The Corner
+    async fetchCornerProducts(params: Record<string, string | number> = {}): Promise<{ products: Product[]; total: number }> {
+        try {
+            const response = await this.client.get('/corner-products', { params })
+            
+            // Transformation des données reçues
+            const products = response.data.data.map((product: any) => {
+                // Normalisation de l'URL des images
+                if (product.image_url) {
+                    product.image_url = this.formatImageUrl(product.image_url)
+                }
+                
+                // Normalisation des images
+                if (product.images && Array.isArray(product.images)) {
+                    product.images = product.images.map((img: string) => this.formatImageUrl(img))
+                }
+                
+                // Normalisation du prix
+                product.price = this.normalizePrice(product.price)
+                
+                // Traitement des variants
+                if (product.variants && typeof product.variants === 'string') {
+                    try {
+                        product.variants = JSON.parse(product.variants)
+                    } catch (e) {
+                        console.error('Erreur parsing variants:', e)
+                        product.variants = []
+                    }
+                }
+                
+                return product
+            })
+            
+            return {
+                products,
+                total: response.data.pagination.totalItems || products.length
+            }
+        } catch (error) {
+            this.handleError(error, 'Erreur lors de la récupération des produits The Corner')
+            return { products: [], total: 0 }
+        }
+    }
+
+    async getCornerProductById(id: string): Promise<Product | null> {
+        try {
+            const response = await this.client.get(`/corner-products/${id}`)
+            const product = response.data
+            
+            // Normalisation de l'URL des images
+            if (product.image_url) {
+                product.image_url = this.formatImageUrl(product.image_url)
+            }
+            
+            // Normalisation des images
+            if (product.images && Array.isArray(product.images)) {
+                product.images = product.images.map((img: string) => this.formatImageUrl(img))
+            }
+            
+            // Normalisation du prix
+            product.price = this.normalizePrice(product.price)
+            
+            // Traitement des variants
+            if (product.variants && typeof product.variants === 'string') {
+                try {
+                    product.variants = JSON.parse(product.variants)
+                } catch (e) {
+                    console.error('Erreur parsing variants:', e)
+                    product.variants = []
+                }
+            }
+            
+            return product
+        } catch (error) {
+            this.handleError(error, `Erreur lors de la récupération du produit The Corner (ID: ${id})`)
+            return null
+        }
+    }
+
+    async createCornerProduct(productData: ProductWithFiles): Promise<Product> {
+        try {
+            const formData = new FormData()
+            
+            // Ajout des champs textuels au formData
+            for (const [key, value] of Object.entries(productData)) {
+                if (key === 'images' || key === 'files') continue // Traité séparément
+                
+                if (value !== undefined && value !== null) {
+                    if (typeof value === 'object') {
+                        formData.append(key, JSON.stringify(value))
+                    } else {
+                        formData.append(key, String(value))
+                    }
+                }
+            }
+            
+            // Traitement des images
+            if (productData.files && Array.isArray(productData.files)) {
+                for (const file of productData.files) {
+                    formData.append('images', file)
+                }
+            }
+            
+            const response = await this.client.post('/corner-products', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            })
+            
+            return response.data
+        } catch (error) {
+            this.handleError(error, 'Erreur lors de la création du produit The Corner')
+            throw error
+        }
+    }
+
+    async updateCornerProduct(id: string, data: ProductWithFiles): Promise<Product> {
+        try {
+            const formData = new FormData()
+            
+            // Ajout des champs textuels au formData
+            for (const [key, value] of Object.entries(data)) {
+                if (key === 'images' || key === 'files') continue // Traité séparément
+                
+                if (value !== undefined && value !== null) {
+                    if (typeof value === 'object') {
+                        formData.append(key, JSON.stringify(value))
+                    } else {
+                        formData.append(key, String(value))
+                    }
+                }
+            }
+            
+            // Traitement des images
+            if (data.files && Array.isArray(data.files)) {
+                for (const file of data.files) {
+                    formData.append('images', file)
+                }
+            }
+            
+            const response = await this.client.put(`/corner-products/${id}`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            })
+            
+            return response.data
+        } catch (error) {
+            this.handleError(error, `Erreur lors de la mise à jour du produit The Corner (ID: ${id})`)
+            throw error
+        }
+    }
+
+    async deleteCornerProduct(id: string): Promise<boolean> {
+        try {
+            const token = getToken();
+            if (!token) {
+                throw new Error('Non authentifié');
+            }
+
+            await this.client.delete(`/corner/products/${id}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            return true;
+        } catch (error) {
+            this.handleError(error, "Erreur lors de la suppression du produit");
+            return false;
+        }
+    }
+
+    async addToCornerFavorites(productId: string): Promise<any> {
+        try {
+            const token = getToken();
+            if (!token) {
+                throw new Error('Non authentifié');
+            }
+
+            console.log('Ajout aux favoris The Corner:', { productId });
+
+            const response = await this.client.post('/users/favorites', {
+                product_id: productId,
+                is_corner_product: true
+            }, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            console.log('Réponse de l\'API:', response.data);
+            return response.data;
+        } catch (error) {
+            console.error('Erreur détaillée lors de l\'ajout aux favoris The Corner:', error);
+            if (error instanceof AxiosError) {
+                console.error('Réponse du serveur:', error.response?.data);
+            }
+            this.handleError(error, "Erreur lors de l'ajout aux favoris The Corner");
+            throw error;
+        }
+    }
 }
 
 export const api = new Api()
@@ -2039,6 +2520,7 @@ export const updateSettings = api.updateSettings.bind(api)
 // Favoris
 export const getFavorites = api.getFavorites.bind(api)
 export const addToFavorites = api.addToFavorites.bind(api)
+export const addToCornerFavorites = api.addToCornerFavorites.bind(api)
 export const removeFromFavorites = api.removeFromFavorites.bind(api)
 
 export const fetchArchives = api.fetchArchives.bind(api)

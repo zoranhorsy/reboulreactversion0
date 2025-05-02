@@ -4,7 +4,7 @@ import { useEffect } from 'react'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import Dock from '@/components/Dock'
-import { Loader } from '@/components/ui/Loader'
+import { LoaderComponent } from '@/components/ui/Loader'
 import Footer from '@/components/Footer'
 
 export default function DynamicComponents() {
@@ -21,7 +21,7 @@ export default function DynamicComponents() {
 
     return (
         <>
-            <Loader />
+            <LoaderComponent />
             <Dock />
             <Footer />
         </>

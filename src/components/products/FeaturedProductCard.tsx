@@ -14,9 +14,10 @@ import { getColorInfo, isWhiteColor } from '@/config/productColors'
 
 interface FeaturedProductCardProps {
     product: Product
+    className?: string
 }
 
-export function FeaturedProductCard({ product }: FeaturedProductCardProps) {
+export function FeaturedProductCard({ product, className }: FeaturedProductCardProps) {
     const [imageError, setImageError] = useState(false)
     const [isFavorite, setIsFavorite] = useState(false)
     const [isProcessing, setIsProcessing] = useState(false)
@@ -165,7 +166,7 @@ export function FeaturedProductCard({ product }: FeaturedProductCardProps) {
                 })
             } else {
                 // Ajouter aux favoris
-                await api.addToFavorites(product.id)
+                await api.addToFavorites(product.id, product.is_corner_product ? 'corner' : 'main')
                 toast({
                     title: "Ajouté aux favoris",
                     description: `${product.name} a été ajouté à vos favoris`,
@@ -202,9 +203,12 @@ export function FeaturedProductCard({ product }: FeaturedProductCardProps) {
     const availableColors = getAvailableColors();
 
     return (
-        <Link href={`/produit/${product.id}`}>
-            <Card className="group relative overflow-hidden bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800
-                shadow-sm hover:shadow-md hover:border-primary/20 dark:hover:border-primary/20 transition-all duration-300">
+        <Link href={product.is_corner_product ? `/the-corner/${product.id}` : `/produit/${product.id}`}>
+            <Card className={cn(
+                "group relative overflow-hidden bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800",
+                "shadow-sm hover:shadow-md hover:border-primary/20 dark:hover:border-primary/20 transition-all duration-300",
+                className
+            )}>
                 <div className="aspect-[4/5] relative overflow-hidden">
                     {imageError ? (
                         <div className="w-full h-full flex items-center justify-center bg-muted">
@@ -305,7 +309,7 @@ export function FeaturedProductCard({ product }: FeaturedProductCardProps) {
                                             key={index} 
                                             className="text-[8px] sm:text-[9px] font-medium text-zinc-900 dark:text-zinc-200"
                                         >
-                                            {size}
+                                            {size}{index < Math.min(availableSizes.length, 4) - 1 ? ", " : ""}
                                         </span>
                                     ))}
                                     {availableSizes.length > 4 && (
@@ -325,22 +329,15 @@ export function FeaturedProductCard({ product }: FeaturedProductCardProps) {
                                 <div className="flex items-center gap-0.5">
                                     {availableColors.slice(0, 3).map((color, index) => {
                                         const colorInfo = getColorInfo(color || '');
-                                        const isWhite = isWhiteColor(colorInfo.hex);
                                         
                                         return (
                                             <span 
                                                 key={index} 
-                                                className={cn(
-                                                    "w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full border border-zinc-300 dark:border-zinc-700",
-                                                    isWhite && "border-zinc-400 dark:border-zinc-500"
-                                                )}
+                                                className="text-[8px] sm:text-[9px] font-medium text-zinc-900 dark:text-zinc-200"
                                                 title={colorInfo.label}
-                                                style={{ 
-                                                    backgroundColor: colorInfo.hex.startsWith('linear-gradient') 
-                                                        ? colorInfo.hex 
-                                                        : colorInfo.hex
-                                                }}
-                                            />
+                                            >
+                                                {colorInfo.label}{index < Math.min(availableColors.length, 3) - 1 ? ", " : ""}
+                                            </span>
                                         );
                                     })}
                                     {availableColors.length > 3 && (

@@ -91,44 +91,30 @@ export function ProductForm({
   // Fonction pour nettoyer les images du produit et les convertir en URLs
   const cleanProductImages = (productImages: (string | File | Blob | ProductImage)[] | undefined): string[] => {
     if (!productImages || !Array.isArray(productImages)) {
-      console.log("Pas d&apos;images à nettoyer");
       return [];
     }
-    
-    console.log("Images à nettoyer:", productImages);
     
     const cleanedImageUrls = productImages
       .map(img => {
         // Si c'est une chaîne de caractères (URL)
         if (typeof img === 'string') {
-          console.log("Image de type string:", img);
           return img;
         }
         
         // Si c'est un objet ProductImage
         if (typeof img === 'object' && img !== null && 'url' in img && typeof img.url === 'string') {
-          console.log("Image de type ProductImage, extraction de l'URL:", img.url);
           return img.url;
         }
         
-        // Si c'est un autre type d'objet
-        console.warn("Image de type non reconnu:", img);
         return null;
       })
       .filter((url): url is string => url !== null);
     
-    console.log("URLs d&apos;images nettoyées:", cleanedImageUrls);
     return cleanedImageUrls;
   };
   
   // Initialiser le formulaire avec les données du produit
   const initialImages = cleanProductImages(product?.images);
-  console.log("Images initiales nettoyées:", initialImages);
-  console.log("Données techniques du produit:", {
-    weight: product?.weight,
-    dimensions: product?.dimensions,
-    material: product?.material
-  });
   
   const [formData, setFormData] = useState<Product>({
     id: product?.id || '',
@@ -163,7 +149,7 @@ export function ProductForm({
     reviews_count: product?.reviews_count || 0,
     created_at: product?.created_at || new Date().toISOString(),
     _actiontype: product?._actiontype || '',
-    showTechnicalDetails: false
+    showTechnicalDetails: product?.weight || product?.dimensions || product?.material ? true : false
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -347,7 +333,6 @@ export function ProductForm({
 
     try {
       setIsUploading(true);
-      console.log('Début de l\'upload des images...');
 
       // Obtenir la signature du serveur
       const timestamp = Math.round(new Date().getTime() / 1000);
@@ -377,13 +362,6 @@ export function ProductForm({
           formData.append('folder', 'reboul-store');
           formData.append('signature', signature);
 
-          console.log('Envoi du fichier:', {
-            name: file.name,
-            size: file.size,
-            type: file.type,
-            timestamp
-          });
-
           const response = await fetch(
             'https://api.cloudinary.com/v1_1/dxen69pdo/image/upload',
             {
@@ -399,8 +377,6 @@ export function ProductForm({
           }
 
           const data = await response.json();
-          console.log('Réponse Cloudinary:', data);
-          // Retourner uniquement l'URL sécurisée
           return data.secure_url;
         } catch (error) {
           console.error('Erreur lors de l\'upload d\'une image:', error);
@@ -411,8 +387,6 @@ export function ProductForm({
       const uploadedUrls = await Promise.all(uploadPromises);
       const validUrls = uploadedUrls.filter(url => url);
 
-      console.log('URLs des images uploadées:', validUrls);
-
       if (validUrls.length) {
         const existingImages = formData.images || [];
         // S'assurer que toutes les images sont des URLs simples
@@ -420,8 +394,6 @@ export function ProductForm({
           ...existingImages.map(img => typeof img === 'string' ? img : (img && 'url' in img ? img.url : '')).filter(url => url),
           ...validUrls
         ];
-        
-        console.log('Mise à jour du state avec les nouvelles images:', updatedImages);
         
         setFormData(prev => ({
           ...prev,
@@ -435,7 +407,7 @@ export function ProductForm({
         });
       }
     } catch (error) {
-      console.error('Erreur détaillée lors de l\'upload:', error);
+      console.error('Erreur upload:', error instanceof Error ? error.message : String(error));
       toast({
         title: "Erreur",
         description: error instanceof Error ? error.message : "Une erreur est survenue lors de l'upload des images",
@@ -489,6 +461,7 @@ export function ProductForm({
     
     try {
       setIsSubmitting(true);
+      console.log("Form submission started with data:", formData);
       
       // Nettoyer et formater les images pour n'avoir que des URLs simples
       const cleanedImages = (formData.images || []).map(img => {
@@ -496,76 +469,95 @@ export function ProductForm({
         if (img && typeof img === 'object' && 'url' in img) return img.url;
         return null;
       }).filter((url): url is string => typeof url === 'string' && url.trim() !== '');
+      
+      console.log("Cleaned images:", cleanedImages);
 
       // Créer une copie de formData sans la propriété showTechnicalDetails
       const { showTechnicalDetails, ...productData } = formData;
 
-      // Préparer les données du produit
+      // Nettoyer les variants pour s'assurer qu'ils ont des valeurs correctes
+      const cleanedVariants: Variant[] = Array.isArray(productData.variants) 
+        ? productData.variants.filter(v => 
+            v.size && v.size.trim() !== '' && 
+            v.color && v.color.trim() !== '' && 
+            v.stock >= 0
+          )
+        : [];
+      
+      console.log("Cleaned variants:", cleanedVariants);
+
+      // Préparer les données du produit avec seulement les champs nécessaires
       const tempProductData = {
         name: productData.name?.trim() || "",
         description: productData.description?.trim() || "",
         price: Number(productData.price) || 0,
         category_id: Number(productData.category_id) || 0,
         brand_id: Number(productData.brand_id) || 0,
-        category: productData.category || "",
-        brand: productData.brand || "",
-        image_url: productData.image_url || "",
-        image: productData.image || "",
-        images: cleanedImages,
-        imagesText: productData.imagesText,
-        variants: Array.isArray(productData.variants) ? productData.variants.map(variant => ({
-          size: String(variant.size),
-          color: String(variant.color),
-          stock: Number(variant.stock)
-        })) || [] : [],
-        tags: Array.isArray(productData.tags) ? productData.tags : [],
-        details: productData.details || [],
-        reviews: productData.reviews || [],
-        questions: productData.questions || [],
-        faqs: productData.faqs || [],
-        size_chart: productData.size_chart || [],
         store_type: productData.store_type || "adult",
         featured: Boolean(productData.featured),
         active: Boolean(productData.active),
         new: Boolean(productData.new),
-        sku: productData.sku?.trim() || null,
-        store_reference: productData.store_reference?.trim() || null,
-        weight: productData.weight || null,
-        dimensions: productData.dimensions?.trim() || null,
-        material: productData.material?.trim() || null,
-        rating: productData.rating || 0,
-        reviews_count: productData.reviews_count || 0,
-        created_at: productData.created_at || new Date().toISOString(),
-        _actiontype: productData._actiontype || ""
+        images: cleanedImages,
+        variants: cleanedVariants, // Utiliser les variants nettoyés
+        tags: Array.isArray(productData.tags) ? productData.tags : [],
+        details: Array.isArray(productData.details) ? productData.details : []
       };
+
+      // Ajouter les champs optionnels uniquement s'ils ont une valeur
+      if (productData.sku) {
+        (tempProductData as any).sku = productData.sku.trim();
+      }
+      
+      if (productData.store_reference) {
+        (tempProductData as any).store_reference = productData.store_reference.trim();
+      }
+      
+      if (productData.weight) {
+        (tempProductData as any).weight = productData.weight;
+      }
+      
+      if (productData.dimensions) {
+        (tempProductData as any).dimensions = productData.dimensions.trim();
+      }
+      
+      if (productData.material) {
+        (tempProductData as any).material = productData.material.trim();
+      }
       
       // Ajouter l'id si présent
       const cleanedProductData: Partial<Product> = formData.id 
         ? { ...tempProductData, id: formData.id } 
         : tempProductData;
-
-      console.log('Données préparées pour l\'envoi:', JSON.stringify(cleanedProductData, null, 2));
+        
+      console.log("Final product data to submit:", JSON.stringify(cleanedProductData, null, 2));
 
       // Appeler la fonction onSubmit avec les données préparées
-      await onSubmit(cleanedProductData as Product);
-
-      toast({
-        title: "Succès",
-        description: formData.id ? "Produit mis à jour avec succès" : "Produit créé avec succès",
-      });
-      
-      router.push('/admin');
-    } catch (error) {
-      console.error('Error saving product:', error);
-      if (error instanceof Error) {
-        console.error('Error details:', error.message);
-        if ('response' in error && error.response) {
-          console.error('Server response:', error.response);
+      try {
+        await onSubmit(cleanedProductData as Product);
+        
+        toast({
+          title: "Succès",
+          description: formData.id ? "Produit mis à jour avec succès" : "Produit créé avec succès",
+        });
+        
+        // Rediriger uniquement si la soumission a réussi
+        if (router) {
+          router.push('/admin');
         }
+      } catch (submitError) {
+        console.error("Error in form submission:", submitError);
+        toast({
+          title: "Erreur lors de la soumission",
+          description: submitError instanceof Error ? submitError.message : "Erreur lors de l'enregistrement du produit",
+          variant: "destructive",
+        });
+        // Ne pas rediriger en cas d'erreur
       }
+    } catch (error) {
+      console.error('Erreur traitement formulaire:', error instanceof Error ? error.message : String(error));
       toast({
         title: "Erreur",
-        description: error instanceof Error ? error.message : "Une erreur est survenue lors de l'enregistrement du produit",
+        description: error instanceof Error ? error.message : "Une erreur est survenue lors du traitement du formulaire",
         variant: "destructive",
       });
     } finally {
@@ -574,7 +566,16 @@ export function ProductForm({
   };
 
   const handleVariantChange = (variants: Variant[]): void => {
-    handleChange("variants", variants);
+    // Valider et nettoyer les variants avant de les ajouter
+    const validVariants: Variant[] = variants.map(variant => ({
+      id: variant.id || 0,
+      size: variant.size?.trim() || '',
+      color: variant.color?.trim() || '',
+      stock: Math.max(0, Number(variant.stock) || 0), // Assurer que le stock est positif
+      price: variant.price
+    })).filter(v => v.size !== '' && v.color !== '');
+    
+    handleChange("variants", validVariants);
   };
 
   const handleTagsChange = (tags: string[]): void => {
@@ -582,7 +583,9 @@ export function ProductForm({
   };
 
   const handleDetailsChange = (details: string[]): void => {
-    handleChange("details", details);
+    // Ensure details is always an array
+    const safeDetails = Array.isArray(details) ? details : [];
+    handleChange("details", safeDetails);
   };
 
   const handleSizeChartChange = (sizeChart: SizeChart[]): void => {
@@ -971,9 +974,13 @@ export function ProductForm({
                           if (e.key === 'Enter') {
                             e.preventDefault();
                             const value = e.currentTarget.value.trim();
-                            if (value && !formData.details.includes(value)) {
-                              handleDetailsChange([...formData.details, value]);
-                              e.currentTarget.value = '';
+                            if (value) {
+                              // Ensure we're working with an array, even if formData.details is null/undefined
+                              const currentDetails = Array.isArray(formData.details) ? formData.details : [];
+                              if (!currentDetails.includes(value)) {
+                                handleDetailsChange([...currentDetails, value]);
+                                e.currentTarget.value = '';
+                              }
                             }
                           }
                         }}
@@ -985,9 +992,13 @@ export function ProductForm({
                       onClick={() => {
                         const input = document.getElementById('detail-input') as HTMLInputElement;
                         const value = input.value.trim();
-                        if (value && !formData.details.includes(value)) {
-                          handleDetailsChange([...formData.details, value]);
-                          input.value = '';
+                        if (value) {
+                          // Ensure we're working with an array, even if formData.details is null/undefined
+                          const currentDetails = Array.isArray(formData.details) ? formData.details : [];
+                          if (!currentDetails.includes(value)) {
+                            handleDetailsChange([...currentDetails, value]);
+                            input.value = '';
+                          }
                         }
                       }}
                     >

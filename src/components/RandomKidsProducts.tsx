@@ -38,6 +38,7 @@ export function RandomKidsProducts() {
     )
 
     const [products, setProducts] = useState<Product[]>([])
+    const [featuredProducts, setFeaturedProducts] = useState<Product[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
 
@@ -45,14 +46,16 @@ export function RandomKidsProducts() {
         const fetchRandomKidsProducts = async () => {
             try {
                 setIsLoading(true)
-                const response = await api.fetchProducts({ store_type: "kids", limit: "8" })
+                const response = await api.fetchProducts({ store_type: "kids", limit: "50" })
                 
                 // Shuffle the products array to get random products
                 const shuffled = [...response.products].sort(() => 0.5 - Math.random())
-                // Take the first 8 (or fewer if there aren't 8 available)
+                // Take the first 8 for carousel and 3 for featured
                 const randomProducts = shuffled.slice(0, 8)
+                const featured = shuffled.slice(8, 11)
                 
                 setProducts(randomProducts)
+                setFeaturedProducts(featured)
             } catch (err) {
                 console.error('Erreur lors de la récupération des produits enfants aléatoires:', err)
                 setError(err instanceof Error ? err.message : "Une erreur est survenue")
@@ -81,110 +84,155 @@ export function RandomKidsProducts() {
     }
 
     return (
-        <section className="w-full py-6 sm:py-8 md:py-10 lg:py-12 overflow-hidden">
-           
-
-            <div className="w-full px-1.5 sm:px-2 md:px-4 lg:px-6 xl:px-8">
-                <Carousel
-                    ref={emblaRef}
-                    className="w-full"
-                    opts={{
-                        loop: true,
-                        align: 'start',
-                        skipSnaps: false,
-                        dragFree: true,
-                        containScroll: "trimSnaps",
-                    }}
-                >
-                    <CarouselContent className="-ml-1 sm:-ml-2 md:-ml-3 pl-1 sm:pl-2 md:pl-3">
-                        {products.map((product, index) => (
-                            <CarouselItem 
-                                key={product.id} 
-                                className="pl-1 sm:pl-2 md:pl-3
-                                    basis-[49%]
-                                    xs:basis-[45%] 
-                                    sm:basis-[33.333%] 
-                                    md:basis-[25%] 
-                                    lg:basis-[20%] 
-                                    xl:basis-[16.666%]"
-                            >
-                                <motion.div
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ duration: 0.3, delay: Math.min(index * 0.05, 0.3) }}
-                                >
-                                    <FeaturedProductCard product={product} />
-                                </motion.div>
-                            </CarouselItem>
-                        ))}
-                    </CarouselContent>
-                    
-                    <div className="flex items-center justify-center gap-2 mt-4 sm:hidden">
-                        <CarouselPrevious 
-                            className="static transform-none flex h-8 w-8
-                                bg-white/80 dark:bg-zinc-950/80 
-                                border border-zinc-200 dark:border-zinc-800
-                                text-zinc-900 dark:text-white
-                                hover:bg-primary/10 hover:border-primary
-                                dark:hover:bg-primary/10 dark:hover:border-primary
-                                transition-all duration-200" 
+        <div className="relative w-full overflow-hidden">
+            {/* Section d'en-tête avec image de fond et cartes produits */}
+            <div className="relative overflow-hidden bg-zinc-900">
+                {/* Image de fond avec effet flou */}
+                <div className="absolute inset-0 z-0">
+                    <div className="relative w-full h-full">
+                        <motion.div 
+                            className="absolute inset-0 bg-[url('/images/header/reboul/3.png')] 
+                            bg-cover bg-center bg-no-repeat
+                            transition-opacity duration-500 ease-in-out"
+                            initial={{ scale: 1.1 }}
+                            animate={{ scale: 1 }}
+                            transition={{ duration: 20, repeat: Infinity, repeatType: "reverse" }}
                         />
-                        <CarouselNext 
-                            className="static transform-none flex h-8 w-8
-                                bg-white/80 dark:bg-zinc-950/80 
-                                border border-zinc-200 dark:border-zinc-800
-                                text-zinc-900 dark:text-white
-                                hover:bg-primary/10 hover:border-primary
-                                dark:hover:bg-primary/10 dark:hover:border-primary
-                                transition-all duration-200" 
-                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/90 via-zinc-900/70 to-transparent backdrop-blur-sm" />
                     </div>
-                    
-                    <CarouselPrevious 
-                        className="hidden sm:flex left-0 sm:left-1 md:left-2 lg:left-4 xl:left-6
-                            h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10
-                            bg-white/90 dark:bg-zinc-950/90 
-                            border border-zinc-200 dark:border-zinc-800
-                            text-zinc-800 dark:text-white
-                            hover:bg-primary/10 hover:border-primary hover:text-primary
-                            dark:hover:bg-primary/10 dark:hover:border-primary dark:hover:text-primary
-                            transition-all duration-200
-                            shadow-sm z-10" 
-                    />
-                    <CarouselNext 
-                        className="hidden sm:flex right-0 sm:right-1 md:right-2 lg:right-4 xl:right-6
-                            h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10
-                            bg-white/90 dark:bg-zinc-950/90 
-                            border border-zinc-200 dark:border-zinc-800
-                            text-zinc-800 dark:text-white
-                            hover:bg-primary/10 hover:border-primary hover:text-primary
-                            dark:hover:bg-primary/10 dark:hover:border-primary dark:hover:text-primary
-                            transition-all duration-200
-                            shadow-sm z-10" 
-                    />
-                </Carousel>
-            </div>
+                </div>
 
-            <div className="flex justify-center mt-5 sm:mt-6 md:mt-8 lg:mt-10">
-                <Button 
-                    asChild
-                    variant="outline" 
-                    size="sm"
-                    className="font-geist text-xs tracking-wide uppercase
-                        bg-transparent
-                        text-zinc-800 dark:text-white
-                        border-zinc-300 dark:border-zinc-700
-                        hover:bg-primary/5 hover:text-primary hover:border-primary
-                        dark:hover:bg-primary/10 dark:hover:text-primary dark:hover:border-primary
-                        transition-all duration-200
-                        h-8 sm:h-9 md:h-10"
-                >
-                    <Link href="/catalogue?store_type=kids" className="flex items-center gap-1.5">
-                        Voir tous les produits enfants
-                        <ChevronRight className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                    </Link>
-                </Button>
+                {/* Contenu de l'en-tête */}
+                <div className="relative z-10 container mx-auto px-4 sm:px-6 py-20">
+                    {/* Logo */}
+                    <motion.div 
+                        className="absolute top-6 right-6 sm:top-8 sm:right-8"
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8, delay: 0.2 }}
+                    >
+                        <div className="relative h-12 w-12 sm:h-16 sm:w-16">
+                            <motion.img
+                                src="/images/logotype_w.png"
+                                alt="Kids Logo"
+                                className="w-full h-full object-contain"
+                                whileHover={{ scale: 1.05 }}
+                                transition={{ duration: 0.2 }}
+                            />
+                        </div>
+                    </motion.div>
+
+                    {/* Contenu principal */}
+                    <div className="flex flex-col">
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.6 }}
+                            className="max-w-2xl mb-12"
+                        >
+                            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white tracking-tight mb-4">
+                                Kids
+                            </h1>
+                            <p className="text-lg sm:text-xl text-zinc-300">
+                                Explorez notre collection exclusive pour les enfants
+                            </p>
+                        </motion.div>
+
+                        {/* Carousel intégré dans le hero */}
+                        <Carousel
+                            ref={emblaRef}
+                            className="w-full relative"
+                            opts={{
+                                loop: true,
+                                align: 'start',
+                                skipSnaps: false,
+                                dragFree: true,
+                                containScroll: "trimSnaps",
+                            }}
+                        >
+                            <CarouselContent className="-ml-1 sm:-ml-2 md:-ml-3 pl-1 sm:pl-2 md:pl-3">
+                                {products.map((product, index) => (
+                                    <CarouselItem 
+                                        key={product.id} 
+                                        className="pl-1 sm:pl-2 md:pl-3
+                                            basis-[49%]
+                                            xs:basis-[45%] 
+                                            sm:basis-[33.333%] 
+                                            md:basis-[25%] 
+                                            lg:basis-[20%] 
+                                            xl:basis-[16.666%]"
+                                    >
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 20 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ duration: 0.5, delay: index * 0.1 }}
+                                            className="h-full"
+                                            whileHover={{ 
+                                                scale: 1.02,
+                                                transition: { duration: 0.2 }
+                                            }}
+                                        >
+                                            <FeaturedProductCard 
+                                                product={product} 
+                                                className="bg-white/10 backdrop-blur-md border border-white/20 
+                                                    hover:border-white/30 shadow-2xl hover:shadow-3xl
+                                                    transition-all duration-300
+                                                    [&_h3]:text-white [&_span.font-geist]:text-white"
+                                            />
+                                        </motion.div>
+                                    </CarouselItem>
+                                ))}
+                            </CarouselContent>
+                            
+                            <div className="flex items-center justify-center gap-2 mt-8 sm:hidden">
+                                <CarouselPrevious 
+                                    className="static transform-none flex h-10 w-10
+                                        bg-white/10 backdrop-blur-md
+                                        border border-white/20
+                                        text-white
+                                        hover:bg-white/20
+                                        transition-all duration-200
+                                        hover:scale-105" 
+                                />
+                                <CarouselNext 
+                                    className="static transform-none flex h-10 w-10
+                                        bg-white/10 backdrop-blur-md
+                                        border border-white/20
+                                        text-white
+                                        hover:bg-white/20
+                                        transition-all duration-200
+                                        hover:scale-105" 
+                                />
+                            </div>
+                            
+                            <CarouselPrevious 
+                                className="hidden sm:flex absolute 
+                                    left-0 sm:-left-4 md:-left-6 lg:-left-8 xl:-left-10
+                                    h-10 w-10 sm:h-12 sm:w-12
+                                    bg-white/10 backdrop-blur-md
+                                    border border-white/20
+                                    text-white
+                                    hover:bg-white/20
+                                    transition-all duration-200
+                                    shadow-lg z-10
+                                    hover:scale-105" 
+                            />
+                            <CarouselNext 
+                                className="hidden sm:flex absolute
+                                    right-0 sm:-right-4 md:-right-6 lg:-right-8 xl:-right-10
+                                    h-10 w-10 sm:h-12 sm:w-12
+                                    bg-white/10 backdrop-blur-md
+                                    border border-white/20
+                                    text-white
+                                    hover:bg-white/20
+                                    transition-all duration-200
+                                    shadow-lg z-10
+                                    hover:scale-105" 
+                            />
+                        </Carousel>
+                    </div>
+                </div>
             </div>
-        </section>
+        </div>
     )
 } 

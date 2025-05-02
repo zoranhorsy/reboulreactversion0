@@ -1,31 +1,62 @@
 'use client'
 
-import { useLayoutEffect } from 'react'
-import { gsap } from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import React, { useEffect, createContext, useContext, useState } from 'react'
+import { initGSAP } from '@/lib/gsap-config'
 
-if (typeof window !== 'undefined') {
-    gsap.registerPlugin(ScrollTrigger)
+// Type pour le contexte GSAP
+interface GSAPContextType {
+  gsap: any
+  ScrollTrigger?: any
+  isReady: boolean
 }
 
-export function GsapProvider({ children }: { children: React.ReactNode }) {
-    useLayoutEffect(() => {
-        // Configuration globale de GSAP
+// Création du contexte avec des valeurs par défaut
+const GSAPContext = createContext<GSAPContextType>({
+  gsap: null,
+  ScrollTrigger: null,
+  isReady: false
+})
+
+// Hook personnalisé pour utiliser GSAP dans les composants
+export const useGSAP = () => useContext(GSAPContext)
+
+export function GSAPProvider({ children }: { children: React.ReactNode }) {
+  const [gsapState, setGsapState] = useState<GSAPContextType>({
+    gsap: null,
+    ScrollTrigger: null,
+    isReady: false
+  })
+
+  useEffect(() => {
+    // Initialiser GSAP uniquement côté client
+    const setupGSAP = async () => {
+      try {
+        const { gsap, ScrollTrigger } = await initGSAP()
+        
+        // Configurer les settings globaux de GSAP
         gsap.config({
-            nullTargetWarn: false, // Désactive les avertissements pour les cibles null
+          autoSleep: 60,
+          nullTargetWarn: false
         })
-
-        // Configuration globale de ScrollTrigger
-        ScrollTrigger.config({
-            ignoreMobileResize: true, // Optimisation pour mobile
+        
+        setGsapState({
+          gsap,
+          ScrollTrigger,
+          isReady: true
         })
+      } catch (error) {
+        console.error('Erreur lors de l\'initialisation du provider GSAP:', error)
+      }
+    }
 
-        // Nettoyage lors du démontage
-        return () => {
-            ScrollTrigger.getAll().forEach(trigger => trigger.kill())
-            gsap.killTweensOf('*') // Arrête toutes les animations en cours
-        }
-    }, [])
+    setupGSAP()
+  }, [])
 
-    return <>{children}</>
-} 
+  return (
+    <GSAPContext.Provider value={gsapState}>
+      {children}
+    </GSAPContext.Provider>
+  )
+}
+
+export default GSAPProvider 

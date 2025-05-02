@@ -4,35 +4,50 @@
 
 @layer base {
   :root {
-    --background: 0 0% 7%;
-    --foreground: 0 0% 98%;
-
-    --card: 0 0% 9%;
-    --card-foreground: 0 0% 98%;
-
-    --popover: 0 0% 9%;
-    --popover-foreground: 0 0% 98%;
-
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-
-    --secondary: 0 0% 13%;
-    --secondary-foreground: 0 0% 98%;
-
-    --muted: 0 0% 13%;
-    --muted-foreground: 0 0% 63%;
-
-    --accent: 0 0% 13%;
-    --accent-foreground: 0 0% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-
-    --border: 0 0% 13%;
-    --input: 0 0% 13%;
-    --ring: 0 0% 83%;
-
-    --radius: 0.5rem;
+    /* Couleurs de base */
+    --background: 220 30% 98%;
+    --foreground: 220 25% 2%;
+    
+    /* Couleurs des cartes */
+    --card: 220 30% 100%;
+    --card-foreground: 220 25% 2%;
+    
+    /* Couleurs des popups */
+    --popover: 220 30% 100%;
+    --popover-foreground: 220 25% 2%;
+    
+    /* Couleurs primaires */
+    --primary: 220 25% 2%;
+    --primary-foreground: 220 30% 100%;
+    --primary-hover: 220 25% 5%;
+    
+    /* Couleurs secondaires */
+    --secondary: 220 30% 96%;
+    --secondary-foreground: 220 25% 2%;
+    --secondary-hover: 220 30% 90%;
+    
+    /* Couleurs atténuées */
+    --muted: 220 30% 96%;
+    --muted-foreground: 220 25% 30%;
+    --muted-hover: 220 30% 92%;
+    
+    /* Couleurs d'accent */
+    --accent: 220 30% 96%;
+    --accent-foreground: 220 25% 2%;
+    --accent-hover: 220 30% 90%;
+    
+    /* Couleurs destructives */
+    --destructive: 0 85% 60%;
+    --destructive-foreground: 220 30% 100%;
+    --destructive-hover: 0 85% 55%;
+    
+    /* Couleurs des bordures et inputs */
+    --border: 220 30% 90%;
+    --input: 220 30% 90%;
+    --ring: 220 25% 2%;
+    
+    /* Radius par défaut */
+    --radius: 0.75rem;
 
     --sidebar-background: 0 0% 9%;
     --sidebar-foreground: 0 0% 98%;
@@ -44,43 +59,57 @@
     --sidebar-ring: 0 0% 83%;
   }
 
-  .light {
-    --background: 0 0% 97%;
-    --foreground: 240 10% 3.9%;
+  .dark {
+    /* Couleurs de base - Dark */
+    --background: 240 5% 8%;
+    --foreground: 240 5% 100%;
+    
+    /* Couleurs des cartes - Dark */
+    --card: 240 5% 8%;
+    --card-foreground: 240 5% 100%;
+    
+    /* Couleurs des popups - Dark */
+    --popover: 240 5% 8%;
+    --popover-foreground: 240 5% 100%;
+    
+    /* Couleurs primaires - Dark */
+    --primary: 240 5% 100%;
+    --primary-foreground: 240 5% 2%;
+    --primary-hover: 240 5% 95%;
+    
+    /* Couleurs secondaires - Dark */
+    --secondary: 240 5% 15%;
+    --secondary-foreground: 240 5% 100%;
+    --secondary-hover: 240 5% 20%;
+    
+    /* Couleurs atténuées - Dark */
+    --muted: 240 5% 15%;
+    --muted-foreground: 240 5% 80%;
+    --muted-hover: 240 5% 20%;
+    
+    /* Couleurs d'accent - Dark */
+    --accent: 240 5% 15%;
+    --accent-foreground: 240 5% 100%;
+    --accent-hover: 240 5% 20%;
+    
+    /* Couleurs destructives - Dark */
+    --destructive: 0 65% 30%;
+    --destructive-foreground: 240 5% 100%;
+    --destructive-hover: 0 65% 25%;
+    
+    /* Couleurs des bordures et inputs - Dark */
+    --border: 240 5% 15%;
+    --input: 240 5% 15%;
+    --ring: 240 5% 85%;
 
-    --card: 0 0% 98%;
-    --card-foreground: 240 10% 3.9%;
-
-    --popover: 0 0% 98%;
-    --popover-foreground: 240 10% 3.9%;
-
-    --primary: 240 5.9% 10%;
-    --primary-foreground: 0 0% 98%;
-
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 240 5.9% 10%;
-
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: 0 0% 9%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 0 0% 98%;
+    --sidebar-primary-foreground: 0 0% 9%;
+    --sidebar-accent: 0 0% 13%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 0 0% 13%;
+    --sidebar-ring: 0 0% 83%;
   }
 }
 
@@ -126,12 +155,115 @@
     to { opacity: 1; transform: translateY(0); }
 }
 
+/* Styles de base */
 @layer base {
   * {
     @apply border-border;
   }
+
   body {
-    @apply bg-background text-foreground;
+    @apply gradient-surface text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Styles pour les titres */
+  h1, h2, h3, h4, h5, h6 {
+    @apply text-zinc-950 dark:text-zinc-50 font-medium tracking-tight;
+  }
+
+  /* Styles pour les paragraphes */
+  p {
+    @apply text-zinc-800 dark:text-zinc-200;
+  }
+
+  /* Styles pour les liens */
+  a {
+    @apply text-zinc-950 dark:text-zinc-50 
+           hover:text-zinc-800 dark:hover:text-zinc-300 
+           transition-colors duration-200;
+  }
+}
+
+/* Classes utilitaires pour les effets communs */
+@layer components {
+  /* Effet de carte en verre */
+  .glass-card {
+    @apply bg-white/95 dark:bg-zinc-900/95
+           rounded-xl shadow-lg shadow-zinc-200/50 dark:shadow-zinc-900/50
+           border border-zinc-200/80 dark:border-zinc-800/80;
+  }
+
+  /* Bouton avec dégradé */
+  .gradient-button {
+    @apply bg-gradient-to-r from-zinc-950 to-zinc-900 hover:from-zinc-900 hover:to-zinc-800 
+           dark:from-zinc-50 dark:to-zinc-100 dark:hover:from-zinc-100 dark:hover:to-zinc-200 
+           text-white dark:text-zinc-950 transition-all duration-300
+           shadow-lg shadow-zinc-200/20 dark:shadow-zinc-900/20;
+  }
+
+  /* Bouton outline */
+  .outline-button {
+    @apply bg-white/95 dark:bg-zinc-900/95
+           border-zinc-300 dark:border-zinc-700
+           text-zinc-950 dark:text-zinc-50
+           hover:bg-zinc-100 hover:border-zinc-400
+           dark:hover:bg-zinc-800 dark:hover:border-zinc-600;
+  }
+
+  /* Surface avec dégradé */
+  .gradient-surface {
+    @apply bg-gradient-to-br from-blue-50/80 via-zinc-50 to-white 
+           dark:from-zinc-900 dark:to-zinc-950;
+  }
+
+  /* Effet de grain */
+  .grain-effect {
+    @apply relative;
+  }
+  
+  .grain-effect::before {
+    @apply content-[''] absolute inset-0 bg-noise opacity-[0.15] dark:opacity-[0.25] pointer-events-none;
+  }
+
+  /* Texte avec dégradé */
+  .gradient-text {
+    @apply bg-gradient-to-r from-zinc-950 to-zinc-900 
+           dark:from-zinc-50 dark:to-zinc-100 
+           bg-clip-text text-transparent;
+  }
+}
+
+/* Animations personnalisées */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes grain {
+  0%, 100% { transform: translate(0, 0); }
+  10% { transform: translate(-2%, -2%); }
+  20% { transform: translate(2%, 2%); }
+  30% { transform: translate(-1%, 1%); }
+  40% { transform: translate(1%, -1%); }
+  50% { transform: translate(-2%, 2%); }
+  60% { transform: translate(2%, -2%); }
+  70% { transform: translate(-1%, -1%); }
+  80% { transform: translate(1%, 1%); }
+  90% { transform: translate(-2%, -2%); }
+}
+
+.grain {
+  animation: grain 8s steps(10) infinite;
+}
+
+@layer utilities {
+  .bg-noise {
+    background-image: url('/noise.png');
+    background-repeat: repeat;
   }
 }
 

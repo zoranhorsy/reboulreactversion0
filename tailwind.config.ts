@@ -25,6 +25,11 @@ const config: Config = {
                     ...fontFamily.sans
                 ]
     		},
+    		backgroundImage: {
+    			'noise': "url('/noise.png')",
+    			'grid-zinc-900': "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' width='32' height='32' fill='none' stroke='rgb(24 24 27 / 0.04)'%3e%3cpath d='M0 .5H31.5V32'/%3e%3c/svg%3e\")",
+    			'grid-zinc-100': "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' width='32' height='32' fill='none' stroke='rgb(244 244 245 / 0.04)'%3e%3cpath d='M0 .5H31.5V32'/%3e%3c/svg%3e\")",
+    		},
     		colors: {
     			border: 'hsl(var(--border))',
     			input: 'hsl(var(--input))',
@@ -74,6 +79,38 @@ const config: Config = {
     			lg: 'var(--radius)',
     			md: 'calc(var(--radius) - 2px)',
     			sm: 'calc(var(--radius) - 4px)'
+    		},
+    		animation: {
+    			'ping-slow': 'ping-slow 2s cubic-bezier(0, 0, 0.2, 1) infinite',
+    			'pulse-slow': 'pulse-slow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+    			'float': 'float 3s ease-in-out infinite',
+    			'grain': 'grain 8s steps(10) infinite',
+    		},
+    		keyframes: {
+    			'ping-slow': {
+    				'0%, 100%': { opacity: '1' },
+    				'50%': { opacity: '0.5' },
+    			},
+    			'pulse-slow': {
+    				'0%, 100%': { transform: 'scale(1)' },
+    				'50%': { transform: 'scale(1.05)' },
+    			},
+    			'float': {
+    				'0%, 100%': { transform: 'translateY(0)' },
+    				'50%': { transform: 'translateY(-10px)' },
+    			},
+    			'grain': {
+    				'0%, 100%': { transform: 'translate(0, 0)' },
+    				'10%': { transform: 'translate(-2%, -2%)' },
+    				'20%': { transform: 'translate(2%, 2%)' },
+    				'30%': { transform: 'translate(-1%, 1%)' },
+    				'40%': { transform: 'translate(1%, -1%)' },
+    				'50%': { transform: 'translate(-2%, 2%)' },
+    				'60%': { transform: 'translate(2%, -2%)' },
+    				'70%': { transform: 'translate(-1%, -1%)' },
+    				'80%': { transform: 'translate(1%, 1%)' },
+    				'90%': { transform: 'translate(-2%, -2%)' },
+    			}
     		}
     	}
     },

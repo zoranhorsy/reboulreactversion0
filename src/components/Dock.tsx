@@ -33,8 +33,9 @@ const dockStyles = {
     "w-fit",
     "h-[45px] sm:h-[50px]",
     "px-1 sm:px-2",
-    "bg-black/80 backdrop-blur-sm rounded-full",
-    "border border-white/5 shadow-lg",
+    "bg-zinc-950/90 dark:bg-zinc-50/90 backdrop-blur-md rounded-full",
+    "border border-zinc-900/50 dark:border-zinc-200/50",
+    "shadow-lg shadow-zinc-900/20 dark:shadow-zinc-300/20",
     "z-[100]",
     "transition-all duration-300 ease-in-out"
   ),
@@ -44,12 +45,17 @@ const dockStyles = {
   ),
   icon: cn(
     "w-4 h-4 sm:w-5 sm:h-5",
-    "text-white opacity-80 hover:opacity-100",
+    "text-zinc-400 dark:text-zinc-600",
+    "hover:text-zinc-50 dark:hover:text-zinc-950",
+    "opacity-80 hover:opacity-100",
     "transition-all duration-200"
   ),
   button: cn(
     "w-8 h-8 sm:w-10 sm:h-10",
-    "flex items-center justify-center relative"
+    "flex items-center justify-center relative",
+    "hover:bg-zinc-900/50 dark:hover:bg-zinc-200/50",
+    "rounded-full",
+    "transition-all duration-200"
   ),
   logo: cn(
     "w-4 h-4 sm:w-5 sm:h-5",
@@ -59,34 +65,37 @@ const dockStyles = {
   ),
   separator: cn(
     "w-px h-4 sm:h-5",
-    "bg-white/10 mx-0.5 sm:mx-1"
+    "bg-zinc-900/50 dark:bg-zinc-200/50",
+    "mx-0.5 sm:mx-1"
   ),
   menuContainer: cn(
-    "hidden opacity-0", // Caché par défaut
+    "hidden opacity-0",
     "items-center gap-1",
     "ml-1",
     "transition-all duration-300 ease-in-out"
   ),
-  menuVisible: "!flex !opacity-100", // Afficher en flex quand visible
+  menuVisible: "!flex !opacity-100",
   submenu: cn(
     "absolute bottom-full mb-2",
-    "bg-black/80 backdrop-blur-sm rounded-lg",
+    "bg-zinc-900/90 dark:bg-zinc-100/90 backdrop-blur-md rounded-lg",
     "p-1 md:p-1.5",
     "min-w-[140px]",
     "whitespace-nowrap",
-    "border border-white/5",
-    "shadow-lg",
+    "border border-zinc-800/50 dark:border-zinc-200/50",
+    "shadow-lg shadow-zinc-900/20 dark:shadow-zinc-300/20",
     "flex flex-col gap-0.5 md:gap-1"
   ),
   submenuItem: cn(
     "w-full",
     "px-3 py-1 md:px-4 md:py-1.5",
-    "text-white/80 text-[11px] md:text-xs",
-    "hover:bg-white/10 rounded",
+    "text-zinc-400 dark:text-zinc-600",
+    "hover:text-zinc-50 dark:hover:text-zinc-950",
+    "hover:bg-zinc-800/50 dark:hover:bg-zinc-200/50 rounded",
     "transition-colors",
     "text-left",
     "block",
-    "cursor-pointer"
+    "cursor-pointer",
+    "text-[11px] md:text-xs"
   )
 }
 
@@ -96,8 +105,18 @@ export function Dock() {
   const [showSubmenu, setShowSubmenu] = useState(false)
   const { items } = useCart()
   const itemCount = items.reduce((total, item) => total + item.quantity, 0)
-  const { theme, setTheme } = useTheme()
+  const { theme, setTheme, resolvedTheme } = useTheme()
   const { user, logout } = useAuth()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // Déterminer le logo à utiliser en fonction du thème
+  const logoSrc = mounted && (theme === 'dark' || resolvedTheme === 'dark') 
+    ? "/logo_black.png" 
+    : "/logo_w.png"
 
   useEffect(() => {
     const handleOpenCart = () => {
@@ -134,7 +153,8 @@ export function Dock() {
     { href: "/catalogue", label: "Tous les produits" },
     { href: "/catalogue/adulte", label: "Adulte" },
     { href: "/catalogue/enfant", label: "Enfant" },
-    { href: "/catalogue/sneakers", label: "Sneakers" }
+    { href: "/catalogue/sneakers", label: "Sneakers" },
+    { href: "/the-corner", label: "The Corner" }
   ]
 
   return (
@@ -170,14 +190,16 @@ export function Dock() {
           damping: 15
         }}
       >
+        {mounted && (
         <Image
-          src="/images/logo_white.png"
+            src={logoSrc}
           alt="Reboul Logo"
           width={20}
           height={20}
           className={dockStyles.logo}
           priority
         />
+        )}
       </motion.button>
 
       {/* Menu Items */}

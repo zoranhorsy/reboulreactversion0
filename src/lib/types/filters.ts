@@ -3,6 +3,7 @@ export type FilterState = {
   limit: string
   category_id: string
   brand: string
+  brand_id: string
   search: string
   sort: string
   color: string

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
-import { Loader } from '@/components/ui/Loader'
+import { LoaderComponent } from '@/components/ui/Loader'
 
 export function LoadingIndicator() {
     const [loading, setLoading] = useState(false)
@@ -37,6 +37,6 @@ export function LoadingIndicator() {
 
     if (!loading) return null
 
-    return <Loader />
+    return <LoaderComponent />
 }
 

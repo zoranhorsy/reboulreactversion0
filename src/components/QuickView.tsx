@@ -19,9 +19,11 @@ type Product = {
     stock: number
     images?: string[]
     variants?: Array<{
+        id?: number
         size: string
         color: string
         stock: number
+        price?: number
     }>
 }
 
@@ -55,8 +57,8 @@ export function QuickView({ product }: QuickViewProps) {
                     ? product.images[0]
                     : "/placeholder.svg",
                 variant: {
-                    size,
-                    color,
+                    size : size,
+                    color : color,
                     colorLabel: color,
                     stock: variant.stock
                 }
@@ -119,7 +121,10 @@ export function QuickView({ product }: QuickViewProps) {
                             image_url: product.image,
                             image: product.image,
                             images: product.images || [product.image],
-                            variants: product.variants || [],
+                            variants: (product.variants || []).map((variant, index) => ({
+                                ...variant,
+                                id: variant.id || index + 1
+                            })),
                             details: [],
                             reviews: [],
                             questions: [],
