@@ -29,6 +29,7 @@ export default function TheCornerProductPage({ params }: TheCornerProductPagePro
           setError(true)
           return
         }
+        
         setProduct(productData)
 
         // Récupérer les produits similaires

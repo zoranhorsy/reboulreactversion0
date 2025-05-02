@@ -2277,6 +2277,17 @@ export class Api {
                     }
                 }
                 
+                // Convertir le format des variants du backend (taille/couleur) au format frontend (size/color)
+                if (product.variants && Array.isArray(product.variants)) {
+                    product.variants = product.variants.map((variant: any) => ({
+                        id: variant.id,
+                        size: variant.taille || variant.size,
+                        color: variant.couleur || variant.color,
+                        stock: variant.stock,
+                        price: variant.price ? this.normalizePrice(variant.price) : undefined
+                    }))
+                }
+                
                 return product
             })
             
@@ -2316,6 +2327,17 @@ export class Api {
                     console.error('Erreur parsing variants:', e)
                     product.variants = []
                 }
+            }
+            
+            // Convertir le format des variants du backend (taille/couleur) au format frontend (size/color)
+            if (product.variants && Array.isArray(product.variants)) {
+                product.variants = product.variants.map((variant: any) => ({
+                    id: variant.id,
+                    size: variant.taille || variant.size,
+                    color: variant.couleur || variant.color,
+                    stock: variant.stock,
+                    price: variant.price ? this.normalizePrice(variant.price) : undefined
+                }))
             }
             
             return product
