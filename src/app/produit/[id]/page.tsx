@@ -1,5 +1,7 @@
 "use client"
 
+import { ClientPageWrapper, defaultViewport } from '@/components/ClientPageWrapper';
+import type { Viewport } from 'next';
 import { useState, useEffect } from "react"
 import { useParams, notFound } from "next/navigation"
 import { getProductById } from "@/lib/api"
@@ -17,6 +19,8 @@ import type { CartItem } from "@/lib/types/cart"
 import { ReboulPageHeader } from "@/components/reboul/components/ReboulPageHeader"
 import { cn } from "@/lib/utils"
 import { Heart, Share2 } from "lucide-react"
+
+export const viewport: Viewport = defaultViewport;
 
 export default function ProductPage() {
   const params = useParams()
@@ -143,70 +147,70 @@ export default function ProductPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <ReboulPageHeader 
-        title="REBOUL STORE"
-        subtitle="Collection exclusive de vêtements premium"
-        backLink="/catalogue"
-        backText="Retour au catalogue"
-        breadcrumbs={[
-          { label: "Accueil", href: "/" },
-          { label: "Catalogue", href: "/catalogue" },
-          { label: product.name, href: `/produit/${product.id}` }
-        ]}
-        actions={[
-          {
-            icon: <Heart className={cn(
-              "w-5 h-5",
-              isWishlist ? "fill-rose-500 text-rose-500" : "text-zinc-100"
-            )} />,
-            onClick: toggleWishlist,
-            label: "Favoris"
-          },
-          {
-            icon: <Share2 className="w-5 h-5 text-zinc-100" />,
-            onClick: handleShare,
-            label: "Partager"
-          }
-        ]}
-      />
+    <ClientPageWrapper>
+      <div className="min-h-screen bg-background">
+        <ReboulPageHeader 
+          title="REBOUL STORE"
+          subtitle="Collection exclusive de vêtements premium"
+          backLink="/catalogue"
+          backText="Retour au catalogue"
+          breadcrumbs={[
+            { label: "Accueil", href: "/" },
+            { label: "Catalogue", href: "/catalogue" },
+            { label: product.name, href: `/produit/${product.id}` }
+          ]}
+          actions={[
+            {
+              icon: <Heart className={cn(
+                "w-5 h-5",
+                isWishlist ? "fill-rose-500 text-rose-500" : "text-zinc-100"
+              )} />,
+              onClick: toggleWishlist,
+              label: "Favoris"
+            },
+            {
+              icon: <Share2 className="w-5 h-5 text-zinc-100" />,
+              onClick: handleShare,
+              label: "Partager"
+            }
+          ]}
+        />
 
-      <div className="container mx-auto px-2 sm:px-4 py-8">
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-8">
-          <ProductGallery images={product.images} productName={product.name} />
-          
-          <div className="sticky top-8">
-            <ProductDetails
-              product={product}
-              selectedSize={selectedSize}
-              selectedColor={selectedColor}
-              onSizeChange={setSelectedSize}
-              onColorChange={setSelectedColor}
-              quantity={quantity}
-              onQuantityChange={setQuantity}
-              onAddToCart={handleAddToCart}
-              isWishlist={isWishlist}
-              onToggleWishlist={toggleWishlist}
-              onShare={handleShare}
-            />
+        <div className="container mx-auto px-2 sm:px-4 py-8">
+          <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-8">
+            <ProductGallery images={product.images} productName={product.name} />
+            
+            <div className="sticky top-8">
+              <ProductDetails
+                product={product}
+                selectedSize={selectedSize}
+                selectedColor={selectedColor}
+                onSizeChange={setSelectedSize}
+                onColorChange={setSelectedColor}
+                quantity={quantity}
+                onQuantityChange={setQuantity}
+                onAddToCart={handleAddToCart}
+                isWishlist={isWishlist}
+                onToggleWishlist={toggleWishlist}
+                onShare={handleShare}
+              />
+            </div>
+          </div>
+
+          <div className="mt-16 sm:mt-24 space-y-12 sm:space-y-16">
+            <section>
+              <h2 className="text-2xl font-bold mb-6 sm:mb-8">Produits similaires</h2>
+              <SimilarProducts currentProductId={product.id} />
+            </section>
+
+            <section>
+              <h2 className="text-2xl font-bold mb-6 sm:mb-8">Récemment consultés</h2>
+              <RecentlyViewedProducts currentProductId={product.id} />
+            </section>
           </div>
         </div>
-
-        <div className="mt-16 sm:mt-24 space-y-12 sm:space-y-16">
-         
-
-          <section>
-            <h2 className="text-2xl font-bold mb-6 sm:mb-8">Produits similaires</h2>
-            <SimilarProducts currentProductId={product.id} />
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-bold mb-6 sm:mb-8">Récemment consultés</h2>
-            <RecentlyViewedProducts currentProductId={product.id} />
-          </section>
-        </div>
       </div>
-    </div>
+    </ClientPageWrapper>
   )
 }
 

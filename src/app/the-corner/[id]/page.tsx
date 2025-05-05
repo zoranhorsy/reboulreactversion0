@@ -1,5 +1,7 @@
 "use client"
 
+import { ClientPageWrapper, defaultViewport } from '@/components/ClientPageWrapper';
+import type { Viewport } from 'next';
 import { Suspense } from "react"
 import { LoaderComponent } from "@/components/ui/Loader"
 import { api } from "@/lib/api"
@@ -12,6 +14,8 @@ interface TheCornerProductPageProps {
     id: string
   }
 }
+
+export const viewport: Viewport = defaultViewport;
 
 export default function TheCornerProductPage({ params }: TheCornerProductPageProps) {
   const [product, setProduct] = useState<any>(null)
@@ -58,11 +62,12 @@ export default function TheCornerProductPage({ params }: TheCornerProductPagePro
   }
 
   return (
-    <Suspense fallback={<LoaderComponent />}>
+    <ClientPageWrapper>
+      <Suspense fallback={<LoaderComponent />}>
       <TheCornerProductDetails 
         product={product} 
         similarProducts={similarProducts}
       />
     </Suspense>
-  )
-} 
+    </ClientPageWrapper>
+  );} 

@@ -1,13 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { usePathname, useSearchParams } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import { LoaderComponent } from '@/components/ui/Loader'
 
 export function LoadingIndicator() {
     const [loading, setLoading] = useState(false)
     const pathname = usePathname()
-    const searchParams = useSearchParams()
 
     useEffect(() => {
         const handleRouteChange = () => {
@@ -30,10 +29,10 @@ export function LoadingIndicator() {
         }
     }, [])
 
-    // Reset loading state when pathname or searchParams change
+    // Reset loading state when pathname changes
     useEffect(() => {
         setLoading(false)
-    }, [pathname, searchParams])
+    }, [pathname])
 
     if (!loading) return null
 

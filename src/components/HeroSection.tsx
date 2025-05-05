@@ -3,23 +3,19 @@
 import React, { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { gsap } from 'gsap'
 import { Button } from './ui/button'
-import { ChevronRight, ArrowDown } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useTheme } from 'next-themes'
-import { initGSAP } from '@/lib/gsap-config'
 
 export function HeroSection() {
     const heroRef = useRef<HTMLElement>(null)
     const logoRef = useRef<HTMLDivElement>(null)
     const buttonsRef = useRef<HTMLDivElement>(null)
-    const mouseFollowerRef = useRef<HTMLDivElement>(null)
-    const scrollIndicatorRef = useRef<HTMLDivElement>(null)
     
     const { resolvedTheme } = useTheme()
     const [logoSource, setLogoSource] = useState("/images/logotype_w.png")
-    const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
+    const [animationsInitialized, setAnimationsInitialized] = useState(false)
 
     // Changer la source du logo en fonction du thème
     useEffect(() => {
@@ -28,120 +24,62 @@ export function HeroSection() {
         }
     }, [resolvedTheme])
 
-    // Création des animations GSAP
+    // Initialiser les animations GSAP APRÈS le premier rendu
     useEffect(() => {
-        let ctx: any
-        
-        const setupGSAP = async () => {
+        // Marquer le contenu critique comme visible immédiatement
+        if (logoRef.current) {
+            logoRef.current.style.opacity = "1"
+        }
+        if (buttonsRef.current) {
+            buttonsRef.current.style.opacity = "1"
+        }
+
+        // Reporter le chargement des animations non critiques
+        const timer = setTimeout(async () => {
+            if (animationsInitialized) return
+            
             try {
-                // Initialiser GSAP
-                const { gsap, ScrollTrigger } = await initGSAP()
+                // Import dynamique de GSAP après le chargement initial
+                const { gsap } = await import('gsap')
+                const ScrollTriggerModule = await import('gsap/ScrollTrigger')
+                const { ScrollTrigger } = ScrollTriggerModule
                 
-                ctx = gsap.context(() => {
-                    // Animation d'entrée principale
-                    const mainTimeline = gsap.timeline({ delay: 0.3 })
-                    
-                    // Zoom out léger du background
-                    mainTimeline.fromTo('.hero-bg',
-                        { scale: 1.1, opacity: 0.8 },
-                        { scale: 1, opacity: 1, duration: 2.5, ease: 'power2.out' },
-                        0
-                    )
-                    
-                    // Animation du logo
-                    mainTimeline.fromTo('.hero-logo',
-                        { y: 40, opacity: 0 },
-                        { y: 0, opacity: 1, duration: 1.2, ease: 'power3.out' },
-                        0.8
-                    )
-                    
-                    // Animation des boutons
-                    mainTimeline.fromTo('.hero-buttons',
-                        { y: 20, opacity: 0 },
-                        { y: 0, opacity: 1, duration: 1, ease: 'power2.out' },
-                        1.2
-                    )
-                    
-                    // Animation de l'indicateur de défilement
-                    mainTimeline.fromTo('.scroll-indicator',
-                        { opacity: 0, y: -10 },
-                        { opacity: 0.8, y: 0, duration: 0.8, ease: 'power1.out' },
-                        2
-                    )
-                    
-                    // Animation continue de l'indicateur de défilement
-                    gsap.to('.scroll-arrow', {
-                        y: 10,
-                        opacity: 0.6,
-                        duration: 1.5,
-                        ease: 'power1.inOut',
-                        repeat: -1,
-                        yoyo: true
-                    })
-                    
-                    // Effet de parallaxe au scroll
-                    if (ScrollTrigger && heroRef.current) {
-                        gsap.to('.hero-parallax', {
-                            y: 120,
-                            ease: 'none',
-                            scrollTrigger: {
-                                trigger: heroRef.current,
-                                start: 'top top',
-                                end: 'bottom top',
-                                scrub: true
+                // Enregistrer le plugin
+                gsap.registerPlugin(ScrollTrigger)
+                
+                // Initialiser les animations seulement après le chargement initial
+                const ctx = gsap.context(() => {
+                    // Animation de l'élément suivant la souris (non critique)
+                    const handleMouseMove = (e: MouseEvent) => {
+                        if (!heroRef.current) return
+                        
+                        // Alléger les calculs en limitant la fréquence des mises à jour
+                        requestAnimationFrame(() => {
+                            const mouseFollower = document.querySelector('.mouse-follower') as HTMLElement
+                            if (mouseFollower) {
+                                gsap.to(mouseFollower, {
+                                    x: e.clientX,
+                                    y: e.clientY,
+                                    duration: 0.5,
+                                    ease: 'power2.out'
+                                })
                             }
                         })
                     }
                     
-                    // Suivi de souris pour l'effet de profondeur
-                    const handleMouseMove = (e: MouseEvent) => {
-                        // Calculer la position relative à l'élément
-                        if (!heroRef.current) return
-                        const rect = heroRef.current.getBoundingClientRect()
-                        const x = e.clientX - rect.left
-                        const y = e.clientY - rect.top
-                        
-                        // Normaliser la position (entre -1 et 1)
-                        const normalizedX = (x / rect.width) * 2 - 1
-                        const normalizedY = (y / rect.height) * 2 - 1
-                        
-                        // Stocker la position pour les animations réactives
-                        setMousePosition({ x: normalizedX, y: normalizedY })
-                        
-                        // Déplacer subtilement le logo en fonction de la position de la souris
-                        if (logoRef.current) {
-                            gsap.to(logoRef.current, {
-                                x: normalizedX * 10,
-                                y: normalizedY * 5,
-                                duration: 1,
-                                ease: 'power2.out'
-                            })
-                        }
-                        
-                        // Déplacer plus subtilement les boutons
-                        if (buttonsRef.current) {
-                            gsap.to(buttonsRef.current, {
-                                x: normalizedX * 5,
-                                y: normalizedY * 3,
-                                duration: 1.2,
-                                ease: 'power2.out'
-                            })
-                        }
-                        
-                        // Déplacer l'élément qui suit la souris
-                        if (mouseFollowerRef.current) {
-                            gsap.to(mouseFollowerRef.current, {
-                                x: e.clientX,
-                                y: e.clientY,
-                                duration: 0.2,
-                                ease: 'power1.out'
-                            })
-                        }
-                    }
-                    
-                    // Ajouter et nettoyer l'écouteur d'événement
+                    // Ajouter l'écouteur d'événement avec limitation
                     if (heroRef.current) {
-                        heroRef.current.addEventListener('mousemove', handleMouseMove)
+                        // Utiliser un écouteur d'événement avec throttle
+                        let lastTime = 0
+                        const throttledMouseMove = (e: MouseEvent) => {
+                            const now = Date.now()
+                            if (now - lastTime >= 50) { // Limiter à 20fps
+                                lastTime = now
+                                handleMouseMove(e)
+                            }
+                        }
+                        
+                        heroRef.current.addEventListener('mousemove', throttledMouseMove)
                     }
                     
                     return () => {
@@ -150,74 +88,57 @@ export function HeroSection() {
                         }
                     }
                 }, heroRef)
+                
+                setAnimationsInitialized(true)
+                
+                return () => {
+                    ctx.revert() // Nettoyer les animations
+                }
             } catch (error) {
                 console.error('Erreur lors de l\'initialisation des animations GSAP:', error)
             }
-        }
+        }, 1000) // Attendre 1 seconde après le chargement initial
         
-        setupGSAP()
-
-        return () => {
-            if (ctx) ctx.revert() // Nettoyer les animations
-        }
-    }, [])
-    
-    // Fonction pour le défilement vers le bas
-    const scrollToNextSection = () => {
-        if (heroRef.current) {
-            const nextSection = heroRef.current.nextElementSibling as HTMLElement
-            if (nextSection) {
-                window.scrollTo({
-                    top: nextSection.offsetTop,
-                    behavior: 'smooth'
-                })
-            }
-        }
-    }
+        return () => clearTimeout(timer)
+    }, [animationsInitialized])
 
     return (
         <section 
             ref={heroRef} 
             className="relative py-20 md:py-32 lg:py-40 w-full flex items-center justify-center overflow-hidden bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-900 dark:to-zinc-950"
         >
-            {/* Effet de grain */}
-            <div className="absolute inset-0 bg-noise opacity-20 dark:opacity-30 pointer-events-none" />
+            {/* Effet de grain - Rendu en CSS plutôt qu'en image */}
+            <div className="absolute inset-0 opacity-20 dark:opacity-30 pointer-events-none bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48ZmlsdGVyIGlkPSJhIiB4PSIwIiB5PSIwIj48ZmVUdXJidWxlbmNlIGJhc2VGcmVxdWVuY3k9Ii43NSIgc3RpdGNoVGlsZXM9InN0aXRjaCIgdHlwZT0iZnJhY3RhbE5vaXNlIi8+PGZlQ29sb3JNYXRyaXggdHlwZT0ic2F0dXJhdGUiIHZhbHVlcz0iMCIvPjwvZmlsdGVyPjxwYXRoIGQ9Ik0wIDBoMzAwdjMwMEgweiIgZmlsdGVyPSJ1cmwoI2EpIiBvcGFjaXR5PSIuMDUiLz48L3N2Zz4=')]" />
 
-            {/* Élément suivant la souris */}
-            <div 
-                ref={mouseFollowerRef}
-                className="fixed w-32 h-32 pointer-events-none opacity-10 -ml-16 -mt-16 rounded-full bg-gradient-to-br from-zinc-900/20 to-zinc-900/5 dark:from-zinc-100/20 dark:to-zinc-100/5 blur-xl"
-                style={{ zIndex: 5 }}
-            />
+            {/* Élément suivant la souris - Ajouté de manière conditionnelle après le chargement initial */}
+            {animationsInitialized && (
+                <div 
+                    className="mouse-follower fixed w-32 h-32 pointer-events-none opacity-10 -ml-16 -mt-16 rounded-full bg-gradient-to-br from-zinc-900/20 to-zinc-900/5 dark:from-zinc-100/20 dark:to-zinc-100/5 blur-xl"
+                    style={{ zIndex: 5, transform: 'translate(-100%, -100%)' }}
+                />
+            )}
             
-            {/* Arrière-plan avec superposition */}
-            <div className="hero-bg absolute inset-0 z-0">
-                <div className="absolute inset-0 bg-gradient-to-b from-zinc-50/50 to-zinc-100/50 dark:from-zinc-900/50 dark:to-zinc-950/50 z-10" />
-                <div className="absolute inset-0 bg-gradient-to-r from-zinc-200/5 via-transparent to-zinc-200/5 dark:from-zinc-700/5 dark:via-transparent dark:to-zinc-700/5 opacity-[0.05] z-20 hero-parallax" />
-            </div>
-
             {/* Contenu principal */}
-            <div className="hero-content relative z-10 flex flex-col items-center justify-center w-full max-w-screen-xl mx-auto px-4">
-                {/* Logo */}
-                <div ref={logoRef} className="hero-logo opacity-0 w-full max-w-[350px] mx-auto mb-12 relative">
-                    <div className="relative">
+            <div className="relative z-10 flex flex-col items-center justify-center w-full max-w-full mx-auto px-4">
+                {/* Logo - Priorité critique */}
+                <div ref={logoRef} className="w-full mx-auto mb-20 relative opacity-0 transition-opacity duration-300 flex justify-center">
+                    <div className="relative w-[900px] h-[270px] sm:w-[1400px] sm:h-[420px]">
                         <Image
                             src={logoSource}
                             alt="REBOUL"
-                            width={350}
-                            height={105}
-                            className="w-full h-auto relative z-10"
-                            priority
+                            width={1400}
+                            height={420}
+                            className="w-full h-full object-contain"
+                            priority={true}
                             quality={100}
+                            fetchPriority="high"
+                            sizes="(max-width: 640px) 900px, 1400px"
                         />
-                        
-                        {/* Effet de brillance derrière le logo */}
-                        <div className="absolute inset-0 -z-10 blur-2xl opacity-20 dark:opacity-30 bg-gradient-to-r from-zinc-200/0 via-zinc-300/80 to-zinc-200/0 dark:from-zinc-700/0 dark:via-zinc-600/80 dark:to-zinc-700/0" />
                     </div>
                 </div>
 
-                {/* Boutons */}
-                <div ref={buttonsRef} className="hero-buttons flex flex-col sm:flex-row items-center gap-4 md:gap-6 opacity-0">
+                {/* Boutons - Priorité critique */}
+                <div ref={buttonsRef} className="flex flex-col sm:flex-row items-center gap-6 md:gap-8 opacity-0 transition-opacity duration-300">
                     <motion.div 
                         whileHover={{ scale: 1.03 }}
                         whileTap={{ scale: 0.97 }}
@@ -264,7 +185,6 @@ export function HeroSection() {
                         </Button>
                     </motion.div>
                 </div>
-                
             </div>
         </section>
     )

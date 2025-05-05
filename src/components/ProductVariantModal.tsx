@@ -41,8 +41,9 @@ import { useCart } from "@/app/contexts/CartContext"
 import { useMediaQuery } from "@/hooks/useMediaQuery"
 import { CartItemVariant } from "@/lib/types/cart"
 import { api } from "@/lib/api"
-import { WishlistButton } from "@/components/WishlistButton"
+import { WishlistButton } from "@/components/optimized/MemoizedComponents"
 import Image from 'next/image'
+import { useProductMetadata } from '@/hooks/useProductMetadata'
 
 // Import du mapping des couleurs
 const colorMap: Record<string, { hex: string; label: string }> = {
@@ -68,60 +69,6 @@ interface ProductVariantModalProps {
   onAddToCart: (size: string, color: string, quantity: number) => void
 }
 
-// Hook pour récupérer les marques
-function useBrands() {
-  const [brands, setBrands] = useState<Record<number, string>>({})
-  const [isLoading, setIsLoading] = useState(true)
-
-  useEffect(() => {
-    async function loadBrands() {
-      try {
-        const brandsData = await api.fetchBrands()
-        const brandsMap = brandsData.reduce((acc, brand) => {
-          acc[brand.id] = brand.name
-          return acc
-        }, {} as Record<number, string>)
-        setBrands(brandsMap)
-      } catch (error) {
-        console.error("Error loading brands:", error)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    loadBrands()
-  }, [])
-
-  return { brands, isLoading }
-}
-
-// Hook pour récupérer les catégories
-function useCategories() {
-  const [categories, setCategories] = useState<Record<number, string>>({})
-  const [isLoading, setIsLoading] = useState(true)
-
-  useEffect(() => {
-    async function loadCategories() {
-      try {
-        const categoriesData = await api.fetchCategories()
-        const categoriesMap = categoriesData.reduce((acc, category) => {
-          acc[category.id] = category.name
-          return acc
-        }, {} as Record<number, string>)
-        setCategories(categoriesMap)
-      } catch (error) {
-        console.error("Error loading categories:", error)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    loadCategories()
-  }, [])
-
-  return { categories, isLoading }
-}
-
 export function ProductVariantModal({ 
   product, 
   isOpen, 
@@ -134,8 +81,7 @@ export function ProductVariantModal({
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const contentRef = useRef<HTMLDivElement>(null)
   const [isMobile, setIsMobile] = useState(false)
-  const { brands } = useBrands()
-  const { categories } = useCategories()
+  const { brands, categories, isLoading: isMetadataLoading } = useProductMetadata()
 
   useEffect(() => {
     const checkMobile = () => {

@@ -173,3 +173,95 @@ export function MyPage() {
 3. Utilisez les composants d'animation fournis pour une cohérence visuelle
 4. Préférez les animations déclenchées au scroll pour une meilleure expérience utilisateur
 5. Pour les animations complexes, utilisez des timelines GSAP avec le hook useGSAP
+
+# Reboul Store - React Version
+
+## Comment exécuter le projet
+
+1. Cloner le dépôt
+2. Installer les dépendances: `npm install`
+3. Lancer le serveur de développement: `npm run dev`
+4. Pour construire l'application: `npm run build`
+5. Pour déployer l'application: `./deploy.sh`
+
+## Architecture
+
+Ce projet utilise:
+- Next.js 14
+- React
+- Typescript
+- Tailwind CSS
+- shadcn/ui
+
+## Résolution des problèmes courants
+
+### Erreurs liées à useSearchParams()
+
+Si vous rencontrez l'erreur suivante lors de la compilation:
+```
+useSearchParams() should be wrapped in a suspense boundary at page "/page"
+```
+
+Cette erreur se produit car `useSearchParams()` doit être utilisé à l'intérieur d'une limite Suspense.
+
+#### Solution:
+
+1. Assurez-vous que toutes vos pages sont enveloppées dans le composant `ClientPageWrapper`:
+
+```tsx
+import { ClientPageWrapper, defaultViewport } from '@/components/ClientPageWrapper';
+import type { Viewport } from 'next';
+
+export const viewport: Viewport = defaultViewport;
+
+export default function MaPage() {
+  return (
+    <ClientPageWrapper>
+      {/* Votre contenu ici */}
+    </ClientPageWrapper>
+  );
+}
+```
+
+2. N'utilisez pas `useSearchParams()` dans les composants qui sont utilisés en dehors d'un `Suspense`. Si vous devez utiliser `useSearchParams()`, assurez-vous que le composant est appelé uniquement à l'intérieur d'un `Suspense`.
+
+3. Si vous créez un nouveau composant qui utilise `useSearchParams()`, enveloppez-le dans un Suspense:
+
+```tsx
+import { Suspense } from 'react';
+
+export function MonComposant() {
+  return (
+    <Suspense fallback={<div>Chargement...</div>}>
+      <MonComposantAvecSearchParams />
+    </Suspense>
+  );
+}
+```
+
+4. Pour appliquer automatiquement `ClientPageWrapper` à toutes les pages, vous pouvez utiliser le script `fix-pages-v2.js`:
+
+```
+node fix-pages-v2.js
+```
+
+### Autres problèmes
+
+Si vous rencontrez d'autres problèmes, veuillez consulter la documentation de Next.js ou ouvrir une issue sur le dépôt.
+
+## Déploiement
+
+Le script `deploy.sh` vous permet de construire l'application et de préparer les fichiers pour le déploiement. Il effectue les étapes suivantes:
+
+1. Vérification que tous les changements sont commités
+2. Installation des dépendances
+3. Vérification des types
+4. Linting du code
+5. Construction de l'application
+6. Préparation du dossier de distribution
+
+Pour déployer l'application, exécutez simplement:
+
+```
+./deploy.sh
+```

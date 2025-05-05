@@ -1,5 +1,7 @@
 'use client'
 
+import { ClientPageWrapper, defaultViewport } from '@/components/ClientPageWrapper';
+import type { Viewport } from 'next';
 import { useState } from 'react'
 import { Button } from "@/components/ui/button"
 
@@ -57,6 +59,8 @@ const useProducts = () => {
   return { products, error, loading, fetchProducts, addProduct };
 };
 
+export const viewport: Viewport = defaultViewport;
+
 export default function ApiTest() {
   const { products, error, loading, fetchProducts, addProduct } = useProducts();
 
@@ -69,16 +73,18 @@ export default function ApiTest() {
   };
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">API Test</h1>
-      <Button onClick={fetchProducts} className="mb-4">Fetch Products</Button>
-      <Button onClick={handleAddProduct} className="mb-4 ml-2">Add Test Product</Button>
-      {loading && <p>Loading...</p>}
-      {error && <p className="text-red-500 mb-4">{error}</p>}
-      <pre className="bg-gray-100 p-4 rounded">
-        {JSON.stringify(products, null, 2)}
-      </pre>
-    </div>
-  )
+    <ClientPageWrapper>
+      <div className="container mx-auto p-4">
+        <h1 className="text-2xl font-bold mb-4">API Test</h1>
+        <Button onClick={fetchProducts} className="mb-4">Fetch Products</Button>
+        <Button onClick={handleAddProduct} className="mb-4 ml-2">Add Test Product</Button>
+        {loading && <p>Loading...</p>}
+        {error && <p className="text-red-500 mb-4">{error}</p>}
+        <pre className="bg-gray-100 p-4 rounded">
+          {JSON.stringify(products, null, 2)}
+        </pre>
+      </div>
+    </ClientPageWrapper>
+  );
 }
 

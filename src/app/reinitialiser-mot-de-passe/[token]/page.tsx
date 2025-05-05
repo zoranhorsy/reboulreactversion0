@@ -1,5 +1,7 @@
 'use client'
 
+import { ClientPageWrapper, defaultViewport } from '@/components/ClientPageWrapper';
+import type { Viewport } from 'next';
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -22,6 +24,8 @@ const logWithTime = (message: string, data?: any) => {
     console.log(`[ResetPasswordPage][${timestamp}] ${message}`)
   }
 }
+
+export const viewport: Viewport = defaultViewport;
 
 export default function ResetPasswordPage() {
     const params = useParams()
@@ -239,13 +243,14 @@ export default function ResetPasswordPage() {
         // Si le token est en cours de vérification
         if (tokenValid === null) {
             return (
-                <div className="text-center py-4">
+    <ClientPageWrapper>
+      <div className="text-center py-4">
                     <p className={`text-sm ${theme === 'light' ? 'text-gray-600' : 'text-gray-400'}`}>
                         Vérification du lien...
                     </p>
                 </div>
-            )
-        }
+    </ClientPageWrapper>
+  );}
         
         // Si le token est invalide
         if (tokenValid === false) {

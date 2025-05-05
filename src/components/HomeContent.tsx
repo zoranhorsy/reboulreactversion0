@@ -2,7 +2,8 @@
 
 import React, { useEffect, useRef } from 'react'
 import { HeroSection } from './HeroSection'
-import { StoreSelection } from './StoreSelection'
+import { DynamicStoreSelection, DynamicLatestCollections } from './dynamic-imports'
+import { LazyLoadWrapper } from './LazyLoadWrapper'
 import { FeaturedProducts } from './FeaturedProducts'
 import { RandomAdultProducts } from './RandomAdultProducts'
 import { RandomSneakersProducts } from './RandomSneakersProducts'
@@ -17,7 +18,6 @@ import { initGSAP } from '@/lib/gsap-config'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { useGSAP } from '@gsap/react'
 import { cn } from '@/lib/utils'
-import { LatestCollections } from './LatestCollections'
 
 // Définition des types pour GSAP
 type GSAPContextType = ReturnType<typeof gsap.context> | null;
@@ -189,9 +189,13 @@ export function HomeContent() {
     return (
         <div ref={mainRef} className="relative">
             <HeroSection />
-            <StoreSelection />
+            <LazyLoadWrapper>
+                <DynamicStoreSelection />
+            </LazyLoadWrapper>
             <FeaturedProducts />
-            <LatestCollections/>
+            <LazyLoadWrapper>
+                <DynamicLatestCollections />
+            </LazyLoadWrapper>
             <RandomAdultProducts />
             <RandomSneakersProducts />
             <RandomKidsProducts />

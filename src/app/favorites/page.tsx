@@ -1,5 +1,7 @@
 'use client';
 
+import { ClientPageWrapper, defaultViewport } from '@/components/ClientPageWrapper';
+import type { Viewport } from 'next';
 import { useEffect, useState } from 'react';
 import { useFavorites } from '../contexts/FavoritesContext';
 import { ProductCard } from '@/components/products/ProductCard';
@@ -7,6 +9,8 @@ import { useToast } from '@/components/ui/use-toast';
 import { Heart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Product } from '@/lib/api';
+
+export const viewport: Viewport = defaultViewport;
 
 export default function FavoritesPage() {
     const { favorites, removeFromFavorites } = useFavorites();
@@ -37,12 +41,13 @@ export default function FavoritesPage() {
 
     if (loading) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-[400px]">
+    <ClientPageWrapper>
+      <div className="flex flex-col items-center justify-center min-h-[400px]">
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
                 <p className="mt-4 text-muted-foreground">Chargement de vos favoris...</p>
             </div>
-        );
-    }
+    </ClientPageWrapper>
+  );}
 
     if (!favorites || favorites.length === 0) {
         return (

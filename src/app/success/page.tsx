@@ -1,5 +1,12 @@
 'use client'
 
+
+
+
+// Importer la configuration globale pour forcer le rendu dynamique
+import { dynamic, revalidate, fetchCache } from '@/app/config';
+import { ClientPageWrapper, defaultViewport } from '@/components/ClientPageWrapper';
+import type { Viewport } from 'next';
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
@@ -8,6 +15,8 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import confetti from 'canvas-confetti'
+
+export const viewport: Viewport = defaultViewport;
 
 export default function SuccessPage() {
     const router = useRouter()
@@ -28,8 +37,9 @@ export default function SuccessPage() {
         }
     }, [router])
 
-    return (
-        <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    return ((
+    <ClientPageWrapper>
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -105,5 +115,6 @@ export default function SuccessPage() {
                 </Card>
             </motion.div>
         </div>
-    )
+    </ClientPageWrapper>
+  ))
 } 

@@ -3,7 +3,8 @@ import Image from 'next/image'
 import { X } from 'lucide-react'
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { ProductVariantModal } from '@/components/ProductVariantModal'
+import { DynamicProductVariantModal } from '@/components/dynamic-imports'
+import { LazyLoadWrapper } from '@/components/LazyLoadWrapper'
 import { useCart } from '@/app/contexts/CartContext'
 import { toast } from '@/components/ui/use-toast'
 
@@ -112,32 +113,34 @@ export function QuickView({ product }: QuickViewProps) {
                         <p className="text-sm text-gray-500">{product.description}</p>
                         <p className="text-lg font-bold">{product.price} €</p>
                     </div>
-                    <ProductVariantModal
-                        product={{
-                            ...product,
-                            id: product.id.toString(),
-                            category_id: 0,
-                            brand_id: 0,
-                            image_url: product.image,
-                            image: product.image,
-                            images: product.images || [product.image],
-                            variants: (product.variants || []).map((variant, index) => ({
-                                ...variant,
-                                id: variant.id || index + 1
-                            })),
-                            details: [],
-                            reviews: [],
-                            questions: [],
-                            faqs: [],
-                            size_chart: [],
-                            store_type: "adult",
-                            featured: false,
-                            created_at: new Date().toISOString(),
-                        }}
-                        isOpen={isOpen}
-                        onClose={() => setIsOpen(false)}
-                        onAddToCart={handleAddToCart}
-                    />
+                    <LazyLoadWrapper>
+                        {isOpen && <DynamicProductVariantModal
+                            product={{
+                                ...product,
+                                id: product.id.toString(),
+                                category_id: 0,
+                                brand_id: 0,
+                                image_url: product.image,
+                                image: product.image,
+                                images: product.images || [product.image],
+                                variants: (product.variants || []).map((variant, index) => ({
+                                    ...variant,
+                                    id: variant.id || index + 1
+                                })),
+                                details: [],
+                                reviews: [],
+                                questions: [],
+                                faqs: [],
+                                size_chart: [],
+                                store_type: "adult",
+                                featured: false,
+                                created_at: new Date().toISOString(),
+                            }}
+                            isOpen={isOpen}
+                            onClose={() => setIsOpen(false)}
+                            onAddToCart={handleAddToCart}
+                        />}
+                    </LazyLoadWrapper>
                 </div>
                 <button
                     className="absolute top-4 right-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"

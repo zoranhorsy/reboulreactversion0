@@ -1,10 +1,19 @@
 'use client'
 
+
+
+
+// Importer la configuration globale pour forcer le rendu dynamique
+import { dynamic, revalidate, fetchCache } from '@/app/config';
+import { ClientPageWrapper, defaultViewport } from '@/components/ClientPageWrapper';
+import type { Viewport } from 'next';
 import { useState } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "@/components/ui/use-toast"
+
+export const viewport: Viewport = defaultViewport;
 
 export default function Contact() {
     const [name, setName] = useState('')
@@ -24,8 +33,9 @@ export default function Contact() {
         setMessage('')
     }
 
-    return (
-        <div className="max-w-2xl mx-auto">
+    return ((
+    <ClientPageWrapper>
+      <div className="max-w-2xl mx-auto">
             <h1 className="text-3xl font-bold mb-6 text-primary">Contactez-nous</h1>
             <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
@@ -60,6 +70,7 @@ export default function Contact() {
                 <Button type="submit" className="w-full">Envoyer</Button>
             </form>
         </div>
-    )
+    </ClientPageWrapper>
+  ))
 }
 

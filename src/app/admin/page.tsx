@@ -1,5 +1,12 @@
 'use client'
 
+
+
+
+// Importer la configuration globale pour forcer le rendu dynamique
+import { dynamic, revalidate, fetchCache } from '@/app/config';
+import { ClientPageWrapper, defaultViewport } from '@/components/ClientPageWrapper';
+import type { Viewport } from 'next';
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/app/contexts/AuthContext'
@@ -15,6 +22,8 @@ import { ArchiveManager } from '@/components/admin/ArchiveManager'
 import { PromoManagement } from '@/components/admin/PromoManagement'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog"
 
+export const viewport: Viewport = defaultViewport;
+
 export default function AdminPage() {
     const { user, isLoading } = useAuth()
     const router = useRouter()
@@ -28,7 +37,8 @@ export default function AdminPage() {
 
     if (isLoading) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-screen bg-background">
+    <ClientPageWrapper>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-background">
                 <Card className="w-[400px] shadow-none border-none bg-transparent">
                     <CardContent className="flex flex-col items-center space-y-4 pt-6">
                         <Loader2 className="h-16 w-16 animate-spin text-primary" />
@@ -36,8 +46,8 @@ export default function AdminPage() {
                     </CardContent>
                 </Card>
             </div>
-        )
-    }
+    </ClientPageWrapper>
+  );}
 
     if (!user) {
         return null

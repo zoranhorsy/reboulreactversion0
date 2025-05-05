@@ -1,5 +1,7 @@
 'use client'
 
+import { ClientPageWrapper, defaultViewport } from '@/components/ClientPageWrapper';
+import type { Viewport } from 'next';
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
@@ -34,6 +36,8 @@ const shippingSchema = z.object({
 type ShippingFormData = z.infer<typeof shippingSchema>
 
 const TEST_MODE = process.env.NODE_ENV === 'development'
+
+export const viewport: Viewport = defaultViewport;
 
 export default function CheckoutPage() {
     const { register, handleSubmit, formState: { errors } } = useForm<ShippingFormData>({
@@ -213,239 +217,241 @@ export default function CheckoutPage() {
     }
 
     return (
-        <div className="flex flex-col min-h-screen">
-            <main className="flex-grow container mx-auto px-4 py-8">
-                <h1 className="text-3xl font-bold mb-8 text-center">Finalisation de la commande</h1>
+        <ClientPageWrapper>
+            <div className="flex flex-col min-h-screen">
+                <main className="flex-grow container mx-auto px-4 py-8">
+                    <h1 className="text-3xl font-bold mb-8 text-center">Finalisation de la commande</h1>
 
-                {TEST_MODE && (
-                    <Alert className="mb-8">
-                        <AlertCircle className="h-4 w-4" />
-                        <AlertTitle>Mode Test</AlertTitle>
-                        <AlertDescription>
-                            Le paiement est en mode test. Aucune transaction réelle ne sera effectuée.
-                        </AlertDescription>
-                    </Alert>
-                )}
+                    {TEST_MODE && (
+                        <Alert className="mb-8">
+                            <AlertCircle className="h-4 w-4" />
+                            <AlertTitle>Mode Test</AlertTitle>
+                            <AlertDescription>
+                                Le paiement est en mode test. Aucune transaction réelle ne sera effectuée.
+                            </AlertDescription>
+                        </Alert>
+                    )}
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div className="lg:col-span-2">
-                        <Tabs value={activeTab} onValueChange={setActiveTab}>
-                            <TabsList className="grid w-full grid-cols-2">
-                                <TabsTrigger value="shipping" disabled={isProcessing}>
-                                    <Truck className="mr-2 h-4 w-4" />
-                                    Livraison
-                                </TabsTrigger>
-                                <TabsTrigger value="payment" disabled={!shippingData || isProcessing}>
-                                    <CreditCard className="mr-2 h-4 w-4" />
-                                    Paiement
-                                </TabsTrigger>
-                            </TabsList>
-                            <TabsContent value="shipping">
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle>Informations de livraison</CardTitle>
-                                        <CardDescription>
-                                            Remplissez vos informations de livraison
-                                        </CardDescription>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <form onSubmit={handleSubmit(onSubmitShipping)} className="space-y-4">
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="firstName">Prénom</Label>
-                                                    <Input
-                                                        id="firstName"
-                                                        {...register('firstName')}
-                                                        disabled={isProcessing}
-                                                    />
-                                                    {errors.firstName && (
-                                                        <p className="text-red-500 text-sm">{errors.firstName.message}</p>
-                                                    )}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <div className="lg:col-span-2">
+                            <Tabs value={activeTab} onValueChange={setActiveTab}>
+                                <TabsList className="grid w-full grid-cols-2">
+                                    <TabsTrigger value="shipping" disabled={isProcessing}>
+                                        <Truck className="mr-2 h-4 w-4" />
+                                        Livraison
+                                    </TabsTrigger>
+                                    <TabsTrigger value="payment" disabled={!shippingData || isProcessing}>
+                                        <CreditCard className="mr-2 h-4 w-4" />
+                                        Paiement
+                                    </TabsTrigger>
+                                </TabsList>
+                                <TabsContent value="shipping">
+                                    <Card>
+                                        <CardHeader>
+                                            <CardTitle>Informations de livraison</CardTitle>
+                                            <CardDescription>
+                                                Remplissez vos informations de livraison
+                                            </CardDescription>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <form onSubmit={handleSubmit(onSubmitShipping)} className="space-y-4">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div className="space-y-2">
+                                                        <Label htmlFor="firstName">Prénom</Label>
+                                                        <Input
+                                                            id="firstName"
+                                                            {...register('firstName')}
+                                                            disabled={isProcessing}
+                                                        />
+                                                        {errors.firstName && (
+                                                            <p className="text-red-500 text-sm">{errors.firstName.message}</p>
+                                                        )}
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <Label htmlFor="lastName">Nom</Label>
+                                                        <Input
+                                                            id="lastName"
+                                                            {...register('lastName')}
+                                                            disabled={isProcessing}
+                                                        />
+                                                        {errors.lastName && (
+                                                            <p className="text-red-500 text-sm">{errors.lastName.message}</p>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="lastName">Nom</Label>
-                                                    <Input
-                                                        id="lastName"
-                                                        {...register('lastName')}
-                                                        disabled={isProcessing}
-                                                    />
-                                                    {errors.lastName && (
-                                                        <p className="text-red-500 text-sm">{errors.lastName.message}</p>
-                                                    )}
+                                                
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div className="space-y-2">
+                                                        <Label htmlFor="email">Email</Label>
+                                                        <Input
+                                                            id="email"
+                                                            type="email"
+                                                            {...register('email')}
+                                                            disabled={isProcessing}
+                                                        />
+                                                        {errors.email && (
+                                                            <p className="text-red-500 text-sm">{errors.email.message}</p>
+                                                        )}
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <Label htmlFor="phone">Téléphone</Label>
+                                                        <Input
+                                                            id="phone"
+                                                            {...register('phone')}
+                                                            disabled={isProcessing}
+                                                        />
+                                                        {errors.phone && (
+                                                            <p className="text-red-500 text-sm">{errors.phone.message}</p>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="email">Email</Label>
-                                                    <Input
-                                                        id="email"
-                                                        type="email"
-                                                        {...register('email')}
-                                                        disabled={isProcessing}
-                                                    />
-                                                    {errors.email && (
-                                                        <p className="text-red-500 text-sm">{errors.email.message}</p>
-                                                    )}
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="phone">Téléphone</Label>
-                                                    <Input
-                                                        id="phone"
-                                                        {...register('phone')}
-                                                        disabled={isProcessing}
-                                                    />
-                                                    {errors.phone && (
-                                                        <p className="text-red-500 text-sm">{errors.phone.message}</p>
-                                                    )}
-                                                </div>
-                                            </div>
 
-                                            <div className="space-y-2">
-                                                <Label htmlFor="address">Adresse</Label>
-                                                <Input
-                                                    id="address"
-                                                    {...register('address')}
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="address">Adresse</Label>
+                                                    <Input
+                                                        id="address"
+                                                        {...register('address')}
+                                                        disabled={isProcessing}
+                                                    />
+                                                    {errors.address && (
+                                                        <p className="text-red-500 text-sm">{errors.address.message}</p>
+                                                    )}
+                                                </div>
+
+                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                    <div className="space-y-2">
+                                                        <Label htmlFor="city">Ville</Label>
+                                                        <Input
+                                                            id="city"
+                                                            {...register('city')}
+                                                            disabled={isProcessing}
+                                                        />
+                                                        {errors.city && (
+                                                            <p className="text-red-500 text-sm">{errors.city.message}</p>
+                                                        )}
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <Label htmlFor="postalCode">Code postal</Label>
+                                                        <Input
+                                                            id="postalCode"
+                                                            {...register('postalCode')}
+                                                            disabled={isProcessing}
+                                                        />
+                                                        {errors.postalCode && (
+                                                            <p className="text-red-500 text-sm">{errors.postalCode.message}</p>
+                                                        )}
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <Label htmlFor="country">Pays</Label>
+                                                        <Input
+                                                            id="country"
+                                                            {...register('country')}
+                                                            disabled={isProcessing}
+                                                        />
+                                                        {errors.country && (
+                                                            <p className="text-red-500 text-sm">{errors.country.message}</p>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                <Button 
+                                                    type="submit" 
+                                                    className="w-full"
                                                     disabled={isProcessing}
-                                                />
-                                                {errors.address && (
-                                                    <p className="text-red-500 text-sm">{errors.address.message}</p>
-                                                )}
+                                                >
+                                                    {isProcessing ? "Validation..." : "Continuer vers le paiement"}
+                                                </Button>
+                                            </form>
+                                        </CardContent>
+                                    </Card>
+                                </TabsContent>
+                                <TabsContent value="payment">
+                                    <Card>
+                                        <CardHeader>
+                                            <CardTitle>Informations de paiement</CardTitle>
+                                            <CardDescription>
+                                                {TEST_MODE 
+                                                    ? "Mode test : Aucune transaction réelle ne sera effectuée"
+                                                    : "Paiement sécurisé par Stripe"
+                                                }
+                                            </CardDescription>
+                                        </CardHeader>
+                                        <CardContent>
+                                            {TEST_MODE ? (
+                                                <Button 
+                                                    onClick={handleTestCheckout}
+                                                    className="w-full"
+                                                    disabled={isProcessing}
+                                                >
+                                                    {isProcessing ? "Traitement..." : "Simuler un paiement réussi"}
+                                                </Button>
+                                            ) : (
+                                                <StripeProvider>
+                                                    <CheckoutForm shippingData={shippingData} />
+                                                </StripeProvider>
+                                            )}
+                                        </CardContent>
+                                    </Card>
+                                </TabsContent>
+                            </Tabs>
+                        </div>
+                        <div>
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="flex items-center">
+                                        <ShoppingBag className="mr-2 h-5 w-5" />
+                                        Résumé de la commande
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    {items.map((item) => (
+                                        <div key={item.id} className="flex justify-between items-center py-2">
+                                            <div className="flex-1">
+                                                <p className="font-medium">{item.name}</p>
+                                                <p className="text-sm text-muted-foreground">Quantité: {item.quantity}</p>
                                             </div>
-
-                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="city">Ville</Label>
-                                                    <Input
-                                                        id="city"
-                                                        {...register('city')}
-                                                        disabled={isProcessing}
-                                                    />
-                                                    {errors.city && (
-                                                        <p className="text-red-500 text-sm">{errors.city.message}</p>
-                                                    )}
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="postalCode">Code postal</Label>
-                                                    <Input
-                                                        id="postalCode"
-                                                        {...register('postalCode')}
-                                                        disabled={isProcessing}
-                                                    />
-                                                    {errors.postalCode && (
-                                                        <p className="text-red-500 text-sm">{errors.postalCode.message}</p>
-                                                    )}
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="country">Pays</Label>
-                                                    <Input
-                                                        id="country"
-                                                        {...register('country')}
-                                                        disabled={isProcessing}
-                                                    />
-                                                    {errors.country && (
-                                                        <p className="text-red-500 text-sm">{errors.country.message}</p>
-                                                    )}
-                                                </div>
-                                            </div>
-
-                                            <Button 
-                                                type="submit" 
-                                                className="w-full"
-                                                disabled={isProcessing}
-                                            >
-                                                {isProcessing ? "Validation..." : "Continuer vers le paiement"}
-                                            </Button>
-                                        </form>
-                                    </CardContent>
-                                </Card>
-                            </TabsContent>
-                            <TabsContent value="payment">
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle>Informations de paiement</CardTitle>
-                                        <CardDescription>
-                                            {TEST_MODE 
-                                                ? "Mode test : Aucune transaction réelle ne sera effectuée"
-                                                : "Paiement sécurisé par Stripe"
-                                            }
-                                        </CardDescription>
-                                    </CardHeader>
-                                    <CardContent>
-                                        {TEST_MODE ? (
-                                            <Button 
-                                                onClick={handleTestCheckout}
-                                                className="w-full"
-                                                disabled={isProcessing}
-                                            >
-                                                {isProcessing ? "Traitement..." : "Simuler un paiement réussi"}
-                                            </Button>
-                                        ) : (
-                                            <StripeProvider>
-                                                <CheckoutForm shippingData={shippingData} />
-                                            </StripeProvider>
-                                        )}
-                                    </CardContent>
-                                </Card>
-                            </TabsContent>
-                        </Tabs>
-                    </div>
-                    <div>
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center">
-                                    <ShoppingBag className="mr-2 h-5 w-5" />
-                                    Résumé de la commande
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                {items.map((item) => (
-                                    <div key={item.id} className="flex justify-between items-center py-2">
-                                        <div className="flex-1">
-                                            <p className="font-medium">{item.name}</p>
-                                            <p className="text-sm text-muted-foreground">Quantité: {item.quantity}</p>
+                                            <span>{(item.price * item.quantity).toFixed(2)} €</span>
                                         </div>
-                                        <span>{(item.price * item.quantity).toFixed(2)} €</span>
+                                    ))}
+                                    <Separator className="my-4" />
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between items-center">
+                                            <span>Sous-total</span>
+                                            <span>{total.toFixed(2)} €</span>
+                                        </div>
+                                        <div className="flex justify-between items-center text-sm text-muted-foreground">
+                                            <span>Livraison</span>
+                                            <span>Gratuite</span>
+                                        </div>
+                                        <Separator className="my-2" />
+                                        <div className="flex justify-between items-center font-bold">
+                                            <span>Total</span>
+                                            <span>{total.toFixed(2)} €</span>
+                                        </div>
                                     </div>
-                                ))}
-                                <Separator className="my-4" />
-                                <div className="space-y-2">
-                                    <div className="flex justify-between items-center">
-                                        <span>Sous-total</span>
-                                        <span>{total.toFixed(2)} €</span>
-                                    </div>
-                                    <div className="flex justify-between items-center text-sm text-muted-foreground">
-                                        <span>Livraison</span>
-                                        <span>Gratuite</span>
-                                    </div>
-                                    <Separator className="my-2" />
-                                    <div className="flex justify-between items-center font-bold">
-                                        <span>Total</span>
-                                        <span>{total.toFixed(2)} €</span>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                        <Card className="mt-4">
-                            <CardHeader>
-                                <CardTitle className="flex items-center">
-                                    <Lock className="mr-2 h-5 w-5" />
-                                    Paiement sécurisé
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <p className="text-sm text-muted-foreground">
-                                    Vos informations de paiement sont sécurisées. Nous utilisons le cryptage SSL 
-                                    pour protéger vos données.
-                                </p>
-                            </CardContent>
-                        </Card>
+                                </CardContent>
+                            </Card>
+                            <Card className="mt-4">
+                                <CardHeader>
+                                    <CardTitle className="flex items-center">
+                                        <Lock className="mr-2 h-5 w-5" />
+                                        Paiement sécurisé
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <p className="text-sm text-muted-foreground">
+                                        Vos informations de paiement sont sécurisées. Nous utilisons le cryptage SSL 
+                                        pour protéger vos données.
+                                    </p>
+                                </CardContent>
+                            </Card>
+                        </div>
                     </div>
-                </div>
-            </main>
+                </main>
 
-            <ScrollToTopButton />
-        </div>
-    )
+                <ScrollToTopButton />
+            </div>
+        </ClientPageWrapper>
+    );
 }
 

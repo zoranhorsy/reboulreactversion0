@@ -1,5 +1,12 @@
 'use client'
 
+
+
+
+// Importer la configuration globale pour forcer le rendu dynamique
+import { dynamic, revalidate, fetchCache } from '@/app/config';
+import { ClientPageWrapper, defaultViewport } from '@/components/ClientPageWrapper';
+import type { Viewport } from 'next';
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/app/contexts/AuthContext'
@@ -17,6 +24,8 @@ const logWithTime = (message: string, data?: any) => {
     console.log(`[AdminDashboard][${timestamp}] ${message}`)
   }
 }
+
+export const viewport: Viewport = defaultViewport;
 
 export default function AdminDashboardPage() {
     const { user, isLoading, isAuthenticated, isAdmin, checkAuthManually } = useAuth()
@@ -50,7 +59,8 @@ export default function AdminDashboardPage() {
     if (isLoading) {
         logWithTime("Affichage du chargement")
         return (
-            <div className="flex flex-col items-center justify-center min-h-screen bg-background">
+    <ClientPageWrapper>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-background">
                 <Card className="w-[400px] shadow-none border-none bg-transparent">
                     <CardContent className="flex flex-col items-center space-y-4 pt-6">
                         <Loader2 className="h-16 w-16 animate-spin text-primary" />
@@ -58,8 +68,8 @@ export default function AdminDashboardPage() {
                     </CardContent>
                 </Card>
             </div>
-        )
-    }
+    </ClientPageWrapper>
+  );}
 
     if (!isAuthenticated || !isAdmin) {
         logWithTime("Non authentifié ou non admin - affichage du message d'erreur")

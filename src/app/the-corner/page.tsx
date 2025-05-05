@@ -1,3 +1,8 @@
+// Importer la configuration globale pour forcer le rendu dynamique
+import { dynamic, revalidate, fetchCache } from '@/app/config';
+
+import { ClientPageWrapper, defaultViewport } from '@/components/ClientPageWrapper';
+import type { Viewport } from 'next';
 import type { Metadata } from "next"
 import { Suspense } from "react"
 import { LoaderComponent } from "@/components/ui/Loader"
@@ -66,6 +71,8 @@ function TheCornerClientWrapper(props: TheCornerWrapperProps) {
   return <TheCornerClientContent {...props} />
 }
 
+export const viewport: Viewport = defaultViewport;
+
 export default async function TheCornerPage({
   searchParams,
 }: {
@@ -117,7 +124,8 @@ export default async function TheCornerPage({
   ])
 
   return (
-    <Suspense fallback={<LoaderComponent />}>
+    <ClientPageWrapper>
+      <Suspense fallback={<LoaderComponent />}>
       <TheCornerClientWrapper
         initialProducts={productsData.products}
         initialCategories={categories}
@@ -126,5 +134,5 @@ export default async function TheCornerPage({
         searchParams={searchParams}
       />
     </Suspense>
-  )
-} 
+    </ClientPageWrapper>
+  );} 

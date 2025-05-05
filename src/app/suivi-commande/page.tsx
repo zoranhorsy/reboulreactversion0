@@ -1,5 +1,12 @@
 'use client'
 
+
+
+
+// Importer la configuration globale pour forcer le rendu dynamique
+import { dynamic, revalidate, fetchCache } from '@/app/config';
+import { ClientPageWrapper, defaultViewport } from '@/components/ClientPageWrapper';
+import type { Viewport } from 'next';
 import { useState } from 'react'
 import { Package, Truck, CheckCircle } from 'lucide-react'
 import { Button } from "@/components/ui/button"
@@ -15,6 +22,8 @@ const orderStatuses: Record<OrderStatus, { icon: React.ReactNode; text: string }
     delivered: { icon: <CheckCircle className="h-6 w-6" />, text: "Commande livrée" },
 }
 
+export const viewport: Viewport = defaultViewport;
+
 export default function TrackOrder() {
     const [orderNumber, setOrderNumber] = useState('')
     const [orderStatus, setOrderStatus] = useState<OrderStatus | null>(null)
@@ -27,8 +36,9 @@ export default function TrackOrder() {
         setOrderStatus(randomStatus)
     }
 
-    return (
-        <div className="container mx-auto px-4 py-16">
+    return ((
+    <ClientPageWrapper>
+      <div className="container mx-auto px-4 py-16">
             <Card className="max-w-2xl mx-auto">
                 <CardHeader>
                     <CardTitle className="text-2xl">Suivi de commande</CardTitle>
@@ -75,6 +85,7 @@ export default function TrackOrder() {
                 </CardContent>
             </Card>
         </div>
-    )
+    </ClientPageWrapper>
+  ))
 }
 

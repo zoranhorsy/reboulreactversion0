@@ -1,5 +1,7 @@
 'use client'
 
+import { ClientPageWrapper, defaultViewport } from '@/components/ClientPageWrapper';
+import type { Viewport } from 'next';
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -24,6 +26,8 @@ const logWithTime = (message: string, data?: any) => {
     console.log(`[ForgotPasswordPage][${timestamp}] ${message}`)
   }
 }
+
+export const viewport: Viewport = defaultViewport;
 
 export default function ForgotPassword() {
     const [email, setEmail] = useState('')
@@ -114,175 +118,177 @@ export default function ForgotPassword() {
     }
 
     return (
-        <div className={`min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 ${theme === 'light' ? 'bg-gray-50' : 'bg-black'}`}>
-            {/* Bouton de changement de thème */}
-            <button
-                onClick={toggleTheme}
-                className={`absolute top-4 right-4 p-2 rounded-full ${
-                    theme === 'light' 
-                    ? 'bg-gray-200 text-gray-800 hover:bg-gray-300' 
-                    : 'bg-zinc-800 text-gray-200 hover:bg-zinc-700'
-                }`}
-                aria-label={theme === 'light' ? "Passer au mode sombre" : "Passer au mode clair"}
-                title={theme === 'light' ? "Passer au mode sombre" : "Passer au mode clair"}
-            >
-                {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
-            </button>
-            
-            {/* Logo en header */}
-            <div className="w-full max-w-md mb-8 flex flex-col items-center animate-fadeIn">
-                <div className="relative w-40 h-40 sm:w-48 sm:h-48">
-                    <Image 
-                        src={logoSrc}
-                        alt="Logo Reboul" 
-                        fill 
-                        className="object-contain"
-                        priority
-                        onError={(e) => {
-                            console.error("Erreur de chargement du logo:", logoSrc)
-                            const target = e.target as HTMLImageElement
-                            target.style.display = 'none'
-                        }}
-                    />
+        <ClientPageWrapper>
+            <div className={`min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 ${theme === 'light' ? 'bg-gray-50' : 'bg-black'}`}>
+                {/* Bouton de changement de thème */}
+                <button
+                    onClick={toggleTheme}
+                    className={`absolute top-4 right-4 p-2 rounded-full ${
+                        theme === 'light' 
+                        ? 'bg-gray-200 text-gray-800 hover:bg-gray-300' 
+                        : 'bg-zinc-800 text-gray-200 hover:bg-zinc-700'
+                    }`}
+                    aria-label={theme === 'light' ? "Passer au mode sombre" : "Passer au mode clair"}
+                    title={theme === 'light' ? "Passer au mode sombre" : "Passer au mode clair"}
+                >
+                    {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+                </button>
+                
+                {/* Logo en header */}
+                <div className="w-full max-w-md mb-8 flex flex-col items-center animate-fadeIn">
+                    <div className="relative w-40 h-40 sm:w-48 sm:h-48">
+                        <Image 
+                            src={logoSrc}
+                            alt="Logo Reboul" 
+                            fill 
+                            className="object-contain"
+                            priority
+                            onError={(e) => {
+                                console.error("Erreur de chargement du logo:", logoSrc)
+                                const target = e.target as HTMLImageElement
+                                target.style.display = 'none'
+                            }}
+                        />
+                    </div>
                 </div>
-            </div>
-            
-            {/* Formulaire ou confirmation */}
-            <div className={`w-full max-w-md rounded-xl shadow-md p-4 sm:p-6 space-y-5 animate-fadeIn ${
-                theme === 'light' ? 'bg-white' : 'bg-black'
-            }`} style={{animationDelay: "0.1s"}}>
-                {!emailSent ? (
-                    <>
-                        <div className="mb-4">
-                            <h1 className={`text-xl font-semibold mb-2 ${theme === 'light' ? 'text-gray-800' : 'text-gray-100'}`}>
-                                Mot de passe oublié
-                            </h1>
-                            <p className={`text-sm ${theme === 'light' ? 'text-gray-600' : 'text-gray-400'}`}>
-                                Entrez votre adresse email et nous vous enverrons un lien pour réinitialiser votre mot de passe.
-                            </p>
-                        </div>
-                        
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div className="space-y-1">
-                                <label htmlFor="email" className={`block text-sm ${theme === 'light' ? 'text-gray-700' : 'text-gray-300'}`}>
-                                    Email
-                                </label>
-                                <Input
-                                    id="email"
-                                    name="email"
-                                    type="email"
-                                    placeholder="exemple@email.com"
-                                    required
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    disabled={isLoading}
-                                    className={`w-full h-12 text-base rounded-md ${
-                                        theme === 'light' 
-                                        ? 'bg-gray-50 border-gray-200 focus:border-blue-500 focus:ring-0' 
-                                        : 'bg-zinc-900 border-zinc-800 focus:border-zinc-700 focus:ring-0'
-                                    }`}
-                                />
+                
+                {/* Formulaire ou confirmation */}
+                <div className={`w-full max-w-md rounded-xl shadow-md p-4 sm:p-6 space-y-5 animate-fadeIn ${
+                    theme === 'light' ? 'bg-white' : 'bg-black'
+                }`} style={{animationDelay: "0.1s"}}>
+                    {!emailSent ? (
+                        <>
+                            <div className="mb-4">
+                                <h1 className={`text-xl font-semibold mb-2 ${theme === 'light' ? 'text-gray-800' : 'text-gray-100'}`}>
+                                    Mot de passe oublié
+                                </h1>
+                                <p className={`text-sm ${theme === 'light' ? 'text-gray-600' : 'text-gray-400'}`}>
+                                    Entrez votre adresse email et nous vous enverrons un lien pour réinitialiser votre mot de passe.
+                                </p>
                             </div>
                             
-                            <Button 
-                                type="submit" 
-                                className={`w-full h-12 text-base font-medium transition-colors mt-4 ${
-                                    theme === 'light'
-                                    ? 'bg-blue-600 text-white hover:bg-blue-700'
-                                    : 'bg-gray-200 text-black hover:bg-gray-300'
-                                }`}
-                                disabled={isLoading}
-                            >
-                                {isLoading ? "Envoi en cours..." : "Envoyer le lien de réinitialisation"}
-                            </Button>
-                        </form>
-                    </>
-                ) : (
-                    <div className="text-center py-6">
-                        {serverError ? (
-                            <>
-                                <h2 className={`text-xl font-semibold mb-2 ${theme === 'light' ? 'text-gray-800' : 'text-gray-100'}`}>
-                                    Service temporairement indisponible
-                                </h2>
-                                
-                                <p className={`text-sm mb-6 ${theme === 'light' ? 'text-gray-600' : 'text-gray-400'}`}>
-                                    Le service d&apos;envoi d&apos;emails est momentanément indisponible. Veuillez réessayer ultérieurement ou contacter l&apos;administrateur.
-                                </p>
-                                
-                                <div className={`mb-4 p-3 rounded text-sm ${
-                                    theme === 'light' 
-                                    ? 'bg-blue-50 text-blue-800 border border-blue-100' 
-                                    : 'bg-blue-900/20 text-blue-300 border border-blue-900/50'
-                                }`}>
-                                    <h3 className="font-medium mb-1">Vous êtes administrateur ?</h3>
-                                    <p className="mb-2">Assurez-vous que les variables SMTP suivantes sont correctement configurées sur la plateforme Railway :</p>
-                                    <ul className="list-disc list-inside space-y-1 ml-2">
-                                        <li>SMTP_HOST (ex: smtp.gmail.com)</li>
-                                        <li>SMTP_PORT (ex: 587)</li>
-                                        <li>SMTP_USER (votre email)</li>
-                                        <li>SMTP_PASSWORD (mot de passe ou clé d&apos;application)</li>
-                                        <li>SMTP_SECURE (true/false)</li>
-                                    </ul>
+                            <form onSubmit={handleSubmit} className="space-y-4">
+                                <div className="space-y-1">
+                                    <label htmlFor="email" className={`block text-sm ${theme === 'light' ? 'text-gray-700' : 'text-gray-300'}`}>
+                                        Email
+                                    </label>
+                                    <Input
+                                        id="email"
+                                        name="email"
+                                        type="email"
+                                        placeholder="exemple@email.com"
+                                        required
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        disabled={isLoading}
+                                        className={`w-full h-12 text-base rounded-md ${
+                                            theme === 'light' 
+                                            ? 'bg-gray-50 border-gray-200 focus:border-blue-500 focus:ring-0' 
+                                            : 'bg-zinc-900 border-zinc-800 focus:border-zinc-700 focus:ring-0'
+                                        }`}
+                                    />
                                 </div>
                                 
                                 <Button 
-                                    onClick={() => setServerError(false)} 
-                                    variant="outline" 
-                                    className={`mb-2 ${
+                                    type="submit" 
+                                    className={`w-full h-12 text-base font-medium transition-colors mt-4 ${
                                         theme === 'light'
-                                        ? 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                                        : 'bg-zinc-900 text-gray-300 border-zinc-800 hover:bg-zinc-800'
+                                        ? 'bg-blue-600 text-white hover:bg-blue-700'
+                                        : 'bg-gray-200 text-black hover:bg-gray-300'
                                     }`}
+                                    disabled={isLoading}
                                 >
-                                    Réessayer
+                                    {isLoading ? "Envoi en cours..." : "Envoyer le lien de réinitialisation"}
                                 </Button>
-                            </>
-                        ) : (
-                            <>
-                                <div className={`mx-auto w-12 h-12 rounded-full flex items-center justify-center mb-4 ${
-                                    theme === 'light' ? 'bg-green-100' : 'bg-green-900'
-                                }`}>
-                                    <Check className={`h-6 w-6 ${
-                                        theme === 'light' ? 'text-green-600' : 'text-green-400'
-                                    }`} />
-                                </div>
-                                
-                                <h2 className={`text-xl font-semibold mb-2 ${theme === 'light' ? 'text-gray-800' : 'text-gray-100'}`}>
-                                    Email envoyé
-                                </h2>
-                                
-                                <p className={`text-sm mb-6 ${theme === 'light' ? 'text-gray-600' : 'text-gray-400'}`}>
-                                    Si un compte existe avec cette adresse, vous recevrez un email contenant un lien pour réinitialiser votre mot de passe.
-                                </p>
-                                
-                                <Button 
-                                    onClick={() => setEmailSent(false)} 
-                                    variant="outline" 
-                                    className={`mb-2 ${
-                                        theme === 'light'
-                                        ? 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                                        : 'bg-zinc-900 text-gray-300 border-zinc-800 hover:bg-zinc-800'
-                                    }`}
+                            </form>
+                        </>
+                    ) : (
+                        <div className="text-center py-6">
+                            {serverError ? (
+                                <>
+                                    <h2 className={`text-xl font-semibold mb-2 ${theme === 'light' ? 'text-gray-800' : 'text-gray-100'}`}>
+                                        Service temporairement indisponible
+                                    </h2>
+                                    
+                                    <p className={`text-sm mb-6 ${theme === 'light' ? 'text-gray-600' : 'text-gray-400'}`}>
+                                        Le service d&apos;envoi d&apos;emails est momentanément indisponible. Veuillez réessayer ultérieurement ou contacter l&apos;administrateur.
+                                    </p>
+                                    
+                                    <div className={`mb-4 p-3 rounded text-sm ${
+                                        theme === 'light' 
+                                        ? 'bg-blue-50 text-blue-800 border border-blue-100' 
+                                        : 'bg-blue-900/20 text-blue-300 border border-blue-900/50'
+                                    }`}>
+                                        <h3 className="font-medium mb-1">Vous êtes administrateur ?</h3>
+                                        <p className="mb-2">Assurez-vous que les variables SMTP suivantes sont correctement configurées sur la plateforme Railway :</p>
+                                        <ul className="list-disc list-inside space-y-1 ml-2">
+                                            <li>SMTP_HOST (ex: smtp.gmail.com)</li>
+                                            <li>SMTP_PORT (ex: 587)</li>
+                                            <li>SMTP_USER (votre email)</li>
+                                            <li>SMTP_PASSWORD (mot de passe ou clé d&apos;application)</li>
+                                            <li>SMTP_SECURE (true/false)</li>
+                                        </ul>
+                                    </div>
+                                    
+                                    <Button 
+                                        onClick={() => setServerError(false)} 
+                                        variant="outline" 
+                                        className={`mb-2 ${
+                                            theme === 'light'
+                                            ? 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                                            : 'bg-zinc-900 text-gray-300 border-zinc-800 hover:bg-zinc-800'
+                                        }`}
+                                    >
+                                        Réessayer
+                                    </Button>
+                                </>
+                            ) : (
+                                <>
+                                    <div className={`mx-auto w-12 h-12 rounded-full flex items-center justify-center mb-4 ${
+                                        theme === 'light' ? 'bg-green-100' : 'bg-green-900'
+                                    }`}>
+                                        <Check className={`h-6 w-6 ${
+                                            theme === 'light' ? 'text-green-600' : 'text-green-400'
+                                        }`} />
+                                    </div>
+                                    
+                                    <h2 className={`text-xl font-semibold mb-2 ${theme === 'light' ? 'text-gray-800' : 'text-gray-100'}`}>
+                                        Email envoyé
+                                    </h2>
+                                    
+                                    <p className={`text-sm mb-6 ${theme === 'light' ? 'text-gray-600' : 'text-gray-400'}`}>
+                                        Si un compte existe avec cette adresse, vous recevrez un email contenant un lien pour réinitialiser votre mot de passe.
+                                    </p>
+                                    
+                                    <Button 
+                                        onClick={() => setEmailSent(false)} 
+                                        variant="outline" 
+                                        className={`mb-2 ${
+                                            theme === 'light'
+                                            ? 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                                            : 'bg-zinc-900 text-gray-300 border-zinc-800 hover:bg-zinc-800'
+                                        }`}
+                                    >
+                                        Essayer une autre adresse
+                                    </Button>
+                                </>
+                            )}
+                            
+                            <div className="mt-4">
+                                <Link 
+                                    href="/connexion" 
+                                    className={`flex items-center justify-center text-sm ${
+                                        theme === 'light' ? 'text-blue-600 hover:text-blue-800' : 'text-gray-300 hover:text-white'
+                                    } transition-colors`}
                                 >
-                                    Essayer une autre adresse
-                                </Button>
-                            </>
-                        )}
-                        
-                        <div className="mt-4">
-                            <Link 
-                                href="/connexion" 
-                                className={`flex items-center justify-center text-sm ${
-                                    theme === 'light' ? 'text-blue-600 hover:text-blue-800' : 'text-gray-300 hover:text-white'
-                                } transition-colors`}
-                            >
-                                <ArrowLeft className="mr-2 h-4 w-4" />
-                                Retour à la connexion
-                            </Link>
+                                    <ArrowLeft className="mr-2 h-4 w-4" />
+                                    Retour à la connexion
+                                </Link>
+                            </div>
                         </div>
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
-        </div>
+        </ClientPageWrapper>
     )
 } 

@@ -8,6 +8,7 @@ import { ArrowLeft, Home, Search, ShoppingBag, MessageSquare } from 'lucide-reac
 import Image from 'next/image'
 import { useTheme } from 'next-themes'
 
+// Le composant reste client uniquement, mais nous utilisons Suspense dans les pages
 export default function ProductNotFound() {
     const [randomTip, setRandomTip] = useState('')
     const [mounted, setMounted] = useState(false)

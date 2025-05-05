@@ -45,8 +45,7 @@ import {
 import { getColorInfo, isWhiteColor } from '@/config/productColors'
 import { cn } from "@/lib/utils"
 import { ProductGallery } from "@/components/ProductGallery"
-import { ColorSelector } from "@/components/ColorSelector"
-import { SizeSelector } from "@/components/SizeSelector"
+import { ColorSelector, SizeSelector } from "@/components/optimized/MemoizedComponents"
 import { StockIndicator } from "@/components/StockIndicator"
 import { SimilarProducts } from "@/components/SimilarProducts"
 import { PageHeader } from "@/components/products/PageHeader"

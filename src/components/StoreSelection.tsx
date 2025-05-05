@@ -270,7 +270,7 @@ export function StoreSelection() {
                                     <Link 
                                         href={store.href} 
                                         className={cn(
-                                            "block w-full aspect-[16/9] md:aspect-[21/9] relative overflow-hidden rounded-lg md:rounded-xl",
+                                            "block w-full aspect-[4/3] xs:aspect-[16/9] md:aspect-[21/9] relative overflow-hidden rounded-lg md:rounded-xl",
                                             "shadow-md hover:shadow-lg",
                                             "transition-all duration-500 ease-out group"
                                         )}
@@ -306,8 +306,8 @@ export function StoreSelection() {
                                         </div>
                                         
                                         {/* Contenu principal */}
-                                        <div className="absolute inset-0 p-6 sm:p-8 md:p-10 lg:p-12 
-                                            flex flex-col justify-center items-center text-center z-40">
+                                        <div className="absolute inset-0 p-3 xs:p-4 sm:p-6 md:p-10 lg:p-12 
+                                                flex flex-col justify-center items-center text-center z-40">
                                             <div className={cn(
                                                 "transform transition-all duration-700 w-full max-w-lg",
                                                 selectedSlide === index ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0"
@@ -317,9 +317,9 @@ export function StoreSelection() {
                                                     initial={{ opacity: 0, y: -10 }}
                                                     animate={selectedSlide === index ? { opacity: 1, y: 0 } : {}}
                                                     transition={{ duration: 0.5, delay: 0.3 }}
-                                                    className="inline-block px-4 py-1.5 rounded-full bg-white/15 backdrop-blur-sm mb-4 md:mb-5"
+                                                    className="inline-block px-1.5 py-0.5 xs:px-2 xs:py-1 sm:px-4 sm:py-1.5 rounded-full bg-white/15 backdrop-blur-sm mb-2 xs:mb-3 md:mb-5"
                                                 >
-                                                    <p className="font-geist text-[10px] md:text-xs tracking-[0.15em] text-white uppercase font-light">
+                                                    <p className="font-geist text-[8px] xs:text-[10px] sm:text-xs tracking-[0.1em] xs:tracking-[0.15em] text-white uppercase font-light">
                                                         {store.description}
                                                     </p>
                                                 </motion.div>
@@ -329,8 +329,8 @@ export function StoreSelection() {
                                                     initial={{ opacity: 0, y: 10 }}
                                                     animate={selectedSlide === index ? { opacity: 1, y: 0 } : {}}
                                                     transition={{ duration: 0.5, delay: 0.5 }}
-                                                    className="font-geist text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-medium tracking-[0.1em] 
-                                                    text-white mb-3 md:mb-4 uppercase"
+                                                    className="font-geist text-lg xs:text-xl sm:text-3xl md:text-4xl lg:text-5xl font-medium tracking-[0.08em] xs:tracking-[0.1em] 
+                                                     text-white mb-1 xs:mb-2 md:mb-4 uppercase"
                                                 >
                                                     {store.title}
                                                 </motion.h3>
@@ -340,7 +340,7 @@ export function StoreSelection() {
                                                     initial={{ opacity: 0, y: 10 }}
                                                     animate={selectedSlide === index ? { opacity: 1, y: 0 } : {}}
                                                     transition={{ duration: 0.5, delay: 0.6 }}
-                                                    className="text-white/80 text-sm md:text-base mb-5 md:mb-6 max-w-sm mx-auto"
+                                                    className="text-white/80 text-[10px] xs:text-xs sm:text-sm md:text-base mb-2 xs:mb-3 sm:mb-5 md:mb-6 max-w-xs xs:max-w-sm mx-auto"
                                                 >
                                                     {store.tagline}
                                                 </motion.p>
@@ -352,13 +352,13 @@ export function StoreSelection() {
                                                     transition={{ duration: 0.5, delay: 0.7 }}
                                                     className="inline-block overflow-hidden rounded-full bg-white/15 hover:bg-white/25 
                                                         backdrop-blur-sm transition-all duration-300
-                                                        px-6 py-3 group/btn"
+                                                        px-3 py-1.5 xs:px-4 xs:py-2 sm:px-6 sm:py-3 group/btn"
                                                     whileHover={{ scale: 1.03 }}
                                                     whileTap={{ scale: 0.98 }}
                                                 >
-                                                    <span className="font-geist text-sm md:text-base text-white flex items-center gap-2">
+                                                    <span className="font-geist text-[10px] xs:text-xs sm:text-sm md:text-base text-white flex items-center gap-1 xs:gap-1.5 sm:gap-2">
                                                         Découvrir
-                                                        <ChevronRight className="w-4 h-4 md:w-5 md:h-5 transform group-hover/btn:translate-x-1 transition-transform duration-300" />
+                                                        <ChevronRight className="w-3 h-3 xs:w-3.5 xs:h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 transform group-hover/btn:translate-x-1 transition-transform duration-300" />
                                                     </span>
                                                 </motion.div>
                                             </div>
@@ -372,9 +372,9 @@ export function StoreSelection() {
                                                 transition={{ duration: 0.5, delay: 0.4 }}
                                                 className="absolute top-3 right-3 md:top-4 md:right-4 lg:top-5 lg:right-5 z-40"
                                             >
-                                                <div className="bg-red-500/90 text-white px-3 py-1 md:px-4 md:py-1.5 rounded-full 
-                                                    text-[10px] md:text-xs uppercase tracking-wider shadow-sm flex items-center gap-1.5">
-                                                    <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping-slow"></span>
+                                                <div className="bg-red-500/90 text-white px-1.5 py-0.5 xs:px-2 sm:px-3 md:px-4 md:py-1.5 rounded-full 
+    text-[7px] xs:text-[8px] sm:text-[10px] md:text-xs uppercase tracking-wide xs:tracking-wider shadow-sm flex items-center gap-1 xs:gap-1.5">
+                                                    <span className="w-1 h-1 xs:w-1.5 xs:h-1.5 rounded-full bg-white animate-ping-slow"></span>
                                                     <span>Nouveautés</span>
                                                 </div>
                                             </motion.div>
@@ -388,8 +388,8 @@ export function StoreSelection() {
                                                 transition={{ duration: 0.5, delay: 0.6 }}
                                                 className="absolute bottom-3 left-3 md:bottom-4 md:left-4 lg:bottom-5 lg:left-5 z-40"
                                             >
-                                                <div className="bg-black/40 backdrop-blur-sm text-white px-2 py-0.5 md:px-2.5 md:py-1 
-                                                    text-[10px] md:text-xs rounded-md">
+                                                <div className="bg-black/40 backdrop-blur-sm text-white px-1 py-0.5 xs:px-1.5 sm:px-2 md:px-2.5 md:py-1
+    text-[7px] xs:text-[8px] sm:text-[10px] md:text-xs rounded-md">
                                                     {store.productCount} {store.productCount > 1 ? 'produits' : 'produit'}
                                                 </div>
                                             </motion.div>
