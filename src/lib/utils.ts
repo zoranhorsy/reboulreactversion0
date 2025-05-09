@@ -54,6 +54,78 @@ export function debounce<T extends (...args: any[]) => any>(
   }
 }
 
+/**
+ * Limite le nombre d'appels à une fonction dans un intervalle de temps donné
+ * Contrairement au debounce qui attend, throttle exécute immédiatement puis bloque
+ * @param func Fonction à throttle
+ * @param limit Intervalle minimum entre les appels (en ms)
+ */
+export function throttle<T extends (...args: any[]) => any>(
+  func: T,
+  limit: number
+): (...args: Parameters<T>) => void {
+  let lastCall = 0
+  let lastCallArgs: Parameters<T> | null = null
+  let throttled = false
+  
+  return function throttledFunction(...args: Parameters<T>) {
+    const now = Date.now()
+    
+    // Mémoriser les derniers arguments reçus
+    lastCallArgs = args
+    
+    // Si c'est le premier appel ou si l'intervalle est dépassé
+    if (!lastCall || now - lastCall >= limit) {
+      lastCall = now
+      func(...args)
+      return
+    }
+    
+    // Si un throttle est déjà en cours, ignorer
+    if (throttled) return
+    
+    // Programmer le prochain appel
+    throttled = true
+    setTimeout(() => {
+      lastCall = Date.now()
+      throttled = false
+      
+      // Utiliser les derniers arguments reçus
+      if (lastCallArgs) {
+        func(...lastCallArgs)
+      }
+    }, limit - (now - lastCall))
+  }
+}
+
+/**
+ * Optimise les gestionnaires d'événements en utilisant requestAnimationFrame
+ * Idéal pour les événements visuels comme scroll, mousemove, resize
+ * @param func Fonction à optimiser
+ */
+export function rafThrottle<T extends (...args: any[]) => any>(
+  func: T
+): (...args: Parameters<T>) => void {
+  let requestId: number | null = null
+  let lastArgs: Parameters<T> | null = null
+  
+  return function throttledFunction(...args: Parameters<T>) {
+    // Mémoriser les arguments les plus récents
+    lastArgs = args
+    
+    // Si une frame n'est pas déjà programmée
+    if (!requestId) {
+      requestId = requestAnimationFrame(() => {
+        requestId = null
+        // Exécuter avec les derniers arguments reçus
+        if (lastArgs) {
+          func(...lastArgs)
+        }
+      })
+    }
+  }
+}
+
 export function getRandomInt(min: number, max: number) {
   min = Math.ceil(min)
   max = Math.floor(max)
@@ -80,37 +152,43 @@ export function isValidUrl(url: string) {
 
 // Fonction pour convertir les anciennes URLs en URLs Cloudinary
 export function convertToCloudinaryUrl(url: string | null | undefined): string {
-  if (!url) return '';
+  // Vérifier si l'URL est définie et non vide après suppression des espaces
+  if (!url || !url.trim()) {
+    return '';
+  }
+  
+  // Nettoyer l'URL en supprimant les espaces avant et après
+  const trimmedUrl = url.trim();
   
   // Si c'est déjà une URL Cloudinary, on la retourne telle quelle
-  if (url.includes('cloudinary.com')) {
-    console.log('convertToCloudinaryUrl - URL Cloudinary détectée:', url.substring(0, 50) + '...');
-    return url;
+  if (trimmedUrl.includes('cloudinary.com')) {
+    console.log('convertToCloudinaryUrl - URL Cloudinary détectée:', trimmedUrl.substring(0, 50) + '...');
+    return trimmedUrl;
   }
   
   // Si c'est une URL relative, on la convertit en URL absolue
-  if (url.startsWith('/')) {
-    const fullUrl = `${process.env.NEXT_PUBLIC_API_URL || ''}${url}`;
+  if (trimmedUrl.startsWith('/')) {
+    const fullUrl = `${process.env.NEXT_PUBLIC_API_URL || ''}${trimmedUrl}`;
     console.log('convertToCloudinaryUrl - URL relative convertie:', fullUrl.substring(0, 50) + '...');
     return fullUrl;
   }
   
   // Si c'est un publicId Cloudinary (sans http/https)
-  if (!url.startsWith('http') && (url.includes('/') || url.includes('reboul-store'))) {
+  if (!trimmedUrl.startsWith('http') && (trimmedUrl.includes('/') || trimmedUrl.includes('reboul-store'))) {
     const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'dxen69pdo';
-    const fullUrl = `https://res.cloudinary.com/${cloudName}/image/upload/${url}`;
+    const fullUrl = `https://res.cloudinary.com/${cloudName}/image/upload/${trimmedUrl}`;
     console.log('convertToCloudinaryUrl - PublicId converti en URL:', fullUrl.substring(0, 50) + '...');
     return fullUrl;
   }
   
   // Si c'est une URL complète mais pas Cloudinary (par exemple une URL d'image externe)
-  if (url.startsWith('http')) {
-    console.log('convertToCloudinaryUrl - URL externe détectée:', url.substring(0, 50) + '...');
-    return url;
+  if (trimmedUrl.startsWith('http')) {
+    console.log('convertToCloudinaryUrl - URL externe détectée:', trimmedUrl.substring(0, 50) + '...');
+    return trimmedUrl;
   }
   
   // Sinon, on retourne l'URL telle quelle
-  console.log('convertToCloudinaryUrl - URL conservée telle quelle:', url.substring(0, 50) + '...');
-  return url;
+  console.log('convertToCloudinaryUrl - URL conservée telle quelle:', trimmedUrl.substring(0, 50) + '...');
+  return trimmedUrl;
 }
 

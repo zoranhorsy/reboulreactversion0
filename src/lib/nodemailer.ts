@@ -1,12 +1,13 @@
 import nodemailer from 'nodemailer';
+import config from '@/config';
 
 const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: parseInt(process.env.SMTP_PORT || '587'),
-    secure: process.env.SMTP_SECURE === 'true',
+    host: config.smtp.host,
+    port: config.smtp.port,
+    secure: config.smtp.secure,
     auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
+        user: config.smtp.user,
+        pass: config.smtp.pass,
     },
 });
 
@@ -38,20 +39,20 @@ const recommendedProducts: RecommendedProduct[] = [
     {
         name: "T-shirt Premium",
         price: 29.99,
-        imageUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/images/tshirt-premium.jpg`,
-        productUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/produit/tshirt-premium`,
+        imageUrl: `${config.api.baseUrlPublic}/images/tshirt-premium.jpg`,
+        productUrl: `${config.api.baseUrlPublic}/produit/tshirt-premium`,
     },
     {
         name: "Jeans Classique",
         price: 59.99,
-        imageUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/images/jeans-classique.jpg`,
-        productUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/produit/jeans-classique`,
+        imageUrl: `${config.api.baseUrlPublic}/images/jeans-classique.jpg`,
+        productUrl: `${config.api.baseUrlPublic}/produit/jeans-classique`,
     },
     {
         name: "Chaussures de Sport",
         price: 89.99,
-        imageUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/images/chaussures-sport.jpg`,
-        productUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/produit/chaussures-sport`,
+        imageUrl: `${config.api.baseUrlPublic}/images/chaussures-sport.jpg`,
+        productUrl: `${config.api.baseUrlPublic}/produit/chaussures-sport`,
     },
 ];
 
@@ -105,20 +106,22 @@ const translations = {
 type TranslationKey = keyof typeof translations;
 
 export async function sendConfirmationEmail(orderDetails: OrderDetails) {
-    console.log('SMTP Configuration:', {
-        host: process.env.SMTP_HOST,
-        port: process.env.SMTP_PORT,
-        secure: process.env.SMTP_SECURE,
-        user: process.env.SMTP_USER,
-    });
+    if (config.debug) {
+        console.log('SMTP Configuration:', {
+            host: config.smtp.host,
+            port: config.smtp.port,
+            secure: config.smtp.secure,
+            user: config.smtp.user,
+        });
+    }
 
-    const logoUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/images/logo_black.png`;
+    const logoUrl = `${config.api.baseUrlPublic}/images/logo_black.png`;
     const lang = (orderDetails.language && orderDetails.language in translations ? orderDetails.language : 'fr') as TranslationKey;
     const t = translations[lang];
 
     try {
         const info = await transporter.sendMail({
-            from: `"Reboul Store" <${process.env.SMTP_USER}>`,
+            from: `"Reboul Store" <${config.smtp.user}>`,
             to: orderDetails.email,
             subject: `${t.subject} ${orderDetails.id}`,
             html: `

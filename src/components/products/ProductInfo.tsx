@@ -1,10 +1,14 @@
 interface ProductInfoProps {
-    name: string
-    description: string
-    price: number
+    name?: string
+    description?: string
+    price?: number
   }
 
-  export function ProductInfo({ name, description, price }: ProductInfoProps) {
+  export default function ProductInfo({ 
+    name = "Produit exemple",
+    description = "Description du produit exemple",
+    price = 99.99 
+  }: ProductInfoProps) {
     return (
       <div>
         <h1 className="text-2xl font-bold mb-2">{name}</h1>

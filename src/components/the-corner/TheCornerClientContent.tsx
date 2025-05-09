@@ -8,19 +8,35 @@ import { TheCornerProductGrid } from "@/components/the-corner/TheCornerProductGr
 import { TheCornerPagination } from "@/components/the-corner/TheCornerPagination"
 import { TheCornerFilterSidebar } from "@/components/the-corner/TheCornerFilterSidebar"
 import { api } from "@/lib/api"
-import { FilterIcon, XIcon, SearchIcon, ChevronUpIcon } from "lucide-react"
+import { FilterIcon, XIcon, SearchIcon, ChevronUpIcon, AlertTriangleIcon } from "lucide-react"
 import { TheCornerProductSort } from "@/components/the-corner/TheCornerProductSort"
 import Image from "next/image"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion } from 'framer-motion'
+// TODO: Envisager de remplacer framer-motion par des animations CSS pour réduire la taille du bundle
+// TODO: Envisager de remplacer framer-motion par des animations CSS pour réduire la taille du bundle
+import { AnimatePresence } from 'framer-motion'
+// TODO: Envisager de remplacer framer-motion par des animations CSS pour réduire la taille du bundle
+// TODO: Envisager de remplacer framer-motion par des animations CSS pour réduire la taille du bundle
 import debounce from "lodash/debounce"
 import { TheCornerPageHeader } from "./components/TheCornerPageHeader"
 import { TheCornerActiveTags } from "./TheCornerActiveTags"
+import { useFilterWorker } from '@/hooks/useFilterWorker'
+import { rafThrottle } from '@/lib/utils'
 
 interface TheCornerClientContentProps {
   initialProducts: Product[]
   initialCategories: Category[]
   total: number
   searchParams: { [key: string]: string | string[] | undefined }
+}
+
+interface FilterChangeEvent {
+  category_id?: string;
+  minPrice?: string;
+  maxPrice?: string;
+  color?: string;
+  size?: string;
+  search?: string;
 }
 
 export function TheCornerClientContent({
@@ -31,8 +47,10 @@ export function TheCornerClientContent({
 }: TheCornerClientContentProps) {
   const router = useRouter()
   const searchParamsObj = useSearchParams()
+  const { filterProducts, sortProducts, isLoading: isWorkerLoading, error: workerError } = useFilterWorker()
   
   const [products, setProducts] = useState<Product[]>(initialProducts)
+  const [localProducts, setLocalProducts] = useState<Product[]>(initialProducts)
   const [categories] = useState<Category[]>(initialCategories)
   const [totalItems, setTotalItems] = useState(total)
   const [isLoading, setIsLoading] = useState(false)
@@ -40,14 +58,83 @@ export function TheCornerClientContent({
   const [searchQuery, setSearchQuery] = useState(searchParamsObj.get("search") || "")
   const [showScrollTop, setShowScrollTop] = useState(false)
   const [activeFiltersCount, setActiveFiltersCount] = useState(0)
+  const [error, setError] = useState<string | null>(null)
+  const [view, setView] = useState<'grid' | 'list'>('grid')
+  const [sortOrder, setSortOrder] = useState<string>('newest')
   
   const currentPage = Number(searchParamsObj.get("page") || "1")
   const limit = Number(searchParamsObj.get("limit") || "12")
   
+  // Vérifier si des filtres sont actifs
+  const hasActiveFilters = searchParamsObj.has("category_id") || 
+    searchParamsObj.has("brand_id") || 
+    searchParamsObj.has("color") || 
+    searchParamsObj.has("size") || 
+    searchParamsObj.has("minPrice") || 
+    searchParamsObj.has("maxPrice") || 
+    searchParamsObj.has("search")
+
+  // Appliquer le filtrage et le tri aux produits
+  const applyFiltersAndSort = useCallback(async () => {
+    if (!localProducts.length) return
+
+    try {
+      setIsLoading(true)
+      setError(null)
+
+      // Préparer les options de filtrage
+      const filterOptions = {
+        categories: searchParamsObj.getAll("category_id"),
+        brands: searchParamsObj.getAll("brand_id"),
+        priceRange: (searchParamsObj.get("minPrice") && searchParamsObj.get("maxPrice") && searchParamsObj.get("minPrice") !== "" && searchParamsObj.get("maxPrice") !== "") ? {
+          min: Number(searchParamsObj.get("minPrice")),
+          max: Number(searchParamsObj.get("maxPrice"))
+        } : undefined,
+        colors: searchParamsObj.getAll("color"),
+        sizes: searchParamsObj.getAll("size"),
+        searchTerm: searchParamsObj.get("search") || undefined
+      }
+
+      // Appliquer le filtrage
+      let filteredProducts = await filterProducts(localProducts, filterOptions)
+
+      // Appliquer le tri si nécessaire
+      const sort = searchParamsObj.get("sort")
+      const order = searchParamsObj.get("order")
+      if (sort && order) {
+        filteredProducts = await sortProducts(filteredProducts, sort, order as 'asc' | 'desc')
+      }
+
+      setProducts(filteredProducts)
+      setTotalItems(filteredProducts.length)
+    } catch (error) {
+      console.error("Erreur lors du filtrage des produits:", error)
+      setError("Une erreur s'est produite lors du filtrage des produits. Veuillez réessayer.")
+      setProducts([])
+    } finally {
+      setIsLoading(false)
+    }
+  }, [localProducts, searchParamsObj, filterProducts, sortProducts])
+
+  // Effet pour appliquer les filtres initiaux
   useEffect(() => {
-    setProducts(initialProducts)
-    setTotalItems(total)
-  }, [initialProducts, total])
+    if (initialProducts && total) {
+      applyFiltersAndSort()
+    }
+  }, [initialProducts, total, applyFiltersAndSort, hasActiveFilters])
+
+  // Gérer l'erreur du worker
+  useEffect(() => {
+    if (workerError) {
+      console.error("Erreur du worker:", workerError)
+      setError(`Erreur du worker: ${workerError}`)
+    }
+  }, [workerError])
+
+  // Appliquer les filtres quand les paramètres de recherche changent
+  useEffect(() => {
+    applyFiltersAndSort()
+  }, [applyFiltersAndSort, searchParamsObj])
 
   useEffect(() => {
     setSearchQuery(searchParamsObj.get("search") || "")
@@ -157,30 +244,25 @@ export function TheCornerClientContent({
     router.push("/the-corner")
   }, [router])
   
-  const hasActiveFilters = useCallback(() => {
-    const filterParams = [
-      "category_id",
-      "minPrice",
-      "maxPrice",
-      "color",
-      "size",
-      "search"
-    ]
-    return filterParams.some((param) => searchParamsObj.has(param))
-  }, [searchParamsObj])
-  
   // Scroll to top handler
   useEffect(() => {
-    const handleScroll = () => {
+    // Version originale non optimisée
+    // const handleScroll = () => {
+    //   setShowScrollTop(window.scrollY > 500)
+    // }
+    
+    // Version optimisée avec rafThrottle pour éviter le blocage du thread principal
+    const handleScroll = rafThrottle(() => {
       setShowScrollTop(window.scrollY > 500)
-    }
+    })
+    
     window.addEventListener("scroll", handleScroll)
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
-  const scrollToTop = () => {
+  const scrollToTop = useCallback(() => {
     window.scrollTo({ top: 0, behavior: "smooth" })
-  }
+  }, []);
 
   // Update active filters count
   useEffect(() => {
@@ -261,16 +343,15 @@ export function TheCornerClientContent({
                     selectedSize={searchParamsObj.get("size") || ""}
                     availableColors={availableColors}
                     availableSizes={availableSizes}
-                    onFilterChange={(filters) => {
-                      handleFilterChange(filters);
-                      setShowFilters(false);
+                    onFilterChange={(key: string, value: string) => {
+                      handleFilterChange({ [key]: value });
                     }}
                   />
                 </div>
               </div>
 
               {/* Footer des filtres */}
-              {hasActiveFilters() && (
+              {hasActiveFilters && (
                 <div className="p-4 border-t border-border">
                   <button
                     onClick={() => {
@@ -299,10 +380,12 @@ export function TheCornerClientContent({
                   selectedSize={searchParamsObj.get("size") || ""}
                   availableColors={availableColors}
                   availableSizes={availableSizes}
-                  onFilterChange={handleFilterChange}
+                  onFilterChange={(key: string, value: string) => {
+                    handleFilterChange({ [key]: value });
+                  }}
                 />
                 
-                {hasActiveFilters() && (
+                {hasActiveFilters && (
                   <motion.button
                     onClick={clearFilters}
                     className="w-full px-4 py-2.5 text-sm bg-secondary/50 text-secondary-foreground rounded-full hover:bg-secondary transition-colors"
@@ -331,7 +414,7 @@ export function TheCornerClientContent({
                     className="w-full pl-10 pr-4 py-2.5 border border-input rounded-full bg-background/50 focus:outline-none focus:ring-2 focus:ring-ring focus:bg-background text-foreground placeholder:text-muted-foreground/70"
                   />
                   <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  {isLoading && (
+                  {(isLoading || isWorkerLoading) && (
                     <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                       <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
                     </div>
@@ -390,8 +473,20 @@ export function TheCornerClientContent({
                   onRemoveFilter={handleRemoveFilter}
                 />
 
+                {/* Affichage des erreurs */}
+                {error && (
+                  <motion.div
+                    className="flex items-center p-4 bg-destructive/10 text-destructive rounded-lg"
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                  >
+                    <AlertTriangleIcon className="w-5 h-5 mr-2" />
+                    {error}
+                  </motion.div>
+                )}
+
                 <AnimatePresence mode="wait">
-                  {isLoading ? (
+                  {isLoading || isWorkerLoading ? (
                     <motion.div 
                       key="loading"
                       className="flex justify-center items-center min-h-[300px]"

@@ -1,7 +1,9 @@
 "use client"
 
 import React, { useState, useEffect, useMemo, memo } from "react"
-import { motion } from "framer-motion"
+import { motion } from 'framer-motion'
+// TODO: Envisager de remplacer framer-motion par des animations CSS pour réduire la taille du bundle
+// TODO: Envisager de remplacer framer-motion par des animations CSS pour réduire la taille du bundle
 import { FeaturedProductCard } from "./products/FeaturedProductCard"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight, ArrowLeftRight } from "lucide-react"

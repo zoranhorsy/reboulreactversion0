@@ -1,7 +1,7 @@
 "use client"
 
 import { ChevronDown } from "lucide-react"
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useCallback } from "react"
 
 interface TheCornerProductSortProps {
   onSortChange: (sort: string, order: string) => void
@@ -28,16 +28,16 @@ export function TheCornerProductSort({
     (opt) => opt.sort === initialSort && opt.order === initialOrder
   ) || options[0]
 
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false)
-      }
+  const handleClickOutside = useCallback((event: MouseEvent) => {
+    if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      setIsOpen(false)
     }
+  }, []);
 
+  useEffect(() => {
     document.addEventListener("mousedown", handleClickOutside)
     return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [])
+  }, [handleClickOutside])
 
   return (
     <div className="relative" ref={dropdownRef}>

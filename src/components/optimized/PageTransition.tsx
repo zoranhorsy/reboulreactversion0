@@ -2,7 +2,12 @@
 
 import React, { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence } from 'framer-motion'
+// TODO: Envisager de remplacer framer-motion par des animations CSS pour réduire la taille du bundle
+// TODO: Envisager de remplacer framer-motion par des animations CSS pour réduire la taille du bundle
+import { motion } from 'framer-motion'
+// TODO: Envisager de remplacer framer-motion par des animations CSS pour réduire la taille du bundle
+// TODO: Envisager de remplacer framer-motion par des animations CSS pour réduire la taille du bundle
 import { cn } from '@/lib/utils'
 import { LoadingFallback } from './LoadingFallback'
 
@@ -48,7 +53,7 @@ export function PageTransition({
       }
       setIsLoading(false)
     }
-  }, [routeKey, isFirstRender, loadingTimeout])
+  }, [pathname, isFirstRender, loadingTimeout])
 
   // Variants d'animation
   const variants = {

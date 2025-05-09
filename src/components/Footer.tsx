@@ -6,6 +6,8 @@ import styles from './Footer.module.css'
 import { useTheme } from 'next-themes'
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
+// TODO: Envisager de remplacer framer-motion par des animations CSS pour réduire la taille du bundle
+// TODO: Envisager de remplacer framer-motion par des animations CSS pour réduire la taille du bundle
 import { Instagram, Facebook, Twitter, MapPin, Phone, Mail } from 'lucide-react'
 
 export default function Footer() {

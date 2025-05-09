@@ -175,7 +175,21 @@ export function CartSheet({ children, isOpen, onOpenChange }: CartSheetProps) {
                           variant="outline" 
                           size="icon" 
                           className="h-4.5 w-4.5 sm:h-5 sm:w-5 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300"
-                          onClick={() => item.quantity > 1 ? updateQuantity(item.id, item.quantity - 1) : removeItem(item.id)}
+                          onClick={() => {
+                            if (item.quantity > 1) {
+                              try {
+                                updateQuantity(item.id, item.quantity - 1);
+                              } catch (error) {
+                                toast({
+                                  title: "Erreur",
+                                  description: error instanceof Error ? error.message : "Erreur de mise à jour de la quantité",
+                                  variant: "destructive",
+                                });
+                              }
+                            } else {
+                              removeItem(item.id);
+                            }
+                          }}
                         >
                           <Minus className="h-2 w-2 sm:h-2.5 sm:w-2.5" />
                         </Button>
@@ -184,7 +198,17 @@ export function CartSheet({ children, isOpen, onOpenChange }: CartSheetProps) {
                           variant="outline" 
                           size="icon" 
                           className="h-4.5 w-4.5 sm:h-5 sm:w-5 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300"
-                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          onClick={() => {
+                            try {
+                              updateQuantity(item.id, item.quantity + 1);
+                            } catch (error) {
+                              toast({
+                                title: "Stock insuffisant",
+                                description: error instanceof Error ? error.message : "Quantité maximum atteinte",
+                                variant: "destructive",
+                              });
+                            }
+                          }}
                           disabled={item.quantity >= item.variant.stock}
                         >
                           <Plus className="h-2 w-2 sm:h-2.5 sm:w-2.5" />

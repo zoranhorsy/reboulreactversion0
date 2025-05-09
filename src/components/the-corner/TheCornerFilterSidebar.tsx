@@ -1,29 +1,37 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback } from "react"
 import { Category } from "@/lib/types/category"
 
 interface TheCornerFilterSidebarProps {
-  categories: Category[]
-  minPrice: string
-  maxPrice: string
-  selectedCategory: string
-  selectedColor: string
-  selectedSize: string
-  availableColors: string[]
-  availableSizes: string[]
-  onFilterChange: (filters: Record<string, string | number | null>) => void
+  categories?: Category[]
+  initialFilters?: {
+    category_id?: string | number
+    minPrice?: string | number
+    maxPrice?: string | number
+    color?: string
+    size?: string
+  }
+  selectedCategory?: string
+  selectedColor?: string
+  selectedSize?: string
+  minPrice?: string
+  maxPrice?: string
+  availableColors?: string[]
+  availableSizes?: string[]
+  onFilterChange: (key: string, value: string) => void
 }
 
 export function TheCornerFilterSidebar({
-  categories,
-  minPrice,
-  maxPrice,
+  categories = [],
+  initialFilters = {},
   selectedCategory,
   selectedColor,
   selectedSize,
-  availableColors,
-  availableSizes,
+  minPrice,
+  maxPrice,
+  availableColors = ["Noir", "Blanc", "Bleu", "Rouge", "Vert"],
+  availableSizes = ["XS", "S", "M", "L", "XL", "XXL"],
   onFilterChange,
 }: TheCornerFilterSidebarProps) {
   const [expandedSections, setExpandedSections] = useState({
@@ -40,6 +48,12 @@ export function TheCornerFilterSidebar({
     }))
   }
 
+  // Wrapper pour s'adapter à l'interface attendue
+  const handleFilterChange = useCallback((filters: Record<string, string | number | null>) => {
+    const key = Object.keys(filters)[0];
+    onFilterChange(key, String(filters[key]));
+  }, [onFilterChange]);
+
   return (
     <div className="space-y-6">
       {/* Catégories */}
@@ -51,12 +65,12 @@ export function TheCornerFilterSidebar({
           <h3 className="font-medium">Catégories</h3>
           <span className="text-sm">{expandedSections.categories ? "−" : "+"}</span>
         </button>
-        {expandedSections.categories && (
+        {expandedSections.categories && categories && categories.length > 0 && (
           <div className="space-y-2">
             {categories.map((category) => (
               <button
                 key={category.id}
-                onClick={() => onFilterChange({ category_id: category.id })}
+                onClick={() => handleFilterChange({ category_id: category.id })}
                 className={`w-full text-left px-3 py-2 rounded-lg ${
                   selectedCategory === String(category.id)
                     ? "bg-black text-white"
@@ -86,7 +100,7 @@ export function TheCornerFilterSidebar({
               <input
                 type="number"
                 value={minPrice}
-                onChange={(e) => onFilterChange({ minPrice: e.target.value })}
+                onChange={(e) => handleFilterChange({ minPrice: e.target.value })}
                 className="w-full mt-1 px-3 py-2 border rounded-lg"
                 placeholder="0"
               />
@@ -96,7 +110,7 @@ export function TheCornerFilterSidebar({
               <input
                 type="number"
                 value={maxPrice}
-                onChange={(e) => onFilterChange({ maxPrice: e.target.value })}
+                onChange={(e) => handleFilterChange({ maxPrice: e.target.value })}
                 className="w-full mt-1 px-3 py-2 border rounded-lg"
                 placeholder="1000"
               />
@@ -114,12 +128,12 @@ export function TheCornerFilterSidebar({
           <h3 className="font-medium">Couleurs</h3>
           <span className="text-sm">{expandedSections.colors ? "−" : "+"}</span>
         </button>
-        {expandedSections.colors && (
+        {expandedSections.colors && availableColors && availableColors.length > 0 && (
           <div className="grid grid-cols-3 gap-2">
             {availableColors.map((color) => (
               <button
                 key={color}
-                onClick={() => onFilterChange({ color })}
+                onClick={() => handleFilterChange({ color })}
                 className={`px-3 py-2 text-sm rounded-lg border ${
                   selectedColor === color
                     ? "bg-black text-white"
@@ -142,12 +156,12 @@ export function TheCornerFilterSidebar({
           <h3 className="font-medium">Tailles</h3>
           <span className="text-sm">{expandedSections.sizes ? "−" : "+"}</span>
         </button>
-        {expandedSections.sizes && (
+        {expandedSections.sizes && availableSizes && availableSizes.length > 0 && (
           <div className="grid grid-cols-3 gap-2">
             {availableSizes.map((size) => (
               <button
                 key={size}
-                onClick={() => onFilterChange({ size })}
+                onClick={() => handleFilterChange({ size })}
                 className={`px-3 py-2 text-sm rounded-lg border ${
                   selectedSize === size
                     ? "bg-black text-white"

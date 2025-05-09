@@ -1,16 +1,32 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useLayoutEffect } from 'react'
 
-export default function ClientOnly({ children }: { children: React.ReactNode }) {
+// Créer un hook personnalisé pour l'hydratation
+const useHasMounted = () => {
     const [hasMounted, setHasMounted] = useState(false)
-
-    useEffect(() => {
+    
+    // useLayoutEffect s'exécute de manière synchrone après toutes les mutations DOM
+    // mais avant que le navigateur n'ait eu le temps de "peindre" les changements
+    useLayoutEffect(() => {
         setHasMounted(true)
     }, [])
+    
+    return hasMounted
+}
 
+export default function ClientOnly({ 
+    children,
+    fallback = null 
+}: { 
+    children: React.ReactNode
+    fallback?: React.ReactNode 
+}) {
+    const hasMounted = useHasMounted()
+
+    // Retourner un fallback jusqu'à ce que le montage soit confirmé
     if (!hasMounted) {
-        return null
+        return <>{fallback}</>
     }
 
     return <>{children}</>

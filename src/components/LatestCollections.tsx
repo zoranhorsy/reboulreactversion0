@@ -4,6 +4,8 @@ import React, { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
+// TODO: Envisager de remplacer framer-motion par des animations CSS pour réduire la taille du bundle
+// TODO: Envisager de remplacer framer-motion par des animations CSS pour réduire la taille du bundle
 import { ArrowRight, ArrowLeft, ChevronRight } from 'lucide-react'
 import { fetchBrands, fetchProducts } from '@/lib/api'
 import { type Brand } from '@/lib/api'

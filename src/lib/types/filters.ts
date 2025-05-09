@@ -12,6 +12,8 @@ export type FilterState = {
   maxPrice: string
   store_type: string
   featured: string
+  view?: string
+  [key: string]: string | undefined
 }
 
 export type FilterChangeHandler = (newFilters: Partial<FilterState>) => void
@@ -20,8 +22,10 @@ export interface FiltersProps {
   filters: FilterState
   categories: Array<{ id: number; name: string }>
   brands: Array<{ id: number; name: string }>
-  colors: string[]
-  sizes: string[]
-  storeTypes: string[]
+  colors?: string[]
+  sizes?: string[]
+  storeTypes?: string[]
+  availableColors?: string[]
+  availableSizes?: string[]
   onFilterChange: FilterChangeHandler
 } 

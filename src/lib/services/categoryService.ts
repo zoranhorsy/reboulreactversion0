@@ -1,5 +1,6 @@
 import { type AxiosInstance } from 'axios'
-import { type Category, type Brand } from '../types/category'
+import { type Category } from '../types/category'
+import { type Brand } from '../types/brand'
 
 export class CategoryService {
   constructor(private instance: AxiosInstance) {}

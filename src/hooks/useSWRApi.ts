@@ -31,6 +31,8 @@ export function useProducts(params?: Record<string, string>, config?: SWRConfigu
   return {
     products: data?.products || [],
     totalCount: data?.total || 0,
+    totalPages: data?.totalPages || 0,
+    currentPage: data?.currentPage || 1,
     error,
     isLoading,
     isValidating,

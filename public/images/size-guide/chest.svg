@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+  <style>
+    .figure { fill: #e0e0e0; stroke: #888; stroke-width: 1; }
+    .measure { stroke: #007bff; stroke-width: 2; stroke-dasharray: 4 2; }
+    .arrow { fill: #007bff; }
+    .text { font-family: Arial, sans-serif; font-size: 10px; text-anchor: middle; }
+  </style>
+  
+  <!-- Silhouette humaine simplifiée -->
+  <path class="figure" d="M100,40 C130,40 140,60 140,80 C140,100 130,110 125,120 C122,126 120,135 120,140 L120,160 L80,160 L80,140 C80,135 78,126 75,120 C70,110 60,100 60,80 C60,60 70,40 100,40 Z" />
+  
+  <!-- Tête simplifiée -->
+  <circle class="figure" cx="100" cy="30" r="15" />
+  
+  <!-- Mesure du tour de poitrine -->
+  <path class="measure" d="M70,90 L130,90" />
+  
+  <!-- Flèches -->
+  <polygon class="arrow" points="70,90 75,85 75,95" />
+  <polygon class="arrow" points="130,90 125,85 125,95" />
+  
+  <!-- Indication -->
+  <text class="text" x="100" y="80">TOUR DE POITRINE</text>
+</svg> 

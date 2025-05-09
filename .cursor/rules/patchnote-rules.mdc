@@ -1,0 +1,62 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Règles pour la génération de Patch Notes - Reboul
+
+## Structure générale
+Toujours structurer les patch notes de la façon suivante:
+
+1. **Titre et date**: "Patch Note - Application Reboul (Version React) - [Date]"
+2. **Introduction**: Brève présentation des changements majeurs (2-3 phrases)
+3. **Sections principales**: Diviser en sections avec emojis pertinents
+4. **Conclusion**: Impact global des changements (optionnel)
+
+## Sections principales à inclure
+- 🚀 **Nouvelles fonctionnalités**: Ajouts et nouvelles capacités
+- 🔧 **Optimisations techniques**: Améliorations de performance et d'architecture
+- 🐛 **Corrections de bugs**: Problèmes résolus
+- 🎨 **Interface utilisateur**: Changements visuels et UX
+- 📝 **Documentation**: Mises à jour de la documentation
+- 🔄 **Modifications**: Changements dans le comportement existant
+- 🛠️ **Outils et scripts**: Nouveaux outils ou scripts d'aide
+
+## Processus d'analyse
+1. Examiner les commits récents via `git log` pour identifier les changements
+2. Explorer les fichiers modifiés pour comprendre la nature des changements
+3. Analyser les nouveaux fichiers pour identifier les nouvelles fonctionnalités
+4. Regrouper les changements par catégorie et importance
+
+## Format pour chaque élément
+- Utiliser des tirets pour chaque élément
+- Commencer par un verbe à l'infinitif ou un nom d'action
+- Décrire brièvement le changement et son impact si pertinent
+- Pour les changements techniques, mentionner les composants/modules affectés
+
+## Langage et ton
+- Utiliser un langage clair et précis
+- Éviter le jargon technique excessif sauf pour les sections techniques
+- Mettre l'accent sur les bénéfices pour l'utilisateur
+- Écrire en français en respectant la grammaire et l'orthographe
+
+## Informations supplémentaires
+- Inclure des liens vers la documentation quand disponible
+- Mentionner les technologies clés utilisées
+- Pour les bugs critiques, expliquer l'impact de la correction
+
+## Exemple de structure
+```
+# Patch Note - Application Reboul (Version React) - 5 Mai 2025
+
+## 🚀 Nouvelles fonctionnalités
+- Intégration de SWR pour la gestion des données
+- Nouveau composant OptimizedImage pour l'affichage amélioré des images
+
+## 🔧 Optimisations techniques
+- Amélioration du temps de chargement des pages produits
+- Réduction de 30% de la taille du bundle JavaScript
+
+## 🐛 Corrections de bugs
+- Résolution du problème d'affichage sur iOS Safari
+- Correction des erreurs d'hydratation dans les composants dynamiques

@@ -39,9 +39,9 @@ export function ActiveFilters({
       case "maxPrice":
         return `Max: ${value}€`
       case "search":
-        return `Recherche: ${value}`
+        return `"${value}"`
       case "featured":
-        return "Produits vedettes"
+        return value === "true" ? "Produits vedettes" : null
       case "store_type":
         if(value === "adult") return "Adulte"
         if(value === "kids") return "Enfant"
@@ -59,6 +59,8 @@ export function ActiveFilters({
             return "Nom Z-A"
           case "newest":
             return "Nouveautés"
+          case "popular":
+            return "Populaires"
           default:
             return null
         }
@@ -76,34 +78,49 @@ export function ActiveFilters({
   }
 
   return (
-    <div className="relative w-full">
-      <div className="flex items-center space-x-2 overflow-x-auto pb-1 scrollbar-hide">
-        {activeFilters.map(([key, value]) => {
-          const label = getFilterLabel(key as keyof SearchParams, value as string)
-          if (!label) return null
+    <div className="flex flex-nowrap items-center gap-1.5 sm:gap-2 py-1.5 sm:py-2 min-w-max">
+      {activeFilters.map(([key, value]) => {
+        const label = getFilterLabel(key as keyof SearchParams, value as string)
+        if (!label) return null
 
-          return (
-            <Badge 
-              key={key}
-              variant="secondary"
-              className={cn(
-                "flex items-center gap-1 whitespace-nowrap px-2.5 py-1", 
-                "border rounded-full text-xs font-medium"
-              )}
+        return (
+          <Badge
+            key={key}
+            variant="secondary"
+            className={cn(
+              "h-6 sm:h-7 px-2 sm:px-2.5 text-[10px] sm:text-xs rounded-full whitespace-nowrap",
+              "bg-secondary/70 hover:bg-secondary/80"
+            )}
+          >
+            {label}
+            <button
+              onClick={() => onRemoveFilter(key as keyof SearchParams)}
+              className="ml-1 sm:ml-1.5 rounded-full hover:bg-secondary-foreground/20 inline-flex items-center justify-center h-3.5 w-3.5 sm:h-4 sm:w-4"
+              aria-label={`Supprimer le filtre ${label}`}
             >
-              {label}
-              <button
-                onClick={() => onRemoveFilter(key as keyof SearchParams)}
-                aria-label={`Supprimer le filtre ${label}`}
-                className="ml-1 rounded-full p-0.5 hover:bg-muted"
-              >
-                <X className="h-3 w-3" />
-                <span className="sr-only">Supprimer le filtre {label}</span>
-              </button>
-            </Badge>
-          )
-        })}
-      </div>
+              <X className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+            </button>
+          </Badge>
+        )
+      })}
+      
+      {activeFilters.length >= 2 && (
+        <Badge
+          variant="outline"
+          className="h-6 sm:h-7 px-2 sm:px-2.5 text-[10px] sm:text-xs rounded-full bg-background hover:bg-muted cursor-pointer whitespace-nowrap"
+          onClick={() => {
+            // Réinitialiser tous les filtres sauf le store_type qui est généralement fixe par page
+            const storeType = filters.store_type
+            activeFilters.forEach(([key]) => {
+              if (key !== 'store_type') {
+                onRemoveFilter(key as keyof SearchParams)
+              }
+            })
+          }}
+        >
+          Effacer tout
+        </Badge>
+      )}
     </div>
   )
 } 

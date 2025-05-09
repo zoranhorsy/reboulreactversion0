@@ -1,0 +1,39 @@
+{
+  "timestamp": "2025-05-06T18:38:47.245Z",
+  "duration": "933.49 secondes",
+  "totalImages": 296,
+  "convertedImages": 289,
+  "totalVariants": 5055,
+  "corruptedImages": 7,
+  "configuration": {
+    "inputDir": "/Users/tripleseptinteractive/code/reboulreactversion0/public",
+    "outputDir": "/Users/tripleseptinteractive/code/reboulreactversion0/public/optimized",
+    "quality": {
+      "webp": 80,
+      "avif": 65
+    },
+    "sizes": [
+      640,
+      750,
+      828,
+      1080,
+      1200,
+      1920
+    ],
+    "formats": [
+      "webp",
+      "avif"
+    ],
+    "maxWidth": 1920,
+    "excludeDirs": [
+      "node_modules",
+      ".next",
+      "optimized"
+    ],
+    "extensions": [
+      ".jpg",
+      ".jpeg",
+      ".png"
+    ]
+  }
+}

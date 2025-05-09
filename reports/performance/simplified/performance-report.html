@@ -1,0 +1,785 @@
+
+  <!DOCTYPE html>
+  <html lang="fr">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rapport de Performance Reboul</title>
+    <style>
+      body { font-family: system-ui, -apple-system, sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; line-height: 1.5; }
+      h1, h2, h3 { margin-top: 2em; }
+      table { width: 100%; border-collapse: collapse; margin: 1em 0; }
+      th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid #ddd; }
+      th { background-color: #f5f5f5; }
+      .metric-good { color: green; }
+      .metric-medium { color: orange; }
+      .metric-poor { color: red; }
+      .screenshot { max-width: 100%; height: auto; border: 1px solid #ddd; margin: 1em 0; }
+      .recommendations { background-color: #f8f9fa; padding: 1em; border-radius: 4px; }
+      .recommendations h3 { margin-top: 0; }
+      .page-metrics { margin-bottom: 2em; padding-bottom: 1em; border-bottom: 1px solid #eee; }
+    </style>
+  </head>
+  <body>
+    <h1>Rapport de Performance Reboul</h1>
+    <p>Date du test: 5/8/2025, 3:49:22 PM</p>
+    
+    <h2>Résumé</h2>
+    <table>
+      <tr>
+        <th>Page</th>
+        <th>Temps de chargement</th>
+        <th>TTI (estimé)</th>
+        <th>FCP</th>
+        <th>Tâches longues</th>
+        <th>Taille JS</th>
+      </tr>
+      
+      <tr>
+        <td></td>
+        <td class="metric-poor">8398 ms</td>
+        <td class="metric-good">1726 ms</td>
+        <td class="metric-good">492 ms</td>
+        <td>3</td>
+        <td>4619.8 KB</td>
+      </tr>
+      
+      <tr>
+        <td>/catalogue</td>
+        <td class="metric-poor">9117 ms</td>
+        <td class="metric-good">1691 ms</td>
+        <td class="metric-good">300 ms</td>
+        <td>2</td>
+        <td>5743.2 KB</td>
+      </tr>
+      
+      <tr>
+        <td>/produit/1</td>
+        <td class="metric-poor">8230 ms</td>
+        <td class="metric-good">822 ms</td>
+        <td class="metric-good">344 ms</td>
+        <td>2</td>
+        <td>6208.1 KB</td>
+      </tr>
+      
+      <tr>
+        <td>/checkout</td>
+        <td class="metric-poor">10686 ms</td>
+        <td class="metric-medium">5329 ms</td>
+        <td class="metric-medium">2684 ms</td>
+        <td>4</td>
+        <td>5522.6 KB</td>
+      </tr>
+      
+    </table>
+    
+    <h2>Recommandations générales</h2>
+    <div class="recommendations">
+      <h3>Amélioration du TTI</h3>
+      <ul>
+        <li>Différer le chargement des scripts non-critiques avec <code>dynamic import()</code></li>
+        <li>Minimiser le code JavaScript avec une meilleure séparation des bundles</li>
+        <li>Optimiser les chargements des contexts React et leur initialisation</li>
+        <li>Réduire la taille du bundle JavaScript principal</li>
+      </ul>
+      
+      <h3>Autres optimisations</h3>
+      <ul>
+        <li>Préchargement (preload) et preconnect des ressources critiques</li>
+        <li>Optimisation et compression des images</li>
+        <li>Mise en cache des ressources statiques côté client</li>
+        <li>Mise en œuvre stratégique de Suspense pour améliorer le chargement progressif</li>
+      </ul>
+    </div>
+    
+    
+    <div class="page-metrics">
+      <h2>Métriques pour </h2>
+      
+      <div>
+        <h3>Métriques principales</h3>
+        <table>
+          <tr><th>Métrique</th><th>Valeur</th><th>Évaluation</th></tr>
+          <tr>
+            <td>Temps de chargement total</td>
+            <td>8398 ms</td>
+            <td class="metric-poor">Mauvais</td>
+          </tr>
+          <tr>
+            <td>DOMContentLoaded</td>
+            <td>47 ms</td>
+            <td class="metric-good">Bon</td>
+          </tr>
+          <tr>
+            <td>Time to Interactive (estimé)</td>
+            <td>1726 ms</td>
+            <td class="metric-good">Bon</td>
+          </tr>
+          <tr>
+            <td>First Paint</td>
+            <td>492 ms</td>
+            <td class="metric-good">Bon</td>
+          </tr>
+          <tr>
+            <td>First Contentful Paint</td>
+            <td>492 ms</td>
+            <td class="metric-good">Bon</td>
+          </tr>
+          <tr>
+            <td>Nombre de tâches longues</td>
+            <td>3</td>
+            <td class="metric-good">Bon</td>
+          </tr>
+          <tr>
+            <td>Taille totale JS</td>
+            <td>4619.8 KB</td>
+            <td class="metric-poor">Mauvais</td>
+          </tr>
+          <tr>
+            <td>Temps d'exécution JS</td>
+            <td>1141 ms</td>
+            <td class="metric-poor">Mauvais</td>
+          </tr>
+          <tr>
+            <td>Nombre de ressources JS</td>
+            <td>14</td>
+            <td class="metric-medium">Moyen</td>
+          </tr>
+        </table>
+        
+        
+        <h3>Capture d'écran</h3>
+        <img src="http___localhost_3000.png" alt="Capture de http://localhost:3000" class="screenshot">
+        
+        
+        
+        <h3>Tâches longues (>50ms)</h3>
+        <table>
+          <tr>
+            <th>Début (ms)</th>
+            <th>Durée (ms)</th>
+          </tr>
+          
+          <tr>
+            <td>585</td>
+            <td>162</td>
+          </tr>
+          
+          <tr>
+            <td>793</td>
+            <td>82</td>
+          </tr>
+          
+          <tr>
+            <td>1656</td>
+            <td>70</td>
+          </tr>
+          
+          
+        </table>
+        
+        
+        
+        <h3>Ressources (Top 10)</h3>
+        <table>
+          <tr>
+            <th>Type</th>
+            <th>Taille</th>
+            <th>Durée</th>
+            <th>Nom</th>
+          </tr>
+          
+          <tr>
+            <td>link</td>
+            <td>40.8 KB</td>
+            <td>12 ms</td>
+            <td>0912b6f5b5f18160-s.p.woff2</td>
+          </tr>
+          
+          <tr>
+            <td>link</td>
+            <td>39.3 KB</td>
+            <td>16 ms</td>
+            <td>1dbd71bee75dcbe2-s.p.woff2</td>
+          </tr>
+          
+          <tr>
+            <td>link</td>
+            <td>40.8 KB</td>
+            <td>18 ms</td>
+            <td>3e521957c464c122-s.p.woff2</td>
+          </tr>
+          
+          <tr>
+            <td>link</td>
+            <td>40.3 KB</td>
+            <td>20 ms</td>
+            <td>5b17810d8f5e92ae-s.p.woff2</td>
+          </tr>
+          
+          <tr>
+            <td>link</td>
+            <td>42.0 KB</td>
+            <td>19 ms</td>
+            <td>585969283d20b6b5.p.woff2</td>
+          </tr>
+          
+          <tr>
+            <td>link</td>
+            <td>38.6 KB</td>
+            <td>21 ms</td>
+            <td>69a390d3fcb2378e-s.p.woff2</td>
+          </tr>
+          
+          <tr>
+            <td>link</td>
+            <td>42.7 KB</td>
+            <td>22 ms</td>
+            <td>6aa0280f6054384f.p.woff2</td>
+          </tr>
+          
+          <tr>
+            <td>link</td>
+            <td>41.7 KB</td>
+            <td>24 ms</td>
+            <td>92ddaa093d00abf9.p.woff2</td>
+          </tr>
+          
+          <tr>
+            <td>link</td>
+            <td>34.4 KB</td>
+            <td>35 ms</td>
+            <td>811f4dd93c20bb43-s.p.ttf</td>
+          </tr>
+          
+          <tr>
+            <td>link</td>
+            <td>39.3 KB</td>
+            <td>24 ms</td>
+            <td>939391cfa93e8d25-s.p.woff2</td>
+          </tr>
+          
+        </table>
+        
+      </div>
+      
+    </div>
+    
+    <div class="page-metrics">
+      <h2>Métriques pour /catalogue</h2>
+      
+      <div>
+        <h3>Métriques principales</h3>
+        <table>
+          <tr><th>Métrique</th><th>Valeur</th><th>Évaluation</th></tr>
+          <tr>
+            <td>Temps de chargement total</td>
+            <td>9117 ms</td>
+            <td class="metric-poor">Mauvais</td>
+          </tr>
+          <tr>
+            <td>DOMContentLoaded</td>
+            <td>941 ms</td>
+            <td class="metric-good">Bon</td>
+          </tr>
+          <tr>
+            <td>Time to Interactive (estimé)</td>
+            <td>1691 ms</td>
+            <td class="metric-good">Bon</td>
+          </tr>
+          <tr>
+            <td>First Paint</td>
+            <td>300 ms</td>
+            <td class="metric-good">Bon</td>
+          </tr>
+          <tr>
+            <td>First Contentful Paint</td>
+            <td>300 ms</td>
+            <td class="metric-good">Bon</td>
+          </tr>
+          <tr>
+            <td>Nombre de tâches longues</td>
+            <td>2</td>
+            <td class="metric-good">Bon</td>
+          </tr>
+          <tr>
+            <td>Taille totale JS</td>
+            <td>5743.2 KB</td>
+            <td class="metric-poor">Mauvais</td>
+          </tr>
+          <tr>
+            <td>Temps d'exécution JS</td>
+            <td>1649 ms</td>
+            <td class="metric-poor">Mauvais</td>
+          </tr>
+          <tr>
+            <td>Nombre de ressources JS</td>
+            <td>14</td>
+            <td class="metric-medium">Moyen</td>
+          </tr>
+        </table>
+        
+        
+        <h3>Capture d'écran</h3>
+        <img src="http___localhost_3000_catalogue.png" alt="Capture de http://localhost:3000/catalogue" class="screenshot">
+        
+        
+        
+        <h3>Tâches longues (>50ms)</h3>
+        <table>
+          <tr>
+            <th>Début (ms)</th>
+            <th>Durée (ms)</th>
+          </tr>
+          
+          <tr>
+            <td>522</td>
+            <td>175</td>
+          </tr>
+          
+          <tr>
+            <td>1637</td>
+            <td>54</td>
+          </tr>
+          
+          
+        </table>
+        
+        
+        
+        <h3>Ressources (Top 10)</h3>
+        <table>
+          <tr>
+            <th>Type</th>
+            <th>Taille</th>
+            <th>Durée</th>
+            <th>Nom</th>
+          </tr>
+          
+          <tr>
+            <td>link</td>
+            <td>40.8 KB</td>
+            <td>12 ms</td>
+            <td>0912b6f5b5f18160-s.p.woff2</td>
+          </tr>
+          
+          <tr>
+            <td>link</td>
+            <td>39.3 KB</td>
+            <td>10 ms</td>
+            <td>1dbd71bee75dcbe2-s.p.woff2</td>
+          </tr>
+          
+          <tr>
+            <td>link</td>
+            <td>40.3 KB</td>
+            <td>13 ms</td>
+            <td>5b17810d8f5e92ae-s.p.woff2</td>
+          </tr>
+          
+          <tr>
+            <td>link</td>
+            <td>42.0 KB</td>
+            <td>12 ms</td>
+            <td>585969283d20b6b5.p.woff2</td>
+          </tr>
+          
+          <tr>
+            <td>link</td>
+            <td>40.8 KB</td>
+            <td>12 ms</td>
+            <td>3e521957c464c122-s.p.woff2</td>
+          </tr>
+          
+          <tr>
+            <td>link</td>
+            <td>38.6 KB</td>
+            <td>18 ms</td>
+            <td>69a390d3fcb2378e-s.p.woff2</td>
+          </tr>
+          
+          <tr>
+            <td>link</td>
+            <td>42.7 KB</td>
+            <td>16 ms</td>
+            <td>6aa0280f6054384f.p.woff2</td>
+          </tr>
+          
+          <tr>
+            <td>link</td>
+            <td>41.7 KB</td>
+            <td>19 ms</td>
+            <td>92ddaa093d00abf9.p.woff2</td>
+          </tr>
+          
+          <tr>
+            <td>link</td>
+            <td>34.4 KB</td>
+            <td>25 ms</td>
+            <td>811f4dd93c20bb43-s.p.ttf</td>
+          </tr>
+          
+          <tr>
+            <td>link</td>
+            <td>39.3 KB</td>
+            <td>23 ms</td>
+            <td>939391cfa93e8d25-s.p.woff2</td>
+          </tr>
+          
+        </table>
+        
+      </div>
+      
+    </div>
+    
+    <div class="page-metrics">
+      <h2>Métriques pour /produit/1</h2>
+      
+      <div>
+        <h3>Métriques principales</h3>
+        <table>
+          <tr><th>Métrique</th><th>Valeur</th><th>Évaluation</th></tr>
+          <tr>
+            <td>Temps de chargement total</td>
+            <td>8230 ms</td>
+            <td class="metric-poor">Mauvais</td>
+          </tr>
+          <tr>
+            <td>DOMContentLoaded</td>
+            <td>46 ms</td>
+            <td class="metric-good">Bon</td>
+          </tr>
+          <tr>
+            <td>Time to Interactive (estimé)</td>
+            <td>822 ms</td>
+            <td class="metric-good">Bon</td>
+          </tr>
+          <tr>
+            <td>First Paint</td>
+            <td>344 ms</td>
+            <td class="metric-good">Bon</td>
+          </tr>
+          <tr>
+            <td>First Contentful Paint</td>
+            <td>344 ms</td>
+            <td class="metric-good">Bon</td>
+          </tr>
+          <tr>
+            <td>Nombre de tâches longues</td>
+            <td>2</td>
+            <td class="metric-good">Bon</td>
+          </tr>
+          <tr>
+            <td>Taille totale JS</td>
+            <td>6208.1 KB</td>
+            <td class="metric-poor">Mauvais</td>
+          </tr>
+          <tr>
+            <td>Temps d'exécution JS</td>
+            <td>2231 ms</td>
+            <td class="metric-poor">Mauvais</td>
+          </tr>
+          <tr>
+            <td>Nombre de ressources JS</td>
+            <td>17</td>
+            <td class="metric-poor">Mauvais</td>
+          </tr>
+        </table>
+        
+        
+        <h3>Capture d'écran</h3>
+        <img src="http___localhost_3000_produit_1.png" alt="Capture de http://localhost:3000/produit/1" class="screenshot">
+        
+        
+        
+        <h3>Tâches longues (>50ms)</h3>
+        <table>
+          <tr>
+            <th>Début (ms)</th>
+            <th>Durée (ms)</th>
+          </tr>
+          
+          <tr>
+            <td>544</td>
+            <td>164</td>
+          </tr>
+          
+          <tr>
+            <td>757</td>
+            <td>65</td>
+          </tr>
+          
+          
+        </table>
+        
+        
+        
+        <h3>Ressources (Top 10)</h3>
+        <table>
+          <tr>
+            <th>Type</th>
+            <th>Taille</th>
+            <th>Durée</th>
+            <th>Nom</th>
+          </tr>
+          
+          <tr>
+            <td>link</td>
+            <td>40.8 KB</td>
+            <td>24 ms</td>
+            <td>0912b6f5b5f18160-s.p.woff2</td>
+          </tr>
+          
+          <tr>
+            <td>link</td>
+            <td>42.0 KB</td>
+            <td>25 ms</td>
+            <td>585969283d20b6b5.p.woff2</td>
+          </tr>
+          
+          <tr>
+            <td>link</td>
+            <td>40.8 KB</td>
+            <td>22 ms</td>
+            <td>3e521957c464c122-s.p.woff2</td>
+          </tr>
+          
+          <tr>
+            <td>link</td>
+            <td>40.3 KB</td>
+            <td>24 ms</td>
+            <td>5b17810d8f5e92ae-s.p.woff2</td>
+          </tr>
+          
+          <tr>
+            <td>link</td>
+            <td>39.3 KB</td>
+            <td>20 ms</td>
+            <td>1dbd71bee75dcbe2-s.p.woff2</td>
+          </tr>
+          
+          <tr>
+            <td>link</td>
+            <td>38.6 KB</td>
+            <td>28 ms</td>
+            <td>69a390d3fcb2378e-s.p.woff2</td>
+          </tr>
+          
+          <tr>
+            <td>link</td>
+            <td>42.7 KB</td>
+            <td>28 ms</td>
+            <td>6aa0280f6054384f.p.woff2</td>
+          </tr>
+          
+          <tr>
+            <td>link</td>
+            <td>34.4 KB</td>
+            <td>36 ms</td>
+            <td>811f4dd93c20bb43-s.p.ttf</td>
+          </tr>
+          
+          <tr>
+            <td>link</td>
+            <td>41.7 KB</td>
+            <td>29 ms</td>
+            <td>92ddaa093d00abf9.p.woff2</td>
+          </tr>
+          
+          <tr>
+            <td>link</td>
+            <td>39.3 KB</td>
+            <td>32 ms</td>
+            <td>939391cfa93e8d25-s.p.woff2</td>
+          </tr>
+          
+        </table>
+        
+      </div>
+      
+    </div>
+    
+    <div class="page-metrics">
+      <h2>Métriques pour /checkout</h2>
+      
+      <div>
+        <h3>Métriques principales</h3>
+        <table>
+          <tr><th>Métrique</th><th>Valeur</th><th>Évaluation</th></tr>
+          <tr>
+            <td>Temps de chargement total</td>
+            <td>10686 ms</td>
+            <td class="metric-poor">Mauvais</td>
+          </tr>
+          <tr>
+            <td>DOMContentLoaded</td>
+            <td>234 ms</td>
+            <td class="metric-good">Bon</td>
+          </tr>
+          <tr>
+            <td>Time to Interactive (estimé)</td>
+            <td>5329 ms</td>
+            <td class="metric-medium">Moyen</td>
+          </tr>
+          <tr>
+            <td>First Paint</td>
+            <td>2684 ms</td>
+            <td class="metric-medium">Moyen</td>
+          </tr>
+          <tr>
+            <td>First Contentful Paint</td>
+            <td>2684 ms</td>
+            <td class="metric-medium">Moyen</td>
+          </tr>
+          <tr>
+            <td>Nombre de tâches longues</td>
+            <td>4</td>
+            <td class="metric-good">Bon</td>
+          </tr>
+          <tr>
+            <td>Taille totale JS</td>
+            <td>5522.6 KB</td>
+            <td class="metric-poor">Mauvais</td>
+          </tr>
+          <tr>
+            <td>Temps d'exécution JS</td>
+            <td>2212 ms</td>
+            <td class="metric-poor">Mauvais</td>
+          </tr>
+          <tr>
+            <td>Nombre de ressources JS</td>
+            <td>17</td>
+            <td class="metric-poor">Mauvais</td>
+          </tr>
+        </table>
+        
+        
+        <h3>Capture d'écran</h3>
+        <img src="http___localhost_3000_checkout.png" alt="Capture de http://localhost:3000/checkout" class="screenshot">
+        
+        
+        
+        <h3>Tâches longues (>50ms)</h3>
+        <table>
+          <tr>
+            <th>Début (ms)</th>
+            <th>Durée (ms)</th>
+          </tr>
+          
+          <tr>
+            <td>2409</td>
+            <td>178</td>
+          </tr>
+          
+          <tr>
+            <td>2862</td>
+            <td>169</td>
+          </tr>
+          
+          <tr>
+            <td>3074</td>
+            <td>80</td>
+          </tr>
+          
+          <tr>
+            <td>5267</td>
+            <td>62</td>
+          </tr>
+          
+          
+        </table>
+        
+        
+        
+        <h3>Ressources (Top 10)</h3>
+        <table>
+          <tr>
+            <th>Type</th>
+            <th>Taille</th>
+            <th>Durée</th>
+            <th>Nom</th>
+          </tr>
+          
+          <tr>
+            <td>link</td>
+            <td>40.8 KB</td>
+            <td>17 ms</td>
+            <td>0912b6f5b5f18160-s.p.woff2</td>
+          </tr>
+          
+          <tr>
+            <td>link</td>
+            <td>39.3 KB</td>
+            <td>16 ms</td>
+            <td>1dbd71bee75dcbe2-s.p.woff2</td>
+          </tr>
+          
+          <tr>
+            <td>link</td>
+            <td>42.0 KB</td>
+            <td>18 ms</td>
+            <td>585969283d20b6b5.p.woff2</td>
+          </tr>
+          
+          <tr>
+            <td>link</td>
+            <td>40.3 KB</td>
+            <td>20 ms</td>
+            <td>5b17810d8f5e92ae-s.p.woff2</td>
+          </tr>
+          
+          <tr>
+            <td>link</td>
+            <td>40.8 KB</td>
+            <td>16 ms</td>
+            <td>3e521957c464c122-s.p.woff2</td>
+          </tr>
+          
+          <tr>
+            <td>link</td>
+            <td>38.6 KB</td>
+            <td>18 ms</td>
+            <td>69a390d3fcb2378e-s.p.woff2</td>
+          </tr>
+          
+          <tr>
+            <td>link</td>
+            <td>41.7 KB</td>
+            <td>20 ms</td>
+            <td>92ddaa093d00abf9.p.woff2</td>
+          </tr>
+          
+          <tr>
+            <td>link</td>
+            <td>42.7 KB</td>
+            <td>20 ms</td>
+            <td>6aa0280f6054384f.p.woff2</td>
+          </tr>
+          
+          <tr>
+            <td>link</td>
+            <td>34.4 KB</td>
+            <td>36 ms</td>
+            <td>811f4dd93c20bb43-s.p.ttf</td>
+          </tr>
+          
+          <tr>
+            <td>link</td>
+            <td>39.3 KB</td>
+            <td>31 ms</td>
+            <td>939391cfa93e8d25-s.p.woff2</td>
+          </tr>
+          
+        </table>
+        
+      </div>
+      
+    </div>
+    
+    
+    <script>
+      // JS pour le rapport si nécessaire
+    </script>
+  </body>
+  </html>
+  

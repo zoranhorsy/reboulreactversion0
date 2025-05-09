@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="350" height="200" viewBox="0 0 350 200">
+  <style>
+    .outlines { fill: none; stroke: #aaa; stroke-width: 1.5; }
+    .fill-light { fill: #f2f2f2; }
+    .fill-dark { fill: #e0e0e0; }
+    .measure { stroke: #0891b2; stroke-width: 2; stroke-dasharray: 5 3; }
+    .arrow { fill: #0891b2; }
+    .text { font-family: Arial, sans-serif; font-size: 10px; text-anchor: middle; fill: #0891b2; font-weight: 600; }
+    .text-bg { fill: white; stroke: none; }
+    .ruler-mark { stroke: #999; stroke-width: 1; }
+    .ruler-text { font-family: Arial, sans-serif; font-size: 8px; text-anchor: middle; fill: #555; }
+  </style>
+
+  <!-- Empreinte du pied gauche -->
+  <g transform="translate(50, 50)">
+    <!-- Contour du pied et silhouette -->
+    <path class="fill-light outlines" d="M25,20 C30,15 45,5 65,5 C85,5 95,10 100,20 C105,30 105,40 105,50 C105,60 105,80 102,90 C100,95 95,100 85,100 C75,100 65,100 50,100 C40,100 35,95 30,90 C25,85 20,75 20,65 C20,55 20,40 20,35 C20,30 20,25 25,20 Z" />
+    
+    <!-- Détails de la structure du pied -->
+    <path class="outlines" d="M65,5 C60,20 60,40 55,70 C50,85 45,95 40,100" />
+    <path class="outlines" d="M65,5 C70,20 75,40 80,70 C83,85 85,95 85,100" />
+    <path class="outlines" d="M20,50 C40,45 60,45 105,50" />
+    
+    <!-- Points des orteils -->
+    <circle class="fill-dark outlines" cx="50" cy="15" r="4" />
+    <circle class="fill-dark outlines" cx="60" cy="10" r="4" />
+    <circle class="fill-dark outlines" cx="70" cy="10" r="4" />
+    <circle class="fill-dark outlines" cx="80" cy="12" r="4" />
+    <circle class="fill-dark outlines" cx="90" cy="15" r="4" />
+    
+    <!-- Mesure longueur -->
+    <path class="measure" d="M20,110 L105,110" />
+    <polygon class="arrow" points="20,110 25,106 25,114" />
+    <polygon class="arrow" points="105,110 100,106 100,114" />
+    <rect class="text-bg" x="45" y="115" width="35" height="14" rx="7" ry="7" />
+    <text class="text" x="63" y="125">LONGUEUR</text>
+    
+    <!-- Mesure largeur -->
+    <path class="measure" d="M10,50 L115,50" />
+    <polygon class="arrow" points="10,50 15,46 15,54" />
+    <polygon class="arrow" points="115,50 110,46 110,54" />
+    <rect class="text-bg" x="45" y="35" width="35" height="14" rx="7" ry="7" />
+    <text class="text" x="63" y="45">LARGEUR</text>
+  </g>
+  
+  <!-- Règle pour mesurer la taille de pied -->
+  <g transform="translate(200, 50)">
+    <rect class="fill-light outlines" x="0" y="0" width="120" height="40" rx="2" ry="2" />
+    
+    <!-- Graduations de la règle -->
+    <line class="ruler-mark" x1="0" y1="20" x2="120" y2="20" />
+    <line class="ruler-mark" x1="10" y1="15" x2="10" y2="25" />
+    <text class="ruler-text" x="10" y="35">22</text>
+    <line class="ruler-mark" x1="20" y1="15" x2="20" y2="25" />
+    <text class="ruler-text" x="20" y="35">23</text>
+    <line class="ruler-mark" x1="30" y1="15" x2="30" y2="25" />
+    <text class="ruler-text" x="30" y="35">24</text>
+    <line class="ruler-mark" x1="40" y1="15" x2="40" y2="25" />
+    <text class="ruler-text" x="40" y="35">25</text>
+    <line class="ruler-mark" x1="50" y1="15" x2="50" y2="25" />
+    <text class="ruler-text" x="50" y="35">26</text>
+    <line class="ruler-mark" x1="60" y1="15" x2="60" y2="25" />
+    <text class="ruler-text" x="60" y="35">27</text>
+    <line class="ruler-mark" x1="70" y1="15" x2="70" y2="25" />
+    <text class="ruler-text" x="70" y="35">28</text>
+    <line class="ruler-mark" x1="80" y1="15" x2="80" y2="25" />
+    <text class="ruler-text" x="80" y="35">29</text>
+    <line class="ruler-mark" x1="90" y1="15" x2="90" y2="25" />
+    <text class="ruler-text" x="90" y="35">30</text>
+    <line class="ruler-mark" x1="100" y1="15" x2="100" y2="25" />
+    <text class="ruler-text" x="100" y="35">31</text>
+    <line class="ruler-mark" x1="110" y1="15" x2="110" y2="25" />
+    <text class="ruler-text" x="110" y="35">32</text>
+    
+    <!-- Titre de la règle -->
+    <rect class="text-bg" x="30" y="-10" width="60" height="14" rx="7" ry="7" />
+    <text class="text" x="60" y="0">TAILLE EN CM</text>
+  </g>
+  
+  <!-- Guide de conversion tableau simplifié -->
+  <g transform="translate(200, 110)">
+    <rect class="fill-light outlines" x="0" y="0" width="120" height="75" rx="2" ry="2" />
+    <line class="ruler-mark" x1="0" y1="15" x2="120" y2="15" />
+    <line class="ruler-mark" x1="60" y1="0" x2="60" y2="75" />
+    <line class="ruler-mark" x1="0" y1="30" x2="120" y2="30" />
+    <line class="ruler-mark" x1="0" y1="45" x2="120" y2="45" />
+    <line class="ruler-mark" x1="0" y1="60" x2="120" y2="60" />
+    
+    <!-- En-têtes -->
+    <text class="ruler-text" x="30" y="10" font-weight="bold">EU</text>
+    <text class="ruler-text" x="90" y="10" font-weight="bold">US</text>
+    
+    <!-- Valeurs -->
+    <text class="ruler-text" x="30" y="25">36-37</text>
+    <text class="ruler-text" x="90" y="25">4-5</text>
+    
+    <text class="ruler-text" x="30" y="40">38-39</text>
+    <text class="ruler-text" x="90" y="40">6-7</text>
+    
+    <text class="ruler-text" x="30" y="55">40-41</text>
+    <text class="ruler-text" x="90" y="55">8-9</text>
+    
+    <text class="ruler-text" x="30" y="70">42-44</text>
+    <text class="ruler-text" x="90" y="70">10-12</text>
+  </g>
+</svg> 

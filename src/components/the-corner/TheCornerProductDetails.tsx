@@ -8,7 +8,9 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/app/contexts/CartContext"
 import { toast } from "@/components/ui/use-toast"
-import { motion } from "framer-motion"
+import { motion } from 'framer-motion'
+// TODO: Envisager de remplacer framer-motion par des animations CSS pour réduire la taille du bundle
+// TODO: Envisager de remplacer framer-motion par des animations CSS pour réduire la taille du bundle
 import Link from "next/link"
 import { 
   ChevronLeft,
@@ -49,7 +51,7 @@ import { ColorSelector, SizeSelector } from "@/components/optimized/MemoizedComp
 import { StockIndicator } from "@/components/StockIndicator"
 import { SimilarProducts } from "@/components/SimilarProducts"
 import { PageHeader } from "@/components/products/PageHeader"
-import { ProductInfo } from "@/components/products/ProductInfo"
+import ProductInfo from "@/components/products/ProductInfo"
 import { ProductActions } from "@/components/products/ProductActions"
 import { TheCornerPageHeader } from "./components/TheCornerPageHeader"
 import { TheCornerProductInfo } from "./components/TheCornerProductInfo"

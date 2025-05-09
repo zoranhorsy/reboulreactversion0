@@ -62,6 +62,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import Image from 'next/image'
 
 const statusColors: Record<string, string> = {
   pending: "bg-yellow-500/10 text-yellow-500",
@@ -433,10 +434,11 @@ export default function OrderHistory() {
                               >
                                 <div className="w-20 h-20 bg-accent/5 rounded-md flex items-center justify-center shrink-0">
                                   {item.image_url ? (
-                                    // eslint-disable-next-line @next/next/no-img-element
-                                    <img 
+                                    <Image 
                                       src={item.image_url} 
                                       alt={item.product_name} 
+                                      width={80}
+                                      height={80}
                                       className="w-full h-full object-cover rounded-md"
                                     />
                                   ) : (

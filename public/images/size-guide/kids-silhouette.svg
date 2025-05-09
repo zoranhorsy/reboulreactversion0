@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="300" viewBox="0 0 200 300">
+  <style>
+    .figure { fill: #f2f2f2; stroke: #aaa; stroke-width: 1.5; }
+    .figure-detail { fill: none; stroke: #ccc; stroke-width: 1; }
+    .measure { stroke: #6366f1; stroke-width: 2; stroke-dasharray: 4 2; }
+    .arrow { fill: #6366f1; }
+    .text { font-family: Arial, sans-serif; font-size: 10px; text-anchor: middle; fill: #6366f1; font-weight: 600; }
+    .text-bg { fill: #f2f2f2; stroke: none; }
+  </style>
+  
+  <!-- Silhouette enfant (plus petite et proportions différentes) -->
+  <path class="figure" d="M100,40 C115,40 122,50 122,62 C122,74 116,82 116,86 L120,94 L120,102 C120,106 118,114 116,118 L116,190 C116,192 112,195 108,195 L92,195 C88,195 84,192 84,190 L84,118 C82,114 80,106 80,102 L80,94 L84,86 C84,82 78,74 78,62 C78,50 85,40 100,40 Z" />
+  
+  <!-- Détails de la silhouette -->
+  <ellipse class="figure-detail" cx="100" cy="64" rx="10" ry="3" />
+  <path class="figure-detail" d="M90,70 C94,74 106,74 110,70" />
+  <path class="figure-detail" d="M88,94 C93,91 107,91 112,94" />
+  <path class="figure-detail" d="M87,120 C93,124 107,124 113,120" />
+  
+  <!-- Tête simplifiée (proportionnellement plus grande pour un enfant) -->
+  <circle class="figure" cx="100" cy="25" r="16" />
+  <path class="figure-detail" d="M93,22 C95,20 105,20 107,22" />
+  <ellipse class="figure-detail" cx="95" cy="18" rx="2" ry="1" />
+  <ellipse class="figure-detail" cx="105" cy="18" rx="2" ry="1" />
+  
+  <!-- Mesure poitrine -->
+  <g>
+    <rect class="text-bg" x="65" y="75" width="70" height="14" rx="7" ry="7" />
+    <text class="text" x="100" y="85">POITRINE</text>
+    <path class="measure" d="M80,95 L120,95" />
+    <polygon class="arrow" points="80,95 85,91 85,99" />
+    <polygon class="arrow" points="120,95 115,91 115,99" />
+  </g>
+  
+  <!-- Mesure taille -->
+  <g>
+    <rect class="text-bg" x="65" y="105" width="70" height="14" rx="7" ry="7" />
+    <text class="text" x="100" y="115">TAILLE</text>
+    <path class="measure" d="M84,120 L116,120" />
+    <polygon class="arrow" points="84,120 89,116 89,124" />
+    <polygon class="arrow" points="116,120 111,116 111,124" />
+  </g>
+  
+  <!-- Mesure hauteur -->
+  <g>
+    <rect class="text-bg" x="130" y="110" width="70" height="14" rx="7" ry="7" />
+    <text class="text" x="165" y="120">HAUTEUR</text>
+    <path class="measure" d="M140,40 L140,195" />
+    <polygon class="arrow" points="140,40 136,45 144,45" />
+    <polygon class="arrow" points="140,195 136,190 144,190" />
+  </g>
+  
+  <!-- Mesure hanches -->
+  <g>
+    <rect class="text-bg" x="65" y="135" width="70" height="14" rx="7" ry="7" />
+    <text class="text" x="100" y="145">HANCHES</text>
+    <path class="measure" d="M82,150 L118,150" />
+    <polygon class="arrow" points="82,150 87,146 87,154" />
+    <polygon class="arrow" points="118,150 113,146 113,154" />
+  </g>
+</svg> 

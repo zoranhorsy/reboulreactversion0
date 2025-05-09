@@ -45,6 +45,7 @@ export interface Product {
   deleted?: boolean
   has_variants?: boolean
   is_corner_product?: boolean
+  slug?: string
 }
 
 export interface Review {

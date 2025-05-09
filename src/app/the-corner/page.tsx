@@ -1,5 +1,5 @@
 // Importer la configuration globale pour forcer le rendu dynamique
-import { dynamic, revalidate, fetchCache } from '@/app/config';
+import { revalidate, fetchCache } from '@/app/config';
 
 import { ClientPageWrapper, defaultViewport } from '@/components/ClientPageWrapper';
 import type { Viewport } from 'next';
@@ -7,6 +7,23 @@ import type { Metadata } from "next"
 import { Suspense } from "react"
 import { LoaderComponent } from "@/components/ui/Loader"
 import { api } from "@/lib/api"
+
+// Import dynamique pour le composant optimisé
+import dynamic from 'next/dynamic'
+
+// Import des types nécessaires
+import type { Product } from "@/lib/types/product"
+import type { Category } from "@/lib/types/category"
+import type { Brand } from "@/lib/types/brand"
+
+// Chargement dynamique du contenu optimisé
+const OptimizedTheCornerContent = dynamic(() => 
+  import('@/components/optimized/OptimizedTheCornerContent'),
+  {
+    loading: () => <LoaderComponent />, 
+    ssr: true
+  }
+);
 
 type SearchParams = { [key: string]: string | string[] | undefined }
 
@@ -51,24 +68,6 @@ export async function generateMetadata({ searchParams }: TheCornerPageProps): Pr
       ],
     },
   }
-}
-
-// Client wrapper component
-import { TheCornerClientContent } from "@/components/the-corner/TheCornerClientContent"
-import type { Product } from "@/lib/types/product"
-import type { Category } from "@/lib/types/category"
-import type { Brand } from "@/lib/types/brand"
-
-interface TheCornerWrapperProps {
-  initialProducts: Product[]
-  initialCategories: Category[]
-  initialBrands: Brand[]
-  total: number
-  searchParams: { [key: string]: string | string[] | undefined }
-}
-
-function TheCornerClientWrapper(props: TheCornerWrapperProps) {
-  return <TheCornerClientContent {...props} />
 }
 
 export const viewport: Viewport = defaultViewport;
@@ -126,13 +125,13 @@ export default async function TheCornerPage({
   return (
     <ClientPageWrapper>
       <Suspense fallback={<LoaderComponent />}>
-      <TheCornerClientWrapper
-        initialProducts={productsData.products}
-        initialCategories={categories}
-        initialBrands={brands}
-        total={productsData.total}
-        searchParams={searchParams}
-      />
-    </Suspense>
+        <OptimizedTheCornerContent
+          initialProducts={productsData.products}
+          initialCategories={categories}
+          total={productsData.total}
+          searchParams={searchParams}
+        />
+      </Suspense>
     </ClientPageWrapper>
-  );} 
+  );
+} 

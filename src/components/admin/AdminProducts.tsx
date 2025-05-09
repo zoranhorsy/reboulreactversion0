@@ -17,6 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AxiosError } from "axios"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { Label } from "@/components/ui/label"
+import { useFilterWorker } from '@/hooks/useFilterWorker'
 
 // Simple login component for admin area
 function AdminLoginForm() {
@@ -108,12 +109,55 @@ export function AdminProducts() {
     const [deletingProductId, setDeletingProductId] = useState<number | null>(null)
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
     const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const { filterProducts: filterWithWorker, sortProducts: sortWithWorker, isLoading: isWorkerLoading, error: workerError } = useFilterWorker()
 
     // Check authentication status
     useEffect(() => {
         const token = getToken();
         setIsAuthenticated(!!token);
     }, []);
+
+    const applyFiltersFallback = useCallback((search: string, filters: typeof activeFilters) => {
+        let result = [...products]
+
+        // Appliquer les filtres
+        if (filters.category) {
+            result = result.filter(p => p.category === filters.category)
+        }
+        if (filters.brand) {
+            result = result.filter(p => p.brand === filters.brand)
+        }
+        if (filters.store_type) {
+            result = result.filter(p => p.store_type === filters.store_type)
+        }
+        if (filters.store_reference) {
+            result = result.filter(p => p.store_reference === filters.store_reference)
+        }
+
+        // Appliquer la recherche
+        if (search) {
+            const searchLower = search.toLowerCase()
+            result = result.filter(p => 
+                p.name.toLowerCase().includes(searchLower) ||
+                p.description?.toLowerCase().includes(searchLower) ||
+                p.store_reference?.toLowerCase().includes(searchLower)
+            )
+        }
+
+        // Appliquer le tri et mettre à jour l'état
+        if (sortConfig) {
+            handleSort(
+                sortConfig.key,
+                sortConfig,
+                setSortConfig,
+                result,
+                'all',
+                setFilteredProducts
+            )
+        } else {
+            setFilteredProducts(result)
+        }
+    }, [products, sortConfig])
 
     const loadProducts = useCallback(async () => {
         setIsLoading(true)
@@ -164,39 +208,62 @@ export function AdminProducts() {
         loadBrands()
     }, [loadProducts, loadCategories, loadBrands])
 
-    const handleSearch = (value: string) => {
-        setSearchTerm(value)
-        filterProducts(value, activeFilters)
+    // Fonction de filtrage de base
+    async function filterAndSort(search: string, filters: typeof activeFilters) {
+        try {
+            setIsLoading(true)
+
+            // Préparer les options de filtrage pour le worker
+            const filterOptions = {
+                searchTerm: search,
+                categories: filters.category ? [filters.category] : undefined,
+                brands: filters.brand ? [filters.brand] : undefined,
+                storeTypes: filters.store_type ? [filters.store_type] : undefined,
+                storeReferences: filters.store_reference ? [filters.store_reference] : undefined
+            }
+
+            // Filtrer les produits avec le worker
+            let result = await filterWithWorker(products, filterOptions)
+
+            // Appliquer le tri si nécessaire
+            if (sortConfig) {
+                result = await sortWithWorker(result, sortConfig.key, sortConfig.direction as 'asc' | 'desc')
+            }
+
+            setFilteredProducts(result)
+        } catch (error) {
+            console.error('Erreur lors du filtrage:', error)
+            // Fallback au filtrage côté client
+            applyFiltersFallback(search, filters)
+        } finally {
+            setIsLoading(false)
+        }
     }
 
-    const handleFilterChange = (type: 'category' | 'brand' | 'store_type' | 'store_reference', value: string) => {
+    // Mémoriser la fonction avec useCallback
+    const applyFiltersAndSort = useCallback(filterAndSort, [products, sortConfig, filterWithWorker, sortWithWorker, applyFiltersFallback])
+
+    const handleSearch = useCallback((value: string) => {
+        setSearchTerm(value)
+        applyFiltersAndSort(value, activeFilters)
+    }, [activeFilters, applyFiltersAndSort])
+
+    const handleFilterChange = useCallback((type: 'category' | 'brand' | 'store_type' | 'store_reference', value: string) => {
         const newFilters = { ...activeFilters, [type]: value }
         setActiveFilters(newFilters)
-        filterProducts(searchTerm, newFilters)
-    }
+        applyFiltersAndSort(searchTerm, newFilters)
+    }, [activeFilters, searchTerm, applyFiltersAndSort])
 
-    const filterProducts = (search: string, filters: typeof activeFilters) => {
-        let filtered = products.filter((product) =>
-            (product.name.toLowerCase().includes(search.toLowerCase()) ||
-            product.description.toLowerCase().includes(search.toLowerCase()) ||
-            (product.store_reference && product.store_reference.toLowerCase().includes(search.toLowerCase())))
-        )
-
-        if (filters.category) {
-            filtered = filtered.filter(product => product.category_id.toString() === filters.category)
+    useEffect(() => {
+        if (workerError) {
+            applyFiltersFallback(searchTerm, activeFilters)
+            toast({
+                title: "Erreur de filtrage",
+                description: "Le filtrage optimisé n'est pas disponible. Mode standard utilisé.",
+                variant: "destructive",
+            })
         }
-        if (filters.brand) {
-            filtered = filtered.filter(product => product.brand_id.toString() === filters.brand)
-        }
-        if (filters.store_type) {
-            filtered = filtered.filter(product => product.store_type === filters.store_type)
-        }
-        if (filters.store_reference) {
-            filtered = filtered.filter(product => product.store_reference?.includes(filters.store_reference))
-        }
-
-        setFilteredProducts(filtered)
-    }
+    }, [workerError, activeFilters, applyFiltersFallback, searchTerm, toast])
 
     const handleProductSubmit = async (productData: Product) => {
         console.log("handleProductSubmit called with data:", JSON.stringify(productData, null, 2));
@@ -695,7 +762,7 @@ export function AdminProducts() {
                                                     className="h-8 sm:h-9 text-xs sm:text-sm whitespace-nowrap"
                                                     onClick={() => {
                                                         setActiveFilters({ category: '', brand: '', store_type: '', store_reference: '' })
-                                                        filterProducts(searchTerm, { category: '', brand: '', store_type: '', store_reference: '' })
+                                                        applyFiltersAndSort('', { category: '', brand: '', store_type: '', store_reference: '' })
                                                     }}
                                                 >
                                                     Réinitialiser les filtres

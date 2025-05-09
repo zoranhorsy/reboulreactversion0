@@ -7,7 +7,8 @@ import { api, type SalesStats, type CategoryStats, type BrandStats } from '@/lib
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { DateRangePicker } from "@/components/ui/date-range-picker"
-import { addDays, format } from "date-fns"
+import { addDays } from 'date-fns/addDays'
+import { format } from 'date-fns/format'
 import { fr } from "date-fns/locale"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AlertCircle, Loader2 } from "lucide-react"

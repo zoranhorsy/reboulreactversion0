@@ -2,18 +2,10 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { initGSAP } from '@/lib/gsap-config';
+import { debounce, rafThrottle } from '@/lib/utils';
 
 // Type pour le contexte GSAP
 type GSAPContextType = any;
-
-// Fonction de debounce pour limiter les appels aux fonctions
-const debounce = (callback: Function, wait: number) => {
-  let timeoutId: ReturnType<typeof setTimeout>;
-  return (...args: any[]) => {
-    clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => callback(...args), wait);
-  };
-};
 
 // Fonction de throttle pour limiter les appels aux fonctions
 const throttle = (callback: Function, limit: number) => {
@@ -121,15 +113,18 @@ export function useOptimizedScrollTrigger() {
         const ScrollTriggerModule = await import('gsap/ScrollTrigger');
         const { ScrollTrigger } = ScrollTriggerModule;
         
-        // Optimiser le rafraîchissement des ScrollTriggers lors des événements de redimensionnement
-        const debouncedResize = debounce(() => {
+        // Version optimisée avec rafThrottle - meilleure fluidité visuelle
+        // tout en évitant le blocage du thread principal
+        const throttledResize = rafThrottle(() => {
+          // Utilisation de requestAnimationFrame pour s'assurer que le refresh
+          // est synchronisé avec le cycle de rendu du navigateur
           ScrollTrigger.refresh();
-        }, 200);
+        });
 
-        window.addEventListener('resize', debouncedResize);
+        window.addEventListener('resize', throttledResize);
         
         return () => {
-          window.removeEventListener('resize', debouncedResize);
+          window.removeEventListener('resize', throttledResize);
         };
       } catch (error) {
         console.error('Erreur lors de l\'initialisation de ScrollTrigger:', error);

@@ -8,7 +8,7 @@ import { useToast } from "@/components/ui/use-toast"
 import { api, type User, createUser } from "@/lib/api"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { format } from "date-fns"
+import { format } from 'date-fns/format'
 import { fr } from "date-fns/locale"
 import { Search, ArrowUp, ArrowDown, Shield, ShieldOff, UserPlus, Pencil, X } from "lucide-react"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"

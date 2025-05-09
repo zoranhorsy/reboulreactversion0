@@ -6,7 +6,7 @@ import { fetchMonthlyStats, fetchTopProductsByCategory, fetchCustomerStats, type
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts'
 import { Loader2, AlertCircle } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { format } from 'date-fns'
+import { format } from 'date-fns/format'
 import { fr } from 'date-fns/locale'
 
 export function DashboardStats() {

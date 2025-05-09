@@ -21,6 +21,7 @@ import { StripeProvider } from '@/components/StripeProvider'
 import { CheckoutForm } from '@/components/CheckoutForm'
 import { useToast } from "@/components/ui/use-toast"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import config from '@/config'
 
 const shippingSchema = z.object({
     firstName: z.string().min(2, "Le prénom doit contenir au moins 2 caractères"),
@@ -35,7 +36,7 @@ const shippingSchema = z.object({
 
 type ShippingFormData = z.infer<typeof shippingSchema>
 
-const TEST_MODE = process.env.NODE_ENV === 'development'
+const TEST_MODE = config.debug
 
 export const viewport: Viewport = defaultViewport;
 
@@ -162,10 +163,10 @@ export default function CheckoutPage() {
             console.log('Données de livraison:', shippingData)
             console.log('Items du panier:', items)
             console.log('Envoi de la commande:', JSON.stringify(orderData, null, 2))
-            console.log('URL de l\'API:', `${process.env.NEXT_PUBLIC_API_URL}/orders`)
+            console.log('URL de l\'API:', `${config.api.baseUrl}/orders`)
             
             // Envoyer la commande à l'API backend
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders`, {
+            const response = await fetch(`${config.api.baseUrl}/orders`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

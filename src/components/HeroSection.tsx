@@ -6,7 +6,10 @@ import Link from 'next/link'
 import { Button } from './ui/button'
 import { ChevronRight } from 'lucide-react'
 import { motion } from 'framer-motion'
+// TODO: Envisager de remplacer framer-motion par des animations CSS pour réduire la taille du bundle
+// TODO: Envisager de remplacer framer-motion par des animations CSS pour réduire la taille du bundle
 import { useTheme } from 'next-themes'
+import { OptimizedImage } from './optimized/OptimizedImage'
 
 export function HeroSection() {
     const heroRef = useRef<HTMLElement>(null)
@@ -24,7 +27,7 @@ export function HeroSection() {
         }
     }, [resolvedTheme])
 
-    // Initialiser les animations GSAP APRÈS le premier rendu
+    // Initialiser les animations GSAP APRÈS le premier rendu pour ne pas bloquer le LCP
     useEffect(() => {
         // Marquer le contenu critique comme visible immédiatement
         if (logoRef.current) {
@@ -34,70 +37,23 @@ export function HeroSection() {
             buttonsRef.current.style.opacity = "1"
         }
 
-        // Reporter le chargement des animations non critiques
+        // Reporter le chargement des animations non critiques à après le LCP
         const timer = setTimeout(async () => {
             if (animationsInitialized) return
             
             try {
-                // Import dynamique de GSAP après le chargement initial
+                // Importer GSAP uniquement après le chargement critique
                 const { gsap } = await import('gsap')
                 const ScrollTriggerModule = await import('gsap/ScrollTrigger')
                 const { ScrollTrigger } = ScrollTriggerModule
                 
-                // Enregistrer le plugin
                 gsap.registerPlugin(ScrollTrigger)
                 
-                // Initialiser les animations seulement après le chargement initial
-                const ctx = gsap.context(() => {
-                    // Animation de l'élément suivant la souris (non critique)
-                    const handleMouseMove = (e: MouseEvent) => {
-                        if (!heroRef.current) return
-                        
-                        // Alléger les calculs en limitant la fréquence des mises à jour
-                        requestAnimationFrame(() => {
-                            const mouseFollower = document.querySelector('.mouse-follower') as HTMLElement
-                            if (mouseFollower) {
-                                gsap.to(mouseFollower, {
-                                    x: e.clientX,
-                                    y: e.clientY,
-                                    duration: 0.5,
-                                    ease: 'power2.out'
-                                })
-                            }
-                        })
-                    }
-                    
-                    // Ajouter l'écouteur d'événement avec limitation
-                    if (heroRef.current) {
-                        // Utiliser un écouteur d'événement avec throttle
-                        let lastTime = 0
-                        const throttledMouseMove = (e: MouseEvent) => {
-                            const now = Date.now()
-                            if (now - lastTime >= 50) { // Limiter à 20fps
-                                lastTime = now
-                                handleMouseMove(e)
-                            }
-                        }
-                        
-                        heroRef.current.addEventListener('mousemove', throttledMouseMove)
-                    }
-                    
-                    return () => {
-                        if (heroRef.current) {
-                            heroRef.current.removeEventListener('mousemove', handleMouseMove)
-                        }
-                    }
-                }, heroRef)
-                
                 setAnimationsInitialized(true)
-                
-                return () => {
-                    ctx.revert() // Nettoyer les animations
-                }
             } catch (error) {
                 console.error('Erreur lors de l\'initialisation des animations GSAP:', error)
             }
-        }, 1000) // Attendre 1 seconde après le chargement initial
+        }, 2000) // Délai plus long pour garantir le chargement du LCP
         
         return () => clearTimeout(timer)
     }, [animationsInitialized])
@@ -110,29 +66,27 @@ export function HeroSection() {
             {/* Effet de grain - Rendu en CSS plutôt qu'en image */}
             <div className="absolute inset-0 opacity-20 dark:opacity-30 pointer-events-none bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48ZmlsdGVyIGlkPSJhIiB4PSIwIiB5PSIwIj48ZmVUdXJidWxlbmNlIGJhc2VGcmVxdWVuY3k9Ii43NSIgc3RpdGNoVGlsZXM9InN0aXRjaCIgdHlwZT0iZnJhY3RhbE5vaXNlIi8+PGZlQ29sb3JNYXRyaXggdHlwZT0ic2F0dXJhdGUiIHZhbHVlcz0iMCIvPjwvZmlsdGVyPjxwYXRoIGQ9Ik0wIDBoMzAwdjMwMEgweiIgZmlsdGVyPSJ1cmwoI2EpIiBvcGFjaXR5PSIuMDUiLz48L3N2Zz4=')]" />
 
-            {/* Élément suivant la souris - Ajouté de manière conditionnelle après le chargement initial */}
-            {animationsInitialized && (
-                <div 
-                    className="mouse-follower fixed w-32 h-32 pointer-events-none opacity-10 -ml-16 -mt-16 rounded-full bg-gradient-to-br from-zinc-900/20 to-zinc-900/5 dark:from-zinc-100/20 dark:to-zinc-100/5 blur-xl"
-                    style={{ zIndex: 5, transform: 'translate(-100%, -100%)' }}
-                />
-            )}
+            {/* Élément suivant la souris - Supprimé du rendu initial pour améliorer le LCP */}
+            {/* Sera ajouté de manière différée par GSAP */}
             
             {/* Contenu principal */}
             <div className="relative z-10 flex flex-col items-center justify-center w-full max-w-full mx-auto px-4">
-                {/* Logo - Priorité critique */}
+                {/* Logo - Priorité critique pour LCP */}
                 <div ref={logoRef} className="w-full mx-auto mb-20 relative opacity-0 transition-opacity duration-300 flex justify-center">
                     <div className="relative w-[900px] h-[270px] sm:w-[1400px] sm:h-[420px]">
-                        <Image
+                        <OptimizedImage
                             src={logoSource}
                             alt="REBOUL"
                             width={1400}
                             height={420}
                             className="w-full h-full object-contain"
+                            isLCP={true} 
                             priority={true}
-                            quality={100}
-                            fetchPriority="high"
+                            quality={90}
                             sizes="(max-width: 640px) 900px, 1400px"
+                            showPlaceholder={false}
+                            usePicture={false} // Désactiver l'élément picture pour le logo
+                            type="logo"
                         />
                     </div>
                 </div>

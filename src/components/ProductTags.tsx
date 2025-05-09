@@ -1,38 +1,25 @@
 import React from 'react';
-import styled from 'styled-components';
+import { cn } from '@/lib/utils';
 
 interface ProductTagsProps {
     tags: string[];
+    className?: string;
 }
 
-const StyledWrapper = styled.div`
-    .tags-container {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-    }
-
-    .tag {
-        background-color: var(--primary-color, #7257fa);
-        color: white;
-        padding: 0.25rem 0.5rem;
-        border-radius: 9999px;
-        font-size: 0.75rem;
-        font-weight: 600;
-    }
-`;
-
-export function ProductTags({ tags }: ProductTagsProps) {
+export function ProductTags({ tags, className }: ProductTagsProps) {
     return (
-        <StyledWrapper>
-            <div className="tags-container">
+        <div className={cn(className)}>
+            <div className="flex flex-wrap gap-2">
                 {tags.map((tag) => (
-                    <div key={tag} className="tag">
+                    <div 
+                        key={tag} 
+                        className="bg-[#7257fa] text-white px-2 py-1 rounded-full text-xs font-semibold"
+                    >
                         {tag}
                     </div>
                 ))}
             </div>
-        </StyledWrapper>
+        </div>
     );
 }
 

@@ -16,6 +16,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Overview } from './Overview'
 import { RecentSales } from './RecentSales'
+import config from '@/config'
 
 interface DashboardStats {
     totalRevenue: number
@@ -34,8 +35,6 @@ interface DashboardStats {
         total: number
     }[]
 }
-
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "https://reboul-store-api-production.up.railway.app";
 
 export function AdminDashboard() {
     const router = useRouter()
@@ -63,7 +62,7 @@ export function AdminDashboard() {
             try {
                 const token = localStorage.getItem('token')
                 
-                const response = await fetch(`${BACKEND_URL}/admin/dashboard/stats`, {
+                const response = await fetch(`${config.api.baseUrl}/admin/dashboard/stats`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'

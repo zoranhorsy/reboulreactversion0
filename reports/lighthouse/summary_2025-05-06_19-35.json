@@ -1,0 +1,82 @@
+[
+  {
+    "page": "Accueil",
+    "url": "http://localhost:3000",
+    "scores": {
+      "performance": 15,
+      "accessibility": 88,
+      "bestPractices": 93,
+      "seo": 100
+    },
+    "webVitals": {
+      "lcp": 55076.84327500001,
+      "fid": 2124.9999999999927,
+      "cls": 0.9708383961117861,
+      "tti": 55438.4296975,
+      "tbt": 3086.645849999997,
+      "fcp": 901.7083,
+      "ttfb": 70.828
+    },
+    "timestamp": "2025-05-06T17:34:09.847Z"
+  },
+  {
+    "page": "Catalogue",
+    "url": "http://localhost:3000/catalogue",
+    "scores": {
+      "performance": 12,
+      "accessibility": 88,
+      "bestPractices": 96,
+      "seo": 100
+    },
+    "webVitals": {
+      "lcp": 34026.12,
+      "fid": 2327.0000000000036,
+      "cls": 0.9708383961117861,
+      "tti": 34033.62,
+      "tbt": 4366.970000000003,
+      "fcp": 918.06,
+      "ttfb": 1904.1899999999998
+    },
+    "timestamp": "2025-05-06T17:34:34.265Z"
+  },
+  {
+    "page": "Produit",
+    "url": "http://localhost:3000/produit/1",
+    "scores": {
+      "performance": 37,
+      "accessibility": 85,
+      "bestPractices": 96,
+      "seo": 63
+    },
+    "webVitals": {
+      "lcp": 35871.23545,
+      "fid": 2089,
+      "cls": 0,
+      "tti": 35871.23545,
+      "tbt": 3052,
+      "fcp": 916.6387,
+      "ttfb": 2178.736
+    },
+    "timestamp": "2025-05-06T17:34:51.569Z"
+  },
+  {
+    "page": "Checkout",
+    "url": "http://localhost:3000/checkout",
+    "scores": {
+      "performance": 13,
+      "accessibility": 88,
+      "bestPractices": 93,
+      "seo": 100
+    },
+    "webVitals": {
+      "lcp": 48077.038499999995,
+      "fid": 2304.0000000000073,
+      "cls": 0.9708383961117861,
+      "tti": 54767.579850000104,
+      "tbt": 3507.5000000000073,
+      "fcp": 901.229,
+      "ttfb": 1545.153
+    },
+    "timestamp": "2025-05-06T17:35:32.632Z"
+  }
+]

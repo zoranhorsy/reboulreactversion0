@@ -9,7 +9,7 @@ import { api, type Order, fetchUsers } from "@/lib/api"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { format } from "date-fns"
+import { format } from 'date-fns/format'
 import { fr } from "date-fns/locale"
 import { Eye, Search, ArrowUp, ArrowDown } from "lucide-react"
 import { DateRangePicker } from "@/components/ui/date-range-picker"

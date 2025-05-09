@@ -1,5 +1,5 @@
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import type { FilterState, FiltersProps } from '@/lib/types/filters'
 import { cn } from "@/lib/utils"
 import {
@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Slider } from "@/components/ui/slider"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import {
   Search,
   SlidersHorizontal,
@@ -22,7 +23,13 @@ import {
   ChevronDown,
   ChevronUp,
   RotateCcw,
-  Check
+  Check,
+  Tag,
+  Palette,
+  PanelTop,
+  Euro,
+  Ruler,
+  Filter
 } from "lucide-react"
 import {
   Collapsible,
@@ -110,6 +117,8 @@ export const FilterComponent = ({
   colors,
   sizes,
   storeTypes,
+  availableColors,
+  availableSizes,
   onFilterChange
 }: FiltersProps) => {
   const [isAdvancedSearch, setIsAdvancedSearch] = useState(false)
@@ -117,6 +126,8 @@ export const FilterComponent = ({
   const [priceRange, setPriceRange] = useState([0, 1000])
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [selectedBrands, setSelectedBrands] = useState<string[]>([])
+  const [selectedColors, setSelectedColors] = useState<string[]>([])
+  const [selectedSizes, setSelectedSizes] = useState<string[]>([])
   const [openSections, setOpenSections] = useState<SectionState>({
     categories: true,
     brands: true,
@@ -124,11 +135,62 @@ export const FilterComponent = ({
     colors: true,
     price: true
   })
+  const [isMobile, setIsMobile] = useState(false)
+  
+  // Référence pour calculer la hauteur du contenu
+  const headerRef = useRef<HTMLDivElement>(null)
+  const footerRef = useRef<HTMLDivElement>(null)
 
-  const handleSearch = (value: string) => {
-    setSearchQuery(value)
-    onFilterChange({ search: value })
-  }
+  // Détecter si l'appareil est mobile
+  useEffect(() => {
+    const checkIfMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    
+    // Vérifier au chargement initial
+    checkIfMobile()
+    
+    // Vérifier à chaque fois que la fenêtre est redimensionnée
+    window.addEventListener('resize', checkIfMobile)
+    
+    return () => {
+      window.removeEventListener('resize', checkIfMobile)
+    }
+  }, [])
+
+  // Initialiser searchQuery à partir des filtres existants
+  useEffect(() => {
+    if (filters.search) {
+      setSearchQuery(filters.search)
+    } else {
+      setSearchQuery("")
+    }
+  }, [filters.search])
+
+  // Initialiser priceRange à partir des filtres existants
+  useEffect(() => {
+    const min = filters.minPrice ? parseInt(filters.minPrice) : 0
+    const max = filters.maxPrice ? parseInt(filters.maxPrice) : 1000
+    setPriceRange([min, max])
+  }, [filters.minPrice, filters.maxPrice])
+
+  // Initialiser selectedColors à partir des filtres existants
+  useEffect(() => {
+    if (filters.color) {
+      setSelectedColors(filters.color.split(","))
+    } else {
+      setSelectedColors([])
+    }
+  }, [filters.color])
+
+  // Initialiser selectedSizes à partir des filtres existants
+  useEffect(() => {
+    if (filters.size) {
+      setSelectedSizes(filters.size.split(","))
+    } else {
+      setSelectedSizes([])
+    }
+  }, [filters.size])
 
   const handlePriceChange = (values: number[]) => {
     setPriceRange(values)
@@ -159,14 +221,32 @@ export const FilterComponent = ({
     // Si la marque est déjà sélectionnée, la désélectionner
     if (selectedBrands.includes(brand.id.toString())) {
       setSelectedBrands([]);
-      // Utiliser brand_id = 0 pour réinitialiser le filtre (une valeur qui n'existe pas)
       onFilterChange({ brand_id: "" });
     } else {
       // Sélectionner la marque spécifique
       setSelectedBrands([brand.id.toString()]);
-      // Envoyer l'ID de la marque directement, pas sous forme de chaîne
       onFilterChange({ brand_id: brand.id.toString() });
     }
+  }
+
+  // Fonction pour sélectionner plusieurs couleurs
+  const toggleColor = (color: string) => {
+    const newColors = selectedColors.includes(color)
+      ? selectedColors.filter(c => c !== color)
+      : [...selectedColors, color]
+    
+    setSelectedColors(newColors)
+    onFilterChange({ color: newColors.join(",") })
+  }
+
+  // Fonction pour sélectionner plusieurs tailles
+  const toggleSize = (size: string) => {
+    const newSizes = selectedSizes.includes(size)
+      ? selectedSizes.filter(s => s !== size)
+      : [...selectedSizes, size]
+    
+    setSelectedSizes(newSizes)
+    onFilterChange({ size: newSizes.join(",") })
   }
 
   // Initialiser selectedBrands à partir des filtres existants
@@ -188,263 +268,282 @@ export const FilterComponent = ({
   }, [filters.category_id])
 
   const resetFilters = () => {
-    // Réinitialiser les états locaux
-    setSearchQuery("")
-    setPriceRange([0, 1000])
     setSelectedCategories([])
     setSelectedBrands([])
+    setSelectedColors([])
+    setSelectedSizes([])
+    setSearchQuery("")
+    setPriceRange([0, 1000])
     setIsAdvancedSearch(false)
-
-    // Réinitialiser tous les filtres avec des valeurs par défaut
-    const defaultFilters: Partial<FilterState> = {
-      search: "",
-      minPrice: "",
-      maxPrice: "",
+    
+    onFilterChange({
       category_id: "",
       brand_id: "",
       color: "",
       size: "",
-      sort: "",
-      page: "1",
-      limit: "12",
-      store_type: "",
-      featured: ""
-    }
-
-    onFilterChange(defaultFilters)
+      minPrice: "",
+      maxPrice: "",
+      featured: "",
+      store_type: ""
+    })
   }
 
   const FilterSection = ({ 
     title, 
     section, 
-    children 
+    children,
+    icon
   }: { 
     title: string; 
     section: keyof SectionState; 
-    children: React.ReactNode 
+    children: React.ReactNode;
+    icon?: React.ReactNode;
   }) => (
-    <Collapsible open={openSections[section]} onOpenChange={() => toggleSection(section)}>
-      <CollapsibleTrigger className="flex w-full items-center justify-between py-2 hover:text-primary transition-colors">
-        <Label className="text-sm font-medium cursor-pointer">{title}</Label>
+    <Collapsible 
+      open={openSections[section]} 
+      onOpenChange={() => toggleSection(section)}
+      className="transition-all duration-300 ease-in-out"
+    >
+      <CollapsibleTrigger className="flex w-full items-center justify-between py-3 hover:text-primary transition-colors rounded-md hover:bg-muted/60 px-3">
+        <div className="flex items-center gap-2.5">
+          {icon && <div className="text-primary/80">{icon}</div>}
+          <Label className="text-sm font-medium cursor-pointer">{title}</Label>
+        </div>
         {openSections[section] ? (
-          <ChevronUp className="h-4 w-4" />
+          <ChevronUp className="h-4 w-4 transition-transform duration-300" />
         ) : (
-          <ChevronDown className="h-4 w-4" />
+          <ChevronDown className="h-4 w-4 transition-transform duration-300" />
         )}
       </CollapsibleTrigger>
-      <CollapsibleContent className="pt-2">
+      <CollapsibleContent className="pt-3 pb-2 px-2 data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up overflow-hidden">
         {children}
       </CollapsibleContent>
     </Collapsible>
   )
 
   return (
-    <div className="space-y-4 bg-background rounded-lg">
+    <div className="h-full flex flex-col bg-background/95 overflow-hidden">
       {/* En-tête des filtres */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <SlidersHorizontal className="h-4 w-4" />
-          <h2 className="text-sm font-semibold">Filtres</h2>
-        </div>
-        <Button
-          variant="ghost"
-          size="sm"
+      <div ref={headerRef} className="sticky top-0 z-10 bg-background border-b pb-3 px-5 pt-5 flex justify-between items-center">
+        <h2 className="text-lg font-medium">Filtres</h2>
+        <Button 
+          variant="link" 
+          size="sm" 
           onClick={resetFilters}
-          className="h-8 px-2 hover:bg-destructive/10 hover:text-destructive"
+          className="text-xs font-normal text-muted-foreground hover:text-primary h-auto p-0"
         >
-          <RotateCcw className="h-4 w-4 mr-2" />
           Réinitialiser
         </Button>
       </div>
 
-      <Separator />
+      {/* Zone scrollable pour les filtres */}
+      <ScrollArea className="flex-1 overflow-auto pb-8">
+        <div className="p-5 space-y-6">
+          {/* Recherche avancée (prix) */}
+          {isAdvancedSearch && (
+            <div className="space-y-4 animate-in slide-in-from-top duration-300 ease-in-out">
+              <FilterSection 
+                title="Prix" 
+                section="price"
+                icon={<Euro className="h-4 w-4 text-primary/80" />}
+              >
+                <div className="space-y-2 px-2 py-1">
+                  <div className="pt-1">
+                    <Slider
+                      value={priceRange}
+                      min={0}
+                      max={1000}
+                      step={10}
+                      onValueChange={handlePriceChange}
+                      className="my-6"
+                    />
+                    <div className="flex justify-between mt-2">
+                      <div className="space-y-1">
+                        <span className="text-xs text-muted-foreground">Min</span>
+                        <Badge variant="outline" className="text-xs font-normal py-1 px-3 rounded-md bg-muted/30">
+                          {priceRange[0]}€
+                        </Badge>
+                      </div>
+                      <div className="space-y-1">
+                        <span className="text-xs text-muted-foreground">Max</span>
+                        <Badge variant="outline" className="text-xs font-normal py-1 px-3 rounded-md bg-muted/30">
+                          {priceRange[1]}€
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </FilterSection>
+            </div>
+          )}
 
-      {/* Barre de recherche */}
-      <div className="space-y-1.5">
-        <div className="relative">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Rechercher..."
-            value={searchQuery}
-            onChange={(e) => handleSearch(e.target.value)}
-            className="pl-8 transition-all focus:ring-2 focus:ring-primary"
-          />
-        </div>
-        <Button
-          variant="link"
-          size="sm"
-          onClick={() => setIsAdvancedSearch(!isAdvancedSearch)}
-          className="p-0 h-auto text-xs"
-        >
-          {isAdvancedSearch ? "Recherche simple" : "Recherche avancée"}
-        </Button>
-      </div>
+          <Separator className="my-4" />
 
-      {/* Recherche avancée */}
-      {isAdvancedSearch && (
-        <div className="space-y-4 animate-in slide-in-from-top-2">
-          <FilterSection title="Prix" section="price">
-            <div className="space-y-2">
-              <div className="pt-1">
-                <Slider
-                  value={priceRange}
-                  min={0}
-                  max={1000}
-                  step={10}
-                  onValueChange={handlePriceChange}
-                  className="my-4"
-                />
-                <div className="flex justify-between mt-1">
-                  <span className="text-xs text-muted-foreground">{priceRange[0]}€</span>
-                  <span className="text-xs text-muted-foreground">{priceRange[1]}€</span>
+          {/* Sections de filtres */}
+          <div className="space-y-5">
+            {/* Catégories */}
+            <FilterSection 
+              title="Catégories" 
+              section="categories"
+              icon={<Tag className="h-4 w-4 text-primary/80" />}
+            >
+              <div className="space-y-2">
+                <div className="flex flex-wrap gap-2">
+                  {categories.map((category) => {
+                    const isSelected = selectedCategories.includes(category.id.toString())
+                    return (
+                      <button
+                        key={category.id}
+                        onClick={() => toggleCategory(category.id.toString())}
+                        className={cn(
+                          "px-3 py-1.5 text-xs font-medium rounded-full transition-all",
+                          "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary",
+                          isSelected
+                            ? "bg-primary text-primary-foreground shadow-md"
+                            : "bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground"
+                        )}
+                      >
+                        {category.name}
+                        {isSelected && <Check className="ml-1.5 h-3 w-3 inline" />}
+                      </button>
+                    )
+                  })}
                 </div>
               </div>
-            </div>
-          </FilterSection>
+            </FilterSection>
+
+            <Separator className="my-2" />
+
+            {/* Marques */}
+            <FilterSection 
+              title="Marques" 
+              section="brands"
+              icon={<PanelTop className="h-4 w-4 text-primary/80" />}
+            >
+              <div className="space-y-2 max-h-64 overflow-y-auto pr-1 rounded-md scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent hover:scrollbar-thumb-muted-foreground/30">
+                <div className="grid grid-cols-1 gap-1.5">
+                  {brands.map((brand) => {
+                    const isSelected = selectedBrands.includes(brand.id.toString())
+                    return (
+                      <button
+                        key={brand.id}
+                        onClick={() => toggleBrand(brand)}
+                        className={cn(
+                          "w-full text-left px-3 py-2 text-xs font-medium rounded-md transition-all flex items-center",
+                          "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary",
+                          isSelected
+                            ? "bg-primary/15 text-primary shadow-sm"
+                            : "hover:bg-muted/70 text-foreground"
+                        )}
+                      >
+                        <span className="flex-1 truncate">{brand.name}</span>
+                        {isSelected && <Check className="h-4 w-4 shrink-0 text-primary" />}
+                      </button>
+                    )
+                  })}
+                </div>
+                {brands.length === 0 && (
+                  <p className="text-xs text-muted-foreground italic px-3 py-3">
+                    Aucune marque disponible
+                  </p>
+                )}
+              </div>
+            </FilterSection>
+
+            <Separator className="my-2" />
+
+            {/* Couleurs */}
+            <FilterSection 
+              title="Couleurs" 
+              section="colors"
+              icon={<Palette className="h-4 w-4 text-primary/80" />}
+            >
+              <div className="grid grid-cols-6 gap-2 py-2">
+                {(availableColors || colors || []).map((color) => {
+                  const colorInfo = getColorInfo(color)
+                  const isActive = selectedColors.includes(color)
+                  
+                  return (
+                    <button
+                      key={color}
+                      onClick={() => toggleColor(color)}
+                      className={cn(
+                        "group flex flex-col items-center space-y-1.5 relative",
+                        "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                      )}
+                      aria-label={`Filtrer par couleur ${colorInfo.label}`}
+                      title={colorInfo.label}
+                    >
+                      <div 
+                        className={cn(
+                          "w-7 h-7 rounded-full",
+                          "flex items-center justify-center transition-all duration-300",
+                          "group-hover:scale-110 group-hover:shadow-md",
+                          isActive ? "ring-2 ring-primary ring-offset-2 shadow-sm" : "ring-1 ring-muted-foreground/20",
+                          isWhiteColor(color) && "border border-gray-200",
+                        )}
+                        style={{ 
+                          background: colorInfo.hex
+                        }}
+                      >
+                        {isActive && (
+                          <Check className={cn(
+                            "h-3.5 w-3.5 animate-in zoom-in-50 duration-300",
+                            isWhiteColor(color) ? "text-black" : "text-white"
+                          )} />
+                        )}
+                      </div>
+                      <span className="text-[10px] text-muted-foreground group-hover:text-foreground transition-colors line-clamp-1">
+                        {colorInfo.label}
+                      </span>
+                    </button>
+                  )
+                })}
+                {(availableColors || colors || []).length === 0 && (
+                  <p className="text-xs text-muted-foreground italic col-span-6 px-3 py-3">
+                    Aucune couleur disponible
+                  </p>
+                )}
+              </div>
+            </FilterSection>
+
+            <Separator className="my-2" />
+
+            {/* Tailles */}
+            <FilterSection 
+              title="Tailles" 
+              section="sizes"
+              icon={<Ruler className="h-4 w-4 text-primary/80" />}
+            >
+              <div className="flex flex-wrap gap-2 py-2">
+                {(availableSizes || sizes || []).map((size) => {
+                  const isActive = selectedSizes.includes(size)
+                  return (
+                    <button
+                      key={size}
+                      onClick={() => toggleSize(size)}
+                      className={cn(
+                        "min-w-[2.5rem] px-3 py-1.5 text-xs font-medium rounded-md transition-all",
+                        "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary",
+                        isActive
+                          ? "bg-primary text-primary-foreground shadow-md"
+                          : "bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      {size}
+                    </button>
+                  )
+                })}
+                {(availableSizes || sizes || []).length === 0 && (
+                  <p className="text-xs text-muted-foreground italic w-full px-3 py-3">
+                    Aucune taille disponible
+                  </p>
+                )}
+              </div>
+            </FilterSection>
+          </div>
         </div>
-      )}
-
-      <Separator />
-
-      {/* Sections de filtres */}
-      <div className="space-y-3">
-        {/* Catégories */}
-        <FilterSection title="Catégories" section="categories">
-          <div className="space-y-1.5">
-            <div className="flex flex-wrap gap-1.5">
-              {categories.map((category) => {
-                const isSelected = selectedCategories.includes(category.id.toString())
-                return (
-                  <button
-                    key={category.id}
-                    onClick={() => toggleCategory(category.id.toString())}
-                    className={cn(
-                      "px-2.5 py-1.5 text-xs font-medium rounded-full transition-all",
-                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-                      isSelected
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted hover:bg-muted/80 text-muted-foreground"
-                    )}
-                  >
-                    {category.name}
-                    {isSelected && <Check className="ml-1 h-3 w-3 inline" />}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-        </FilterSection>
-
-        <Separator />
-
-        {/* Marques */}
-        <FilterSection title="Marques" section="brands">
-          <div className="space-y-1.5 max-h-[200px] overflow-y-auto pr-1">
-            <div className="flex flex-wrap gap-1.5">
-              {brands.map((brand) => {
-                const isSelected = selectedBrands.includes(brand.id.toString())
-                return (
-                  <button
-                    key={brand.id}
-                    onClick={() => toggleBrand(brand)}
-                    className={cn(
-                      "px-2.5 py-1.5 text-xs font-medium rounded-full transition-all",
-                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-                      isSelected
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted hover:bg-muted/80 text-muted-foreground"
-                    )}
-                  >
-                    {brand.name}
-                    {isSelected && <Check className="ml-1 h-3 w-3 inline" />}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-        </FilterSection>
-
-        <Separator />
-
-        {/* Couleurs */}
-        <FilterSection title="Couleurs" section="colors">
-          <div className="flex flex-wrap gap-1.5 pt-1.5">
-            {colors.map((color) => {
-              const colorInfo = getColorInfo(color)
-              const isSelected = filters.color === color
-              
-              return (
-                <button
-                  key={color}
-                  onClick={() => onFilterChange({ color: isSelected ? "" : color })}
-                  className={cn(
-                    "px-2.5 py-1.5 text-xs font-medium rounded-full transition-all",
-                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-                    isSelected
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted hover:bg-muted/80 text-muted-foreground"
-                  )}
-                  title={colorInfo.label}
-                >
-                  {colorInfo.label}
-                  {isSelected && <Check className="ml-1 h-3 w-3 inline" />}
-                </button>
-              )
-            })}
-          </div>
-        </FilterSection>
-
-        <Separator />
-
-        {/* Tailles */}
-        <FilterSection title="Tailles" section="sizes">
-          <div className="flex flex-wrap gap-1.5">
-            {sizes.map((size) => {
-              const isSelected = filters.size === size
-              return (
-                <button
-                  key={size}
-                  onClick={() => onFilterChange({ size: isSelected ? "" : size })}
-                  className={cn(
-                    "min-w-[36px] h-9 px-2 inline-flex items-center justify-center text-sm font-medium",
-                    "rounded-md transition-colors",
-                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-                    isSelected
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted hover:bg-muted/80 text-muted-foreground"
-                  )}
-                >
-                  {size}
-                </button>
-              )
-            })}
-          </div>
-        </FilterSection>
-
-        <Separator />
-
-        {/* Tri */}
-        <div className="space-y-1.5">
-          <Label className="text-sm font-medium">Trier par</Label>
-          <Select
-            value={filters.sort}
-            onValueChange={(value) => onFilterChange({ sort: value })}
-          >
-            <SelectTrigger className="w-full transition-all focus:ring-2 focus:ring-primary">
-              <SelectValue placeholder="Trier par" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="default">Par défaut</SelectItem>
-              <SelectItem value="price_asc">Prix croissant</SelectItem>
-              <SelectItem value="price_desc">Prix décroissant</SelectItem>
-              <SelectItem value="name_asc">Nom A-Z</SelectItem>
-              <SelectItem value="name_desc">Nom Z-A</SelectItem>
-              <SelectItem value="newest">Plus récents</SelectItem>
-              <SelectItem value="popular">Plus populaires</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+      </ScrollArea>
     </div>
   )
 }

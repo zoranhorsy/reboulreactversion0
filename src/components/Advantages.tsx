@@ -2,6 +2,8 @@
 
 import React from 'react'
 import { motion } from 'framer-motion'
+// TODO: Envisager de remplacer framer-motion par des animations CSS pour réduire la taille du bundle
+// TODO: Envisager de remplacer framer-motion par des animations CSS pour réduire la taille du bundle
 import { ShoppingBag, Shield, Users, TrendingUp, Truck, Clock } from 'lucide-react'
 import { cn } from '@/lib/utils'
 

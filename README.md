@@ -265,3 +265,35 @@ Pour déployer l'application, exécutez simplement:
 ```
 ./deploy.sh
 ```
+
+## Optimisation des images
+
+Reboul utilise désormais les formats d'image modernes (WebP et AVIF) pour améliorer les performances et les Web Vitals.
+
+### Conversion des images
+
+Pour convertir les images existantes en formats optimisés :
+
+```bash
+npm run convert-images
+```
+
+Ce script génère des versions WebP et AVIF de toutes les images dans le dossier `public/` et les stocke dans `public/optimized/`.
+
+### Utilisation dans le code
+
+Le composant `OptimizedImage` a été amélioré pour utiliser automatiquement les formats modernes :
+
+```jsx
+import { OptimizedImage } from '@/components/optimized/OptimizedImage'
+
+<OptimizedImage
+  src="/images/monimage.jpg"
+  alt="Description"
+  width={800}
+  height={600}
+  isLCP={true}
+/>
+```
+
+Pour plus d'informations, consultez la [documentation sur l'optimisation des images](docs/image-optimization.md).

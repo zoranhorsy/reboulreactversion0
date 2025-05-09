@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import type { Product, Variant } from "@/lib/api"
@@ -80,6 +80,49 @@ export function CornerProductCard({ product, viewMode = "grid" }: CornerProductC
   const { brands } = useBrands()
   const { categories } = useCategories()
 
+  const handleImageError = useCallback(() => {
+    setImageError(true);
+  }, []);
+
+  const formatPrice = useCallback((price: number | undefined) => {
+    if (typeof price !== 'number') return null
+    return new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency: 'EUR',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(Number(price))
+  }, []);
+
+  const handleFavoriteClick = useCallback(async (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    
+    if (!user) {
+      toast({
+        title: "Connexion requise",
+        description: "Vous devez être connecté pour ajouter des favoris",
+        variant: "destructive"
+      })
+      return
+    }
+
+    try {
+      if (isFavorite(product.id, 'corner')) {
+        await removeFromFavorites(product.id, 'corner')
+      } else {
+        await addToFavorites(product.id, 'corner')
+      }
+    } catch (error) {
+      console.error('Erreur avec les favoris:', error)
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue avec les favoris",
+        variant: "destructive"
+      })
+    }
+  }, [user, product.id, isFavorite, addToFavorites, removeFromFavorites]);
+
   if (!product) return null
 
   const getImageUrl = (product: Product) => {
@@ -111,49 +154,6 @@ export function CornerProductCard({ product, viewMode = "grid" }: CornerProductC
     }
     
     return "/placeholder.png";
-  }
-
-  const handleImageError = () => {
-    setImageError(true);
-  }
-
-  const formatPrice = (price: number | undefined) => {
-    if (typeof price !== 'number') return null
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'EUR',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(Number(price))
-  }
-
-  const handleFavoriteClick = async (e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    
-    if (!user) {
-      toast({
-        title: "Connexion requise",
-        description: "Vous devez être connecté pour ajouter des favoris",
-        variant: "destructive"
-      })
-      return
-    }
-
-    try {
-      if (isFavorite(product.id, 'corner')) {
-        await removeFromFavorites(product.id, 'corner')
-      } else {
-        await addToFavorites(product.id, 'corner')
-      }
-    } catch (error) {
-      console.error('Erreur avec les favoris:', error)
-      toast({
-        title: "Erreur",
-        description: "Une erreur est survenue avec les favoris",
-        variant: "destructive"
-      })
-    }
   }
 
   return (

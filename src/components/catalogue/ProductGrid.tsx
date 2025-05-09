@@ -1,30 +1,27 @@
 "use client"
 import { memo, useState } from "react"
-import { ProductCard } from "@/components/products/ProductCard"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { ChevronLeft, ChevronRight, Grid, List } from "lucide-react"
-import type { Product } from "@/lib/api"
+import { ChevronLeft, ChevronRight } from "lucide-react"
+import type { Product } from "@/lib/types/product"
 import { cn } from "@/lib/utils"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Heart } from "lucide-react"
-import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import Image from "next/image"
 import Link from "next/link"
 import { Pagination } from "@/components/ui/pagination"
+import { ProductCard } from "@/components/products/ProductCard"
+import { type FilterChangeHandler } from '@/lib/types/filters'
 
-interface ProductGridProps {
+export interface ProductGridProps {
   products: Product[]
-  isLoading: boolean
-  error: string | null
+  isLoading?: boolean
+  error?: string | null
   page: number
   limit: number
   totalProducts: number
   totalPages: number
-  onPageChange: (newPage: number) => void
-  _onFilterChange: (newFilters: Partial<Record<string, string>>) => void
-  viewMode?: "grid" | "list"
+  onPageChange: (page: number) => void
+  _onFilterChange?: FilterChangeHandler
 }
 
 const ProductGrid = memo(function ProductGrid({
@@ -37,35 +34,21 @@ const ProductGrid = memo(function ProductGrid({
   totalPages,
   onPageChange,
   _onFilterChange,
-  viewMode: initialViewMode = "grid",
 }: ProductGridProps) {
-  const [viewMode, setViewMode] = useState<"grid" | "list">(initialViewMode)
   const productsCount = Array.isArray(products) ? products.length : 0
-  
-  const handleViewModeChange = (mode: "grid" | "list") => {
-    setViewMode(mode)
-  }
 
   if (isLoading) {
     return (
       <div className="space-y-6">
         <div
-          className={cn(
-            "grid gap-4 sm:gap-6",
-            viewMode === "grid" 
-              ? "grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4" 
-              : "grid-cols-1"
-          )}
+          className="grid gap-4 sm:gap-6 grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
           aria-live="polite"
           aria-busy="true"
         >
           <p className="sr-only">Chargement des produits...</p>
           {[...Array(limit)].map((_, index) => (
             <div key={index} className="space-y-3">
-              <Skeleton className={cn(
-                "w-full rounded-xl", 
-                viewMode === "grid" ? "aspect-[3/4]" : "aspect-[2/1] sm:aspect-[3/1]"
-              )} />
+              <Skeleton className="w-full rounded-xl aspect-[3/4]" />
               <div className="space-y-1">
                 <Skeleton className="h-3 w-[80%]" />
                 <Skeleton className="h-3 w-[60%]" />
@@ -98,26 +81,6 @@ const ProductGrid = memo(function ProductGrid({
       {/* Controls header */}
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1 border rounded">
-            <Button
-              variant={viewMode === "grid" ? "secondary" : "ghost"}
-              size="sm"
-              className="h-9 px-2.5"
-              onClick={() => handleViewModeChange("grid")}
-            >
-              <Grid className="h-4 w-4" />
-              <span className="sr-only">Affichage en grille</span>
-            </Button>
-            <Button
-              variant={viewMode === "list" ? "secondary" : "ghost"}
-              size="sm"
-              className="h-9 px-2.5"
-              onClick={() => handleViewModeChange("list")}
-            >
-              <List className="h-4 w-4" />
-              <span className="sr-only">Affichage en liste</span>
-            </Button>
-          </div>
           <p className="text-xs sm:text-sm text-muted-foreground">
             {totalProducts} article{totalProducts > 1 ? "s" : ""}
           </p>
@@ -126,7 +89,7 @@ const ProductGrid = memo(function ProductGrid({
         <div className="flex items-center gap-2">
           <Select
             value={limit.toString()}
-            onValueChange={(value) => _onFilterChange({ limit: value, page: "1" })}
+            onValueChange={(value) => _onFilterChange && _onFilterChange({ limit: value, page: "1" })}
           >
             <SelectTrigger className="w-[110px] h-9 text-xs sm:text-sm">
               <SelectValue placeholder="Articles par page" />
@@ -141,7 +104,7 @@ const ProductGrid = memo(function ProductGrid({
 
           <Select
             value={"default"}
-            onValueChange={(value) => _onFilterChange({ sort: value })}
+            onValueChange={(value) => _onFilterChange && _onFilterChange({ sort: value })}
           >
             <SelectTrigger className="w-[110px] h-9 text-xs sm:text-sm">
               <SelectValue placeholder="Trier par" />
@@ -158,16 +121,11 @@ const ProductGrid = memo(function ProductGrid({
 
       {/* Grille de produits */}
       <div
-        className={cn(
-          "grid gap-4 sm:gap-6",
-          viewMode === "grid" 
-            ? "grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4" 
-            : "grid-cols-1 gap-y-6"
-        )}
+        className="grid gap-4 sm:gap-6 grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
         aria-live="polite"
       >
         {products.map((product) => (
-          <ProductCard key={product.id} product={product} viewMode={viewMode} />
+          <ProductCard key={product.id} product={product} />
         ))}
       </div>
 

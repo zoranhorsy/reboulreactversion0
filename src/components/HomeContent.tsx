@@ -12,6 +12,8 @@ import { TheCornerShowcase } from './TheCornerShowcase'
 import { Archives } from './Archives'
 import { Advantages } from './Advantages'
 import { motion } from 'framer-motion'
+// TODO: Envisager de remplacer framer-motion par des animations CSS pour réduire la taille du bundle
+// TODO: Envisager de remplacer framer-motion par des animations CSS pour réduire la taille du bundle
 import Link from 'next/link'
 import { gsap } from 'gsap'
 import { initGSAP } from '@/lib/gsap-config'

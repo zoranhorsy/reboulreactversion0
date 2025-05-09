@@ -6,6 +6,7 @@ import { convertToCloudinaryUrl } from "@/lib/utils"
 import { isCloudinaryUrl } from "@/config/cloudinary"
 import Image from "next/image"
 import { fixCloudinaryUrl } from "@/lib/cloudinary"
+import config from '@/config'
 
 interface ImagePreviewProps {
   images: string[]
@@ -48,7 +49,7 @@ export const ImagePreview: React.FC<ImagePreviewProps> = ({ images, onRemove }) 
                 priority={index === 0}
                 unoptimized={true}
               />
-              {process.env.NODE_ENV === 'development' && (
+              {config.debug && (
                 <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white text-xs p-1 truncate">
                   <div>URL: {imageUrl.substring(0, 30)}...</div>
                 </div>
@@ -72,7 +73,7 @@ export const ImagePreview: React.FC<ImagePreviewProps> = ({ images, onRemove }) 
       </div>
       
       {/* Informations de débogage (à supprimer en production) */}
-      {process.env.NODE_ENV === 'development' && (
+      {config.debug && (
         <div className="mt-4 p-2 bg-muted/20 rounded-md text-xs space-y-1 max-h-32 overflow-y-auto">
           <div className="font-semibold">Informations de débogage:</div>
           <div className="text-muted-foreground">Nombre d&apos;images: {images.length}</div>

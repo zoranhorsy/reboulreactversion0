@@ -24,6 +24,7 @@ import { getCloudinaryUrl } from "@/config/cloudinary"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
+import config from '@/config'
 
 // Étendre l'interface Product principale pour ajouter les propriétés spécifiques au formulaire
 interface Product extends MainProduct {
@@ -1375,6 +1376,15 @@ export function ProductForm({
           )}
         </Button>
       </div>
+
+      {config.debug && (
+        <div className="mt-4 p-4 bg-muted/20 rounded-md">
+          <h3 className="text-sm font-semibold mb-2">Mode Debug</h3>
+          <pre className="text-xs overflow-auto">
+            {JSON.stringify(formData, null, 2)}
+          </pre>
+        </div>
+      )}
     </div>
   )
 }

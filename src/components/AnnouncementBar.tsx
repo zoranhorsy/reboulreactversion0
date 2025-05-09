@@ -1,6 +1,8 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion } from 'framer-motion'
+// TODO: Envisager de remplacer framer-motion par des animations CSS pour réduire la taille du bundle
+// TODO: Envisager de remplacer framer-motion par des animations CSS pour réduire la taille du bundle;
 import { useEffect, useState } from 'react';
 import { useTheme } from 'next-themes';
 import { X } from 'lucide-react';

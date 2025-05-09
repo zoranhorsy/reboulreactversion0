@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Importer nos utilitaires d'animation optimisés */
+@import '../styles/animation-utils.css';
+
 @layer base {
   :root {
     /* Couleurs de base */

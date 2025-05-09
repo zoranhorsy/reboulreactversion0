@@ -1,5 +1,10 @@
 import { XIcon } from "lucide-react"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion } from 'framer-motion'
+// TODO: Envisager de remplacer framer-motion par des animations CSS pour réduire la taille du bundle
+// TODO: Envisager de remplacer framer-motion par des animations CSS pour réduire la taille du bundle
+import { AnimatePresence } from 'framer-motion'
+// TODO: Envisager de remplacer framer-motion par des animations CSS pour réduire la taille du bundle
+// TODO: Envisager de remplacer framer-motion par des animations CSS pour réduire la taille du bundle
 import { Category } from "@/lib/types/category"
 
 interface TheCornerActiveTagsProps {

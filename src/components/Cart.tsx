@@ -65,7 +65,17 @@ export function Cart() {
               image={item.image || "/placeholder.png"}
               variant={item.variant || { size: "", color: "", stock: 999 }}
               onRemove={() => removeItem(item.id)}
-              onUpdateQuantity={(quantity) => updateQuantity(item.id, quantity)}
+              onUpdateQuantity={(quantity) => {
+                try {
+                  updateQuantity(item.id, quantity);
+                } catch (error) {
+                  toast({
+                    title: "Stock insuffisant",
+                    description: error instanceof Error ? error.message : "Erreur de mise à jour de la quantité",
+                    variant: "destructive",
+                  });
+                }
+              }}
             />
           ))}
         </div>

@@ -80,6 +80,11 @@ export interface Category {
   id: number
   name: string
   description: string
+  slug: string
+  parent_id?: number
+  image_url?: string
+  count?: number
+  children?: Category[]
 }
 
 export interface Brand {
@@ -292,10 +297,11 @@ export class Api {
     }
 
     private formatImageUrl(url: string | undefined): string {
-        if (!url) return ''
+        // Vérifier si l'URL est définie et non vide après suppression des espaces
+        if (!url || !url.trim()) return '';
         
         // Utiliser la fonction convertToCloudinaryUrl
-        return convertToCloudinaryUrl(url)
+        return convertToCloudinaryUrl(url);
     }
 
     // Nouvelle fonction pour convertir les anciennes URLs en URLs Cloudinary
@@ -395,31 +401,47 @@ export class Api {
         }
     }
 
-    async fetchProducts(params: Record<string, string | number> = {}): Promise<{ products: Product[]; total: number }> {
+    async fetchProducts(params: Record<string, string | number> = {}): Promise<{ 
+        products: Product[]; 
+        total: number;
+        totalPages: number;
+        currentPage: number;
+    }> {
         try {
-            // Conserver tous les paramètres tels quels sans filtrage superflu
-            const transformedParams = { ...params };
+            console.log('Appel API fetchProducts avec paramètres bruts:', params);
             
-            // Convertir explicitement le brand_id en nombre si présent
-            if (transformedParams.brand_id) {
-                console.log("Brand ID avant transformation:", transformedParams.brand_id);
-                transformedParams.brand_id = Number(transformedParams.brand_id);
-                console.log("Brand ID après transformation:", transformedParams.brand_id);
+            // Supprimer les paramètres vides, null, undefined ou chaînes vides
+            const cleanParams: Record<string, string | number> = {};
+            
+            for (const [key, value] of Object.entries(params)) {
+                // Ne pas inclure les paramètres vides ou undefined
+                if (value !== undefined && value !== null && value !== '') {
+                    cleanParams[key] = value;
+                }
             }
             
-            // Pour compatibilité, s'assurer que category_id est correctement défini
-            if (transformedParams.category && transformedParams.category !== 'all') {
-                transformedParams.category_id = transformedParams.category;
-                delete transformedParams.category;
-            }
+            console.log('Paramètres nettoyés pour API:', cleanParams);
             
-            console.log("Paramètres de filtrage envoyés à l'API:", transformedParams);
-            
-            // Envoyer directement les paramètres sans le filtrage qui supprimait les valeurs numériques
-            const response = await this.client.get("/products", { params: transformedParams });
+            // Ajouter un timeout plus long pour l'API
+            const response = await this.client.get("/products", { 
+                params: cleanParams,
+                timeout: 10000 // 10 secondes de timeout
+            });
 
-            if (!response.data || !Array.isArray(response.data.data)) {
-                throw new Error("Format de réponse API inattendu")
+            if (!response.data) {
+                console.warn("Réponse API sans données");
+                return { products: [], total: 0, totalPages: 0, currentPage: 1 };
+            }
+
+            console.log('Réponse API reçue:', {
+                status: response.status,
+                pagination: response.data.pagination,
+                dataCount: Array.isArray(response.data.data) ? response.data.data.length : 'N/A'
+            });
+
+            if (!Array.isArray(response.data.data)) {
+                console.warn("Format de réponse API inattendu: data n'est pas un tableau");
+                return { products: [], total: 0, totalPages: 0, currentPage: 1 };
             }
 
             // Filtrer les produits supprimés (ceux avec _actiontype === "hardDelete" ou "delete")
@@ -456,16 +478,46 @@ export class Api {
                 return normalizedProduct
             })
 
-            // Récupérer le nombre total d'éléments depuis la pagination fournie par le backend
-            const totalItems = response.data.pagination?.totalItems || filteredData.length;
+            // Récupérer les informations de pagination depuis la réponse du backend
+            const pagination = response.data.pagination || {};
+            const totalItems = pagination.totalItems || filteredData.length;
+            const page = parseInt(params.page as string) || 1;
+            const limit = parseInt(params.limit as string) || 10;
+            const totalPages = pagination.totalPages || Math.ceil(totalItems / limit);
 
             return {
                 products,
-                total: totalItems, // Utiliser le nombre total d'éléments du backend
+                total: totalItems,
+                totalPages: totalPages,
+                currentPage: pagination.currentPage || page
             }
         } catch (error) {
-            this.handleError(error, "Erreur lors de la récupération des produits")
-            return { products: [], total: 0 }
+            console.error('Erreur détaillée dans fetchProducts:', error);
+            
+            // Vérifier si c'est une erreur de timeout
+            if (error && typeof error === 'object' && 'code' in error) {
+                if (error.code === 'ECONNABORTED') {
+                    console.error('Timeout de la requête API');
+                    this.handleError(error, "Le serveur met trop de temps à répondre. Veuillez réessayer.");
+                }
+            }
+            
+            // Vérifier si c'est une erreur de réseau
+            if (error && typeof error === 'object' && 'message' in error && 
+                typeof error.message === 'string' && error.message.includes('Network Error')) {
+                console.error('Erreur réseau détectée');
+                this.handleError(error, "Problème de connexion au serveur. Vérifiez votre connexion internet.");
+            }
+            
+            // Informer de l'erreur et retourner un résultat par défaut
+            this.handleError(error, "Erreur lors de la récupération des produits");
+            
+            return { 
+                products: [], 
+                total: 0,
+                totalPages: 0,
+                currentPage: 1
+            };
         }
     }
 
@@ -506,18 +558,34 @@ export class Api {
                 // Nettoyer la marque
                 brand: response.data.brand?.trim() || '',
                 // Nettoyer et filtrer les images
-                image_url: this.formatImageUrl(response.data.image_url),
-                image: this.formatImageUrl(response.data.image),
+                image_url: this.formatImageUrl(response.data.image_url || ''),
+                image: this.formatImageUrl(response.data.image || ''),
                 images: Array.isArray(response.data.images)
                     ? response.data.images
-                        .filter((img: string | File | Blob) => 
-                            img && 
-                            typeof img === 'string' && 
-                            img.trim() !== '' && 
-                            img !== '  ' && 
-                            img !== 'undefined'
-                        )
-                        .map((img: string) => this.formatImageUrl(img))
+                        .filter((img: any) => {
+                            // Vérification plus stricte pour éliminer les images problématiques
+                            if (!img) return false;
+                            if (typeof img === 'string') {
+                                return img.trim() !== '' && img.trim() !== 'undefined';
+                            }
+                            if (typeof img === 'object' && img !== null && 'url' in img) {
+                                return img.url && typeof img.url === 'string' && img.url.trim() !== '' && img.url.trim() !== 'undefined';
+                            }
+                            return false;
+                        })
+                        .map((img: any) => {
+                            if (typeof img === 'string') {
+                                return this.formatImageUrl(img);
+                            }
+                            if (typeof img === 'object' && img !== null && 'url' in img) {
+                                return {
+                                    ...img,
+                                    url: this.formatImageUrl(img.url)
+                                };
+                            }
+                            return null;
+                        })
+                        .filter(Boolean) // Éliminer les null potentiels
                     : [],
                 // S'assurer que variants est un tableau
                 variants: Array.isArray(response.data.variants) 
@@ -1233,11 +1301,76 @@ export class Api {
 
     async searchProducts(query: string): Promise<Product[]> {
         try {
-            const response = await this.client.get("/products/search", { params: { q: query } })
-            return response.data
+            console.log('searchProducts - Début de la recherche pour:', query);
+            
+            // Solution simplifiée: utiliser l'endpoint standard des produits avec le paramètre de recherche
+            const response = await this.client.get("/products", { 
+                params: { 
+                    search: query,
+                    limit: 20  // Récupérer plus de résultats pour le filtrage client
+                }
+            });
+            
+            if (!response.data || !Array.isArray(response.data.data)) {
+                console.warn('searchProducts - Format de réponse inattendu:', response.data);
+                return [];
+            }
+            
+            // Filtrer côté client pour des résultats plus pertinents
+            const products = response.data.data;
+            const searchTerms = query.toLowerCase().split(/\s+/).filter(Boolean);
+            
+            const filteredProducts = products
+                .filter((product: Product) => {
+                    // Ne pas inclure les produits supprimés ou inactifs
+                    if (product._actiontype === "hardDelete" || 
+                        product._actiontype === "delete" || 
+                        product.deleted === true || 
+                        product.active === false) {
+                        return false;
+                    }
+                    
+                    // Créer un texte de recherche combiné
+                    const searchableText = [
+                        product.name,
+                        product.description,
+                        product.sku,
+                        ...(Array.isArray(product.tags) ? product.tags : [])
+                    ]
+                    .filter(Boolean)
+                    .join(' ')
+                    .toLowerCase();
+                    
+                    // Le produit doit contenir tous les termes de recherche
+                    return searchTerms.every(term => searchableText.includes(term));
+                })
+                // Trier par pertinence (nombre de correspondances dans le nom)
+                .sort((a: Product, b: Product) => {
+                    const aMatches = searchTerms.filter(term => 
+                        a.name?.toLowerCase().includes(term)).length;
+                    const bMatches = searchTerms.filter(term => 
+                        b.name?.toLowerCase().includes(term)).length;
+                    return bMatches - aMatches;
+                })
+                // Limiter à 10 résultats
+                .slice(0, 10)
+                // Normaliser les prix et autres champs
+                .map((product: Product) => ({
+                    ...product,
+                    price: this.normalizePrice(product.price),
+                    image_url: this.formatImageUrl(product.image_url),
+                    image: this.formatImageUrl(product.image),
+                    images: Array.isArray(product.images) 
+                        ? product.images.map(img => typeof img === 'string' ? this.formatImageUrl(img) : img) 
+                        : []
+                }));
+            
+            console.log('searchProducts - Résultats trouvés:', filteredProducts.length);
+            return filteredProducts;
         } catch (error) {
-            this.handleError(error, "Error searching products")
-            return []
+            console.error('searchProducts - Erreur complète:', error);
+            this.handleError(error, "Error searching products");
+            return [];
         }
     }
 
@@ -1276,7 +1409,11 @@ export class Api {
     async fetchCategories(): Promise<Category[]> {
         try {
             const response = await this.client.get("/categories")
-            return response.data
+            // Générer le slug pour chaque catégorie
+            return response.data.map((category: any) => ({
+                ...category,
+                slug: category.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+            }))
         } catch (error) {
             this.handleError(error, "Error fetching categories")
             return []

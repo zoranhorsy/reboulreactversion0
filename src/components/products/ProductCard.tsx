@@ -84,12 +84,11 @@ const colorMap: Record<string, { hex: string; label: string }> = {
   "beige": { hex: "#F5F5DC", label: "Beige" }
 }
 
-interface ProductCardProps {
-  product: Product
-  viewMode?: "grid" | "list"
+export interface ProductCardProps {
+  product: Product;
 }
 
-export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
+export function ProductCard({ product }: ProductCardProps) {
   const [isHovered, setIsHovered] = useState(false)
   const [imageError, setImageError] = useState(false)
   const { addToFavorites, removeFromFavorites, isFavorite } = useFavorites()
@@ -182,23 +181,11 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
   }
 
   return (
-    <Link 
-      href={`/produit/${product.id}`}
-      className={cn(
-        "group block relative",
-        "transition-all duration-300",
-        "hover:shadow-lg hover:shadow-primary/5",
-        "rounded-xl overflow-hidden",
-        "bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800",
-        viewMode === "list" && "flex gap-4"
-      )}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+    <Link
+      href={`/produit/${product.slug || product.name.toLowerCase().replace(/\s+/g, '-')}`}
+      className="group block overflow-hidden rounded-lg border border-border/50 bg-card transition-all duration-300 hover:border-border hover:shadow-md"
     >
-      <div className={cn(
-        "aspect-[3/4] relative overflow-hidden",
-        viewMode === "list" && "w-48"
-      )}>
+      <div className="aspect-[3/4] relative overflow-hidden">
         {imageError ? (
           <div className="w-full h-full flex items-center justify-center bg-muted">
             <ImageOff className="w-8 h-8 text-muted-foreground" />
@@ -212,7 +199,7 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
               "object-cover transition-all duration-500",
               isHovered && "scale-105"
             )}
-            sizes={viewMode === "list" ? "192px" : "(max-width: 768px) 100vw, 25vw"}
+            sizes="(max-width: 768px) 100vw, 25vw"
             onError={handleImageError}
           />
         )}
@@ -260,10 +247,7 @@ export function ProductCard({ product, viewMode = "grid" }: ProductCardProps) {
         )}
       </div>
       
-      <div className={cn(
-        "p-4 space-y-2",
-        viewMode === "list" && "flex-1"
-      )}>
+      <div className="p-4 space-y-2">
         <div className="space-y-1">
           <h3 className="text-sm sm:text-base font-medium line-clamp-1">
             {product.name}

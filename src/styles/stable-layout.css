@@ -1,0 +1,49 @@
+.stable-layout {
+  contain: layout size;
+  will-change: transform;
+}
+
+/* Réserver l'espace pour les images */
+.stable-layout img {
+  aspect-ratio: var(--content-width) / var(--content-height);
+  width: 100%;
+  height: auto;
+}
+
+/* Optimiser le chargement des polices */
+@font-face {
+  font-family: 'MainFont';
+  src: url('/fonts/main.woff2') format('woff2');
+  font-display: optional;
+  font-weight: 400;
+  font-style: normal;
+}
+
+/* Réduire le CLS pendant le chargement */
+.stable-layout::before {
+  content: '';
+  display: block;
+  padding-bottom: var(--content-height);
+  width: var(--content-width);
+}
+
+/* Animation de chargement */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.stable-layout.loading {
+  background: linear-gradient(
+    90deg,
+    #f0f0f0 25%,
+    #e0e0e0 50%,
+    #f0f0f0 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+} 

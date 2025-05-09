@@ -86,4 +86,116 @@ Après chaque déploiement majeur, vérifier les performances des images avec :
 
 ## Maintenance
 
-Toute modification des composants d'optimisation d'images doit être documentée ici et communiquée à l'équipe de développement. 
+Toute modification des composants d'optimisation d'images doit être documentée ici et communiquée à l'équipe de développement.
+
+# Optimisation des Images - Reboul
+
+Cette documentation décrit comment utiliser les formats d'image modernes (WebP et AVIF) dans l'application Reboul pour améliorer les performances et les Web Vitals.
+
+## Formats d'images modernes
+
+### WebP
+- Format développé par Google avec un excellent rapport qualité/poids
+- Supporte la transparence et l'animation
+- Compatible avec tous les navigateurs modernes (Chrome, Firefox, Safari, Edge)
+- ~30% plus léger que JPEG à qualité équivalente
+
+### AVIF
+- Format de nouvelle génération basé sur AV1
+- Compression supérieure au WebP (jusqu'à 50% plus efficace)
+- Compatible avec Chrome, Firefox, et bientôt Safari
+- Excellente préservation des détails à taille réduite
+
+## Utilisation dans l'application
+
+### Convertir les images existantes
+
+Pour convertir toutes les images du projet en formats WebP et AVIF :
+
+```bash
+npm run convert-images
+```
+
+Ce script :
+1. Parcourt le dossier `public/`
+2. Convertit chaque image en formats WebP et AVIF
+3. Crée plusieurs variantes redimensionnées pour le responsive
+4. Stocke les résultats dans `public/optimized/`
+
+### Utiliser le composant OptimizedImage
+
+Le composant `OptimizedImage` a été amélioré pour utiliser automatiquement les formats WebP et AVIF en fonction du support du navigateur.
+
+```jsx
+import { OptimizedImage } from '@/components/optimized/OptimizedImage'
+
+// Dans votre composant
+<OptimizedImage
+  src="/images/monimage.jpg"
+  alt="Description de l'image"
+  width={800}
+  height={600}
+  isLCP={true} // Si c'est l'image principale de la page
+  showPlaceholder={true}
+  priority={true}
+/>
+```
+
+Le composant :
+- Utilise l'élément `<picture>` pour servir le format optimal
+- Inclut automatiquement des sources AVIF et WebP
+- Fournit une version JPEG de secours pour les navigateurs anciens
+- Applique `fetchPriority="high"` sur les images critiques
+
+### Optimiser les images produits
+
+Pour les images produits, utilisez le composant `OptimizedProductImage` qui gère automatiquement :
+- Le chargement d'image optimisé en WebP/AVIF
+- L'effet de hover avec deux images
+- Les différents types d'affichage (carte, détail, miniature)
+
+```jsx
+import { OptimizedProductImage } from '@/components/optimized/OptimizedProductImage'
+
+<OptimizedProductImage
+  product={product}
+  type="card" // ou "detail", "thumbnail"
+  priority={index === 0} // Priorité pour la première image
+/>
+```
+
+## Avantages de performance
+
+L'utilisation des formats WebP et AVIF apporte les avantages suivants :
+
+1. **Réduction de la taille des images**
+   - WebP : 25-35% plus petit que JPEG
+   - AVIF : 40-50% plus petit que JPEG
+
+2. **Amélioration des Web Vitals**
+   - LCP (Largest Contentful Paint) réduit grâce à des téléchargements plus rapides
+   - CLS (Cumulative Layout Shift) minimisé par le préchargement et les placeholders
+
+3. **Économie de bande passante**
+   - Moins de données à télécharger pour les utilisateurs
+   - Chargement plus rapide sur les connexions mobiles
+
+## Statistiques
+
+Après conversion en WebP/AVIF, voici les économies moyennes observées :
+
+| Type         | JPEG    | WebP    | AVIF    | Économie vs JPEG |
+|--------------|---------|---------|---------|------------------|
+| Images héro  | ~250KB  | ~150KB  | ~120KB  | 40-50%           |
+| Produits     | ~120KB  | ~80KB   | ~65KB   | 35-45%           |
+| Miniatures   | ~40KB   | ~25KB   | ~20KB   | 40-50%           |
+
+## Mesurer l'impact
+
+Pour mesurer l'impact des optimisations d'image sur les performances, utilisez :
+
+```bash
+npm run audit:lcp
+```
+
+Cet outil montrera les améliorations du LCP avant/après l'optimisation. 

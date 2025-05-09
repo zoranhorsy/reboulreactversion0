@@ -3,6 +3,8 @@
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
+// TODO: Envisager de remplacer framer-motion par des animations CSS pour réduire la taille du bundle
+// TODO: Envisager de remplacer framer-motion par des animations CSS pour réduire la taille du bundle
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, Home, Search, ShoppingBag, MessageSquare } from 'lucide-react'
 import Image from 'next/image'

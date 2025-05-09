@@ -5,6 +5,7 @@ import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { isCloudinaryUrl } from "@/config/cloudinary"
 import { fixCloudinaryUrl } from "@/lib/cloudinary"
+import config from '@/config'
 
 export interface CloudinaryImageProps {
   src: string
@@ -31,7 +32,7 @@ export function CloudinaryImage({
   sizes,
   fill = false,
   fallbackSrc = '/images/product-placeholder.png',
-  showDebug = process.env.NODE_ENV === 'development',
+  showDebug = config.debug,
   onError,
   onLoad,
 }: CloudinaryImageProps) {

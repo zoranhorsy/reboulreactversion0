@@ -1,9 +1,14 @@
 'use client'
 
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import { ChevronLeft, ChevronRight, X, ImageOff, ZoomIn, ZoomOut, Maximize2, Expand } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
+// TODO: Envisager de remplacer framer-motion par des animations CSS pour réduire la taille du bundle
+// TODO: Envisager de remplacer framer-motion par des animations CSS pour réduire la taille du bundle
+import { AnimatePresence } from 'framer-motion'
+// TODO: Envisager de remplacer framer-motion par des animations CSS pour réduire la taille du bundle
+// TODO: Envisager de remplacer framer-motion par des animations CSS pour réduire la taille du bundle
 import { Dialog, DialogContent, DialogTrigger, DialogClose } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -17,6 +22,18 @@ import {
   CarouselPrevious,
   CarouselApi
 } from '@/components/ui/carousel'
+import { OptimizedImage } from './optimized/OptimizedImage'
+import { Loader2 } from 'lucide-react'
+import { useImageWorker } from '@/hooks/useImageWorker'
+import { rafThrottle } from '@/lib/utils'
+
+declare global {
+    interface Window {
+        Image: {
+            new(width?: number, height?: number): HTMLImageElement;
+        }
+    }
+}
 
 interface ProductGalleryProps {
     images: (string | File | Blob | ProductImage)[]
@@ -43,16 +60,58 @@ export function ProductGallery({
     const [isZoomed, setIsZoomed] = useState(false)
     const [isFullscreen, setIsFullscreen] = useState(false)
     const [imageErrors, setImageErrors] = useState<Record<number, boolean>>({})
-    const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0 })
+    const [zoomPosition, setZoomPosition] = useState({ x: 0.5, y: 0.5 })
     const [showControls, setShowControls] = useState(true)
     const [touchStart, setTouchStart] = useState(0)
     const [touchEnd, setTouchEnd] = useState(0)
     const [api, setApi] = useState<CarouselApi>()
     const [showZoomPreview, setShowZoomPreview] = useState(false)
     const [zoomedImage, setZoomedImage] = useState<string | null>(null)
+    const [fullscreenLoading, setFullscreenLoading] = useState(true)
     
     const mainImageRef = useRef<HTMLDivElement>(null)
     const thumbnailsContainerRef = useRef<HTMLDivElement>(null)
+    
+    // Utiliser le worker pour le traitement des images
+    const { processedImage, error, isProcessing, processImage } = useImageWorker({
+        width: 1200,
+        height: 1200,
+        quality: 85,
+        format: 'webp'
+    });
+
+    // Fonction pour charger et traiter l'image
+    const loadAndProcessImage = useCallback(async (imageUrl: string) => {
+        try {
+            const img = new window.Image(0, 0);
+            img.crossOrigin = 'anonymous';
+            
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                
+                const ctx = canvas.getContext('2d');
+                if (!ctx) return;
+                
+                ctx.drawImage(img, 0, 0);
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                
+                processImage(imageData);
+            };
+            
+            img.src = imageUrl;
+        } catch (err) {
+            console.error('Erreur lors du chargement de l\'image:', err);
+        }
+    }, [processImage]);
+
+    // Charger l'image courante
+    useEffect(() => {
+        if (images[currentIndex]) {
+            loadAndProcessImage(getImageUrl(images[currentIndex]));
+        }
+    }, [currentIndex, images, loadAndProcessImage]);
     
     // Filtrer les images valides (non en erreur)
     const validImages = images
@@ -81,8 +140,8 @@ export function ProductGallery({
         }
     }, [isFullscreen, zoomPosition])
     
-    // Réactiver les contrôles lors du mouvement de la souris
-    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Réactiver les contrôles lors du mouvement de la souris - Version originale
+    const handleMouseMoveOriginal = (e: React.MouseEvent<HTMLDivElement>) => {
         if (!showZoomPreview) return
 
         const rect = e.currentTarget.getBoundingClientRect()
@@ -91,6 +150,18 @@ export function ProductGallery({
         
         setZoomPosition({ x, y })
     }
+    
+    // Version optimisée avec rafThrottle pour éviter le blocage du thread principal
+    const handleMouseMove = rafThrottle((e: React.MouseEvent<HTMLDivElement>) => {
+        if (!showZoomPreview) return
+
+        const rect = e.currentTarget.getBoundingClientRect()
+        const x = ((e.clientX - rect.left) / rect.width) * 100
+        const y = ((e.clientY - rect.top) / rect.height) * 100
+        
+        setZoomPosition({ x, y })
+        setShowControls(true)
+    })
     
     // Gestion du swipe sur mobile
     const handleTouchStart = (e: React.TouchEvent) => {
@@ -137,10 +208,24 @@ export function ProductGallery({
 
     // Si aucune image n'est disponible ou si toutes les images sont en erreur, afficher un placeholder
     const getImageUrl = (image: string | File | Blob | ProductImage): string => {
-        if (typeof image === 'string') return image;
-        if (typeof image === 'object' && image !== null && 'url' in image) return image.url;
-        if (image instanceof File || image instanceof Blob) return URL.createObjectURL(image);
-        return '';
+        if (!image) return '/placeholder.svg'; // Retourne une image par défaut si l'image est null ou undefined
+        
+        if (typeof image === 'string') {
+            // Vérifier si la chaîne est vide ou contient seulement des espaces
+            return image.trim() ? image : '/placeholder.svg';
+        }
+        
+        if (typeof image === 'object' && image !== null && 'url' in image) {
+            const url = image.url;
+            // Vérifier si l'URL est vide ou contient seulement des espaces
+            return url && url.trim() ? url : '/placeholder.svg';
+        }
+        
+        if (image instanceof File || image instanceof Blob) {
+            return URL.createObjectURL(image);
+        }
+        
+        return '/placeholder.svg'; // Fallback par défaut
     };
 
     const handleImageError = (index: number) => {
@@ -240,13 +325,18 @@ export function ProductGallery({
                                     onMouseLeave={() => setIsZoomed(false)}
                                     onMouseMove={handleMouseMove}
                                 >
-                                    <Image
+                                    <OptimizedImage
                                         src={getImageUrl(image)}
                                         alt={`${productName} - Image ${index + 1}`}
                                         fill
                                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                                         className="object-cover"
+                                        isLCP={index === 0}
                                         priority={index === 0}
+                                        quality={index === 0 ? 85 : 75}
+                                        showPlaceholder={true}
+                                        loadingClassName="blur-sm"
+                                        loadedClassName="blur-0"
                                     />
                                     {isZoomed && (
                                         <div className="absolute top-2 right-2 z-10 flex gap-2">
@@ -323,68 +413,28 @@ export function ProductGallery({
 
             {/* Fullscreen modal */}
             <Dialog open={isFullscreen} onOpenChange={setIsFullscreen}>
-                <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 bg-black/95">
-                    <div 
-                        className="relative w-full h-[90vh]"
-                        onMouseMove={handleMouseMove}
-                        onTouchStart={handleTouchStart}
-                        onTouchMove={handleTouchMove}
-                        onTouchEnd={handleTouchEnd}
-                    >
+                <DialogContent className="max-w-7xl w-screen h-screen flex items-center justify-center p-0 sm:p-6 overflow-hidden">
+                    <div className="relative w-full h-full">
                         <AnimatePresence>
-                            {showControls && (
-                                <motion.div
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    exit={{ opacity: 0 }}
-                                    className="absolute top-0 left-0 right-0 z-50 p-4 flex justify-between items-center bg-gradient-to-b from-black/50 to-transparent"
-                                >
-                                    <div className="text-white text-lg font-medium">
-                                        {productName}
-                                    </div>
-                                    <div className="flex items-center gap-4">
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="rounded-full bg-white/10 hover:bg-white/20 text-white"
-                                            onClick={toggleZoom}
-                                        >
-                                            {isZoomed ? <ZoomOut className="w-5 h-5" /> : <ZoomIn className="w-5 h-5" />}
-                                        </Button>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="rounded-full bg-white/10 hover:bg-white/20 text-white"
-                                            onClick={() => setIsFullscreen(false)}
-                                        >
-                                            <X className="w-5 h-5" />
-                                        </Button>
-                                    </div>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-
-                        <div 
-                            className="relative w-full h-full"
-                            onClick={toggleZoom}
-                            onMouseMove={handleZoomMove}
-                        >
-                            <AnimatePresence initial={false} mode="wait">
-                                <motion.div
-                                    key={currentIndex}
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    exit={{ opacity: 0 }}
-                                    transition={{ duration: 0.3 }}
-                                    className="absolute inset-0"
-                                >
-                                    {imageErrors[currentIndex] ? (
-                                        <div className="w-full h-full flex items-center justify-center">
-                                            <ImageOff className="w-16 h-16 text-white/70" />
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                transition={{ duration: 0.3 }}
+                                className="w-full h-full flex flex-col"
+                            >
+                                <div className="flex-1 relative">
+                                    {isProcessing ? (
+                                        <div className="absolute inset-0 flex items-center justify-center">
+                                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+                                        </div>
+                                    ) : error ? (
+                                        <div className="w-full h-full flex items-center justify-center text-red-500">
+                                            Erreur de chargement de l&apos;image
                                         </div>
                                     ) : (
                                         <div className="relative w-full h-full">
-                                            <Image
+                                            <OptimizedImage
                                                 src={getImageUrl(images[currentIndex])}
                                                 alt={`${productName} - Image ${currentIndex + 1}`}
                                                 fill={true}
@@ -399,81 +449,88 @@ export function ProductGallery({
                                                         } 
                                                         : {}
                                                 }
-                                                quality={100}
+                                                quality={85}
                                                 onError={() => handleImageError(currentIndex)}
+                                                showPlaceholder={true}
+                                                loadingClassName="blur-sm"
+                                                loadedClassName="blur-0"
                                             />
                                         </div>
                                     )}
-                                </motion.div>
-                            </AnimatePresence>
-                        </div>
+                                </div>
+                                
+                                <AnimatePresence>
+                                    {showControls && images.length > 1 && (
+                                        <>
+                                            <motion.button
+                                                initial={{ opacity: 0, x: -20 }}
+                                                animate={{ opacity: 1, x: 0 }}
+                                                exit={{ opacity: 0, x: -20 }}
+                                                onClick={handlePrevious}
+                                                className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full p-3 
+                                                    bg-white/10 hover:bg-white/20 text-white
+                                                    transform hover:scale-105 transition-all"
+                                            >
+                                                <ChevronLeft className="w-8 h-8" />
+                                            </motion.button>
+                                            <motion.button
+                                                initial={{ opacity: 0, x: 20 }}
+                                                animate={{ opacity: 1, x: 0 }}
+                                                exit={{ opacity: 0, x: 20 }}
+                                                onClick={handleNext}
+                                                className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full p-3 
+                                                    bg-white/10 hover:bg-white/20 text-white
+                                                    transform hover:scale-105 transition-all"
+                                            >
+                                                <ChevronRight className="w-8 h-8" />
+                                            </motion.button>
 
-                        <AnimatePresence>
-                            {showControls && images.length > 1 && (
-                                <>
-                                    <motion.button
-                                        initial={{ opacity: 0, x: -20 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        exit={{ opacity: 0, x: -20 }}
-                                        onClick={handlePrevious}
-                                        className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full p-3 
-                                            bg-white/10 hover:bg-white/20 text-white
-                                            transform hover:scale-105 transition-all"
-                                    >
-                                        <ChevronLeft className="w-8 h-8" />
-                                    </motion.button>
-                                    <motion.button
-                                        initial={{ opacity: 0, x: 20 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        exit={{ opacity: 0, x: 20 }}
-                                        onClick={handleNext}
-                                        className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full p-3 
-                                            bg-white/10 hover:bg-white/20 text-white
-                                            transform hover:scale-105 transition-all"
-                                    >
-                                        <ChevronRight className="w-8 h-8" />
-                                    </motion.button>
-
-                                    {/* Thumbnails at bottom */}
-                                    <motion.div
-                                        initial={{ opacity: 0, y: 20 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0, y: 20 }}
-                                        className="absolute bottom-4 left-1/2 -translate-x-1/2"
-                                    >
-                                        <div className="flex gap-2 p-2 rounded-xl bg-black/50 backdrop-blur-sm overflow-x-auto max-w-[80vw]">
-                                            {images.map((image, index) => (
-                                                <button
-                                                    key={index}
-                                                    onClick={() => api?.scrollTo(index)}
-                                                    className={`
-                                                        relative w-16 aspect-[4/3] rounded-lg overflow-hidden
-                                                        ${currentIndex === index 
-                                                            ? 'ring-2 ring-white scale-95' 
-                                                            : 'hover:ring-1 ring-white/50 hover:scale-105'}
-                                                        transition-all duration-200
-                                                    `}
-                                                >
-                                                    {imageErrors[index] ? (
-                                                        <div className="w-full h-full flex items-center justify-center">
-                                                            <ImageOff className="w-4 h-4 text-white/70" />
-                                                        </div>
-                                                    ) : (
-                                                        <Image
-                                                            src={getImageUrl(image)}
-                                                            alt={`${productName} - Miniature ${index + 1}`}
-                                                            fill={true}
-                                                            className="object-cover"
-                                                            sizes="64px"
-                                                            onError={() => handleImageError(index)}
-                                                        />
-                                                    )}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </motion.div>
-                                </>
-                            )}
+                                            <motion.div 
+                                                initial={{ opacity: 0, y: 20 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                exit={{ opacity: 0, y: 20 }}
+                                                transition={{ duration: 0.3 }}
+                                                className="py-4 px-2"
+                                            >
+                                                <div className="flex overflow-x-auto space-x-2 pb-2">
+                                                    {images.map((image, index) => (
+                                                        <button
+                                                            key={index}
+                                                            onClick={() => {
+                                                                setCurrentIndex(index);
+                                                                api?.scrollTo(index);
+                                                            }}
+                                                            className={cn(
+                                                                "relative w-16 h-16 rounded-md overflow-hidden flex-shrink-0 border-2 transition-all",
+                                                                currentIndex === index 
+                                                                    ? "border-primary" 
+                                                                    : "border-transparent hover:border-primary/50"
+                                                            )}
+                                                        >
+                                                            {imageErrors[index] ? (
+                                                                <div className="w-full h-full flex items-center justify-center">
+                                                                    <ImageOff className="w-4 h-4 text-white/70" />
+                                                                </div>
+                                                            ) : (
+                                                                <OptimizedImage
+                                                                    src={getImageUrl(image)}
+                                                                    alt={`${productName} - Miniature ${index + 1}`}
+                                                                    fill={true}
+                                                                    className="object-cover"
+                                                                    sizes="64px"
+                                                                    onError={() => handleImageError(index)}
+                                                                    quality={60}
+                                                                    showPlaceholder={true}
+                                                                />
+                                                            )}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </motion.div>
+                                        </>
+                                    )}
+                                </AnimatePresence>
+                            </motion.div>
                         </AnimatePresence>
                     </div>
                 </DialogContent>

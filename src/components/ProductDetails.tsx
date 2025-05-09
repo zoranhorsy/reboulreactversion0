@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
+// TODO: Envisager de remplacer framer-motion par des animations CSS pour réduire la taille du bundle
+// TODO: Envisager de remplacer framer-motion par des animations CSS pour réduire la taille du bundle
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
@@ -59,6 +61,11 @@ import { Calendar } from 'lucide-react'
 import { Card, CardContent } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ProductTechnicalSpecs } from '@/components/ProductTechnicalSpecs'
+import { SizeGuideManager } from '@/components/SizeGuideManager'
+import { ColorSelector } from '@/components/ColorSelector'
+import { SizeSelector } from '@/components/SizeSelector'
+import { StockIndicator } from '@/components/StockIndicator'
+import { ProductVariantPreview } from '@/components/ProductVariantPreview'
 
 // Fonction pour transformer le type de magasin en nom d'affichage
 const getStoreDisplayName = (storeType: string | undefined): string => {
@@ -182,242 +189,296 @@ export function ProductDetails({
         : [...prev, detailId]
     )
   }
+  
+  // Récupération des images par couleur pour la prévisualisation
+  const getVariantImages = () => {
+    const colorImages: Record<string, string> = {};
+    
+    // Utiliser l'image principale si pas de couleur spécifique
+    if (product.image_url) {
+      colorImages["default"] = product.image_url;
+    }
+    
+    // Essayer de récupérer les images spécifiques par couleur
+    if (product.images && Array.isArray(product.images)) {
+      product.images.forEach((img: any, index: number) => {
+        const imgUrl = typeof img === 'string' ? img : img?.url;
+        if (imgUrl) {
+          if (colors[index]) {
+            colorImages[colors[index]] = imgUrl;
+          } else if (colors.length > 0 && !colorImages[colors[0]]) {
+            // Si pas d'index correspondant mais qu'on a des couleurs, associer à la première couleur sans image
+            colorImages[colors[0]] = imgUrl;
+          }
+        }
+      });
+    }
+    
+    // S'assurer que chaque couleur a au moins une image par défaut
+    colors.forEach(color => {
+      if (!colorImages[color] && product.image_url) {
+        colorImages[color] = product.image_url;
+      }
+    });
+    
+    return colorImages;
+  };
+  
+  const variantImages = getVariantImages();
+
+  // Fonction pour déterminer le niveau de stock d'une variante
+  const getStockLevel = (color: string, size: string) => {
+    if (!color || !size) return 'unavailable';
+    
+    const variant = variants.find(v => v.color === color && v.size === size);
+    if (!variant || variant.stock <= 0) return 'unavailable';
+    if (variant.stock <= 3) return 'low';
+    if (variant.stock <= 10) return 'medium';
+    return 'high';
+  };
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* En-tête du produit */}
-      <div className="space-y-4">
-        <div className="flex items-start justify-between">
+    <div className="w-full mx-auto px-0 sm:px-4">
+      {/* En-tête principal du produit avec informations essentielles */}
+      <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm p-3 sm:p-6 mb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Colonne gauche : image principale et prévisualisation */}
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
-              {product.name}
-            </h1>
-            <p className="text-lg text-muted-foreground mt-1">
-              {product.brand}
-            </p>
-          </div>
-          <div className="text-right">
-            <div className="text-2xl font-bold">
-              {formatPrice(product.price)}
-            </div>
-            {product.old_price && (
-              <div className="text-sm text-muted-foreground line-through">
-                {formatPrice(product.old_price)}
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          {product.new && (
-            <Badge variant="default">Nouveau</Badge>
-          )}
-          {product.featured && (
-            <Badge variant="secondary">En vedette</Badge>
-          )}
-          <Badge 
-            variant="outline" 
-            className={cn(
-              "font-medium",
-              currentVariantStock === 0 && "text-destructive border-destructive",
-              currentVariantStock && currentVariantStock <= 5 && "text-orange-500 border-orange-500",
-              currentVariantStock && currentVariantStock > 5 && "text-green-500 border-green-500"
-            )}
-          >
-            {currentVariantStock === 0 && "Rupture de stock"}
-            {currentVariantStock && currentVariantStock <= 5 && "Plus que quelques exemplaires"}
-            {currentVariantStock && currentVariantStock > 5 && "En stock"}
-          </Badge>
-        </div>
-      </div>
-
-      <Separator />
-
-      {/* Sélection des variantes */}
-      <div className="space-y-6">
-        {/* Tailles */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <label className="text-sm font-medium">
-              Taille
-            </label>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-xs"
-              onClick={() => setShowSizeGuide(true)}
-            >
-              Guide des tailles
-              <ChevronRight className="h-4 w-4 ml-1" />
-            </Button>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {sizes.map((size) => {
-              const isAvailable = variants.some(
-                v => v.size === size && v.stock > 0
-              )
-              return (
-                <TooltipProvider key={size}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant={selectedSize === size ? "default" : "outline"}
-                        size="sm"
-                        className={cn(
-                          "h-9 min-w-[2.5rem]",
-                          !isAvailable && "opacity-50 cursor-not-allowed"
-                        )}
-                        onClick={() => isAvailable && onSizeChange(size)}
-                        disabled={!isAvailable}
-                      >
-                        {size}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      {isAvailable ? "Disponible" : "Rupture de stock"}
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )
-            })}
-          </div>
-        </div>
-
-        {/* Couleurs */}
-        {selectedSize && (
-          <div className="space-y-4">
-            <label className="text-sm font-medium">
-              Couleur
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {colors.map((color) => {
-                const isAvailable = variants.some(
-                  v => v.size === selectedSize && v.color === color && v.stock > 0
-                )
-                return (
-                  <TooltipProvider key={color}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant={selectedColor === color ? "default" : "outline"}
-                          size="sm"
-                          className={cn(
-                            "h-9",
-                            !isAvailable && "opacity-50 cursor-not-allowed"
-                          )}
-                          onClick={() => isAvailable && onColorChange(color)}
-                          disabled={!isAvailable}
-                        >
-                          {color}
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        {isAvailable ? "Disponible" : "Rupture de stock"}
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                )
-              })}
+            <div className="aspect-square rounded-lg overflow-hidden bg-zinc-100 dark:bg-zinc-800 relative mb-4">
+              {product.new && (
+                <Badge variant="default" className="absolute top-2 left-2 z-10">
+                  Nouveau
+                </Badge>
+              )}
+              {discount && (
+                <Badge variant="destructive" className="absolute top-2 right-2 z-10">
+                  -{discount}%
+                </Badge>
+              )}
+              <ProductVariantPreview 
+                productId={product.id}
+                colorImages={variantImages}
+                availableColors={colors}
+                selectedColor={selectedColor}
+                onColorChange={onColorChange}
+                variants={variants}
+                selectedSize={selectedSize}
+              />
             </div>
           </div>
-        )}
-
-        {/* Quantité */}
-        {selectedSize && selectedColor && currentVariantStock && currentVariantStock > 0 && (
-          <div className="space-y-4">
-            <label className="text-sm font-medium">
-              Quantité
-            </label>
-            <Select
-              value={quantity.toString()}
-              onValueChange={(value) => onQuantityChange(parseInt(value))}
-            >
-              <SelectTrigger className="w-24">
-                <SelectValue placeholder="Qté" />
-              </SelectTrigger>
-              <SelectContent>
-                {Array.from({ length: Math.min(currentVariantStock, 10) }, (_, i) => (
-                  <SelectItem key={i + 1} value={(i + 1).toString()}>
-                    {i + 1}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-      </div>
-
-      {/* Actions */}
-      <div className="flex flex-col gap-4">
-        <Button
-          size="lg"
-          className="w-full"
-          onClick={onAddToCart}
-          disabled={isInStock && (!selectedSize || !selectedColor || !currentVariantStock)}
-        >
-          <ShoppingBag className="h-5 w-5 mr-2" />
-          Ajouter au panier
-        </Button>
-
-        <div className="flex gap-4">
-          {onToggleWishlist && (
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={onToggleWishlist}
-            >
-              <Heart className={cn(
-                "h-5 w-5 mr-2",
-                isWishlist && "fill-current text-red-500"
-              )} />
-              {isWishlist ? "Retirer des favoris" : "Ajouter aux favoris"}
-            </Button>
-          )}
           
-          {onShare && (
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={onShare}
-            >
-              <Share2 className="h-5 w-5 mr-2" />
-              Partager
-            </Button>
-          )}
-        </div>
-      </div>
+          {/* Colonne droite : infos produit et sélecteurs */}
+          <div className="flex flex-col">
+            {/* En-tête produit */}
+            <div className="mb-6">
+              {product.brand && (
+                <div className="text-sm text-muted-foreground uppercase tracking-wide mb-1">
+                  {product.brand}
+                </div>
+              )}
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight mb-2">
+                {product.name}
+              </h1>
+              <div className="flex items-center gap-4 mt-2">
+                <div className="text-2xl font-bold">
+                  {formatPrice(product.price)}
+                </div>
+                {oldPrice && (
+                  <div className="text-sm text-muted-foreground line-through">
+                    {formatPrice(oldPrice)}
+                  </div>
+                )}
+              </div>
+              
+              <div className="flex items-center justify-between mt-3">
+                <div className="flex items-center gap-2">
+                  {currentVariantStock > 0 ? (
+                    <div className="flex items-center text-sm">
+                      <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
+                      <span>Plus que {currentVariantStock} en stock !</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center text-sm text-destructive">
+                      <div className="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
+                      <span>Rupture de stock</span>
+                    </div>
+                  )}
+                </div>
+                
+                {product.sku && (
+                  <span className="text-xs text-muted-foreground">
+                    Réf: {product.sku}
+                  </span>
+                )}
+              </div>
+            </div>
+            
+            <Separator className="mb-6" />
+            
+            {/* Sélecteurs de variantes */}
+            <div className="space-y-6">
+              {/* Légende unifiée des niveaux de stock */}
+              <div className="flex items-center text-xs py-2 px-3 bg-zinc-50 dark:bg-zinc-800 rounded-md mb-2 text-zinc-700 dark:text-zinc-300">
+                <div className="flex flex-col space-y-1">
+                  <div className="font-medium">Information sur la disponibilité</div>
+                  <div>Les produits indisponibles apparaissent grisés</div>
+                </div>
+              </div>
 
-      <Separator />
+              {/* Sélection de taille */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <label className="font-medium dark:text-zinc-200">
+                    Taille: {selectedSize || "Sélectionnez"}
+                  </label>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs h-8 px-2 dark:text-zinc-300 dark:hover:text-white dark:hover:bg-zinc-800"
+                    onClick={() => setShowSizeGuide(true)}
+                  >
+                    Guide des tailles
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
+                </div>
+                
+                <SizeSelector
+                  sizes={sizes}
+                  variants={variants}
+                  selectedSize={selectedSize}
+                  selectedColor={selectedColor}
+                  onSizeChange={onSizeChange}
+                />
+              </div>
+              
+              {/* Sélection de couleur */}
+              <div className="space-y-4">
+                <ColorSelector
+                  colors={colors}
+                  variants={variants}
+                  selectedColor={selectedColor}
+                  selectedSize={selectedSize}
+                  onColorChange={onColorChange}
+                  productImages={variantImages}
+                />
+              </div>
+              
+              {/* Quantité */}
+              {selectedSize && selectedColor && currentVariantStock > 0 && (
+                <div className="space-y-2">
+                  <label className="font-medium dark:text-zinc-200">
+                    Quantité
+                  </label>
+                  <div className="flex items-center w-full max-w-[200px]">
+                    <Button
+                      variant="outline"
+                      className="h-10 px-3 rounded-r-none dark:border-zinc-700 dark:bg-zinc-800 dark:hover:bg-zinc-700"
+                      onClick={() => onQuantityChange(Math.max(1, quantity - 1))}
+                      disabled={quantity <= 1}
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
+                    <div className="h-10 flex-1 border-y border-input dark:border-zinc-700 flex items-center justify-center font-medium dark:bg-zinc-800 dark:text-zinc-200">
+                      {quantity}
+                    </div>
+                    <Button
+                      variant="outline"
+                      className="h-10 px-3 rounded-l-none dark:border-zinc-700 dark:bg-zinc-800 dark:hover:bg-zinc-700"
+                      onClick={() => onQuantityChange(Math.min(currentVariantStock, quantity + 1))}
+                      disabled={quantity >= currentVariantStock}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <p className="text-sm text-muted-foreground dark:text-zinc-400">
+                    {currentVariantStock} disponible{currentVariantStock > 1 ? 's' : ''}
+                  </p>
+                </div>
+              )}
+              
+              {/* Boutons d'action */}
+              <div className="flex flex-col gap-3 mt-6">
+                <Button
+                  size="lg"
+                  className={cn(
+                    "w-full",
+                    "bg-black hover:bg-zinc-800 text-white",
+                    "dark:bg-zinc-100 dark:text-black dark:hover:bg-white"
+                  )}
+                  onClick={onAddToCart}
+                  disabled={!isInStock || !selectedSize || !selectedColor || currentVariantStock <= 0}
+                >
+                  <ShoppingBag className="h-5 w-5 mr-2" />
+                  Ajouter au panier
+                </Button>
 
-      {/* Description */}
-      {product.description && (
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold">Description</h2>
-          <div className="text-sm text-muted-foreground space-y-2">
-            {product.description}
+                <div className="flex gap-3">
+                  {onToggleWishlist && (
+                    <Button
+                      variant="outline"
+                      className="flex-1 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                      onClick={onToggleWishlist}
+                    >
+                      <Heart className={cn(
+                        "h-5 w-5 mr-2",
+                        isWishlist && "fill-current text-red-500"
+                      )} />
+                      {isWishlist ? "Retirer des favoris" : "Ajouter aux favoris"}
+                    </Button>
+                  )}
+                  
+                  {onShare && (
+                    <Button
+                      variant="outline"
+                      className="flex-1 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                      onClick={onShare}
+                    >
+                      <Share2 className="h-5 w-5 mr-2" />
+                      Partager
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      )}
-
-      {/* Caractéristiques techniques */}
-      {product.details && product.details.length > 0 && (
-        <ProductTechnicalSpecs 
-          specs={product.details.map(detail => {
-            const [name, ...descriptionParts] = detail.split(':')
-            const value = descriptionParts.join(':').trim()
-            return {
-              code: name.slice(0, 2).toUpperCase(),
-              title: name.trim(),
-              value: value,
-              description: value
-            }
-          })}
-        />
-      )}
+      </div>
+      
+      {/* Description et informations produit */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
+        {/* Description */}
+        {product.description && (
+          <div className="lg:col-span-2 space-y-4 bg-white dark:bg-zinc-900 rounded-lg shadow-sm p-4 sm:p-6">
+            <h2 className="text-lg font-semibold">Description</h2>
+            <div className="text-sm text-muted-foreground space-y-2">
+              {product.description}
+            </div>
+          </div>
+        )}
+        
+        {/* Caractéristiques techniques */}
+        {product.details && product.details.length > 0 && (
+          <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm p-4 sm:p-6">
+            <h2 className="text-lg font-semibold mb-4">Caractéristiques</h2>
+            <ProductTechnicalSpecs 
+              specs={product.details.map(detail => {
+                const [name, ...descriptionParts] = detail.split(':')
+                const value = descriptionParts.join(':').trim()
+                return {
+                  code: name.slice(0, 2).toUpperCase(),
+                  title: name.trim(),
+                  value: value,
+                  description: value
+                }
+              })}
+            />
+          </div>
+        )}
+      </div>
 
       {/* Informations de livraison */}
-      <Card>
-        <CardContent className="grid gap-4 p-6">
+      <Card className="mt-8">
+        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 sm:p-6">
           <div className="flex items-center gap-4">
             <Truck className="h-5 w-5 text-muted-foreground" />
             <div>
@@ -450,73 +511,21 @@ export function ProductDetails({
 
       {/* Guide des tailles (Drawer) */}
       <Drawer open={showSizeGuide} onOpenChange={setShowSizeGuide}>
-        <DrawerContent>
-          <DrawerHeader>
+        <DrawerContent className="max-h-[85vh]">
+          <DrawerHeader className="px-4 py-3">
             <DrawerTitle>Guide des tailles</DrawerTitle>
             <DrawerDescription>
               Trouvez votre taille parfaite avec notre guide détaillé
             </DrawerDescription>
           </DrawerHeader>
-          <div className="p-4 space-y-6">
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="border-b">
-                    <th className="py-2 px-4 text-left font-medium">Taille</th>
-                    <th className="py-2 px-4 text-left font-medium">EU</th>
-                    <th className="py-2 px-4 text-left font-medium">US</th>
-                    <th className="py-2 px-4 text-left font-medium">UK</th>
-                    <th className="py-2 px-4 text-left font-medium">CM</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr className="border-b">
-                    <td className="py-2 px-4">XS</td>
-                    <td className="py-2 px-4">36-38</td>
-                    <td className="py-2 px-4">4-6</td>
-                    <td className="py-2 px-4">8-10</td>
-                    <td className="py-2 px-4">84-88</td>
-                  </tr>
-                  <tr className="border-b">
-                    <td className="py-2 px-4">S</td>
-                    <td className="py-2 px-4">38-40</td>
-                    <td className="py-2 px-4">6-8</td>
-                    <td className="py-2 px-4">10-12</td>
-                    <td className="py-2 px-4">88-92</td>
-                  </tr>
-                  <tr className="border-b">
-                    <td className="py-2 px-4">M</td>
-                    <td className="py-2 px-4">40-42</td>
-                    <td className="py-2 px-4">8-10</td>
-                    <td className="py-2 px-4">12-14</td>
-                    <td className="py-2 px-4">92-96</td>
-                  </tr>
-                  <tr className="border-b">
-                    <td className="py-2 px-4">L</td>
-                    <td className="py-2 px-4">42-44</td>
-                    <td className="py-2 px-4">10-12</td>
-                    <td className="py-2 px-4">14-16</td>
-                    <td className="py-2 px-4">96-100</td>
-                  </tr>
-                  <tr className="border-b">
-                    <td className="py-2 px-4">XL</td>
-                    <td className="py-2 px-4">44-46</td>
-                    <td className="py-2 px-4">12-14</td>
-                    <td className="py-2 px-4">16-18</td>
-                    <td className="py-2 px-4">100-104</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            
-            <div className="space-y-2">
-              <h4 className="font-medium">Comment mesurer</h4>
-              <p className="text-sm text-muted-foreground">
-                Pour trouver votre taille idéale, mesurez votre tour de poitrine, de taille et de hanches. Comparez ensuite vos mesures avec notre tableau des tailles.
-              </p>
-            </div>
+          <div className="px-4 py-2 overflow-y-auto">
+            <SizeGuideManager 
+              productSizeChart={product.size_chart} 
+              storeType={product.store_type}
+              availableSizes={Array.from(new Set(variants.map(v => v.size)))}
+            />
           </div>
-          <DrawerFooter>
+          <DrawerFooter className="px-4 py-3 border-t">
             <DrawerClose asChild>
               <Button variant="outline">Fermer</Button>
             </DrawerClose>

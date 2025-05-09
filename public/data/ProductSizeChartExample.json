@@ -1,0 +1,40 @@
+{
+  "size_chart": [
+    {
+      "size": "XS",
+      "chest": 88,
+      "waist": 72,
+      "hips": 94
+    },
+    {
+      "size": "S",
+      "chest": 92,
+      "waist": 76,
+      "hips": 98
+    },
+    {
+      "size": "M",
+      "chest": 96,
+      "waist": 80,
+      "hips": 102
+    },
+    {
+      "size": "L",
+      "chest": 100,
+      "waist": 84,
+      "hips": 106
+    },
+    {
+      "size": "XL",
+      "chest": 104,
+      "waist": 88,
+      "hips": 110
+    },
+    {
+      "size": "XXL",
+      "chest": 108,
+      "waist": 92,
+      "hips": 114
+    }
+  ]
+} 

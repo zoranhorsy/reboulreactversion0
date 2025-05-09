@@ -4,6 +4,8 @@ import React, { useEffect, useState, useCallback } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
+// TODO: Envisager de remplacer framer-motion par des animations CSS pour réduire la taille du bundle
+// TODO: Envisager de remplacer framer-motion par des animations CSS pour réduire la taille du bundle
 import { ChevronRight, ArrowLeft, ArrowRight } from 'lucide-react'
 import { useInView } from 'react-intersection-observer'
 import { cn } from '@/lib/utils'

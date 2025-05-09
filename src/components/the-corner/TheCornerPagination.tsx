@@ -1,6 +1,7 @@
 "use client"
 
 import { ChevronLeft, ChevronRight } from "lucide-react"
+import { useCallback } from "react"
 
 interface TheCornerPaginationProps {
   currentPage: number
@@ -17,11 +18,11 @@ export function TheCornerPagination({
 }: TheCornerPaginationProps) {
   const totalPages = Math.ceil(totalItems / pageSize)
 
-  const handlePageChange = (page: number) => {
+  const handlePageChange = useCallback((page: number) => {
     if (page >= 1 && page <= totalPages) {
       onPageChange(page)
     }
-  }
+  }, [totalPages, onPageChange]);
 
   return (
     <div className="flex items-center justify-center gap-4">

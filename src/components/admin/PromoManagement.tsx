@@ -25,7 +25,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Trash2, Plus, Edit2, Check, X, Calendar, Users, Package } from "lucide-react"
-import { format } from "date-fns"
+import { format } from 'date-fns/format'
 import { fr } from "date-fns/locale"
 import { Calendar as CalendarComponent } from "@/components/ui/calendar"
 import {

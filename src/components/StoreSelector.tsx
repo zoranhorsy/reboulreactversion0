@@ -1,6 +1,8 @@
 'use client'
 
 import { motion } from 'framer-motion'
+// TODO: Envisager de remplacer framer-motion par des animations CSS pour réduire la taille du bundle
+// TODO: Envisager de remplacer framer-motion par des animations CSS pour réduire la taille du bundle
 import Link from 'next/link'
 import Image from 'next/image'
 import styles from './StoreSelector.module.css'

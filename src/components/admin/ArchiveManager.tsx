@@ -34,7 +34,7 @@ import {
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import Image from "next/image"
-import { format } from 'date-fns'
+import { format } from 'date-fns/format'
 import { fr } from 'date-fns/locale'
 import { api } from '@/lib/api'
 import {

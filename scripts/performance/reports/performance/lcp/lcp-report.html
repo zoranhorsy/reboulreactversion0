@@ -1,0 +1,675 @@
+
+  <!DOCTYPE html>
+  <html lang="fr">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rapport LCP Reboul</title>
+    <style>
+      body { font-family: system-ui, -apple-system, sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; line-height: 1.5; }
+      h1, h2, h3 { margin-top: 2em; }
+      table { width: 100%; border-collapse: collapse; margin: 1em 0; }
+      th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid #ddd; }
+      th { background-color: #f5f5f5; }
+      .metric-good { color: green; }
+      .metric-medium { color: orange; }
+      .metric-poor { color: red; }
+      .screenshot { max-width: 100%; height: auto; border: 1px solid #ddd; margin: 1em 0; }
+      .recommendations { background-color: #f8f9fa; padding: 1em; border-radius: 4px; }
+      .recommendations h3 { margin-top: 0; }
+      .page-metrics { margin-bottom: 2em; padding-bottom: 1em; border-bottom: 1px solid #eee; }
+    </style>
+  </head>
+  <body>
+    <h1>Rapport de Performance LCP Reboul</h1>
+    <p>Date du test: 5/6/2025, 8:57:38 PM</p>
+    
+    <h2>Résumé</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Page</th>
+          <th>LCP (s)</th>
+          <th>Évaluation</th>
+          <th>Élément LCP</th>
+        </tr>
+      </thead>
+      <tbody>
+        
+        <tr>
+          <td>http://localhost:3000</td>
+          <td>1.16s</td>
+          <td class="metric-good">Bon</td>
+          <td>IMG</td>
+        </tr>
+        
+        <tr>
+          <td>http://localhost:3000/catalogue</td>
+          <td>0.92s</td>
+          <td class="metric-good">Bon</td>
+          <td>IMG</td>
+        </tr>
+        
+        <tr>
+          <td>http://localhost:3000/produit/1</td>
+          <td>0.98s</td>
+          <td class="metric-good">Bon</td>
+          <td>IMG</td>
+        </tr>
+        
+        <tr>
+          <td>http://localhost:3000/checkout</td>
+          <td>1.58s</td>
+          <td class="metric-good">Bon</td>
+          <td>IMG</td>
+        </tr>
+        
+        <tr>
+          <td>http://localhost:3000/the-corner</td>
+          <td>2.88s</td>
+          <td class="metric-medium">À améliorer</td>
+          <td>IMG</td>
+        </tr>
+        
+      </tbody>
+    </table>
+    
+    <h2>Détails par page</h2>
+    
+    <div class="page-metrics">
+      <h3>http://localhost:3000</h3>
+      
+        <p>LCP: <span class="metric-good">1.16s</span></p>
+        <p>Temps de chargement total: 1.09s</p>
+        
+        
+        <h4>Élément LCP détecté:</h4>
+        <ul>
+          <li>Type: IMG</li>
+          <li>ID: Non défini</li>
+          <li>Classes: transition-opacity duration-300 ease-in-out opacity-100 w-full h-full object-contain</li>
+          <li>URL de l'image: http://localhost:3000/images/logotype_b.png</li>
+          <li>Dimensions: 1248x420px</li>
+        </ul>
+        
+        
+        <h4>Capture d'écran:</h4>
+        <img src="http___localhost_3000.png" alt="Capture d'écran de http://localhost:3000" class="screenshot">
+        
+        <h4>10 premières ressources chargées:</h4>
+        <table>
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Ressource</th>
+              <th>Taille</th>
+              <th>Temps de chargement</th>
+            </tr>
+          </thead>
+          <tbody>
+            
+            <tr>
+              <td>script</td>
+              <td>http://localhost:3000/_next/static/chunks/app-page...</td>
+              <td>30.8 KB</td>
+              <td>63 ms</td>
+            </tr>
+            
+            <tr>
+              <td>script</td>
+              <td>http://localhost:3000/_next/static/chunks/main-app...</td>
+              <td>1310.4 KB</td>
+              <td>284 ms</td>
+            </tr>
+            
+            <tr>
+              <td>script</td>
+              <td>http://localhost:3000/_next/static/chunks/app/not-...</td>
+              <td>521.6 KB</td>
+              <td>160 ms</td>
+            </tr>
+            
+            <tr>
+              <td>script</td>
+              <td>http://localhost:3000/_next/static/chunks/app/page...</td>
+              <td>1128.9 KB</td>
+              <td>237 ms</td>
+            </tr>
+            
+            <tr>
+              <td>script</td>
+              <td>http://localhost:3000/_next/static/chunks/app/layo...</td>
+              <td>1449.4 KB</td>
+              <td>268 ms</td>
+            </tr>
+            
+            <tr>
+              <td>css</td>
+              <td>http://localhost:3000/noise.png</td>
+              <td>0.5 KB</td>
+              <td>63 ms</td>
+            </tr>
+            
+            <tr>
+              <td>css</td>
+              <td>http://localhost:3000/fonts/KernelRegular.ttf</td>
+              <td>29.5 KB</td>
+              <td>13 ms</td>
+            </tr>
+            
+            <tr>
+              <td>script</td>
+              <td>http://localhost:3000/_next/static/chunks/_app-pag...</td>
+              <td>103.8 KB</td>
+              <td>44 ms</td>
+            </tr>
+            
+            <tr>
+              <td>script</td>
+              <td>http://localhost:3000/_next/static/chunks/_app-pag...</td>
+              <td>35.0 KB</td>
+              <td>21 ms</td>
+            </tr>
+            
+            <tr>
+              <td>script</td>
+              <td>http://localhost:3000/_next/static/chunks/_app-pag...</td>
+              <td>37.9 KB</td>
+              <td>21 ms</td>
+            </tr>
+            
+          </tbody>
+        </table>
+        
+        <div class="recommendations">
+          <h3>Recommandations</h3>
+          <ul>
+            
+            
+            <li>Assurez-vous que les dimensions de l'image sont spécifiées pour réduire le CLS.</li>
+          </ul>
+        </div>
+      
+    </div>
+    
+    <div class="page-metrics">
+      <h3>http://localhost:3000/catalogue</h3>
+      
+        <p>LCP: <span class="metric-good">0.92s</span></p>
+        <p>Temps de chargement total: 0.83s</p>
+        
+        
+        <h4>Élément LCP détecté:</h4>
+        <ul>
+          <li>Type: IMG</li>
+          <li>ID: Non défini</li>
+          <li>Classes: object-cover opacity-60 transition-opacity duration-500 ease-in-out</li>
+          <li>URL de l'image: http://localhost:3000/_next/image?url=%2Fimages%2Fheader%2Freboul%2F1.png&w=2048&q=75</li>
+          <li>Dimensions: 1280x280px</li>
+        </ul>
+        
+        
+        <h4>Capture d'écran:</h4>
+        <img src="http___localhost_3000_catalogue.png" alt="Capture d'écran de http://localhost:3000/catalogue" class="screenshot">
+        
+        <h4>10 premières ressources chargées:</h4>
+        <table>
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Ressource</th>
+              <th>Taille</th>
+              <th>Temps de chargement</th>
+            </tr>
+          </thead>
+          <tbody>
+            
+            <tr>
+              <td>script</td>
+              <td>http://localhost:3000/_next/static/chunks/app-page...</td>
+              <td>30.8 KB</td>
+              <td>36 ms</td>
+            </tr>
+            
+            <tr>
+              <td>script</td>
+              <td>http://localhost:3000/_next/static/chunks/app/layo...</td>
+              <td>1449.4 KB</td>
+              <td>248 ms</td>
+            </tr>
+            
+            <tr>
+              <td>script</td>
+              <td>http://localhost:3000/_next/static/chunks/main-app...</td>
+              <td>1310.4 KB</td>
+              <td>266 ms</td>
+            </tr>
+            
+            <tr>
+              <td>script</td>
+              <td>http://localhost:3000/_next/static/chunks/app/not-...</td>
+              <td>521.6 KB</td>
+              <td>148 ms</td>
+            </tr>
+            
+            <tr>
+              <td>script</td>
+              <td>http://localhost:3000/_next/static/chunks/app/cata...</td>
+              <td>1309.0 KB</td>
+              <td>231 ms</td>
+            </tr>
+            
+            <tr>
+              <td>css</td>
+              <td>http://localhost:3000/noise.png</td>
+              <td>0.5 KB</td>
+              <td>20 ms</td>
+            </tr>
+            
+            <tr>
+              <td>css</td>
+              <td>http://localhost:3000/fonts/KernelRegular.ttf</td>
+              <td>29.5 KB</td>
+              <td>34 ms</td>
+            </tr>
+            
+            <tr>
+              <td>script</td>
+              <td>http://localhost:3000/_next/static/chunks/_app-pag...</td>
+              <td>103.8 KB</td>
+              <td>263 ms</td>
+            </tr>
+            
+            <tr>
+              <td>xmlhttprequest</td>
+              <td>https://reboul-store-api-production.up.railway.app...</td>
+              <td>0.0 KB</td>
+              <td>525 ms</td>
+            </tr>
+            
+            <tr>
+              <td>xmlhttprequest</td>
+              <td>https://reboul-store-api-production.up.railway.app...</td>
+              <td>0.0 KB</td>
+              <td>786 ms</td>
+            </tr>
+            
+          </tbody>
+        </table>
+        
+        <div class="recommendations">
+          <h3>Recommandations</h3>
+          <ul>
+            
+            
+            <li>Assurez-vous que les dimensions de l'image sont spécifiées pour réduire le CLS.</li>
+          </ul>
+        </div>
+      
+    </div>
+    
+    <div class="page-metrics">
+      <h3>http://localhost:3000/produit/1</h3>
+      
+        <p>LCP: <span class="metric-good">0.98s</span></p>
+        <p>Temps de chargement total: 0.92s</p>
+        
+        
+        <h4>Élément LCP détecté:</h4>
+        <ul>
+          <li>Type: IMG</li>
+          <li>ID: Non défini</li>
+          <li>Classes: object-cover opacity-60 transition-opacity duration-500 ease-in-out</li>
+          <li>URL de l'image: http://localhost:3000/_next/image?url=%2Fimages%2Fheader%2Freboul%2F1.png&w=2048&q=75</li>
+          <li>Dimensions: 1280x280px</li>
+        </ul>
+        
+        
+        <h4>Capture d'écran:</h4>
+        <img src="http___localhost_3000_produit_1.png" alt="Capture d'écran de http://localhost:3000/produit/1" class="screenshot">
+        
+        <h4>10 premières ressources chargées:</h4>
+        <table>
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Ressource</th>
+              <th>Taille</th>
+              <th>Temps de chargement</th>
+            </tr>
+          </thead>
+          <tbody>
+            
+            <tr>
+              <td>script</td>
+              <td>http://localhost:3000/_next/static/chunks/app-page...</td>
+              <td>30.8 KB</td>
+              <td>40 ms</td>
+            </tr>
+            
+            <tr>
+              <td>script</td>
+              <td>http://localhost:3000/_next/static/chunks/app/prod...</td>
+              <td>527.1 KB</td>
+              <td>162 ms</td>
+            </tr>
+            
+            <tr>
+              <td>script</td>
+              <td>http://localhost:3000/_next/static/chunks/app/prod...</td>
+              <td>1041.1 KB</td>
+              <td>233 ms</td>
+            </tr>
+            
+            <tr>
+              <td>script</td>
+              <td>http://localhost:3000/_next/static/chunks/main-app...</td>
+              <td>1310.4 KB</td>
+              <td>286 ms</td>
+            </tr>
+            
+            <tr>
+              <td>script</td>
+              <td>http://localhost:3000/_next/static/chunks/app/not-...</td>
+              <td>521.6 KB</td>
+              <td>172 ms</td>
+            </tr>
+            
+            <tr>
+              <td>script</td>
+              <td>http://localhost:3000/_next/static/chunks/app/layo...</td>
+              <td>1449.4 KB</td>
+              <td>277 ms</td>
+            </tr>
+            
+            <tr>
+              <td>css</td>
+              <td>http://localhost:3000/noise.png</td>
+              <td>0.5 KB</td>
+              <td>76 ms</td>
+            </tr>
+            
+            <tr>
+              <td>css</td>
+              <td>http://localhost:3000/fonts/KernelRegular.ttf</td>
+              <td>29.5 KB</td>
+              <td>17 ms</td>
+            </tr>
+            
+            <tr>
+              <td>script</td>
+              <td>http://localhost:3000/_next/static/chunks/_app-pag...</td>
+              <td>103.8 KB</td>
+              <td>22 ms</td>
+            </tr>
+            
+            <tr>
+              <td>script</td>
+              <td>http://localhost:3000/_next/static/chunks/_app-pag...</td>
+              <td>47.6 KB</td>
+              <td>30 ms</td>
+            </tr>
+            
+          </tbody>
+        </table>
+        
+        <div class="recommendations">
+          <h3>Recommandations</h3>
+          <ul>
+            
+            
+            <li>Assurez-vous que les dimensions de l'image sont spécifiées pour réduire le CLS.</li>
+          </ul>
+        </div>
+      
+    </div>
+    
+    <div class="page-metrics">
+      <h3>http://localhost:3000/checkout</h3>
+      
+        <p>LCP: <span class="metric-good">1.58s</span></p>
+        <p>Temps de chargement total: 1.54s</p>
+        
+        
+        <h4>Élément LCP détecté:</h4>
+        <ul>
+          <li>Type: IMG</li>
+          <li>ID: Non défini</li>
+          <li>Classes: transition-opacity duration-300 ease-in-out opacity-100 w-full h-full object-contain</li>
+          <li>URL de l'image: http://localhost:3000/images/logotype_b.png</li>
+          <li>Dimensions: 1248x420px</li>
+        </ul>
+        
+        
+        <h4>Capture d'écran:</h4>
+        <img src="http___localhost_3000_checkout.png" alt="Capture d'écran de http://localhost:3000/checkout" class="screenshot">
+        
+        <h4>10 premières ressources chargées:</h4>
+        <table>
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Ressource</th>
+              <th>Taille</th>
+              <th>Temps de chargement</th>
+            </tr>
+          </thead>
+          <tbody>
+            
+            <tr>
+              <td>script</td>
+              <td>http://localhost:3000/_next/static/chunks/app-page...</td>
+              <td>30.8 KB</td>
+              <td>50 ms</td>
+            </tr>
+            
+            <tr>
+              <td>script</td>
+              <td>http://localhost:3000/_next/static/chunks/app/chec...</td>
+              <td>716.2 KB</td>
+              <td>236 ms</td>
+            </tr>
+            
+            <tr>
+              <td>script</td>
+              <td>http://localhost:3000/_next/static/chunks/main-app...</td>
+              <td>1310.4 KB</td>
+              <td>359 ms</td>
+            </tr>
+            
+            <tr>
+              <td>script</td>
+              <td>http://localhost:3000/_next/static/chunks/app/not-...</td>
+              <td>521.6 KB</td>
+              <td>196 ms</td>
+            </tr>
+            
+            <tr>
+              <td>script</td>
+              <td>http://localhost:3000/_next/static/chunks/app/layo...</td>
+              <td>1449.4 KB</td>
+              <td>344 ms</td>
+            </tr>
+            
+            <tr>
+              <td>css</td>
+              <td>http://localhost:3000/noise.png</td>
+              <td>0.5 KB</td>
+              <td>49 ms</td>
+            </tr>
+            
+            <tr>
+              <td>css</td>
+              <td>http://localhost:3000/fonts/KernelRegular.ttf</td>
+              <td>29.5 KB</td>
+              <td>15 ms</td>
+            </tr>
+            
+            <tr>
+              <td>script</td>
+              <td>https://js.stripe.com/v3</td>
+              <td>175.2 KB</td>
+              <td>156 ms</td>
+            </tr>
+            
+            <tr>
+              <td>script</td>
+              <td>http://localhost:3000/_next/static/chunks/_app-pag...</td>
+              <td>103.8 KB</td>
+              <td>84 ms</td>
+            </tr>
+            
+            <tr>
+              <td>fetch</td>
+              <td>http://localhost:3000/?_rsc=42y2r</td>
+              <td>0.4 KB</td>
+              <td>91 ms</td>
+            </tr>
+            
+          </tbody>
+        </table>
+        
+        <div class="recommendations">
+          <h3>Recommandations</h3>
+          <ul>
+            
+            
+            <li>Assurez-vous que les dimensions de l'image sont spécifiées pour réduire le CLS.</li>
+          </ul>
+        </div>
+      
+    </div>
+    
+    <div class="page-metrics">
+      <h3>http://localhost:3000/the-corner</h3>
+      
+        <p>LCP: <span class="metric-medium">2.88s</span></p>
+        <p>Temps de chargement total: 1.64s</p>
+        
+        
+        <h4>Élément LCP détecté:</h4>
+        <ul>
+          <li>Type: IMG</li>
+          <li>ID: Non défini</li>
+          <li>Classes: object-cover opacity-60 transition-opacity duration-500 ease-in-out</li>
+          <li>URL de l'image: http://localhost:3000/_next/image?url=%2Fimages%2Fheader%2Fthecorner%2F1.png&w=2048&q=75</li>
+          <li>Dimensions: 1280x280px</li>
+        </ul>
+        
+        
+        <h4>Capture d'écran:</h4>
+        <img src="http___localhost_3000_the_corner.png" alt="Capture d'écran de http://localhost:3000/the-corner" class="screenshot">
+        
+        <h4>10 premières ressources chargées:</h4>
+        <table>
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Ressource</th>
+              <th>Taille</th>
+              <th>Temps de chargement</th>
+            </tr>
+          </thead>
+          <tbody>
+            
+            <tr>
+              <td>script</td>
+              <td>http://localhost:3000/_next/static/chunks/app-page...</td>
+              <td>30.8 KB</td>
+              <td>69 ms</td>
+            </tr>
+            
+            <tr>
+              <td>script</td>
+              <td>http://localhost:3000/_next/static/chunks/app/the-...</td>
+              <td>811.4 KB</td>
+              <td>606 ms</td>
+            </tr>
+            
+            <tr>
+              <td>script</td>
+              <td>http://localhost:3000/_next/static/chunks/app/layo...</td>
+              <td>1449.4 KB</td>
+              <td>716 ms</td>
+            </tr>
+            
+            <tr>
+              <td>script</td>
+              <td>http://localhost:3000/_next/static/chunks/main-app...</td>
+              <td>1310.4 KB</td>
+              <td>729 ms</td>
+            </tr>
+            
+            <tr>
+              <td>script</td>
+              <td>http://localhost:3000/_next/static/chunks/app/not-...</td>
+              <td>521.6 KB</td>
+              <td>560 ms</td>
+            </tr>
+            
+            <tr>
+              <td>css</td>
+              <td>http://localhost:3000/noise.png</td>
+              <td>0.5 KB</td>
+              <td>280 ms</td>
+            </tr>
+            
+            <tr>
+              <td>css</td>
+              <td>http://localhost:3000/fonts/KernelRegular.ttf</td>
+              <td>29.5 KB</td>
+              <td>270 ms</td>
+            </tr>
+            
+            <tr>
+              <td>script</td>
+              <td>http://localhost:3000/_next/static/chunks/_app-pag...</td>
+              <td>103.8 KB</td>
+              <td>19 ms</td>
+            </tr>
+            
+            <tr>
+              <td>xmlhttprequest</td>
+              <td>https://reboul-store-api-production.up.railway.app...</td>
+              <td>0.0 KB</td>
+              <td>598 ms</td>
+            </tr>
+            
+            <tr>
+              <td>xmlhttprequest</td>
+              <td>https://reboul-store-api-production.up.railway.app...</td>
+              <td>0.0 KB</td>
+              <td>445 ms</td>
+            </tr>
+            
+          </tbody>
+        </table>
+        
+        <div class="recommendations">
+          <h3>Recommandations</h3>
+          <ul>
+            
+              <li>L'élément LCP charge trop lentement. Utilisez l'attribut <code>priority</code> sur cette image.</li>
+              <li>Préchargez cette ressource avec <code>&lt;link rel="preload" href="http://localhost:3000/_next/image?url=%2Fimages%2Fheader%2Fthecorner%2F1.png&w=2048&q=75" as="image"&gt;</code>.</li>
+              <li>Optimisez l'image avec un format plus efficace (WebP/AVIF) et une compression adaptée.</li>
+              <li>Utilisez le composant OptimizedImage avec l'attribut isLCP=true.</li>
+            
+            
+            <li>Assurez-vous que les dimensions de l'image sont spécifiées pour réduire le CLS.</li>
+          </ul>
+        </div>
+      
+    </div>
+    
+    
+    <h2>Prochaines étapes recommandées</h2>
+    <ul>
+      <li>Optimisez davantage les images LCP en utilisant des formats modernes (WebP/AVIF)</li>
+      <li>Implémentez la technique LQIP (Low Quality Image Placeholders) pour toutes les images critiques</li>
+      <li>Réduisez la taille des bundles JavaScript pour accélérer l'interactivité</li>
+      <li>Utilisez le component OptimizedImage avec l'attribut isLCP=true pour toutes les images critiques</li>
+      <li>Ajoutez des préchargements explicites pour les polices et les images héro</li>
+    </ul>
+  </body>
+  </html>
+  

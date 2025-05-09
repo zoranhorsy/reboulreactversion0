@@ -1,7 +1,9 @@
 "use client"
 
 import { Product } from "@/lib/types/product"
-import { motion } from "framer-motion"
+import { motion } from 'framer-motion'
+// TODO: Envisager de remplacer framer-motion par des animations CSS pour réduire la taille du bundle
+// TODO: Envisager de remplacer framer-motion par des animations CSS pour réduire la taille du bundle
 import { CornerProductCard } from "@/components/products/CornerProductCard"
 import { useInView } from "react-intersection-observer"
 

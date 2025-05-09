@@ -10,6 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useToast } from '@/components/ui/use-toast'
 import { fetchUserOrders, type Order as ApiOrder, type OrderItem } from '@/lib/api'
 import { useAuth } from '@/app/contexts/AuthContext'
+import Image from 'next/image'
 
 interface Order extends Omit<ApiOrder, 'items'> {
     order_number: string
@@ -157,10 +158,11 @@ export function UserOrders() {
                                                 <div key={item.id} className="flex items-center gap-4">
                                                     <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-accent/5">
                                                         {item.image_url && (
-                                                            // eslint-disable-next-line @next/next/no-img-element
-                                                            <img
+                                                            <Image
                                                                 src={item.image_url}
                                                                 alt={item.product_name}
+                                                                width={64}
+                                                                height={64}
                                                                 className="object-cover w-full h-full"
                                                             />
                                                         )}

@@ -2,6 +2,8 @@
 
 import React, { useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
+// TODO: Envisager de remplacer framer-motion par des animations CSS pour réduire la taille du bundle
+// TODO: Envisager de remplacer framer-motion par des animations CSS pour réduire la taille du bundle
 import Image from 'next/image'
 
 export function LoaderComponent() {
