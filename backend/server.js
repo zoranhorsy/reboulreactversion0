@@ -16,6 +16,9 @@ const uploadsDir = path.join(publicDir, 'uploads');
 const brandsDir = path.join(publicDir, 'brands');
 const archivesDir = path.join(publicDir, 'archives');
 
+const stripeWebhook = require('./routes/stripewebhooks');
+app.use('/api/webhooks', stripeWebhook);
+
 // Créer les dossiers s'ils n'existent pas
 [publicDir, uploadsDir, brandsDir, archivesDir].forEach(dir => {
     if (!fs.existsSync(dir)) {
@@ -192,6 +195,7 @@ const addressesRouter = require('./routes/addresses');
 const reviewsRouter = require('./routes/reviews');
 const statsRouter = require('./routes/stats');
 const archivesRouter = require('./routes/archives');
+const checkoutRouter = require('./routes/checkout');
 
 // Enregistrement des routes avec le préfixe /api
 app.use('/api/categories', categoriesRouter);
@@ -208,6 +212,7 @@ app.use('/api/admin', adminRouter);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/stats', statsRouter);
 app.use('/api/archives', archivesRouter);
+app.use('/api/checkout', checkoutRouter);
 
 // Endpoint spécial pour les statistiques des collections par store_type
 app.get('/collections/stats', async (req, res) => {
