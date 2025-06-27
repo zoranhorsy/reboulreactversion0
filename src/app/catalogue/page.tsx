@@ -1,40 +1,42 @@
 // Importer la configuration globale pour forcer le rendu dynamique
-import { dynamic, revalidate, fetchCache } from '@/app/config';
+import { dynamic, revalidate, fetchCache } from "@/app/config";
+import { defaultViewport } from "@/components/ClientPageWrapper";
+import type { Viewport } from "next";
+import type { Metadata } from "next";
+import { Suspense } from "react";
+import { LoaderComponent } from "@/components/ui/Loader";
+import { api } from "@/lib/api";
+import { CatalogueClientContent } from "@/components/catalogue/CatalogueClientContent";
+import type { Product } from "@/lib/types/product";
+import type { Category } from "@/lib/types/category";
+import type { Brand } from "@/lib/types/brand";
 
-import { ClientPageWrapper, defaultViewport } from '@/components/ClientPageWrapper';
-import type { Viewport } from 'next';
-import type { Metadata } from "next"
-import { Suspense } from "react"
-import { LoaderComponent } from "@/components/ui/Loader"
-import { api } from "@/lib/api"
-import { CatalogueClientContent } from "@/components/catalogue/CatalogueClientContent"
-import type { Product } from "@/lib/types/product"
-import type { Category } from "@/lib/types/category"
-import type { Brand } from "@/lib/types/brand"
-
-type SearchParams = { [key: string]: string | string[] | undefined }
+type SearchParams = { [key: string]: string | string[] | undefined };
 
 interface CataloguePageProps {
-  searchParams: SearchParams
+  searchParams: SearchParams;
 }
 
-export async function generateMetadata({ searchParams }: CataloguePageProps): Promise<Metadata> {
-  const category = searchParams.categories as string | undefined
-  const brand = searchParams.brand as string | undefined
-  const search = searchParams.search as string | undefined
+export async function generateMetadata({
+  searchParams,
+}: CataloguePageProps): Promise<Metadata> {
+  const category = searchParams.categories as string | undefined;
+  const brand = searchParams.brand as string | undefined;
+  const search = searchParams.search as string | undefined;
 
-  let title = "Catalogue - Reboul Store"
-  let description = "Découvrez notre sélection de vêtements premium chez Reboul Store."
+  let title = "Catalogue - Reboul Store";
+  let description =
+    "Découvrez notre sélection de vêtements premium chez Reboul Store.";
 
   if (category) {
-    title = `${category} - Catalogue Reboul Store`
-    description = `Explorez notre collection de ${category} chez Reboul Store.`
+    title = `${category} - Catalogue Reboul Store`;
+    description = `Explorez notre collection de ${category} chez Reboul Store.`;
   } else if (brand) {
-    title = `${brand} - Catalogue Reboul Store`
-    description = `Découvrez les produits ${brand} disponibles chez Reboul Store.`
+    title = `${brand} - Catalogue Reboul Store`;
+    description = `Découvrez les produits ${brand} disponibles chez Reboul Store.`;
   } else if (search) {
-    title = `Résultats pour "${search}" - Catalogue Reboul Store`
-    description = `Explorez les résultats de recherche pour "${search}" dans notre catalogue Reboul Store.`
+    title = `Résultats pour "${search}" - Catalogue Reboul Store`;
+    description = `Explorez les résultats de recherche pour "${search}" dans notre catalogue Reboul Store.`;
   }
 
   return {
@@ -54,18 +56,18 @@ export async function generateMetadata({ searchParams }: CataloguePageProps): Pr
         },
       ],
     },
-  }
+  };
 }
 
 interface CatalogueWrapperProps {
-  initialProducts: Product[]
-  initialCategories: Category[]
-  initialBrands: Brand[]
-  total: number
+  initialProducts: Product[];
+  initialCategories: Category[];
+  initialBrands: Brand[];
+  total: number;
 }
 
 function CatalogueClientWrapper(props: CatalogueWrapperProps) {
-  return <CatalogueClientContent {...props} />
+  return <CatalogueClientContent {...props} />;
 }
 
 export const viewport: Viewport = defaultViewport;
@@ -73,13 +75,13 @@ export const viewport: Viewport = defaultViewport;
 export default async function CataloguePage({
   searchParams,
 }: {
-  searchParams: SearchParams
+  searchParams: SearchParams;
 }) {
   const ensureString = (value: string | string[] | undefined): string => {
-    if (Array.isArray(value)) return value[0] || ""
-    if (value === undefined) return ""
-    return value
-  }
+    if (Array.isArray(value)) return value[0] || "";
+    if (value === undefined) return "";
+    return value;
+  };
 
   const queryParams: Record<string, string | number> = {
     page: ensureString(searchParams.page) || "1",
@@ -93,36 +95,34 @@ export default async function CataloguePage({
     minPrice: ensureString(searchParams.minPrice) || "0",
     maxPrice: ensureString(searchParams.maxPrice) || "10000",
     store_type: "reboul",
-    featured: ensureString(searchParams.featured) || "false"
-  }
+    featured: ensureString(searchParams.featured) || "false",
+  };
 
   const brandId = ensureString(searchParams.brand_id);
   if (brandId) {
     queryParams.brand_id = Number(brandId);
   }
 
-  Object.keys(queryParams).forEach(key => {
+  Object.keys(queryParams).forEach((key) => {
     if (!queryParams[key]) {
-      delete queryParams[key]
+      delete queryParams[key];
     }
-  })
+  });
 
   const [productsData, categories, brands] = await Promise.all([
     api.fetchProducts(queryParams),
     api.fetchCategories(),
     api.fetchBrands(),
-  ])
+  ]);
 
   return (
-    <ClientPageWrapper>
-      <Suspense fallback={<LoaderComponent />}>
+    <Suspense fallback={<LoaderComponent />}>
       <CatalogueClientWrapper
-        initialProducts={productsData.products}
-        initialCategories={categories}
-        initialBrands={brands}
-        total={productsData.total}
+        initialProducts={productsData.products || []}
+        initialCategories={categories || []}
+        initialBrands={brands || []}
+        total={productsData.total || 0}
       />
     </Suspense>
-    </ClientPageWrapper>
-  );}
-
+  );
+}

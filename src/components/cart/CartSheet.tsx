@@ -1,402 +1,458 @@
-"use client"
+"use client";
 
-import { useState, useCallback, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { useCart } from "@/app/contexts/CartContext"
-import { useToast } from "@/components/ui/use-toast"
-import Link from "next/link"
-import { ShoppingCart, X, Minus, Plus, GripVertical } from "lucide-react"
-import { Separator } from "@/components/ui/separator"
-import Image from 'next/image'
-import { 
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
+import { Button } from "@/components/ui/button";
+import { useCart } from "@/app/contexts/CartContext";
+import { useToast } from "@/components/ui/use-toast";
+import Link from "next/link";
+import { Separator } from "@/components/ui/separator";
+import Image from "next/image";
+import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { cn } from "@/lib/utils"
-import { usePromo } from "@/app/contexts/PromoContext"
-import Draggable from 'react-draggable'
-import '@/styles/cart.css'
+} from "@/components/ui/card";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import axios from "axios";
+import { ShoppingCart, X, Minus, Plus } from "lucide-react"
 
 interface CartSheetProps {
-  children: React.ReactNode
-  isOpen: boolean
-  onOpenChange: (isOpen: boolean) => void
+  children: React.ReactNode;
+  isOpen: boolean;
+  onOpenChange: (isOpen: boolean) => void;
 }
 
 export function CartSheet({ children, isOpen, onOpenChange }: CartSheetProps) {
-  const { items: cartItems, removeItem, updateQuantity, clearCart } = useCart()
-  const { appliedPromo, applyPromoCode, removePromoCode } = usePromo()
-  const { toast } = useToast()
-  const [promoCode, setPromoCode] = useState("")
-  const [isApplyingPromo, setIsApplyingPromo] = useState(false)
-  const [windowWidth, setWindowWidth] = useState<number>(0)
-  const [position, setPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 })
+  const {
+    items: cartItems,
+    removeItem,
+    updateQuantity,
+    clearCart,
+    subtotal,
+    shipping,
+    totalPrice,
+  } = useCart();
+  const { toast } = useToast();
+  const [promos, setPromos] = useState<any[]>([]);
+  const [loadingPromos, setLoadingPromos] = useState(false);
+  const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
+  const hasLoadedPromos = useRef(false);
+  const isMounted = useRef(false);
 
+  // Log des valeurs du panier
   useEffect(() => {
-    const updatePosition = () => {
-      if (window.innerWidth <= 768) {
-        const dockHeight = 80; // Hauteur approximative du dock
-        const cartHeight = 600; // Hauteur du panier
-        const margin = 20; // Marge par rapport au dock
-        setPosition({
-          x: 20,
-          y: window.innerHeight - dockHeight - cartHeight - margin
-        });
-      } else {
-        // Sur desktop, positionner au centre
-        setPosition({
-          x: window.innerWidth / 2 - 300,
-          y: window.innerHeight / 2 - 300
-        });
-      }
-      setWindowWidth(window.innerWidth);
-    };
+    console.log("CartSheet - Cart values:", {
+      cartItems,
+      subtotal,
+      shipping,
+      totalPrice,
+    });
+  }, [cartItems, subtotal, shipping, totalPrice]);
 
-    updatePosition();
-    window.addEventListener('resize', updatePosition);
-    return () => window.removeEventListener('resize', updatePosition);
+  // Log de l'état du composant
+  useEffect(() => {
+    console.log("CartSheet - Component state:", {
+      isOpen,
+      loadingPromos,
+      isCheckoutLoading,
+      hasLoadedPromos: hasLoadedPromos.current,
+      isMounted: isMounted.current,
+    });
+  }, [isOpen, loadingPromos, isCheckoutLoading]);
+
+  // Memoize les données du panier pour éviter les re-renders inutiles
+  const cartData = useMemo(() => {
+    console.log("CartSheet - Recalculating cartData");
+    return {
+      items: cartItems,
+      subtotal,
+      shipping,
+      totalPrice,
+    };
+  }, [cartItems, subtotal, shipping, totalPrice]);
+
+  // Fonction pour fermer le panier
+  const closeCart = useCallback(() => {
+    if (onOpenChange) {
+      onOpenChange(false);
+    }
+  }, [onOpenChange]);
+
+  // Initialisation unique
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
   }, []);
 
-  const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
-  const shipping = 5.99 // Fixed shipping cost
-  const discount = appliedPromo?.discountAmount || 0
-  const total = subtotal + shipping - discount
+  // Gestion optimisée des promos avec useCallback
+  const loadPromos = useCallback(async () => {
+    if (
+      !isMounted.current ||
+      loadingPromos ||
+      !isOpen ||
+      hasLoadedPromos.current
+    )
+      return;
 
-  // Handle apply promo code
-  const handleApplyPromoCode = useCallback(async () => {
-    if (!promoCode) {
-      toast({
-        title: "Erreur",
-        description: "Veuillez entrer un code promo",
-        variant: "destructive",
-      })
-      return
-    }
-
-    setIsApplyingPromo(true)
-    
     try {
-      const success = await applyPromoCode(promoCode, subtotal)
-      
-      if (success) {
-        toast({
-          title: "Code promo appliqué",
-          description: appliedPromo?.description || "Réduction appliquée à votre commande",
-        })
-      } else {
-        toast({
-          title: "Code promo invalide",
-          description: "Le code promo saisi n'est pas valide ou ne peut pas être appliqué",
-          variant: "destructive",
-        })
+      setLoadingPromos(true);
+      const response = await fetch("/api/promos");
+      const data = await response.json();
+
+      if (isMounted.current) {
+        setPromos(data.promos || []);
+        hasLoadedPromos.current = true;
       }
     } catch (error) {
-      toast({
-        title: "Erreur",
-        description: "Une erreur est survenue lors de l'application du code promo",
-        variant: "destructive",
-      })
+      console.error("Erreur lors du chargement des promos:", error);
+      if (isMounted.current) {
+        setPromos([]);
+      }
     } finally {
-      setIsApplyingPromo(false)
+      if (isMounted.current) {
+        setLoadingPromos(false);
+      }
     }
-  }, [promoCode, subtotal, applyPromoCode, appliedPromo, toast])
+  }, [isOpen, loadingPromos]);
 
-  const content = (
-    <Card className="border border-white/5 bg-background/50 backdrop-blur-md shadow-lg h-full text-zinc-900 dark:text-white">
-      <CardHeader className="px-3 py-2 sm:px-4 sm:py-3 border-b border-border/20 flex-shrink-0">
-        <CardTitle className="text-base sm:text-lg flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="drag-handle flex items-center p-1 rounded hover:bg-accent/10 cursor-move">
-              <GripVertical className="h-4 w-4 text-zinc-600 dark:text-white" />
-            </div>
-            <span className="select-none pointer-events-none dark:text-white">Votre panier</span>
-          </div>
-          <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8 opacity-60 hover:opacity-100" onClick={() => onOpenChange(false)}>
-            <X className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-zinc-600 dark:text-white" />
-          </Button>
-        </CardTitle>
-      </CardHeader>
-    
-      {cartItems.length === 0 ? (
-        <CardContent className="p-4 sm:p-6 text-center">
-          <ShoppingCart className="w-10 h-10 sm:w-12 sm:h-12 mx-auto text-zinc-400 dark:text-white/40 mb-3 sm:mb-4 opacity-15" />
-          <p className="text-sm sm:text-base font-medium mb-1 dark:text-white">Votre panier est vide</p>
-          <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-300 mb-3 sm:mb-4">Ajoutez des articles pour les retrouver ici</p>
-          <Button asChild onClick={() => onOpenChange(false)} className="w-full text-xs sm:text-sm" size="sm">
-            <Link href="/catalogue">Continuer mes achats</Link>
-          </Button>
-        </CardContent>
-      ) : (
-        <>
-          <CardContent className="cart-items flex-1 min-h-0 overflow-auto px-3 py-2 sm:px-4 sm:py-3">
-            <div className="space-y-2 sm:space-y-3">
-              {cartItems.map((item) => (
-                <div key={item.id} className="flex gap-2 sm:gap-3 pb-2 sm:pb-3 border-b border-border/20 last:border-b-0">
-                  {/* Product image */}
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 relative rounded-md overflow-hidden flex-shrink-0 bg-accent/5">
-                    <Image 
-                      src={item.image} 
-                      alt={item.name}
-                      className="object-cover"
-                      fill
-                      sizes="(max-width: 640px) 56px, 64px"
-                    />
-                  </div>
-                  
-                  {/* Product details */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between">
-                      <h3 className="font-medium text-xs sm:text-sm truncate dark:text-white">{item.name}</h3>
-                      <button 
-                        onClick={() => removeItem(item.id)}
-                        className="text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300 ml-1 sm:ml-2 flex-shrink-0 opacity-60 hover:opacity-100"
-                      >
-                        <X className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                      </button>
-                    </div>
-                    
-                    <div className="text-[10px] sm:text-xs text-zinc-500 dark:text-zinc-300 mt-0.5 sm:mt-1 space-y-0">
-                      {item.variant.size && (
-                        <p>Taille: <span className="font-medium text-zinc-700 dark:text-white">{item.variant.size}</span></p>
-                      )}
-                      {item.variant.color && (
-                        <p>Couleur: <span className="font-medium text-zinc-700 dark:text-white">{item.variant.colorLabel || item.variant.color}</span></p>
-                      )}
-                    </div>
-                    
-                    <div className="flex items-center justify-between mt-1.5 sm:mt-2">
-                      <div className="flex items-center gap-1">
-                        <Button 
-                          variant="outline" 
-                          size="icon" 
-                          className="h-4.5 w-4.5 sm:h-5 sm:w-5 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300"
-                          onClick={() => {
-                            if (item.quantity > 1) {
-                              try {
-                                updateQuantity(item.id, item.quantity - 1);
-                              } catch (error) {
-                                toast({
-                                  title: "Erreur",
-                                  description: error instanceof Error ? error.message : "Erreur de mise à jour de la quantité",
-                                  variant: "destructive",
-                                });
-                              }
-                            } else {
-                              removeItem(item.id);
-                            }
-                          }}
-                        >
-                          <Minus className="h-2 w-2 sm:h-2.5 sm:w-2.5" />
-                        </Button>
-                        <span className="w-5 sm:w-6 text-center text-[10px] sm:text-xs text-zinc-900 dark:text-zinc-100">{item.quantity}</span>
-                        <Button 
-                          variant="outline" 
-                          size="icon" 
-                          className="h-4.5 w-4.5 sm:h-5 sm:w-5 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300"
-                          onClick={() => {
-                            try {
-                              updateQuantity(item.id, item.quantity + 1);
-                            } catch (error) {
-                              toast({
-                                title: "Stock insuffisant",
-                                description: error instanceof Error ? error.message : "Quantité maximum atteinte",
-                                variant: "destructive",
-                              });
-                            }
-                          }}
-                          disabled={item.quantity >= item.variant.stock}
-                        >
-                          <Plus className="h-2 w-2 sm:h-2.5 sm:w-2.5" />
-                        </Button>
-                      </div>
-                      <div className="font-medium text-[10px] sm:text-sm dark:text-white">
-                        {new Intl.NumberFormat('fr-FR', {
-                          style: 'currency',
-                          currency: 'EUR'
-                        }).format(item.price * item.quantity)}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-          
-          {/* Cart Summary and Actions */}
-          <CardFooter className="border-t border-border/20 p-3 sm:p-4 space-y-3 sm:space-y-4 flex flex-col flex-shrink-0">
-            <div className="space-y-1.5 sm:space-y-2 w-full">
-              <div className="flex justify-between text-xs sm:text-sm">
-                <span className="text-zinc-500 dark:text-zinc-300">Sous-total</span>
-                <span className="text-zinc-700 dark:text-white">
-                  {new Intl.NumberFormat('fr-FR', {
-                    style: 'currency',
-                    currency: 'EUR'
-                  }).format(subtotal)}
-                </span>
-              </div>
-              <div className="flex justify-between text-xs sm:text-sm">
-                <span className="text-zinc-500 dark:text-zinc-300">Frais de livraison</span>
-                <span className="text-zinc-700 dark:text-white">
-                  {new Intl.NumberFormat('fr-FR', {
-                    style: 'currency',
-                    currency: 'EUR'
-                  }).format(shipping)}
-                </span>
-              </div>
-              {discount > 0 && (
-                <div className="flex justify-between text-xs sm:text-sm text-green-600/80">
-                  <span>Réduction</span>
-                  <span>
-                    -{new Intl.NumberFormat('fr-FR', {
-                      style: 'currency',
-                      currency: 'EUR'
-                    }).format(discount)}
-                  </span>
-                </div>
-              )}
-              <Separator className="bg-border/20" />
-              <div className="flex justify-between text-sm sm:text-base font-medium">
-                <span className="dark:text-white">Total</span>
-                <span className="dark:text-white">
-                  {new Intl.NumberFormat('fr-FR', {
-                    style: 'currency',
-                    currency: 'EUR'
-                  }).format(total)}
-                </span>
-              </div>
-            </div>
-            
-            <div className="pt-1 sm:pt-2 w-full">
-              {!appliedPromo ? (
-                <div className="flex gap-1.5 sm:gap-2 mb-2 sm:mb-3">
-                  <Input
-                    placeholder="Code promo"
-                    value={promoCode}
-                    onChange={(e) => setPromoCode(e.target.value)}
-                    className="flex-1 h-7 sm:h-8 text-xs bg-background/50"
-                  />
-                  <Button 
-                    onClick={handleApplyPromoCode}
-                    disabled={isApplyingPromo}
-                    className="flex-shrink-0 h-7 sm:h-8 text-[10px] sm:text-xs bg-zinc-900 dark:bg-zinc-100 hover:bg-zinc-800 dark:hover:bg-zinc-200 text-zinc-50 dark:text-zinc-900"
-                    size="sm"
-                  >
-                    {isApplyingPromo ? "..." : "Appliquer"}
-                  </Button>
-                </div>
-              ) : (
-                <div className="flex items-center justify-between mb-2 sm:mb-3 p-2 bg-primary/5 rounded-md">
-                  <div className="flex-1">
-                    <p className="text-xs sm:text-sm font-medium">{appliedPromo.code}</p>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground">{appliedPromo.description}</p>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 sm:h-7 sm:w-7"
-                    onClick={() => {
-                      removePromoCode()
-                      setPromoCode("")
-                      toast({
-                        title: "Code promo retiré",
-                        description: "Le code promo a été retiré de votre commande",
-                      })
-                    }}
-                  >
-                    <X className="h-3 w-3 sm:h-4 sm:w-4" />
-                  </Button>
-                </div>
-              )}
-              
-              <Button className="w-full mb-2 text-xs sm:text-sm h-7 sm:h-9 bg-zinc-900 dark:bg-zinc-100 hover:bg-zinc-800 dark:hover:bg-zinc-200 text-zinc-50 dark:text-zinc-900 hover:text-white dark:hover:text-black" asChild>
-                <Link href="/checkout" onClick={() => onOpenChange(false)}>Passer à la caisse</Link>
-              </Button>
-              
-              <div className="flex gap-1.5 sm:gap-2">
-                <Button 
-                  variant="outline" 
-                  className="flex-1 text-[10px] sm:text-xs h-7 sm:h-8 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300"
-                  size="sm"
-                  onClick={() => onOpenChange(false)}
-                >
-                  Continuer
-                </Button>
-                <Button 
-                  variant="outline"
-                  className="flex-1 text-[10px] sm:text-xs h-7 sm:h-8 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300"
-                  size="sm"
-                  onClick={() => {
-                    clearCart()
-                    toast({
-                      title: "Panier vidé",
-                      description: "Tous les articles ont été supprimés de votre panier",
-                    })
-                  }}
-                >
-                  Vider le panier
-                </Button>
-              </div>
-            </div>
-          </CardFooter>
-        </>
-      )}
-    </Card>
-  )
+  // Effet pour gérer le chargement des promos
+  useEffect(() => {
+    if (isOpen) {
+      loadPromos();
+    } else {
+      hasLoadedPromos.current = false;
+      setPromos([]);
+      setLoadingPromos(false);
+    }
+  }, [isOpen, loadPromos]);
+
+  // Fonction pour gérer le checkout
+  const handleCheckout = useCallback(async () => {
+    if (!isMounted.current || cartItems.length === 0) {
+      toast({
+        title: "Panier vide",
+        description:
+          "Votre panier est vide. Ajoutez des produits avant de continuer.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (isCheckoutLoading) return;
+
+    setIsCheckoutLoading(true);
+
+    try {
+      const cartItemsForApi = cartItems.map((item) => ({
+        id: item.id,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+        image: item.image,
+        variant: {
+          size: item.variant.size,
+          color: item.variant.color,
+          colorLabel: item.variant.colorLabel || item.variant.color,
+          stock: item.variant.stock,
+        },
+      }));
+
+      let userEmail = "zoran@reboul.com"; // Email par défaut
+
+      try {
+        const stripeEmails = localStorage.getItem("stripe_user_emails");
+        const userProfile = localStorage.getItem("user_profile");
+
+        if (stripeEmails) {
+          const emails = JSON.parse(stripeEmails);
+          if (Array.isArray(emails) && emails.length > 0) {
+            userEmail = emails[0];
+          }
+        } else if (userProfile) {
+          const profile = JSON.parse(userProfile);
+          if (profile?.email) {
+            userEmail = profile.email;
+          }
+        }
+      } catch (error) {
+        console.error("Erreur lors de la récupération de l'email:", error);
+      }
+
+      const response = await axios.post("/api/checkout/create-cart-session", {
+        items: cartItemsForApi,
+        cart_id: `cart-${Date.now()}`,
+        shipping_method: "standard",
+        force_user_email: userEmail,
+      });
+
+      if (response.data?.url) {
+        if (response.data.id && isMounted.current) {
+          localStorage.setItem("lastStripeSession", response.data.id);
+          closeCart();
+          window.location.href = response.data.url;
+        }
+      } else {
+        throw new Error("URL de paiement non trouvée dans la réponse");
+      }
+    } catch (error) {
+      console.error(
+        "Erreur lors de la création de la session de paiement:",
+        error,
+      );
+
+      if (isMounted.current) {
+        const errorMessage =
+          axios.isAxiosError(error) && error.response?.data?.error
+            ? error.response.data.error
+            : error instanceof Error
+              ? error.message
+              : "Une erreur est survenue lors de la préparation du paiement.";
+
+        toast({
+          title: "Erreur de paiement",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      }
+    } finally {
+      if (isMounted.current) {
+        setIsCheckoutLoading(false);
+      }
+    }
+  }, [cartItems, closeCart, toast, isCheckoutLoading]);
 
   return (
     <Popover open={isOpen} onOpenChange={onOpenChange}>
       <PopoverTrigger asChild>{children}</PopoverTrigger>
-      <PopoverContent 
-        className={cn(
-          "p-0 rounded-lg",
-          windowWidth >= 1024 
-            ? "fixed inset-0 w-full h-full max-w-none bg-transparent border-none" 
-            : "w-[85vw] max-w-[380px]"
-        )}
-        align={windowWidth >= 1024 ? undefined : "center"}
-        side={windowWidth >= 1024 ? undefined : "top"} 
-        sideOffset={windowWidth >= 1024 ? 0 : 80}
-        style={{ 
-          zIndex: 50,
-          position: windowWidth >= 1024 ? undefined : 'fixed',
-          bottom: windowWidth >= 1024 ? undefined : '80px',
-          left: windowWidth >= 1024 ? undefined : '50%',
-          transform: windowWidth >= 1024 ? undefined : 'translateX(-50%)'
-        }}
-      >
-        {windowWidth >= 1024 ? (
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
-            <Draggable
-              handle=".drag-handle"
-              position={position}
-              onDrag={(e, data) => {
-                const maxX = window.innerWidth - 380
-                const maxY = window.innerHeight - 600
-                setPosition({
-                  x: Math.max(0, Math.min(data.x, maxX)),
-                  y: Math.max(0, Math.min(data.y, maxY))
-                })
-              }}
-              bounds="parent"
-              defaultClassName="draggable-cart"
-              defaultClassNameDragging="dragging"
-            >
-              <div style={{ width: '380px', maxHeight: '80vh', minHeight: 'min-content' }}>
-                {content}
+      <PopoverContent className="w-80 sm:w-96 p-0 shadow-xl border-0" side="right">
+        <Card className="border shadow-lg rounded-lg overflow-hidden bg-background">
+          <CardHeader className="px-6 py-4 border-b bg-background/50">
+            <CardTitle className="text-lg flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                  <ShoppingCart className="w-4 h-4 text-primary" />
+                </div>
+                <span className="font-semibold text-foreground">Votre panier</span>
               </div>
-            </Draggable>
-          </div>
-        ) : (
-          content
-        )}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 rounded-lg hover:bg-accent/50 text-muted-foreground hover:text-foreground"
+                onClick={closeCart}
+              >
+                <X className="text-lg" />
+              </Button>
+            </CardTitle>
+          </CardHeader>
+
+          {cartItems.length === 0 ? (
+            <CardContent className="flex flex-col items-center justify-center py-12 px-6">
+              <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-accent/20 flex items-center justify-center">
+                <span className="text-2xl">🛒</span>
+              </div>
+              <p className="font-medium mb-3 text-center text-foreground">Votre panier est vide</p>
+              <p className="text-sm text-muted-foreground mb-6 text-center">
+                Ajoutez des articles pour les retrouver ici
+              </p>
+              <Button asChild onClick={closeCart} className="w-full rounded-xl py-2.5">
+                <Link href="/catalogue">Continuer mes achats</Link>
+              </Button>
+            </CardContent>
+          ) : (
+            <>
+              <CardContent className="p-6">
+                <div className="space-y-6">
+                  {cartItems.map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex gap-4 p-4 rounded-xl hover:bg-accent/30 transition-colors border border-transparent hover:border-accent/50"
+                    >
+                      <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-accent/20 flex-shrink-0">
+                        <Image
+                          src={item.image}
+                          alt={item.name}
+                          className="object-cover"
+                          fill
+                          sizes="64px"
+                        />
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        {/* Ligne 1: Nom + bouton suppression */}
+                        <div className="flex justify-between items-start mb-3">
+                          <h3 className="font-medium text-sm text-foreground leading-relaxed flex-1 pr-2">
+                            {item.name}
+                          </h3>
+                          <button
+                            onClick={() => removeItem(item.id)}
+                            className="text-muted-foreground hover:text-destructive transition-colors p-1.5 rounded-md hover:bg-destructive/10 flex-shrink-0 ml-2"
+                            title="Supprimer cet article"
+                          >
+                            <X className="text-sm" />
+                          </button>
+                        </div>
+
+                        {/* Ligne 2: Variantes (si présentes) */}
+                        {(item.variant?.size || item.variant?.color) && (
+                          <div className="text-xs text-muted-foreground mb-3">
+                            <div className="flex flex-wrap gap-2">
+                              {item.variant.size && (
+                                <span className="font-medium text-foreground bg-accent/30 px-2 py-1 rounded text-xs">
+                                  Taille: {item.variant.size}
+                                </span>
+                              )}
+                              {item.variant.color && (
+                                <span className="font-medium text-foreground bg-accent/30 px-2 py-1 rounded text-xs">
+                                  Couleur: {item.variant.colorLabel || item.variant.color}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Ligne 3: Prix seul */}
+                        <div className="mb-3">
+                          <div className="font-bold text-base text-foreground">
+                            {new Intl.NumberFormat("fr-FR", {
+                              style: "currency",
+                              currency: "EUR",
+                            }).format(item.price * item.quantity)}
+                          </div>
+                        </div>
+
+                        {/* Ligne 4: Contrôles de quantité */}
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm text-muted-foreground">Quantité:</span>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-8 w-8 rounded-lg border-accent/50 hover:bg-accent/50"
+                              onClick={() => {
+                                if (item.quantity > 1) {
+                                  updateQuantity(item.id, item.quantity - 1);
+                                } else {
+                                  removeItem(item.id);
+                                }
+                              }}
+                            >
+                              <Minus className="text-sm" />
+                            </Button>
+                            <span className="text-sm font-semibold w-8 text-center text-foreground bg-accent/20 py-1 rounded">
+                              {item.quantity}
+                            </span>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-8 w-8 rounded-lg border-accent/50 hover:bg-accent/50"
+                              onClick={() =>
+                                updateQuantity(item.id, item.quantity + 1)
+                              }
+                              disabled={
+                                item.quantity >= (item.variant?.stock || 99)
+                              }
+                            >
+                              <Plus className="text-sm" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+
+              <CardFooter className="p-6 border-t bg-background/50">
+                {/* Section des totaux */}
+                <div className="w-full space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Sous-total</span>
+                      <span className="font-medium text-foreground">
+                        {new Intl.NumberFormat("fr-FR", {
+                          style: "currency",
+                          currency: "EUR",
+                        }).format(subtotal)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">
+                        Frais de livraison
+                      </span>
+                      <span className="font-medium text-foreground">
+                        {new Intl.NumberFormat("fr-FR", {
+                          style: "currency",
+                          currency: "EUR",
+                        }).format(shipping)}
+                      </span>
+                    </div>
+                    <Separator className="my-3" />
+                    <div className="flex justify-between font-semibold text-base">
+                      <span className="text-foreground">Total</span>
+                      <span className="text-primary">
+                        {new Intl.NumberFormat("fr-FR", {
+                          style: "currency",
+                          currency: "EUR",
+                        }).format(totalPrice)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Section des boutons - bien séparée */}
+                  <div className="space-y-3 pt-4">
+                    <Button
+                      onClick={handleCheckout}
+                      disabled={isCheckoutLoading || cartItems.length === 0}
+                      className="w-full rounded-xl py-3 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
+                    >
+                      {isCheckoutLoading ? (
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin"></div>
+                          <span>Préparation...</span>
+                        </div>
+                      ) : (
+                        "Passer à la caisse"
+                      )}
+                    </Button>
+
+                    <div className="flex gap-3">
+                      <Button
+                        variant="outline"
+                        className="flex-1 rounded-xl py-2.5 border-accent/50 hover:bg-accent/50"
+                        onClick={closeCart}
+                      >
+                        Continuer
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="flex-1 rounded-xl py-2.5 border-accent/50 hover:bg-accent/50 text-muted-foreground hover:text-foreground"
+                        onClick={() => {
+                          clearCart();
+                          toast({
+                            title: "Panier vidé",
+                            description: "Tous les articles ont été supprimés",
+                          });
+                        }}
+                      >
+                        Vider
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </CardFooter>
+            </>
+          )}
+        </Card>
       </PopoverContent>
     </Popover>
-  )
+  );
 }
-
-

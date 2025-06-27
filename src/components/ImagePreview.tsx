@@ -1,38 +1,40 @@
-import type React from "react"
-import { X } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { useState, useEffect } from "react"
-import { convertToCloudinaryUrl } from "@/lib/utils"
-import { isCloudinaryUrl } from "@/config/cloudinary"
-import Image from "next/image"
-import { fixCloudinaryUrl } from "@/lib/cloudinary"
-import config from '@/config'
+import type React from "react";
+import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
+import { convertToCloudinaryUrl } from "@/lib/utils";
+import { isCloudinaryUrl } from "@/config/cloudinary";
+import Image from "next/image";
+import { fixCloudinaryUrl } from "@/lib/cloudinary";
+import config from "@/config";
 
 interface ImagePreviewProps {
-  images: string[]
-  onRemove: (index: number) => void
+  images: string[];
+  onRemove: (index: number) => void;
 }
 
-export const ImagePreview: React.FC<ImagePreviewProps> = ({ images, onRemove }) => {
-  const [processedImages, setProcessedImages] = useState<string[]>([])
+export const ImagePreview: React.FC<ImagePreviewProps> = ({
+  images,
+  onRemove,
+}) => {
+  const [processedImages, setProcessedImages] = useState<string[]>([]);
 
   useEffect(() => {
     // Log pour le débogage
-    console.log("ImagePreview - Images reçues:", images)
-    
+    console.log("ImagePreview - Images reçues:", images);
+
     // Traiter les images pour s'assurer qu'elles sont correctement formatées
     const processed = images
-      .filter(img => img && img.trim() !== '')
-      .map(img => {
+      .filter((img) => img && img.trim() !== "")
+      .map((img) => {
         // Essayer de corriger l'URL si nécessaire
         return fixCloudinaryUrl(img);
       });
-    
+
     setProcessedImages(processed);
-  }, [images])
+  }, [images]);
 
   if (!processedImages.length) {
-    return <div className="text-sm text-muted-foreground">Aucune image</div>
+    return <div className="text-sm text-muted-foreground">Aucune image</div>;
   }
 
   return (
@@ -61,9 +63,9 @@ export const ImagePreview: React.FC<ImagePreviewProps> = ({ images, onRemove }) 
               className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
               onClick={() => onRemove(index)}
             >
-              <X className="h-4 w-4" />
+              <span>×</span>
             </Button>
-            
+
             {/* Indicateur de l'index de l'image */}
             <div className="absolute bottom-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
               {index + 1}
@@ -71,13 +73,17 @@ export const ImagePreview: React.FC<ImagePreviewProps> = ({ images, onRemove }) 
           </div>
         ))}
       </div>
-      
+
       {/* Informations de débogage (à supprimer en production) */}
       {config.debug && (
         <div className="mt-4 p-2 bg-muted/20 rounded-md text-xs space-y-1 max-h-32 overflow-y-auto">
           <div className="font-semibold">Informations de débogage:</div>
-          <div className="text-muted-foreground">Nombre d&apos;images: {images.length}</div>
-          <div className="text-muted-foreground">Images traitées: {processedImages.length}</div>
+          <div className="text-muted-foreground">
+            Nombre d&apos;images: {images.length}
+          </div>
+          <div className="text-muted-foreground">
+            Images traitées: {processedImages.length}
+          </div>
           {processedImages.map((url, idx) => (
             <div key={idx} className="text-muted-foreground truncate">
               Image {idx + 1}: {url.substring(0, 50)}...
@@ -86,6 +92,5 @@ export const ImagePreview: React.FC<ImagePreviewProps> = ({ images, onRemove }) 
         </div>
       )}
     </div>
-  )
-}
-
+  );
+};

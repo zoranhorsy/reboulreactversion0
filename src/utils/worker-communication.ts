@@ -5,10 +5,10 @@
 /**
  * Types de données qui peuvent être utilisés comme Transferable
  */
-export type TransferableData = 
-  | ArrayBuffer 
-  | MessagePort 
-  | ImageBitmap 
+export type TransferableData =
+  | ArrayBuffer
+  | MessagePort
+  | ImageBitmap
   | OffscreenCanvas
   | ReadableStream
   | WritableStream
@@ -28,22 +28,22 @@ export function isArrayBuffer(obj: any): obj is ArrayBuffer {
  */
 export function extractTransferables(data: any): TransferableData[] {
   const transferables: TransferableData[] = [];
-  
+
   function scan(obj: any) {
     // Si null ou undefined, ignorer
     if (obj == null) {
       return;
     }
-    
+
     // Si c'est un ArrayBuffer, l'ajouter aux transferables
     if (isArrayBuffer(obj)) {
       transferables.push(obj);
       return;
     }
-    
+
     // Si c'est un TypedArray, extraire son buffer
     if (
-      obj instanceof Int8Array || 
+      obj instanceof Int8Array ||
       obj instanceof Uint8Array ||
       obj instanceof Uint8ClampedArray ||
       obj instanceof Int16Array ||
@@ -58,7 +58,7 @@ export function extractTransferables(data: any): TransferableData[] {
       }
       return;
     }
-    
+
     // Si c'est un autre type de Transferable, l'ajouter
     if (
       obj instanceof ImageBitmap ||
@@ -71,15 +71,15 @@ export function extractTransferables(data: any): TransferableData[] {
       transferables.push(obj);
       return;
     }
-    
+
     // Pour les objets et tableaux, parcourir récursivement
-    if (typeof obj === 'object') {
+    if (typeof obj === "object") {
       for (const key in obj) {
         scan(obj[key]);
       }
     }
   }
-  
+
   scan(data);
   return transferables;
 }
@@ -116,31 +116,27 @@ export function estimateObjectSize(object: any): number {
   while (stack.length) {
     const value = stack.pop();
 
-    if (
-      value === null ||
-      value === undefined ||
-      objectList.has(value)
-    ) {
+    if (value === null || value === undefined || objectList.has(value)) {
       continue;
     }
 
     // Ajout à l'ensemble des objets déjà comptés
-    if (typeof value === 'object') {
+    if (typeof value === "object") {
       objectList.add(value);
     }
 
     // Estimation de la taille selon le type
     switch (typeof value) {
-      case 'boolean':
+      case "boolean":
         bytes += 4;
         break;
-      case 'number':
+      case "number":
         bytes += 8;
         break;
-      case 'string':
+      case "string":
         bytes += value.length * 2;
         break;
-      case 'object':
+      case "object":
         if (Array.isArray(value)) {
           // Pour les tableaux, ajouter chaque élément à la pile
           for (const item of value) {
@@ -185,29 +181,32 @@ export function estimateObjectSize(object: any): number {
  * @param threshold Seuil en octets (par défaut 1Mo)
  * @returns Un objet contenant l'indication si fragmentation nécessaire et stratégie proposée
  */
-export function shouldFragmentData(data: any, threshold: number = 1024 * 1024): { 
-  shouldFragment: boolean; 
+export function shouldFragmentData(
+  data: any,
+  threshold: number = 1024 * 1024,
+): {
+  shouldFragment: boolean;
   estimatedSize: number;
-  strategy: 'direct' | 'chunk' | 'shared' | 'compress';
+  strategy: "direct" | "chunk" | "shared" | "compress";
 } {
   const size = estimateObjectSize(data);
-  
-  let strategy: 'direct' | 'chunk' | 'shared' | 'compress' = 'direct';
-  
+
+  let strategy: "direct" | "chunk" | "shared" | "compress" = "direct";
+
   if (size > threshold) {
     if (Array.isArray(data)) {
-      strategy = 'chunk';
-    } else if (typeof data === 'string' || data instanceof ArrayBuffer) {
-      strategy = 'compress';
+      strategy = "chunk";
+    } else if (typeof data === "string" || data instanceof ArrayBuffer) {
+      strategy = "compress";
     } else {
-      strategy = 'shared';
+      strategy = "shared";
     }
   }
-  
+
   return {
     shouldFragment: size > threshold,
     estimatedSize: size,
-    strategy
+    strategy,
   };
 }
 
@@ -236,14 +235,14 @@ type CacheEntry = {
 
 class WorkerResultCache {
   private cache: Map<string, CacheEntry> = new Map();
-  
+
   /**
    * Génère une clé de cache à partir d'un message
    */
   private generateKey(message: any): string {
     return JSON.stringify(message);
   }
-  
+
   /**
    * Met en cache le résultat d'une opération
    * @param message Le message original
@@ -255,10 +254,10 @@ class WorkerResultCache {
     this.cache.set(key, {
       result,
       timestamp: Date.now(),
-      ttl
+      ttl,
     });
   }
-  
+
   /**
    * Récupère un résultat du cache
    * @param message Le message original
@@ -267,40 +266,40 @@ class WorkerResultCache {
   get(message: any): any | undefined {
     const key = this.generateKey(message);
     const entry = this.cache.get(key);
-    
+
     if (!entry) {
       return undefined;
     }
-    
+
     // Vérifier si l'entrée est expirée
     if (Date.now() - entry.timestamp > entry.ttl) {
       this.cache.delete(key);
       return undefined;
     }
-    
+
     return entry.result;
   }
-  
+
   /**
    * Vérifie si un message existe dans le cache et est valide
    */
   has(message: any): boolean {
     const key = this.generateKey(message);
     const entry = this.cache.get(key);
-    
+
     if (!entry) {
       return false;
     }
-    
+
     // Vérifier si l'entrée est expirée
     if (Date.now() - entry.timestamp > entry.ttl) {
       this.cache.delete(key);
       return false;
     }
-    
+
     return true;
   }
-  
+
   /**
    * Nettoie les entrées expirées du cache
    */
@@ -312,7 +311,7 @@ class WorkerResultCache {
       }
     }
   }
-  
+
   /**
    * Vide le cache
    */
@@ -325,8 +324,11 @@ class WorkerResultCache {
 export const workerResultCache = new WorkerResultCache();
 
 // Nettoyer le cache périodiquement toutes les 10 minutes
-if (typeof window !== 'undefined') {
-  setInterval(() => {
-    workerResultCache.cleanup();
-  }, 10 * 60 * 1000);
-} 
+if (typeof window !== "undefined") {
+  setInterval(
+    () => {
+      workerResultCache.cleanup();
+    },
+    10 * 60 * 1000,
+  );
+}

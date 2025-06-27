@@ -1,19 +1,29 @@
-"use client"
+"use client";
 
-import React, { useState, useEffect, useCallback, useMemo, Suspense } from "react"
-import { useParams, notFound } from "next/navigation"
-import { getProductById } from "@/lib/api"
-import { ClientPageWrapper, defaultViewport } from '@/components/ClientPageWrapper';
-import type { Viewport } from 'next';
-import { useCart } from "@/app/contexts/CartContext"
-import { useFavorites } from "@/app/contexts/FavoritesContext"
-import { toast } from "@/components/ui/use-toast"
-import type { CartItem } from "@/lib/types/cart"
-import { cn } from "@/lib/utils"
-import { Heart, Share2 } from "lucide-react"
-import { ProductDetails } from "@/components/ProductDetails"
-import dynamic from "next/dynamic"
-import { Skeleton } from "@/components/ui/skeleton"
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  Suspense,
+} from "react";
+import { useParams, notFound, useRouter } from "next/navigation";
+import { getProductById } from "@/lib/api";
+import {
+  ClientPageWrapper,
+  defaultViewport,
+} from "@/components/ClientPageWrapper";
+import { Viewport } from "next";
+import { useCart } from "@/app/contexts/CartContext";
+import { useFavorites } from "@/app/contexts/FavoritesContext";
+import { toast } from "@/components/ui/use-toast";
+import type { CartItem } from "@/lib/types/cart";
+import { cn } from "@/lib/utils";
+import { ProductDetails } from "@/components/ProductDetails";
+import dynamic from "next/dynamic";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { api } from "@/lib/api";
 
 // Squelette pour le composant ProductDetails
 const ProductDetailsSkeleton = () => (
@@ -24,14 +34,18 @@ const ProductDetailsSkeleton = () => (
       <Skeleton className="h-6 w-1/2" />
       <Skeleton className="h-24 w-full" />
       <div className="flex flex-wrap gap-2 pt-2">
-        {Array(4).fill(0).map((_, i) => (
-          <Skeleton key={i} className="h-10 w-10 rounded-full" />
-        ))}
+        {Array(4)
+          .fill(0)
+          .map((_, i) => (
+            <Skeleton key={i} className="h-10 w-10 rounded-full" />
+          ))}
       </div>
       <div className="flex flex-wrap gap-2 pt-2">
-        {Array(5).fill(0).map((_, i) => (
-          <Skeleton key={i} className="h-10 w-12 rounded-md" />
-        ))}
+        {Array(5)
+          .fill(0)
+          .map((_, i) => (
+            <Skeleton key={i} className="h-10 w-12 rounded-md" />
+          ))}
       </div>
       <div className="pt-4">
         <Skeleton className="h-12 w-full" />
@@ -40,121 +54,238 @@ const ProductDetailsSkeleton = () => (
   </div>
 );
 
+// Composant pour afficher une erreur avec option de retry
+const ErrorFallback = ({ onRetry }: { onRetry: () => void }) => (
+  <div className="grid place-items-center py-12 px-4 text-center">
+    <div className="max-w-md">
+      <div className="mb-6 text-red-500 flex justify-center">
+        <span>⚠️</span>
+      </div>
+      <h2 className="text-2xl font-bold mb-4">Problème de chargement</h2>
+      <p className="text-zinc-600 dark:text-zinc-400 mb-6">
+        Nous rencontrons des difficultés pour charger ce produit. Il est
+        possible que l&apos;API soit temporairement indisponible.
+      </p>
+      <div className="flex flex-col sm:flex-row gap-4 justify-center">
+        <Button
+          onClick={() => (window.location.href = "/catalogue")}
+          variant="outline"
+          className="flex items-center gap-2"
+        >
+          <span>←</span> Retour au catalogue
+        </Button>
+        <Button onClick={onRetry} className="flex items-center gap-2">
+          <span>🔄</span> Réessayer
+        </Button>
+      </div>
+    </div>
+  </div>
+);
+
 // Chargement dynamique des composants non-critiques
-const SimilarProducts = dynamic(() => import("@/components/SimilarProducts").then(mod => ({ 
-  default: mod.SimilarProducts 
-})), {
-  loading: () => <div className="h-32 animate-pulse bg-zinc-100/10 rounded-md"></div>,
-  ssr: false
-})
+const SimilarProducts = dynamic(
+  () =>
+    import("@/components/SimilarProducts").then((mod) => ({
+      default: mod.SimilarProducts,
+    })),
+  {
+    loading: () => (
+      <div className="h-32 animate-pulse bg-zinc-100/10 rounded-md"></div>
+    ),
+    ssr: false,
+  },
+);
 
-const RecentlyViewedProducts = dynamic(() => import("@/components/RecentlyViewedProducts").then(mod => ({ 
-  default: mod.RecentlyViewedProducts 
-})), {
-  loading: () => <div className="h-32 animate-pulse bg-zinc-100/10 rounded-md"></div>,
-  ssr: false
-})
+const RecentlyViewedProducts = dynamic(
+  () =>
+    import("@/components/RecentlyViewedProducts").then((mod) => ({
+      default: mod.RecentlyViewedProducts,
+    })),
+  {
+    loading: () => (
+      <div className="h-32 animate-pulse bg-zinc-100/10 rounded-md"></div>
+    ),
+    ssr: false,
+  },
+);
 
-const ReboulPageHeader = dynamic(() => import("@/components/reboul/components/ReboulPageHeader").then(mod => ({ 
-  default: mod.ReboulPageHeader 
-})), {
-  ssr: true
-})
+const ReboulPageHeader = dynamic(
+  () =>
+    import("@/components/reboul/components/ReboulPageHeader").then((mod) => ({
+      default: mod.ReboulPageHeader,
+    })),
+  {
+    ssr: true,
+  },
+);
 
 export const viewport: Viewport = defaultViewport;
 
 export default function ProductPage() {
-  const params = useParams()
-  const id = params.id as string
-  const [product, setProduct] = useState<any>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [selectedSize, setSelectedSize] = useState("")
-  const [selectedColor, setSelectedColor] = useState("")
-  const [quantity, setQuantity] = useState(1)
-  const { addItem, openCart } = useCart()
-  const { addToFavorites, removeFromFavorites, isFavorite } = useFavorites()
-  const [isWishlist, setIsWishlist] = useState(false)
-  
+  const router = useRouter();
+  const params = useParams();
+  const id = params.id as string;
+  const [product, setProduct] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isError, setIsError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const [selectedSize, setSelectedSize] = useState("");
+  const [selectedColor, setSelectedColor] = useState("");
+  const [quantity, setQuantity] = useState(1);
+  const { addItem, openCart } = useCart();
+  const { addToFavorites, removeFromFavorites, isFavorite } = useFavorites();
+  const [isWishlist, setIsWishlist] = useState(false);
+
   // Précharger la page suivante si une ressource est définie
   useEffect(() => {
     // Précharger les données du produit dès l'hydratation
     const preloadProduct = async () => {
       try {
-        const data = await getProductById(id)
+        const data = await getProductById(id);
         if (data && data.images && data.images.length > 0) {
           // Précharger l'image principale
-          const img = new Image()
-          const imgSrc = data.images[0]
-          if (typeof imgSrc === 'string') {
-            img.src = imgSrc
-          } else if (imgSrc && typeof imgSrc === 'object') {
+          const img = new Image();
+          const imgSrc = data.images[0];
+          if (typeof imgSrc === "string") {
+            img.src = imgSrc;
+          } else if (imgSrc && typeof imgSrc === "object") {
             // Utiliser une approche plus sûre avec vérification d'existence
-            img.src = (imgSrc as any).url || (imgSrc as any).src || ''
+            img.src = (imgSrc as any).url || (imgSrc as any).src || "";
           }
         }
       } catch (error) {
         // Silencieux pour le préchargement
       }
-    }
-    
-    preloadProduct()
-  }, [id])
-  
+    };
+
+    preloadProduct();
+  }, [id]);
+
   // Mémoriser la fonction fetchProduct pour éviter les recréations
   const fetchProduct = useCallback(async () => {
     try {
       // Afficher immédiatement un état de chargement
-      setIsLoading(true)
-      
-      const data = await getProductById(id)
+      setIsLoading(true);
+      setIsError(false);
+
+      // Fonction de nouvelle tentative avec délai exponentiel
+      const fetchWithRetry = async (retryCount = 0, maxRetries = 3) => {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 secondes de timeout
+
+          // Utiliser directement getProductById car nous utilisons uniquement des IDs numériques
+          const result = await getProductById(id);
+
+          clearTimeout(timeoutId);
+          return result;
+        } catch (error) {
+          console.warn(`Tentative ${retryCount + 1} échouée:`, error);
+
+          if (retryCount < maxRetries) {
+            // Attendre avec un délai exponentiel (1s, puis 2s, puis 4s)
+            const delay = Math.pow(2, retryCount) * 1000;
+            console.log(`Nouvelle tentative dans ${delay}ms`);
+            await new Promise((resolve) => setTimeout(resolve, delay));
+            return fetchWithRetry(retryCount + 1, maxRetries);
+          }
+          throw error;
+        }
+      };
+
+      // Tenter de récupérer le produit avec retry
+      const data = await fetchWithRetry();
+
       if (!data) {
-        notFound()
-        return
+        console.error("Produit non trouvé après plusieurs tentatives");
+        setIsError(true);
+
+        // Si c'est un problème persistant, rediriger vers le catalogue après un court délai
+        if (retryCount > 2) {
+          toast({
+            title: "Produit indisponible",
+            description:
+              "Nous n'avons pas pu charger ce produit. Redirection vers le catalogue...",
+            variant: "destructive",
+          });
+          setTimeout(() => {
+            router.push("/catalogue");
+          }, 3000);
+        }
+        return;
       }
-      setProduct(data)
-      setIsWishlist(isFavorite(data.id))
-      
+
+      setProduct(data);
+      setIsWishlist(isFavorite(data.id));
+
       // Sélectionner automatiquement la première variante disponible
       if (data.variants && data.variants.length > 0) {
-        const firstAvailableVariant = data.variants.find((v: any) => v.stock > 0)
+        const firstAvailableVariant = data.variants.find(
+          (v: any) => v.stock > 0,
+        );
         if (firstAvailableVariant) {
-          setSelectedSize(firstAvailableVariant.size)
-          setSelectedColor(firstAvailableVariant.color)
+          setSelectedSize(firstAvailableVariant.size);
+          setSelectedColor(firstAvailableVariant.color);
         }
       }
     } catch (error) {
-      notFound()
+      console.error("Erreur lors de la récupération du produit:", error);
+      setIsError(true);
+
+      // Enregistrer le nombre de tentatives
+      setRetryCount((prev) => prev + 1);
+
+      // Si c'est la première erreur, on affiche un toast
+      if (retryCount === 0) {
+        toast({
+          title: "Erreur de chargement",
+          description:
+            "Impossible de charger les informations du produit. Utilisez le bouton 'Réessayer'.",
+          variant: "destructive",
+        });
+      }
+
+      // Rediriger vers le catalogue après plusieurs échecs
+      if (retryCount >= 2) {
+        toast({
+          title: "Problème persistant",
+          description:
+            "Nous n'avons pas pu accéder à ce produit. Redirection vers le catalogue...",
+          variant: "destructive",
+        });
+        setTimeout(() => router.push("/catalogue"), 3000);
+      }
     } finally {
       // Réduire le temps d'affichage du squelette pour les chargements rapides
       const timer = setTimeout(() => {
-        setIsLoading(false)
-      }, 100) // Délai minimal pour éviter le flash du chargement
-      
-      return () => clearTimeout(timer)
+        setIsLoading(false);
+      }, 300); // Délai minimal pour éviter le flash du chargement
+
+      return () => clearTimeout(timer);
     }
-  }, [id, isFavorite])
+  }, [id, isFavorite, retryCount, router]);
 
   // Charger le produit au montage du composant
   useEffect(() => {
-    fetchProduct()
-    
+    fetchProduct();
+
     // Précharger le composant des produits similaires après le chargement initial
     const timer = setTimeout(() => {
-      import("@/components/SimilarProducts")
-      import("@/components/RecentlyViewedProducts")
-    }, 1000) 
-    
-    return () => clearTimeout(timer)
-  }, [fetchProduct])
-  
+      import("@/components/SimilarProducts");
+      import("@/components/RecentlyViewedProducts");
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [fetchProduct]);
+
   const handleAddToCart = () => {
     if (!product) return;
-    
+
     // Trouver la variante sélectionnée
     const selectedVariant = product.variants?.find(
-      (v: any) => v.size === selectedSize && v.color === selectedColor
+      (v: any) => v.size === selectedSize && v.color === selectedColor,
     );
-    
+
     if (!selectedVariant) {
       toast({
         title: "Erreur",
@@ -163,7 +294,7 @@ export default function ProductPage() {
       });
       return;
     }
-    
+
     if (selectedVariant.stock < quantity) {
       toast({
         title: "Stock insuffisant",
@@ -172,7 +303,7 @@ export default function ProductPage() {
       });
       return;
     }
-    
+
     const cartItem: CartItem = {
       id: `${product.id}-${selectedSize}-${selectedColor}`,
       name: product.name,
@@ -183,33 +314,34 @@ export default function ProductPage() {
         size: selectedSize,
         color: selectedColor,
         colorLabel: selectedColor,
-        stock: selectedVariant.stock
-      }
+        stock: selectedVariant.stock,
+      },
     };
-    
+
     try {
       addItem(cartItem);
-      
+
       toast({
         title: "Produit ajouté au panier",
         description: `${product.name} (${selectedColor}, ${selectedSize}) x ${quantity}`,
       });
-      
+
       // Ouvrir le panier
       openCart();
     } catch (error) {
       // Gestion de l'erreur de stock insuffisant
       toast({
         title: "Stock insuffisant",
-        description: error instanceof Error ? error.message : "Erreur d'ajout au panier",
+        description:
+          error instanceof Error ? error.message : "Erreur d'ajout au panier",
         variant: "destructive",
       });
     }
   };
-  
+
   const toggleWishlist = useCallback(() => {
     if (!product) return;
-    
+
     if (isWishlist) {
       removeFromFavorites(product.id);
       setIsWishlist(false);
@@ -229,7 +361,7 @@ export default function ProductPage() {
 
   const handleShare = useCallback(async () => {
     if (!product) return;
-    
+
     try {
       if (navigator.share) {
         await navigator.share({
@@ -248,52 +380,52 @@ export default function ProductPage() {
       console.error("Erreur lors du partage:", error);
     }
   }, [product]);
-  
+
   // Génération des miettes de pain après le chargement du produit
   const breadcrumbs = useMemo(() => {
     if (!product) return [];
-    
+
     return [
       { label: "Accueil", href: "/" },
       { label: "Catalogue", href: "/catalogue" },
-      { label: product.category || "Produit", href: `/catalogue?category=${product.category}` },
-      { label: product.name, href: `#`, current: true }
+      {
+        label: product.category || "Produit",
+        href: `/catalogue?category=${product.category}`,
+      },
+      { label: product.name, href: `#`, current: true },
     ];
   }, [product]);
-  
+
   // Actions pour le header
   const actions = useMemo(() => {
     return [
       {
-        icon: <Heart className={cn("h-5 w-5", isWishlist ? "fill-primary" : "")} />,
+        icon: <span>♥</span>,
         label: isWishlist ? "Retirer des favoris" : "Ajouter aux favoris",
-        onClick: toggleWishlist
+        onClick: toggleWishlist,
       },
       {
-        icon: <Share2 className="h-5 w-5" />,
+        icon: <span>Share2</span>,
         label: "Partager",
-        onClick: handleShare
-      }
+        onClick: handleShare,
+      },
     ];
   }, [isWishlist, toggleWishlist, handleShare]);
+
+  const handleRetry = useCallback(() => {
+    fetchProduct();
+  }, [fetchProduct]);
 
   return (
     <ClientPageWrapper>
       <div className="min-h-screen bg-background">
-        <ReboulPageHeader 
-          title="REBOUL STORE"
-          subtitle="Collection exclusive de vêtements premium"
-          backLink="/catalogue"
-          backText="Retour au catalogue"
-          breadcrumbs={breadcrumbs}
-          actions={actions}
-        />
-
         <div className="container mx-auto px-2 sm:px-4 py-8">
           <div className="mt-8">
-            {isLoading || !product ? (
+            {isLoading ? (
               <ProductDetailsSkeleton />
-            ) : (
+            ) : isError ? (
+              <ErrorFallback onRetry={handleRetry} />
+            ) : product ? (
               <ProductDetails
                 product={product}
                 selectedSize={selectedSize}
@@ -307,43 +439,42 @@ export default function ProductPage() {
                 onToggleWishlist={toggleWishlist}
                 onShare={handleShare}
               />
+            ) : (
+              <ErrorFallback onRetry={handleRetry} />
             )}
           </div>
 
-          <div className="mt-16 sm:mt-24 space-y-12 sm:space-y-16">
-            <Suspense fallback={<div className="h-32 animate-pulse bg-zinc-100/10 rounded-md"></div>}>
-              <section>
-                <h2 className="text-2xl font-bold mb-6 sm:mb-8">Produits similaires</h2>
-                {!isLoading && product ? (
+          {!isError && !isLoading && product && (
+            <div className="mt-16 sm:mt-24 space-y-12 sm:space-y-16">
+              <Suspense
+                fallback={
+                  <div className="h-32 animate-pulse bg-zinc-100/10 rounded-md"></div>
+                }
+              >
+                <section>
+                  <h2 className="text-2xl font-bold mb-6 sm:mb-8">
+                    Produits similaires
+                  </h2>
                   <SimilarProducts currentProductId={product.id} />
-                ) : (
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {Array(4).fill(0).map((_, i) => (
-                      <Skeleton key={i} className="aspect-[3/4] rounded-xl" />
-                    ))}
-                  </div>
-                )}
-              </section>
-            </Suspense>
+                </section>
+              </Suspense>
 
-            <Suspense fallback={<div className="h-32 animate-pulse bg-zinc-100/10 rounded-md"></div>}>
-              <section>
-                <h2 className="text-2xl font-bold mb-6 sm:mb-8">Récemment consultés</h2>
-                {!isLoading && product ? (
+              <Suspense
+                fallback={
+                  <div className="h-32 animate-pulse bg-zinc-100/10 rounded-md"></div>
+                }
+              >
+                <section>
+                  <h2 className="text-2xl font-bold mb-6 sm:mb-8">
+                    Récemment consultés
+                  </h2>
                   <RecentlyViewedProducts currentProductId={product.id} />
-                ) : (
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {Array(4).fill(0).map((_, i) => (
-                      <Skeleton key={i} className="aspect-[3/4] rounded-xl" />
-                    ))}
-                  </div>
-                )}
-              </section>
-            </Suspense>
-          </div>
+                </section>
+              </Suspense>
+            </div>
+          )}
         </div>
       </div>
     </ClientPageWrapper>
-  )
+  );
 }
-

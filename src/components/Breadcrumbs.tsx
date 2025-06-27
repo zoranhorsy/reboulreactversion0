@@ -1,13 +1,11 @@
-import Link from 'next/link'
-import { ChevronRight } from 'lucide-react'
-
+import Link from "next/link";
 interface BreadcrumbItem {
-  label: string
-  href: string
+  label: string;
+  href: string;
 }
 
 interface BreadcrumbsProps {
-  items: BreadcrumbItem[]
+  items: BreadcrumbItem[];
 }
 
 export function Breadcrumbs({ items }: BreadcrumbsProps) {
@@ -16,9 +14,7 @@ export function Breadcrumbs({ items }: BreadcrumbsProps) {
       <ol className="inline-flex items-center space-x-1 md:space-x-3">
         {items.map((item, index) => (
           <li key={item.href} className="inline-flex items-center">
-            {index > 0 && (
-              <ChevronRight className="w-4 h-4 text-gray-400 mx-1" />
-            )}
+            {index > 0 && <span>→</span>}
             {index === items.length - 1 ? (
               <span className="text-gray-500" aria-current="page">
                 {item.label}
@@ -35,5 +31,5 @@ export function Breadcrumbs({ items }: BreadcrumbsProps) {
         ))}
       </ol>
     </nav>
-  )
-} 
+  );
+}

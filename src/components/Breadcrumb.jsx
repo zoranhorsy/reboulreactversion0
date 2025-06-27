@@ -1,7 +1,6 @@
-import React from 'react'
-import Link from 'next/link'
-import { ChevronRight } from 'lucide-react'
-import PropTypes from 'prop-types'
+import React from "react";
+import Link from "next/link";
+import PropTypes from "prop-types";
 
 export function Breadcrumb({ items }) {
   return (
@@ -9,13 +8,16 @@ export function Breadcrumb({ items }) {
       <ol className="inline-flex items-center space-x-1 md:space-x-3">
         {items.map((item, index) => (
           <li key={index} className="inline-flex items-center">
-            {index > 0 && <ChevronRight className="w-4 h-4 text-gray-400" />}
+            {index > 0 && <span>→</span>}
             {index === items.length - 1 ? (
               <span className="ml-1 text-sm font-medium text-gray-500 md:ml-2">
                 {item.label}
               </span>
             ) : (
-              <Link href={item.href} className="ml-1 text-sm font-medium text-blue-600 hover:text-blue-800 md:ml-2">
+              <Link
+                href={item.href}
+                className="ml-1 text-sm font-medium text-blue-600 hover:text-blue-800 md:ml-2"
+              >
                 {item.label}
               </Link>
             )}
@@ -23,7 +25,7 @@ export function Breadcrumb({ items }) {
         ))}
       </ol>
     </nav>
-  )
+  );
 }
 
 Breadcrumb.propTypes = {
@@ -31,6 +33,6 @@ Breadcrumb.propTypes = {
     PropTypes.shape({
       label: PropTypes.string.isRequired,
       href: PropTypes.string.isRequired,
-    })
+    }),
   ).isRequired,
-}
+};

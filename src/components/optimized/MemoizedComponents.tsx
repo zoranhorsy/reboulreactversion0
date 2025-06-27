@@ -1,8 +1,8 @@
-import React from 'react';
-import { ProductCard as OriginalProductCard } from '../ProductCard';
-import { WishlistButton as OriginalWishlistButton } from '../WishlistButton';
-import { SizeSelector as OriginalSizeSelector } from '../SizeSelector';
-import { ColorSelector as OriginalColorSelector } from '../ColorSelector';
+import React from "react";
+import { ProductCard as OriginalProductCard } from "../ProductCard";
+import { WishlistButton as OriginalWishlistButton } from "../WishlistButton";
+import { SizeSelector as OriginalSizeSelector } from "../SizeSelector";
+import { ColorSelector as OriginalColorSelector } from "../ColorSelector";
 
 // Version mémoïsée de ProductCard
 export const ProductCard = React.memo(OriginalProductCard);
@@ -22,4 +22,4 @@ export const ColorSelector = React.memo(OriginalColorSelector);
  * WishlistButton - Mémoïsé car son état ne change que lors du clic
  * SizeSelector - Mémoïsé car les options de tailles sont généralement statiques
  * ColorSelector - Mémoïsé car les options de couleurs sont généralement statiques
- */ 
+ */

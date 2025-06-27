@@ -1,9 +1,12 @@
-'use client'
+"use client";
 
-import { ClientPageWrapper, defaultViewport } from '@/components/ClientPageWrapper';
-import type { Viewport } from 'next';
-import { useState } from 'react'
-import { Button } from "@/components/ui/button"
+import {
+  ClientPageWrapper,
+  defaultViewport,
+} from "@/components/ClientPageWrapper";
+import type { Viewport } from "next";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
 
 interface Product {
   id: number;
@@ -13,34 +16,34 @@ interface Product {
 
 const useProducts = () => {
   const [products, setProducts] = useState<Product[]>([]);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const fetchProducts = async () => {
     setLoading(true);
-    setError('');
+    setError("");
     try {
-      const response = await fetch('/api/products');
+      const response = await fetch("/api/products");
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
       setProducts(data);
     } catch (e) {
-      setError('Failed to fetch products: ' + (e as Error).message);
+      setError("Failed to fetch products: " + (e as Error).message);
     } finally {
       setLoading(false);
     }
   };
 
-  const addProduct = async (newProduct: Omit<Product, 'id'>) => {
+  const addProduct = async (newProduct: Omit<Product, "id">) => {
     setLoading(true);
-    setError('');
+    setError("");
     try {
-      const response = await fetch('/api/products', {
-        method: 'POST',
+      const response = await fetch("/api/products", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(newProduct),
       });
@@ -50,7 +53,7 @@ const useProducts = () => {
       const addedProduct = await response.json();
       setProducts([...products, addedProduct]);
     } catch (e) {
-      setError('Failed to add product: ' + (e as Error).message);
+      setError("Failed to add product: " + (e as Error).message);
     } finally {
       setLoading(false);
     }
@@ -66,7 +69,7 @@ export default function ApiTest() {
 
   const handleAddProduct = () => {
     const newProduct = {
-      name: 'Test Product',
+      name: "Test Product",
       price: 99.99,
     };
     addProduct(newProduct);
@@ -76,8 +79,12 @@ export default function ApiTest() {
     <ClientPageWrapper>
       <div className="container mx-auto p-4">
         <h1 className="text-2xl font-bold mb-4">API Test</h1>
-        <Button onClick={fetchProducts} className="mb-4">Fetch Products</Button>
-        <Button onClick={handleAddProduct} className="mb-4 ml-2">Add Test Product</Button>
+        <Button onClick={fetchProducts} className="mb-4">
+          Fetch Products
+        </Button>
+        <Button onClick={handleAddProduct} className="mb-4 ml-2">
+          Add Test Product
+        </Button>
         {loading && <p>Loading...</p>}
         {error && <p className="text-red-500 mb-4">{error}</p>}
         <pre className="bg-gray-100 p-4 rounded">
@@ -87,4 +94,3 @@ export default function ApiTest() {
     </ClientPageWrapper>
   );
 }
-

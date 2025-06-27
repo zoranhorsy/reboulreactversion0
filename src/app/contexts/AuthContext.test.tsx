@@ -8,42 +8,42 @@ interface MockRouter {
   prefetch: (path: string) => void;
 }
 
-process.emitWarning = () => {}
+process.emitWarning = () => {};
 
-import React from "react"
-import { render, screen, act, waitFor } from "@testing-library/react"
-import "@testing-library/jest-dom"
-import { AuthProvider, useAuth } from "./AuthContext"
-import axios from "axios"
+import React from "react";
+import { render, screen, act, waitFor } from "@testing-library/react";
+import "@testing-library/jest-dom";
+import { AuthProvider, useAuth } from "./AuthContext";
+import axios from "axios";
 
 // Mock next/navigation
 jest.mock("next/navigation", () => ({
   useRouter: jest.fn(),
-}))
+}));
 
 // Mock axios
-jest.mock("axios")
+jest.mock("axios");
 
 // Mock localStorage
 const localStorageMock = (() => {
-  let store: Record<string, string> = {}
+  let store: Record<string, string> = {};
   return {
     getItem: (key: string) => store[key] || null,
     setItem: (key: string, value: string) => {
-      store[key] = value.toString()
+      store[key] = value.toString();
     },
     removeItem: (key: string) => {
-      delete store[key]
+      delete store[key];
     },
     clear: () => {
-      store = {}
+      store = {};
     },
-  }
-})()
+  };
+})();
 
 Object.defineProperty(window, "localStorage", {
   value: localStorageMock,
-})
+});
 
 // Mock router
 const mockRouter: MockRouter = {
@@ -53,156 +53,194 @@ const mockRouter: MockRouter = {
   refresh: jest.fn(),
   replace: jest.fn(),
   prefetch: jest.fn(),
-}
+};
 
 // Mock du composant qui utilise useAuth
 const TestComponent = () => {
-  const { user, isLoading, login, logout, register } = useAuth()
-  if (isLoading) return <div>Loading...</div>
+  const { user, isLoading, login, logout, register } = useAuth();
+  if (isLoading) return <div>Loading...</div>;
   return (
     <div>
       <div>{user ? `Logged in as ${user.username}` : "Not logged in"}</div>
-      <button onClick={() => login("test@example.com", "password")}>Login</button>
-      <button onClick={() => register("testuser", "test@example.com", "password")}>Register</button>
+      <button onClick={() => login("test@example.com", "password")}>
+        Login
+      </button>
+      <button
+        onClick={() => register("testuser", "test@example.com", "password")}
+      >
+        Register
+      </button>
       <button onClick={logout}>Logout</button>
     </div>
-  )
-}
+  );
+};
 
 describe("AuthContext", () => {
   beforeEach(() => {
-    jest.clearAllMocks()
-    localStorageMock.clear()
-  })
+    jest.clearAllMocks();
+    localStorageMock.clear();
+  });
 
   it("provides authentication context to child components", () => {
     render(
-      <AuthProvider router={mockRouter as MockRouter}>
+      <AuthProvider>
         <TestComponent />
       </AuthProvider>,
-    )
+    );
 
-    expect(screen.getByText("Not logged in")).toBeInTheDocument()
-  })
+    expect(screen.getByText("Not logged in")).toBeInTheDocument();
+  });
 
   it("throws an error when useAuth is used outside of AuthProvider", () => {
-    const consoleError = console.error
-    console.error = jest.fn()
+    const consoleError = console.error;
+    console.error = jest.fn();
 
-    expect(() => render(<TestComponent />)).toThrow("useAuth must be used within an AuthProvider")
+    expect(() => render(<TestComponent />)).toThrow(
+      "useAuth must be used within an AuthProvider",
+    );
 
-    console.error = consoleError
-  })
+    console.error = consoleError;
+  });
 
   it("handles successful login", async () => {
-    const mockUser = { id: "1", email: "test@example.com", username: "testuser", isAdmin: false }
-    const mockToken = "mockToken"
-    ;(axios.post as jest.Mock).mockResolvedValueOnce({ data: { user: mockUser, token: mockToken } })
+    const mockUser = {
+      id: "1",
+      email: "test@example.com",
+      username: "testuser",
+      isAdmin: false,
+    };
+    const mockToken = "mockToken";
+    (axios.post as jest.Mock).mockResolvedValueOnce({
+      data: { user: mockUser, token: mockToken },
+    });
 
     render(
-      <AuthProvider router={mockRouter as MockRouter}>
+      <AuthProvider>
         <TestComponent />
       </AuthProvider>,
-    )
+    );
 
     await act(async () => {
-      screen.getByText("Login").click()
-    })
+      screen.getByText("Login").click();
+    });
 
     await waitFor(() => {
-      expect(screen.getByText("Logged in as testuser")).toBeInTheDocument()
-    })
+      expect(screen.getByText("Logged in as testuser")).toBeInTheDocument();
+    });
 
-    expect(localStorage.getItem("token")).toBe(mockToken)
-    expect(axios.defaults.headers.common["Authorization"]).toBe(`Bearer ${mockToken}`)
-  })
+    expect(localStorage.getItem("token")).toBe(mockToken);
+    expect(axios.defaults.headers.common["Authorization"]).toBe(
+      `Bearer ${mockToken}`,
+    );
+  });
 
   it("handles successful registration", async () => {
-    const mockUser = { id: "1", email: "test@example.com", username: "testuser", isAdmin: false }
-    const mockToken = "mockToken"
-    ;(axios.post as jest.Mock).mockResolvedValueOnce({ data: { user: mockUser, token: mockToken } })
+    const mockUser = {
+      id: "1",
+      email: "test@example.com",
+      username: "testuser",
+      isAdmin: false,
+    };
+    const mockToken = "mockToken";
+    (axios.post as jest.Mock).mockResolvedValueOnce({
+      data: { user: mockUser, token: mockToken },
+    });
 
     render(
-      <AuthProvider router={mockRouter as MockRouter}>
+      <AuthProvider>
         <TestComponent />
       </AuthProvider>,
-    )
+    );
 
     await act(async () => {
-      screen.getByText("Register").click()
-    })
+      screen.getByText("Register").click();
+    });
 
     await waitFor(() => {
-      expect(screen.getByText("Logged in as testuser")).toBeInTheDocument()
-    })
+      expect(screen.getByText("Logged in as testuser")).toBeInTheDocument();
+    });
 
-    expect(localStorage.getItem("token")).toBe(mockToken)
-    expect(axios.defaults.headers.common["Authorization"]).toBe(`Bearer ${mockToken}`)
-  })
+    expect(localStorage.getItem("token")).toBe(mockToken);
+    expect(axios.defaults.headers.common["Authorization"]).toBe(
+      `Bearer ${mockToken}`,
+    );
+  });
 
   it("handles logout", async () => {
-    const mockUser = { id: "1", email: "test@example.com", username: "testuser", isAdmin: false }
-    const mockToken = "mockToken"
-    localStorage.setItem("token", mockToken)
-    ;(axios.get as jest.Mock).mockResolvedValueOnce({ data: mockUser })
+    const mockUser = {
+      id: "1",
+      email: "test@example.com",
+      username: "testuser",
+      isAdmin: false,
+    };
+    const mockToken = "mockToken";
+    localStorage.setItem("token", mockToken);
+    (axios.get as jest.Mock).mockResolvedValueOnce({ data: mockUser });
 
     render(
-      <AuthProvider router={mockRouter as MockRouter}>
+      <AuthProvider>
         <TestComponent />
       </AuthProvider>,
-    )
+    );
 
     await waitFor(() => {
-      expect(screen.getByText("Logged in as testuser")).toBeInTheDocument()
-    })
+      expect(screen.getByText("Logged in as testuser")).toBeInTheDocument();
+    });
 
     await act(async () => {
-      screen.getByText("Logout").click()
-    })
+      screen.getByText("Logout").click();
+    });
 
-    expect(screen.getByText("Not logged in")).toBeInTheDocument()
-    expect(localStorage.getItem("token")).toBeNull()
-    expect(axios.defaults.headers.common["Authorization"]).toBeUndefined()
-    expect(mockRouter.push).toHaveBeenCalledWith("/admin/login")
-  })
+    expect(screen.getByText("Not logged in")).toBeInTheDocument();
+    expect(localStorage.getItem("token")).toBeNull();
+    expect(axios.defaults.headers.common["Authorization"]).toBeUndefined();
+    expect(mockRouter.push).toHaveBeenCalledWith("/admin/login");
+  });
 
   it("checks auth status on mount when token exists", async () => {
-    const mockUser = { id: "1", email: "test@example.com", username: "testuser", isAdmin: false }
-    const mockToken = "mockToken"
-    localStorage.setItem("token", mockToken)
-    ;(axios.get as jest.Mock).mockResolvedValueOnce({ data: mockUser })
+    const mockUser = {
+      id: "1",
+      email: "test@example.com",
+      username: "testuser",
+      isAdmin: false,
+    };
+    const mockToken = "mockToken";
+    localStorage.setItem("token", mockToken);
+    (axios.get as jest.Mock).mockResolvedValueOnce({ data: mockUser });
 
     render(
-      <AuthProvider router={mockRouter as MockRouter}>
+      <AuthProvider>
         <TestComponent />
       </AuthProvider>,
-    )
+    );
 
     await waitFor(() => {
-      expect(screen.getByText("Logged in as testuser")).toBeInTheDocument()
-    })
+      expect(screen.getByText("Logged in as testuser")).toBeInTheDocument();
+    });
 
-    expect(axios.get).toHaveBeenCalledWith(expect.stringContaining("/auth/me"), expect.any(Object))
-  })
+    expect(axios.get).toHaveBeenCalledWith(
+      expect.stringContaining("/auth/me"),
+      expect.any(Object),
+    );
+  });
 
   it("handles auth check failure", async () => {
-    const mockToken = "invalidToken"
-    localStorage.setItem("token", mockToken)
-    ;(axios.get as jest.Mock).mockRejectedValueOnce(new Error("Invalid token"))
+    const mockToken = "invalidToken";
+    localStorage.setItem("token", mockToken);
+    (axios.get as jest.Mock).mockRejectedValueOnce(new Error("Invalid token"));
 
     render(
-      <AuthProvider router={mockRouter as MockRouter}>
+      <AuthProvider>
         <TestComponent />
       </AuthProvider>,
-    )
+    );
 
     await waitFor(() => {
-      expect(screen.getByText("Not logged in")).toBeInTheDocument()
-    })
+      expect(screen.getByText("Not logged in")).toBeInTheDocument();
+    });
 
-    expect(localStorage.getItem("token")).toBeNull()
-    expect(axios.defaults.headers.common["Authorization"]).toBeUndefined()
-    expect(mockRouter.push).toHaveBeenCalledWith("/admin/login")
-  })
-})
-
+    expect(localStorage.getItem("token")).toBeNull();
+    expect(axios.defaults.headers.common["Authorization"]).toBeUndefined();
+    expect(mockRouter.push).toHaveBeenCalledWith("/admin/login");
+  });
+});

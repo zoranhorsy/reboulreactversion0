@@ -1,12 +1,11 @@
-"use client"
+"use client";
 
-import { ChevronDown } from "lucide-react"
-import { useState, useRef, useEffect, useCallback } from "react"
+import { useState, useRef, useEffect, useCallback } from "react";
 
 interface TheCornerProductSortProps {
-  onSortChange: (sort: string, order: string) => void
-  initialSort?: string
-  initialOrder?: string
+  onSortChange: (sort: string, order: string) => void;
+  initialSort?: string;
+  initialOrder?: string;
 }
 
 export function TheCornerProductSort({
@@ -14,30 +13,34 @@ export function TheCornerProductSort({
   initialSort = "name",
   initialOrder = "asc",
 }: TheCornerProductSortProps) {
-  const [isOpen, setIsOpen] = useState(false)
-  const dropdownRef = useRef<HTMLDivElement>(null)
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const options = [
     { label: "Nom (A-Z)", sort: "name", order: "asc" },
     { label: "Nom (Z-A)", sort: "name", order: "desc" },
     { label: "Prix croissant", sort: "price", order: "asc" },
     { label: "Prix décroissant", sort: "price", order: "desc" },
-  ]
+  ];
 
-  const currentOption = options.find(
-    (opt) => opt.sort === initialSort && opt.order === initialOrder
-  ) || options[0]
+  const currentOption =
+    options.find(
+      (opt) => opt.sort === initialSort && opt.order === initialOrder,
+    ) || options[0];
 
   const handleClickOutside = useCallback((event: MouseEvent) => {
-    if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-      setIsOpen(false)
+    if (
+      dropdownRef.current &&
+      !dropdownRef.current.contains(event.target as Node)
+    ) {
+      setIsOpen(false);
     }
   }, []);
 
   useEffect(() => {
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [handleClickOutside])
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [handleClickOutside]);
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -46,7 +49,7 @@ export function TheCornerProductSort({
         className="flex items-center gap-2 px-4 py-2 border rounded-lg hover:bg-gray-50"
       >
         <span>{currentOption.label}</span>
-        <ChevronDown className="w-4 h-4" />
+        <span>↓</span>
       </button>
 
       {isOpen && (
@@ -56,8 +59,8 @@ export function TheCornerProductSort({
               key={`${option.sort}-${option.order}`}
               className="w-full text-left px-4 py-2 hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg"
               onClick={() => {
-                onSortChange(option.sort, option.order)
-                setIsOpen(false)
+                onSortChange(option.sort, option.order);
+                setIsOpen(false);
               }}
             >
               {option.label}
@@ -66,5 +69,5 @@ export function TheCornerProductSort({
         </div>
       )}
     </div>
-  )
-} 
+  );
+}

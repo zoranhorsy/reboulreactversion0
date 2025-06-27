@@ -2,55 +2,82 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Animation simple pour remplacer InfiniteSlider */
+@keyframes scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes scroll-reverse {
+  0% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+.animate-scroll {
+  animation: scroll 30s linear infinite;
+}
+
+.animate-scroll-reverse {
+  animation: scroll-reverse 30s linear infinite;
+}
+
 /* Importer nos utilitaires d'animation optimisés */
-@import '../styles/animation-utils.css';
+@import '@/styles/animation-utils.css';
 
 @layer base {
   :root {
     /* Couleurs de base */
-    --background: 220 30% 98%;
-    --foreground: 220 25% 2%;
+    --background: 0 0% 100%;
+    --foreground: 0 0% 3.9%;
     
     /* Couleurs des cartes */
-    --card: 220 30% 100%;
-    --card-foreground: 220 25% 2%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 3.9%;
     
     /* Couleurs des popups */
-    --popover: 220 30% 100%;
-    --popover-foreground: 220 25% 2%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 3.9%;
     
     /* Couleurs primaires */
-    --primary: 220 25% 2%;
-    --primary-foreground: 220 30% 100%;
+    --primary: 0 0% 9%;
+    --primary-foreground: 0 0% 98%;
     --primary-hover: 220 25% 5%;
     
     /* Couleurs secondaires */
-    --secondary: 220 30% 96%;
-    --secondary-foreground: 220 25% 2%;
+    --secondary: 0 0% 96.1%;
+    --secondary-foreground: 0 0% 9%;
     --secondary-hover: 220 30% 90%;
     
     /* Couleurs atténuées */
-    --muted: 220 30% 96%;
-    --muted-foreground: 220 25% 30%;
+    --muted: 0 0% 96.1%;
+    --muted-foreground: 0 0% 45.1%;
     --muted-hover: 220 30% 92%;
     
     /* Couleurs d'accent */
-    --accent: 220 30% 96%;
-    --accent-foreground: 220 25% 2%;
+    --accent: 0 0% 96.1%;
+    --accent-foreground: 0 0% 9%;
     --accent-hover: 220 30% 90%;
     
     /* Couleurs destructives */
-    --destructive: 0 85% 60%;
-    --destructive-foreground: 220 30% 100%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
     --destructive-hover: 0 85% 55%;
     
     /* Couleurs des bordures et inputs */
-    --border: 220 30% 90%;
-    --input: 220 30% 90%;
-    --ring: 220 25% 2%;
+    --border: 0 0% 89.8%;
+    --input: 0 0% 89.8%;
+    --ring: 0 0% 3.9%;
     
     /* Radius par défaut */
-    --radius: 0.75rem;
+    --radius: 0.5rem;
 
     --sidebar-background: 0 0% 9%;
     --sidebar-foreground: 0 0% 98%;
@@ -60,50 +87,55 @@
     --sidebar-accent-foreground: 0 0% 98%;
     --sidebar-border: 0 0% 13%;
     --sidebar-ring: 0 0% 83%;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
   }
 
   .dark {
     /* Couleurs de base - Dark */
-    --background: 240 5% 8%;
-    --foreground: 240 5% 100%;
+    --background: 0 0% 3.9%;
+    --foreground: 0 0% 98%;
     
     /* Couleurs des cartes - Dark */
-    --card: 240 5% 8%;
-    --card-foreground: 240 5% 100%;
+    --card: 0 0% 3.9%;
+    --card-foreground: 0 0% 98%;
     
     /* Couleurs des popups - Dark */
-    --popover: 240 5% 8%;
-    --popover-foreground: 240 5% 100%;
+    --popover: 0 0% 3.9%;
+    --popover-foreground: 0 0% 98%;
     
     /* Couleurs primaires - Dark */
-    --primary: 240 5% 100%;
-    --primary-foreground: 240 5% 2%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 9%;
     --primary-hover: 240 5% 95%;
     
     /* Couleurs secondaires - Dark */
-    --secondary: 240 5% 15%;
-    --secondary-foreground: 240 5% 100%;
+    --secondary: 0 0% 14.9%;
+    --secondary-foreground: 0 0% 98%;
     --secondary-hover: 240 5% 20%;
     
     /* Couleurs atténuées - Dark */
-    --muted: 240 5% 15%;
-    --muted-foreground: 240 5% 80%;
+    --muted: 0 0% 14.9%;
+    --muted-foreground: 0 0% 63.9%;
     --muted-hover: 240 5% 20%;
     
     /* Couleurs d'accent - Dark */
-    --accent: 240 5% 15%;
-    --accent-foreground: 240 5% 100%;
+    --accent: 0 0% 14.9%;
+    --accent-foreground: 0 0% 98%;
     --accent-hover: 240 5% 20%;
     
     /* Couleurs destructives - Dark */
-    --destructive: 0 65% 30%;
-    --destructive-foreground: 240 5% 100%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
     --destructive-hover: 0 65% 25%;
     
     /* Couleurs des bordures et inputs - Dark */
-    --border: 240 5% 15%;
-    --input: 240 5% 15%;
-    --ring: 240 5% 85%;
+    --border: 0 0% 14.9%;
+    --input: 0 0% 14.9%;
+    --ring: 0 0% 83.1%;
 
     --sidebar-background: 0 0% 9%;
     --sidebar-foreground: 0 0% 98%;
@@ -113,6 +145,11 @@
     --sidebar-accent-foreground: 0 0% 98%;
     --sidebar-border: 0 0% 13%;
     --sidebar-ring: 0 0% 83%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
   }
 }
 
@@ -161,11 +198,11 @@
 /* Styles de base */
 @layer base {
   * {
-    @apply border-border;
+    @apply border-[hsl(var(--border))];
   }
 
   body {
-    @apply gradient-surface text-foreground antialiased;
+    @apply bg-background text-foreground antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 
@@ -270,3 +307,20 @@
   }
 }
 
+.stable-layout,
+.stable-layout *:not([data-radix-popper-content-wrapper]):not([data-radix-popper-content]):not([data-radix-dropdown-menu-content]):not([data-radix-hover-card-content]):not([data-radix-tooltip-content]):not([data-radix-popover-content]) {
+  contain: none !important;
+  will-change: auto !important;
+  transform: none !important;
+}
+
+
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}

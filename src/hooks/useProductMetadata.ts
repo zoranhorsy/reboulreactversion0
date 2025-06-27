@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { api } from '@/lib/api';
+import { useState, useEffect } from "react";
+import { api } from "@/lib/api";
 
 /**
  * Hook pour charger et mettre en cache les métadonnées des produits (marques et catégories)
@@ -17,19 +17,25 @@ export function useProductMetadata() {
       try {
         const [brandsData, categoriesData] = await Promise.all([
           api.fetchBrands(),
-          api.fetchCategories()
+          api.fetchCategories(),
         ]);
 
         // Transformer les données en map pour un accès facile par ID
-        const brandsMap = brandsData.reduce((acc, brand) => {
-          acc[brand.id] = brand.name;
-          return acc;
-        }, {} as Record<number, string>);
+        const brandsMap = brandsData.reduce(
+          (acc, brand) => {
+            acc[brand.id] = brand.name;
+            return acc;
+          },
+          {} as Record<number, string>,
+        );
 
-        const categoriesMap = categoriesData.reduce((acc, category) => {
-          acc[category.id] = category.name;
-          return acc;
-        }, {} as Record<number, string>);
+        const categoriesMap = categoriesData.reduce(
+          (acc, category) => {
+            acc[category.id] = category.name;
+            return acc;
+          },
+          {} as Record<number, string>,
+        );
 
         setBrands(brandsMap);
         setCategories(categoriesMap);
@@ -46,4 +52,4 @@ export function useProductMetadata() {
   }, []);
 
   return { brands, categories, isLoading, error };
-} 
+}

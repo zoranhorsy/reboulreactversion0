@@ -1,43 +1,54 @@
 #!/usr/bin/env node
 
 const esbuild = require('esbuild');
-const { globSync } = require('glob');
 const path = require('path');
 const fs = require('fs');
 
-// Configuration
-const WORKERS_DIR = path.join(__dirname, '../src/workers');
-const PUBLIC_DIR = path.join(__dirname, '../public/workers');
+// Liste des workers à compiler
+const workers = [
+  'cartWorker',
+  'filterWorker',
+  'imageWorker',
+  'priorityWorker'
+];
 
-// Créer le répertoire public/workers s'il n'existe pas
-if (!fs.existsSync(PUBLIC_DIR)) {
-  fs.mkdirSync(PUBLIC_DIR, { recursive: true });
-}
+// Configuration de base pour esbuild
+const baseConfig = {
+  bundle: true,
+  minify: true,
+  sourcemap: true,
+  target: ['es2020'],
+  format: 'iife',
+  platform: 'browser',
+};
 
-// Trouvez tous les fichiers worker
-const workerFiles = globSync('src/workers/**/*.ts');
-
-// Compilez chaque worker
-workerFiles.forEach(async (workerFile) => {
-  const fileName = path.basename(workerFile, '.ts');
-  const outfile = path.join(PUBLIC_DIR, `${fileName}.js`);
-  
+async function buildWorkers() {
   try {
-    await esbuild.build({
-      entryPoints: [workerFile],
-      bundle: true,
-      minify: true,
-      sourcemap: true,
-      target: ['es2020'],
-      outfile,
-      format: 'iife',
-    });
-    
-    console.log(`✅ Compiled: ${fileName}.js`);
+    // Créer le dossier public/workers s'il n'existe pas
+    const outputDir = path.join(process.cwd(), 'public', 'workers');
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
+
+    // Compiler chaque worker
+    for (const worker of workers) {
+      const entryPoint = path.join(process.cwd(), 'src', 'workers', `${worker}.ts`);
+      const outfile = path.join(outputDir, `${worker}.js`);
+
+      await esbuild.build({
+        ...baseConfig,
+        entryPoints: [entryPoint],
+        outfile,
+      });
+
+      console.log(`✅ Worker compilé: ${worker}`);
+    }
+
+    console.log('🎉 Tous les workers ont été compilés avec succès!');
   } catch (error) {
-    console.error(`❌ Error compiling ${fileName}.js:`, error);
+    console.error('❌ Erreur lors de la compilation des workers:', error);
     process.exit(1);
   }
-});
+}
 
-console.log('All workers compiled successfully 🚀'); 
+buildWorkers(); 

@@ -1,29 +1,28 @@
-import React from 'react'
-import { Button } from "@/components/ui/button"
+import React from "react";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { Separator } from "@/components/ui/separator"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Input } from "@/components/ui/input"
-import { Search } from "lucide-react"
-import type { Category } from "@/lib/types/category"
-import type { Brand } from "@/lib/types/brand"
-import type { SearchParams } from "@/lib/types/search"
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Input } from "@/components/ui/input";
+import type { Category } from "@/lib/types/category";
+import type { Brand } from "@/lib/types/brand";
+import type { SearchParams } from "@/lib/types/search";
 
 interface FilterSidebarProps {
-  categories: Category[]
-  brands: Brand[]
-  colors: string[]
-  sizes: string[]
-  storeTypes: string[]
-  filters: SearchParams
-  updateFilter: (filters: Partial<SearchParams>) => void
-  resetFilters: () => void
+  categories: Category[];
+  brands: Brand[];
+  colors: string[];
+  sizes: string[];
+  storeTypes: string[];
+  filters: SearchParams;
+  updateFilter: (filters: Partial<SearchParams>) => void;
+  resetFilters: () => void;
 }
 
 export function FilterSidebar({
@@ -37,16 +36,16 @@ export function FilterSidebar({
   resetFilters,
 }: FilterSidebarProps) {
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
-    updateFilter({ search: event.target.value })
-  }
+    updateFilter({ search: event.target.value });
+  };
 
   return (
     <div className="h-full w-full max-w-xs border-r bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="p-4 pb-0">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold tracking-tight">Filtres</h2>
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             onClick={resetFilters}
             className="h-8 px-2 text-xs"
           >
@@ -56,7 +55,7 @@ export function FilterSidebar({
 
         {/* Barre de recherche */}
         <div className="relative mb-4">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <span>🔍</span>
           <Input
             placeholder="Rechercher un produit..."
             className="pl-8 bg-muted/50"
@@ -101,9 +100,15 @@ export function FilterSidebar({
               {categories.slice(0, 6).map((category) => (
                 <div key={category.id} className="flex items-center space-x-2">
                   <Button
-                    variant={filters.category === category.id.toString() ? "default" : "ghost"}
+                    variant={
+                      filters.category === category.id.toString()
+                        ? "default"
+                        : "ghost"
+                    }
                     className="w-full justify-start"
-                    onClick={() => updateFilter({ category: category.id.toString() })}
+                    onClick={() =>
+                      updateFilter({ category: category.id.toString() })
+                    }
                   >
                     {category.name}
                   </Button>
@@ -111,13 +116,18 @@ export function FilterSidebar({
               ))}
             </div>
             {categories.length > 6 && (
-              <Select onValueChange={(value) => updateFilter({ category: value })}>
-                <SelectTrigger className="w-full mt-2">
+              <Select
+                onValueChange={(value) => updateFilter({ category: value })}
+              >
+                <SelectTrigger>
                   <SelectValue placeholder="Plus de catégories..." />
                 </SelectTrigger>
                 <SelectContent>
                   {categories.map((category) => (
-                    <SelectItem key={category.id} value={category.id.toString()}>
+                    <SelectItem
+                      key={category.id}
+                      value={category.id.toString()}
+                    >
                       {category.name}
                     </SelectItem>
                   ))}
@@ -131,7 +141,7 @@ export function FilterSidebar({
               Marques
             </h3>
             <Select onValueChange={(value) => updateFilter({ brand: value })}>
-              <SelectTrigger className="w-full">
+              <SelectTrigger>
                 <SelectValue placeholder="Toutes les marques" />
               </SelectTrigger>
               <SelectContent>
@@ -178,11 +188,14 @@ export function FilterSidebar({
                 <button
                   key={color}
                   className={`w-6 h-6 rounded-full border-2 transition-all ${
-                    filters.color === color ? 'border-primary' : 'border-border'
+                    filters.color === color ? "border-primary" : "border-border"
                   }`}
                   style={{
                     backgroundColor: color,
-                    boxShadow: filters.color === color ? '0 0 0 2px var(--primary)' : 'none'
+                    boxShadow:
+                      filters.color === color
+                        ? "0 0 0 2px var(--primary)"
+                        : "none",
                   }}
                   onClick={() => updateFilter({ color })}
                 />
@@ -226,15 +239,21 @@ export function FilterSidebar({
             <h3 className="text-sm font-medium tracking-wide text-foreground/60">
               Type de magasin
             </h3>
-            <Select onValueChange={(value) => updateFilter({ store_type: value })}>
-              <SelectTrigger className="w-full">
+            <Select
+              onValueChange={(value) => updateFilter({ store_type: value })}
+            >
+              <SelectTrigger>
                 <SelectValue placeholder="Tous les types" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tous les types</SelectItem>
                 {storeTypes.map((type) => (
                   <SelectItem key={type} value={type}>
-                    {type === 'adult' ? 'Adulte' : type === 'kids' ? 'Enfant' : 'Sneakers'}
+                    {type === "adult"
+                      ? "Adulte"
+                      : type === "kids"
+                        ? "Enfant"
+                        : "Sneakers"}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -247,7 +266,7 @@ export function FilterSidebar({
               Tri
             </h3>
             <Select onValueChange={(value) => updateFilter({ sort: value })}>
-              <SelectTrigger className="w-full">
+              <SelectTrigger>
                 <SelectValue placeholder="Trier par" />
               </SelectTrigger>
               <SelectContent>
@@ -262,5 +281,5 @@ export function FilterSidebar({
         </div>
       </ScrollArea>
     </div>
-  )
-} 
+  );
+}

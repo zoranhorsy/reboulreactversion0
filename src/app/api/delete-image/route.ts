@@ -1,5 +1,5 @@
-import { v2 as cloudinary } from 'cloudinary';
-import { NextResponse } from 'next/server';
+import { v2 as cloudinary } from "cloudinary";
+import { NextResponse } from "next/server";
 
 // Configuration de Cloudinary
 cloudinary.config({
@@ -15,8 +15,8 @@ export async function POST(request: Request) {
 
     if (!publicId) {
       return NextResponse.json(
-        { error: 'No public ID provided' },
-        { status: 400 }
+        { error: "No public ID provided" },
+        { status: 400 },
       );
     }
 
@@ -25,13 +25,13 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       result,
-      message: 'Image deleted successfully',
+      message: "Image deleted successfully",
     });
   } catch (error) {
-    console.error('Error deleting image from Cloudinary:', error);
+    console.error("Error deleting image from Cloudinary:", error);
     return NextResponse.json(
-      { error: 'Failed to delete image' },
-      { status: 500 }
+      { error: "Failed to delete image" },
+      { status: 500 },
     );
   }
-} 
+}

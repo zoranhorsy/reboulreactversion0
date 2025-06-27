@@ -1,17 +1,16 @@
-import { Minus, Plus, Package } from "lucide-react"
-import { Variant } from "@/lib/types/variant"
-import { cn } from "@/lib/utils"
+import { Variant } from "@/lib/types/variant";
+import { cn } from "@/lib/utils";
 
 interface TheCornerStockIndicatorProps {
-  variant?: Variant
-  quantity: number
-  onQuantityChange: (quantity: number) => void
+  variant?: Variant;
+  quantity: number;
+  onQuantityChange: (quantity: number) => void;
 }
 
 export function TheCornerStockIndicator({
   variant,
   quantity,
-  onQuantityChange
+  onQuantityChange,
 }: TheCornerStockIndicatorProps) {
   return (
     <div className="space-y-4">
@@ -19,9 +18,12 @@ export function TheCornerStockIndicator({
         <h3 className="text-base font-medium">Quantité</h3>
         {variant && (
           <div className="flex items-center text-sm">
-            <Package className="w-4 h-4 mr-1.5 text-muted-foreground" />
+            <span>📦</span>
             <span className="text-muted-foreground">
-              Stock: <span className="font-medium text-foreground">{variant.stock}</span>
+              Stock:{" "}
+              <span className="font-medium text-foreground">
+                {variant.stock}
+              </span>
             </span>
           </div>
         )}
@@ -33,25 +35,27 @@ export function TheCornerStockIndicator({
             disabled={quantity <= 1}
             className={cn(
               "h-10 w-10 flex items-center justify-center rounded-l-lg transition-colors",
-              "hover:bg-muted disabled:pointer-events-none disabled:opacity-50"
+              "hover:bg-muted disabled:pointer-events-none disabled:opacity-50",
             )}
             aria-label="Diminuer la quantité"
           >
-            <Minus className="w-4 h-4" />
+            <span>-</span>
           </button>
           <div className="h-10 w-12 flex items-center justify-center border-l border-r">
             <span className="text-sm font-medium">{quantity}</span>
           </div>
           <button
-            onClick={() => onQuantityChange(Math.min(variant?.stock || 10, quantity + 1))}
+            onClick={() =>
+              onQuantityChange(Math.min(variant?.stock || 10, quantity + 1))
+            }
             disabled={quantity >= (variant?.stock || 10)}
             className={cn(
               "h-10 w-10 flex items-center justify-center rounded-r-lg transition-colors",
-              "hover:bg-muted disabled:pointer-events-none disabled:opacity-50"
+              "hover:bg-muted disabled:pointer-events-none disabled:opacity-50",
             )}
             aria-label="Augmenter la quantité"
           >
-            <Plus className="w-4 h-4" />
+            <span>+</span>
           </button>
         </div>
         {variant && variant.stock <= 3 && (
@@ -61,5 +65,5 @@ export function TheCornerStockIndicator({
         )}
       </div>
     </div>
-  )
-} 
+  );
+}

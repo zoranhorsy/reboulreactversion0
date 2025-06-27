@@ -1,149 +1,110 @@
-'use client'
+"use client";
 
-import React from 'react'
-import { motion } from 'framer-motion'
-// TODO: Envisager de remplacer framer-motion par des animations CSS pour réduire la taille du bundle
-// TODO: Envisager de remplacer framer-motion par des animations CSS pour réduire la taille du bundle
-import { ShoppingBag, Shield, Users, TrendingUp, Truck, Clock } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import React from "react";
+import { cn } from "@/lib/utils";
+import {
+  IconShield,
+  IconUsers,
+  IconShoppingBag,
+  IconTrendingUp,
+  IconTruck,
+  IconClock,
+} from "@tabler/icons-react";
 
 const ADVANTAGES = [
-    {
-        id: 'authenticity',
-        icon: Shield,
-        title: 'Authenticité garantie',
-        description: 'Tous nos produits sont authentiques et proviennent directement des marques'
-    },
-    {
-        id: 'expertise',
-        icon: Users,
-        title: 'Expertise',
-        description: 'Une équipe de passionnés à votre service pour vous conseiller'
-    },
-    {
-        id: 'selection',
-        icon: ShoppingBag,
-        title: 'Sélection exclusive',
-        description: 'Les meilleures pièces des plus grandes marques'
-    },
-    {
-        id: 'trends',
-        icon: TrendingUp,
-        title: 'Dernières tendances',
-        description: 'Une sélection constamment mise à jour selon les tendances'
-    },
-    {
-        id: 'shipping',
-        icon: Truck,
-        title: 'Livraison rapide',
-        description: 'Livraison express disponible sur toute la France'
-    },
-    {
-        id: 'service',
-        icon: Clock,
-        title: 'Service client',
-        description: 'Une équipe disponible pour répondre à vos questions'
-    }
-]
+  {
+    title: "Authenticité garantie",
+    description:
+      "Tous nos produits sont authentiques et proviennent directement des marques",
+    icon: <IconShield className="w-6 h-6" />,
+  },
+  {
+    title: "Expertise",
+    description:
+      "Une équipe de passionnés à votre service pour vous conseiller",
+    icon: <IconUsers className="w-6 h-6" />,
+  },
+  {
+    title: "Sélection exclusive",
+    description: "Les meilleures pièces des plus grandes marques",
+    icon: <IconShoppingBag className="w-6 h-6" />,
+  },
+  {
+    title: "Dernières tendances",
+    description: "Une sélection constamment mise à jour selon les tendances",
+    icon: <IconTrendingUp className="w-6 h-6" />,
+  },
+  {
+    title: "Livraison rapide",
+    description: "Livraison express disponible sur toute la France",
+    icon: <IconTruck className="w-6 h-6" />,
+  },
+  {
+    title: "Service client",
+    description: "Une équipe disponible pour répondre à vos questions",
+    icon: <IconClock className="w-6 h-6" />,
+  },
+];
 
 export function Advantages() {
-    const containerVariants = {
-        hidden: { opacity: 0 },
-        visible: {
-            opacity: 1,
-            transition: {
-                staggerChildren: 0.12
-            }
-        }
-    }
+  return (
+    <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12 md:py-16 lg:py-20">
+      <div className="text-center mb-8 sm:mb-12">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-medium text-zinc-900 dark:text-zinc-100 mb-4">
+          Nos Services
+        </h2>
+        <p className="text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto">
+          REBOUL redéfinit l&apos;expérience shopping en fusionnant
+          l&apos;élégance traditionnelle avec les tendances contemporaines
+        </p>
+      </div>
 
-    const itemVariants = {
-        hidden: { opacity: 0, y: 25 },
-        visible: { 
-            opacity: 1, 
-            y: 0,
-            transition: { 
-                duration: 0.6,
-                ease: [0.215, 0.61, 0.355, 1] // easeOutCubic
-            }
-        }
-    }
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 relative z-10 py-10 max-w-7xl mx-auto">
+        {ADVANTAGES.map((advantage, index) => (
+          <Feature key={advantage.title} {...advantage} index={index} />
+        ))}
+      </div>
+    </div>
+  );
+}
 
-    return (
-        <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12 md:py-16 lg:py-20">
-            <motion.div 
-                className="text-center mb-8 sm:mb-12"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6 }}
-            >
-                <h2 className="text-2xl sm:text-3xl md:text-4xl font-medium text-zinc-900 dark:text-zinc-100 mb-4">
-                    Nos Services
-                </h2>
-                <p className="text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto">
-                    REBOUL redéfinit l&apos;expérience shopping en fusionnant l&apos;élégance traditionnelle 
-                    avec les tendances contemporaines
-                </p>
-            </motion.div>
-
-            <motion.div 
-                className="grid grid-cols-2 xs:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 md:gap-6 lg:gap-8 max-w-7xl mx-auto"
-                variants={containerVariants}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true, margin: "-50px" }}
-            >
-                {ADVANTAGES.map((advantage) => {
-                    const Icon = advantage.icon
-                    return (
-                        <motion.div
-                            key={advantage.id}
-                            className="group relative"
-                            variants={itemVariants}
-                        >
-                            <div className={cn(
-                                "flex flex-col items-center text-center p-4 sm:p-6 md:p-8 rounded-2xl",
-                                "bg-white dark:bg-zinc-900",
-                                "border border-zinc-200 dark:border-zinc-800",
-                                "hover:bg-zinc-900 hover:border-zinc-800 hover:shadow-lg",
-                                "dark:hover:bg-white dark:hover:border-zinc-200 dark:hover:shadow-lg",
-                                "relative overflow-hidden h-full",
-                                "transition-all duration-300"
-                            )}>
-                                {/* Content */}
-                                <div className="flex flex-col items-center justify-center h-full">
-                                    <div className={cn(
-                                        "w-8 h-8 xs:w-9 xs:h-9 sm:w-10 sm:h-10 md:w-12 md:h-12 mb-2 xs:mb-2.5 sm:mb-3 md:mb-4 rounded-lg",
-                                        "bg-zinc-100 dark:bg-zinc-800",
-                                        "flex items-center justify-center",
-                                        "group-hover:bg-zinc-800 dark:group-hover:bg-zinc-100",
-                                        "transition-all duration-300"
-                                    )}>
-                                        <Icon className={cn(
-                                            "w-4 h-4 xs:w-4 xs:h-4 sm:w-5 sm:h-5 md:w-6 md:h-6",
-                                            "text-zinc-700 dark:text-zinc-200",
-                                            "group-hover:text-zinc-100 dark:group-hover:text-zinc-800"
-                                        )} />
-                                    </div>
-                                    
-                                    <h3 className="text-sm xs:text-base sm:text-lg font-medium 
-                                        text-zinc-800 dark:text-zinc-100 mb-2
-                                        group-hover:text-zinc-100 dark:group-hover:text-zinc-800">
-                                        {advantage.title}
-                                    </h3>
-                                    
-                                    <p className="text-xs sm:text-sm leading-relaxed
-                                        text-zinc-600 dark:text-zinc-400
-                                        group-hover:text-zinc-300 dark:group-hover:text-zinc-600">
-                                        {advantage.description}
-                                    </p>
-                                </div>
-                            </div>
-                        </motion.div>
-                    )
-                })}
-            </motion.div>
-        </div>
-    )
-} 
+const Feature = ({
+  title,
+  description,
+  icon,
+  index,
+}: {
+  title: string;
+  description: string;
+  icon: React.ReactNode;
+  index: number;
+}) => {
+  return (
+    <div
+      className={cn(
+        "flex flex-col lg:border-r py-10 relative group/feature dark:border-neutral-800",
+        (index === 0 || index === 3) && "lg:border-l dark:border-neutral-800",
+        index < 3 && "lg:border-b dark:border-neutral-800",
+      )}
+    >
+      {index < 3 && (
+        <div className="opacity-0 group-hover/feature:opacity-100 transition duration-200 absolute inset-0 h-full w-full bg-gradient-to-t from-neutral-100 dark:from-neutral-800 to-transparent pointer-events-none" />
+      )}
+      {index >= 3 && (
+        <div className="opacity-0 group-hover/feature:opacity-100 transition duration-200 absolute inset-0 h-full w-full bg-gradient-to-b from-neutral-100 dark:from-neutral-800 to-transparent pointer-events-none" />
+      )}
+      <div className="mb-4 relative z-10 px-10 text-neutral-600 dark:text-neutral-400">
+        {icon}
+      </div>
+      <div className="text-lg font-bold mb-2 relative z-10 px-10">
+        <div className="absolute left-0 inset-y-0 h-6 group-hover/feature:h-8 w-1 rounded-tr-full rounded-br-full bg-neutral-300 dark:bg-neutral-700 group-hover/feature:bg-blue-500 transition-all duration-200 origin-center" />
+        <span className="group-hover/feature:translate-x-2 transition duration-200 inline-block text-neutral-800 dark:text-neutral-100">
+          {title}
+        </span>
+      </div>
+      <p className="text-sm text-neutral-600 dark:text-neutral-300 max-w-xs relative z-10 px-10">
+        {description}
+      </p>
+    </div>
+  );
+};

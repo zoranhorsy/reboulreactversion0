@@ -338,5 +338,323 @@ router.delete('/:id',
         }
     });
 
+/**
+ * Associe les commandes sans user_id à des utilisateurs existants en se basant sur l'email
+ * @route GET /api/orders/associate-orphan-orders
+ * @access Private (admin only)
+ */
+router.get('/associate-orphan-orders', authMiddleware, async (req, res) => {
+  const client = await pool.pool.connect();
+  try {
+    await client.query('BEGIN');
+    
+    // Rechercher les commandes sans user_id mais avec un email dans shipping_info
+    const orphanOrdersQuery = await client.query(`
+      SELECT o.id, o.order_number, o.shipping_info->>'email' as email 
+      FROM orders o 
+      WHERE o.user_id IS NULL 
+      AND o.shipping_info->>'email' IS NOT NULL
+    `);
+    
+    const orphanOrders = orphanOrdersQuery.rows;
+    console.log(`Trouvé ${orphanOrders.length} commandes orphelines à associer`);
+    
+    let associatedCount = 0;
+    
+    // Pour chaque commande orpheline, essayer de trouver un utilisateur correspondant
+    for (const order of orphanOrders) {
+      if (!order.email) continue;
+      
+      // Rechercher l'utilisateur par email
+      const userQuery = await client.query(
+        'SELECT id FROM users WHERE email = $1',
+        [order.email]
+      );
+      
+      if (userQuery.rows.length > 0) {
+        const userId = userQuery.rows[0].id;
+        
+        // Associer la commande à l'utilisateur
+        await client.query(
+          'UPDATE orders SET user_id = $1 WHERE id = $2',
+          [userId, order.id]
+        );
+        
+        console.log(`Commande ${order.order_number} associée à l'utilisateur ${userId}`);
+        associatedCount++;
+      }
+    }
+    
+    await client.query('COMMIT');
+    
+    res.json({
+      success: true,
+      message: `${associatedCount} commandes ont été associées à des utilisateurs existants`,
+      total: orphanOrders.length,
+      associated: associatedCount
+    });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Erreur lors de l\'association des commandes orphelines:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Erreur lors de l\'association des commandes orphelines',
+      error: error.message
+    });
+  } finally {
+    client.release();
+  }
+});
+
+/**
+ * Planifie l'exécution périodique de l'association des commandes orphelines
+ */
+let associationInterval;
+
+// Fonction pour associer automatiquement les commandes orphelines
+async function associateOrphanOrders() {
+  const client = await pool.pool.connect();
+  try {
+    await client.query('BEGIN');
+    
+    // Rechercher les commandes sans user_id mais avec un email dans shipping_info
+    const orphanOrdersQuery = await client.query(`
+      SELECT o.id, o.order_number, o.shipping_info->>'email' as email,
+             o.payment_data->>'customerEmail' as payment_email
+      FROM orders o 
+      WHERE o.user_id IS NULL 
+      AND (o.shipping_info->>'email' IS NOT NULL OR o.payment_data->>'customerEmail' IS NOT NULL)
+    `);
+    
+    const orphanOrders = orphanOrdersQuery.rows;
+    
+    if (orphanOrders.length > 0) {
+      console.log(`Traitement automatique de ${orphanOrders.length} commandes orphelines`);
+    }
+    
+    let associatedCount = 0;
+    
+    // Pour chaque commande orpheline, essayer de trouver un utilisateur correspondant
+    for (const order of orphanOrders) {
+      const email = order.email || order.payment_email;
+      if (!email) continue;
+      
+      // Rechercher l'utilisateur par email
+      const userQuery = await client.query(
+        'SELECT id FROM users WHERE email = $1',
+        [email]
+      );
+      
+      if (userQuery.rows.length > 0) {
+        const userId = userQuery.rows[0].id;
+        
+        // Associer la commande à l'utilisateur
+        await client.query(
+          'UPDATE orders SET user_id = $1 WHERE id = $2',
+          [userId, order.id]
+        );
+        
+        console.log(`[Auto] Commande ${order.order_number} associée à l'utilisateur ${userId}`);
+        associatedCount++;
+      }
+    }
+    
+    await client.query('COMMIT');
+    
+    if (associatedCount > 0) {
+      console.log(`[Auto] ${associatedCount} commandes ont été associées à des utilisateurs existants`);
+    }
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('[Auto] Erreur lors de l\'association des commandes orphelines:', error);
+  } finally {
+    client.release();
+  }
+}
+
+// Démarrer le processus d'association automatique (toutes les 24 heures)
+if (process.env.ENABLE_AUTO_ORDER_ASSOCIATION === 'true') {
+  associationInterval = setInterval(associateOrphanOrders, 24 * 60 * 60 * 1000);
+  console.log('Processus d\'association automatique des commandes orphelines activé');
+  
+  // Exécuter immédiatement au démarrage du serveur
+  associateOrphanOrders().catch(err => {
+    console.error('Erreur lors de l\'association initiale des commandes orphelines:', err);
+  });
+}
+
+/**
+ * Route pour réparer les adresses manquantes dans les commandes
+ * @route GET /api/orders/fix-missing-addresses
+ * @access Private (admin only)
+ */
+router.get('/fix-missing-addresses', authMiddleware, async (req, res) => {
+  if (!req.user.isAdmin) {
+    return res.status(403).json({
+      success: false,
+      message: 'Accès non autorisé'
+    });
+  }
+  
+  const client = await pool.pool.connect();
+  try {
+    await client.query('BEGIN');
+    
+    // Récupérer toutes les commandes avec des adresses manquantes
+    const ordersWithMissingAddressQuery = await client.query(`
+      SELECT o.id, o.order_number, o.shipping_info, o.payment_data, o.customer_info
+      FROM orders o 
+      WHERE (
+        o.shipping_info IS NULL OR 
+        o.shipping_info->>'address' IS NULL OR 
+        o.shipping_info->>'hasAddress' = 'false' OR
+        o.shipping_info->>'isValid' = 'false'
+      )
+      ORDER BY o.created_at DESC
+    `);
+    
+    const ordersToFix = ordersWithMissingAddressQuery.rows;
+    console.log(`Trouvé ${ordersToFix.length} commandes avec des adresses manquantes à réparer`);
+    
+    let fixedCount = 0;
+    
+    for (const order of ordersToFix) {
+      // Récupérer les informations d'adresse de différentes sources
+      const stripeAddress = 
+        order.customer_info?.address || 
+        order.payment_data?.customerAddress || 
+        {};
+      
+      // Si nous avons une adresse valide dans les données Stripe
+      if (stripeAddress.line1 && stripeAddress.city && stripeAddress.postal_code) {
+        // Préparer les nouvelles informations d'expédition
+        let updatedShippingInfo = order.shipping_info || {};
+        
+        // Mettre à jour les informations d'adresse
+        updatedShippingInfo = {
+          ...updatedShippingInfo,
+          address: stripeAddress.line1,
+          addressLine2: stripeAddress.line2,
+          city: stripeAddress.city,
+          postalCode: stripeAddress.postal_code,
+          country: stripeAddress.country,
+          hasAddress: true,
+          addressType: 'shipping',
+          isValid: true,
+          // Conserver le type de livraison existant ou utiliser une valeur par défaut
+          deliveryType: updatedShippingInfo.deliveryType || 
+                        order.payment_data?.deliveryType || 
+                        'standard'
+        };
+        
+        console.log(`Mise à jour des informations d'adresse pour la commande ${order.order_number}:`, 
+                   JSON.stringify(updatedShippingInfo, null, 2));
+        
+        // Mettre à jour la commande avec les nouvelles informations d'expédition
+        await client.query(
+          'UPDATE orders SET shipping_info = $1 WHERE id = $2',
+          [updatedShippingInfo, order.id]
+        );
+        
+        fixedCount++;
+      }
+    }
+    
+    await client.query('COMMIT');
+    
+    res.json({
+      success: true,
+      message: `${fixedCount} commandes ont été réparées sur ${ordersToFix.length} commandes avec des adresses manquantes`,
+      totalOrders: ordersToFix.length,
+      fixedOrders: fixedCount
+    });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Erreur lors de la réparation des adresses manquantes:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Erreur lors de la réparation des adresses manquantes',
+      error: error.message
+    });
+  } finally {
+    client.release();
+  }
+});
+
+/**
+ * Route d'urgence pour corriger toutes les adresses manquantes avec des valeurs par défaut
+ * @route GET /api/orders/emergency-fix-addresses
+ * @access Private (admin only)
+ */
+router.get('/emergency-fix-addresses', authMiddleware, async (req, res) => {
+  if (!req.user.isAdmin) {
+    return res.status(403).json({
+      success: false,
+      message: 'Accès non autorisé'
+    });
+  }
+  
+  const client = await pool.pool.connect();
+  try {
+    await client.query('BEGIN');
+    
+    // Mise à jour de toutes les commandes pour standardiser le format d'adresse
+    const updateResult = await client.query(`
+      UPDATE orders
+      SET shipping_info = jsonb_set(
+        COALESCE(shipping_info, '{}'::jsonb),
+        '{hasAddress}',
+        'true'::jsonb
+      )
+    `);
+    
+    // Deuxième mise à jour pour ajouter d'autres champs nécessaires
+    await client.query(`
+      UPDATE orders
+      SET shipping_info = jsonb_set(
+        jsonb_set(
+          jsonb_set(
+            shipping_info, 
+            '{addressType}', 
+            '"shipping"'::jsonb
+          ),
+          '{isValid}',
+          'true'::jsonb
+        ),
+        '{address}',
+        COALESCE(shipping_info->'address', '"Non spécifiée"'::jsonb)
+      )
+      WHERE shipping_info->'address' IS NULL OR shipping_info->>'address' = 'null'
+    `);
+    
+    console.log('Correction d\'urgence des adresses terminée');
+    
+    // Compter les commandes corrigées
+    const countResult = await client.query(`
+      SELECT COUNT(*) FROM orders
+    `);
+    
+    const totalOrders = parseInt(countResult.rows[0].count);
+    
+    await client.query('COMMIT');
+    
+    res.json({
+      success: true,
+      message: `Correction d'urgence appliquée à ${totalOrders} commandes`,
+      totalOrders
+    });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Erreur lors de la correction d\'urgence des adresses:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Erreur lors de la correction d\'urgence des adresses',
+      error: error.message
+    });
+  } finally {
+    client.release();
+  }
+});
+
 module.exports = router;
 

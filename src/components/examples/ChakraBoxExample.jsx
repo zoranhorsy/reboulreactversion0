@@ -1,7 +1,17 @@
-"use client"
+"use client";
 
-import React from 'react'
-import { Box, Flex, VStack, HStack, Text, Heading, Container, Grid, GridItem } from '@chakra-ui/react'
+import React from "react";
+import {
+  Box,
+  Flex,
+  VStack,
+  HStack,
+  Text,
+  Heading,
+  Container,
+  Grid,
+  GridItem,
+} from "@chakra-ui/react";
 
 /**
  * EXEMPLE - Composant utilisant Box, Flex et autres conteneurs de Chakra UI
@@ -13,7 +23,7 @@ export function ChakraBoxExample() {
       <Heading as="h2" size="xl" mb={6}>
         Exemples de Conteneurs Chakra UI
       </Heading>
-      
+
       {/* Box simple */}
       <Box
         p={5}
@@ -27,13 +37,21 @@ export function ChakraBoxExample() {
           Box simple
         </Heading>
         <Text>
-          Un composant Box basique avec padding, ombre, bordure et rayon de bordure.
+          Un composant Box basique avec padding, ombre, bordure et rayon de
+          bordure.
         </Text>
       </Box>
 
       {/* Container */}
       <Container maxW="container.md" centerContent mb={6}>
-        <Box p={5} shadow="md" borderWidth="1px" borderRadius="md" bg="gray.50" w="100%">
+        <Box
+          p={5}
+          shadow="md"
+          borderWidth="1px"
+          borderRadius="md"
+          bg="gray.50"
+          w="100%"
+        >
           <Heading as="h3" size="md" mb={4}>
             Container centré
           </Heading>
@@ -44,12 +62,12 @@ export function ChakraBoxExample() {
       </Container>
 
       {/* Flex */}
-      <Flex 
-        justify="space-between" 
-        align="center" 
-        p={4} 
+      <Flex
+        justify="space-between"
+        align="center"
+        p={4}
         mb={6}
-        bg="blue.50" 
+        bg="blue.50"
         borderRadius="md"
       >
         <Box p={2} bg="blue.200" borderRadius="md">
@@ -84,13 +102,7 @@ export function ChakraBoxExample() {
       </VStack>
 
       {/* HStack */}
-      <HStack
-        spacing={4}
-        p={4}
-        mb={6}
-        bg="purple.50"
-        borderRadius="md"
-      >
+      <HStack spacing={4} p={4} mb={6} bg="purple.50" borderRadius="md">
         <Box p={2} bg="purple.200" borderRadius="md">
           Élément horizontal 1
         </Box>
@@ -142,9 +154,7 @@ export function ChakraBoxExample() {
         <Heading as="h3" size="md" mb={4}>
           Box avec styles responsifs
         </Heading>
-        <Text>
-          Ce Box change de couleur selon la taille de l&apos;écran.
-        </Text>
+        <Text>Ce Box change de couleur selon la taille de l&apos;écran.</Text>
       </Box>
 
       {/* Box avec pseudo-classes */}
@@ -160,10 +170,8 @@ export function ChakraBoxExample() {
         <Heading as="h3" size="md" mb={4}>
           Box avec pseudo-classes
         </Heading>
-        <Text>
-          Survolez ce box pour voir la couleur changer.
-        </Text>
+        <Text>Survolez ce box pour voir la couleur changer.</Text>
       </Box>
     </div>
-  )
-} 
+  );
+}

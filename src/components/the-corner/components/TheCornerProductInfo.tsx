@@ -1,23 +1,22 @@
-import { Badge } from "@/components/ui/badge"
-import { Star, Truck, Package } from "lucide-react"
-import { formatPrice } from "@/lib/utils"
-import { cn } from "@/lib/utils"
+import { Badge } from "@/components/ui/badge";
+import { formatPrice } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 interface TheCornerProductInfoProps {
-  name: string
-  brand: string
-  description: string
-  price: number
-  oldPrice?: number
-  rating?: number
-  reviewsCount?: number
-  sku?: string | null
-  storeReference?: string | null
-  tags?: string[]
+  name: string;
+  brand: string;
+  description: string;
+  price: number;
+  oldPrice?: number;
+  rating?: number;
+  reviewsCount?: number;
+  sku?: string | null;
+  storeReference?: string | null;
+  tags?: string[];
   technicalSpecs?: {
-    label: string
-    value: string
-  }[]
+    label: string;
+    value: string;
+  }[];
 }
 
 export function TheCornerProductInfo({
@@ -31,24 +30,16 @@ export function TheCornerProductInfo({
   sku,
   storeReference,
   tags,
-  technicalSpecs
+  technicalSpecs,
 }: TheCornerProductInfoProps) {
   return (
     <div className="space-y-6">
       {/* Note et avis */}
-      {typeof rating !== 'undefined' && (
+      {typeof rating !== "undefined" && (
         <div className="flex items-center gap-3">
           <div className="flex items-center">
             {[1, 2, 3, 4, 5].map((star) => (
-              <Star
-                key={star}
-                className={cn(
-                  "w-5 h-5",
-                  star <= (rating || 0)
-                    ? "text-yellow-400 fill-yellow-400"
-                    : "text-gray-300"
-                )}
-              />
+              <span key={star}>⭐</span>
             ))}
           </div>
           <span className="text-sm font-medium text-muted-foreground">
@@ -62,16 +53,12 @@ export function TheCornerProductInfo({
         <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
           {name}
         </h1>
-        <p className="text-lg text-muted-foreground mt-2">
-          {brand}
-        </p>
+        <p className="text-lg text-muted-foreground mt-2">{brand}</p>
       </div>
 
       {/* Prix */}
       <div className="flex items-baseline gap-3">
-        <p className="text-2xl font-semibold">
-          {formatPrice(price)}
-        </p>
+        <p className="text-2xl font-semibold">{formatPrice(price)}</p>
         {oldPrice && (
           <p className="text-lg text-muted-foreground line-through">
             {formatPrice(oldPrice)}
@@ -116,7 +103,7 @@ export function TheCornerProductInfo({
 
       {/* Livraison */}
       <div className="flex items-center gap-3 p-4 bg-muted/20 rounded-lg border border-border/50">
-        <Truck className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+        <span>🚚</span>
         <div>
           <p className="text-sm font-medium">
             {price >= 100
@@ -144,7 +131,9 @@ export function TheCornerProductInfo({
           <div className="grid grid-cols-1 gap-4 p-4 bg-muted/20 rounded-lg border border-border/50">
             {technicalSpecs.map((spec, index) => (
               <div key={index} className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">{spec.label}</span>
+                <span className="text-sm text-muted-foreground">
+                  {spec.label}
+                </span>
                 <span className="text-sm font-medium">{spec.value}</span>
               </div>
             ))}
@@ -152,5 +141,5 @@ export function TheCornerProductInfo({
         </div>
       )}
     </div>
-  )
-} 
+  );
+}

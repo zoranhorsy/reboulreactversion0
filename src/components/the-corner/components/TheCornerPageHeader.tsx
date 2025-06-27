@@ -1,40 +1,39 @@
-import Link from "next/link"
-import { ChevronLeft, ChevronRight } from "lucide-react"
-import { cn } from "@/lib/utils"
-import Image from "next/image"
-import { ReactNode } from "react"
+import Link from "next/link";
+import { cn } from "@/lib/utils";
+import Image from "next/image";
+import { ReactNode } from "react";
 
 interface Breadcrumb {
-  label: string
-  href: string
+  label: string;
+  href: string;
 }
 
 interface Action {
-  icon: ReactNode
-  onClick: () => void
-  label: string
+  icon: ReactNode;
+  onClick: () => void;
+  label: string;
 }
 
 interface TheCornerPageHeaderProps {
-  title: string
-  subtitle: string
-  backLink: string
-  backText: string
-  breadcrumbs: Breadcrumb[]
-  actions: Action[]
-  backgroundImage?: string
-  logoImage?: string
+  title?: string;
+  subtitle?: string;
+  backLink?: string;
+  backText?: string;
+  breadcrumbs?: Breadcrumb[];
+  actions?: Action[];
+  backgroundImage?: string;
+  logoImage?: string;
 }
 
 export function TheCornerPageHeader({
-  title,
-  subtitle,
-  backLink,
-  backText,
-  breadcrumbs,
-  actions,
+  title = "The Corner",
+  subtitle = "Découvrez notre sélection exclusive de vêtements premium",
+  backLink = "/",
+  backText = "Accueil",
+  breadcrumbs = [],
+  actions = [],
   backgroundImage = "/images/header/thecorner/1.png",
-  logoImage = "/images/the-corner-logo-white.png"
+  logoImage = "/images/the-corner-logo-white.png",
 }: TheCornerPageHeaderProps) {
   return (
     <div className="relative w-full h-[280px] overflow-hidden bg-zinc-900 transition-all duration-500 ease-in-out">
@@ -57,29 +56,35 @@ export function TheCornerPageHeader({
         {/* Navigation et Logo */}
         <div className="flex items-center justify-between px-4 py-4 sm:px-6 sm:py-6 transition-all duration-500 ease-in-out">
           <div className="flex items-center gap-2 text-sm text-white/70">
-            <Link 
+            <Link
               href={backLink}
               className="flex items-center gap-1 hover:text-white transition-colors duration-300"
             >
-              <ChevronLeft className="w-4 h-4" />
-              <span className="transition-all duration-500 ease-in-out">{backText}</span>
+              <span>←</span>
+              <span className="transition-all duration-500 ease-in-out">
+                {backText}
+              </span>
             </Link>
-            <div className="flex items-center gap-2">
-              {breadcrumbs.map((crumb, index) => (
-                <div key={index} className="flex items-center gap-1">
-                  {index > 0 && <ChevronRight className="w-4 h-4 flex-shrink-0" />}
-                  <Link
-                    href={crumb.href}
-                    className={cn(
-                      "hover:text-white transition-all duration-500 ease-in-out truncate max-w-[80px] sm:max-w-[200px]",
-                      index === breadcrumbs.length - 1 ? "text-white" : "text-white/70"
-                    )}
-                  >
-                    {crumb.label}
-                  </Link>
-                </div>
-              ))}
-            </div>
+            {breadcrumbs && breadcrumbs.length > 0 && (
+              <div className="flex items-center gap-2">
+                {breadcrumbs.map((crumb, index) => (
+                  <div key={index} className="flex items-center gap-1">
+                    {index > 0 && <span>→</span>}
+                    <Link
+                      href={crumb.href}
+                      className={cn(
+                        "hover:text-white transition-all duration-500 ease-in-out truncate max-w-[80px] sm:max-w-[200px]",
+                        index === breadcrumbs.length - 1
+                          ? "text-white"
+                          : "text-white/70",
+                      )}
+                    >
+                      {crumb.label}
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Logo */}
@@ -109,7 +114,7 @@ export function TheCornerPageHeader({
           </div>
 
           {/* Actions */}
-          {actions.length > 0 && (
+          {actions && actions.length > 0 && (
             <div className="flex items-center gap-2 mt-4 transition-all duration-500 ease-in-out">
               {actions.map((action, index) => (
                 <button
@@ -126,5 +131,5 @@ export function TheCornerPageHeader({
         </div>
       </div>
     </div>
-  )
-} 
+  );
+}

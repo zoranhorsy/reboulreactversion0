@@ -1,0 +1,6 @@
+id,username,email,password_hash,first_name,last_name,is_admin,created_at,updated_at,notification_settings,reset_password_token,reset_password_expires
+6,zorantest2,zoran2@reboul.com,$2b$10$GpT0ZNLb5q9hIzqvz8kEEOSiviSSvBZp2jpLhfiu4RmKiVqaifAA6,,,f,2025-03-31 10:50:59.934167,2025-03-31 10:50:59.934167,"{""push"": false, ""email"": true, ""security"": true, ""marketing"": false}",,
+7,zoran1111111,zxransounds@gmail.com,$2b$10$oGeUhe2BUbLdAtYpBEthxeidvOnyLtAuEbWatlkdOu2Jx.v2sM0TO,,,f,2025-03-31 11:40:21.831653,2025-03-31 11:40:21.831653,"{""push"": false, ""email"": true, ""security"": true, ""marketing"": false}",,
+3,jaab,jaab@reboul.com,$2b$10$lCQosEgj19A9w4S/a/hX9eKm/qXvEQPaQwfd8VUIlPguks98nCwUO,thomas,lorenzi,t,2025-01-02 10:09:26.046441,2025-02-22 21:00:47.344124,"{""push"": false, ""email"": true, ""security"": true, ""marketing"": false}",,
+8,TestUser,test@reboul.com,password_hash_for_testing,,,f,2025-05-13 12:23:16.759268,2025-05-13 12:23:16.759268,"{""push"": false, ""email"": true, ""security"": true, ""marketing"": false}",,
+1,zoran,zoran@reboul.com,$2b$10$UzLt9qVpmXa9vSRmhBs2O.MwEf3aC1oS..TY18g8lAzoE/SNXt6lG,zoran,"",t,2025-01-01 12:10:41.056359,2025-02-22 21:00:47.344124,"{""push"": true, ""email"": true, ""security"": true, ""marketing"": true}",,

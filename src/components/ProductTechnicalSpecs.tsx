@@ -1,46 +1,51 @@
-"use client"
+"use client";
 
-import { useState } from "react"
+import React, { useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-} from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Info } from "lucide-react"
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Info } from "lucide-react";
 
-interface TechnicalSpec {
-  code: string
-  title: string
-  value: string
-  description?: string
+export interface TechnicalSpec {
+  code: string;
+  title: string;
+  value: string;
+  description?: string;
 }
 
 interface ProductTechnicalSpecsProps {
-  specs: TechnicalSpec[]
+  specs: TechnicalSpec[];
 }
 
 export function ProductTechnicalSpecs({ specs }: ProductTechnicalSpecsProps) {
-  const [selectedSpec, setSelectedSpec] = useState<TechnicalSpec | null>(null)
+  const [selectedSpec, setSelectedSpec] = useState<TechnicalSpec | null>(null);
 
   return (
     <>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-        {specs.map((spec) => (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3">
+        {specs.map((spec, index) => (
           <Button
-            key={spec.code}
+            key={`${spec.code}-${index}`}
             variant="outline"
-            className="relative h-auto p-4 hover:border-primary/50 hover:bg-accent/5 transition-colors"
+            className="relative h-auto p-3 sm:p-4 hover:border-primary/50 hover:bg-accent/5 transition-colors text-left group touch-manipulation"
             onClick={() => setSelectedSpec(spec)}
           >
-            <div className="absolute top-2 right-2">
-              <Info className="w-4 h-4 text-muted-foreground/50" />
+            <div className="absolute top-2 right-2 opacity-60 group-hover:opacity-100 transition-opacity">
+              <Info className="w-3 h-3 sm:w-4 sm:h-4" />
             </div>
-            <div className="flex flex-col items-start gap-2 text-left">
-              <div className="text-xs font-medium text-muted-foreground">
+            <div className="flex flex-col items-start gap-1.5 sm:gap-2 text-left pr-5">
+              <div className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wide">
                 {spec.code}
               </div>
-              <div className="font-medium">{spec.title}</div>
-              <div className="text-sm text-muted-foreground line-clamp-2">
+              <div className="font-medium text-xs sm:text-sm leading-tight">
+                {spec.title}
+              </div>
+              <div className="text-xs sm:text-sm text-muted-foreground line-clamp-2 leading-tight">
                 {spec.value}
               </div>
             </div>
@@ -48,34 +53,22 @@ export function ProductTechnicalSpecs({ specs }: ProductTechnicalSpecsProps) {
         ))}
       </div>
 
+      {/* Dialog pour les détails des spécifications */}
       <Dialog open={!!selectedSpec} onOpenChange={() => setSelectedSpec(null)}>
-        <DialogContent className="max-w-md">
-          <div className="space-y-4">
-            {/* En-tête */}
-            <div className="space-y-1.5">
-              <div className="inline-flex h-5 items-center rounded-full bg-primary/10 px-2 text-xs font-medium text-primary">
+        <DialogContent className="max-w-md mx-4">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <span className="text-xs px-2 py-1 bg-primary/10 text-primary rounded font-mono">
                 {selectedSpec?.code}
-              </div>
-              <h2 className="text-xl font-semibold tracking-tight">
-                {selectedSpec?.title}
-              </h2>
-            </div>
-
-            {/* Valeur */}
-            <p className="text-base">
-              {selectedSpec?.value}
-            </p>
-
-            {/* Description */}
-            {selectedSpec?.description && (
-              <div className="flex gap-2 text-sm text-muted-foreground bg-accent/5 p-3 rounded-md">
-                <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                <p>{selectedSpec.description}</p>
-              </div>
-            )}
-          </div>
+              </span>
+              {selectedSpec?.title}
+            </DialogTitle>
+            <DialogDescription className="text-sm leading-relaxed">
+              {selectedSpec?.description || selectedSpec?.value}
+            </DialogDescription>
+          </DialogHeader>
         </DialogContent>
       </Dialog>
     </>
-  )
-} 
+  );
+}

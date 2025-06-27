@@ -1,91 +1,63 @@
-'use client'
+"use client";
 
-import React, { useEffect, useRef } from 'react'
-import { useGSAP } from './GsapProvider'
+import React, { useEffect, useRef } from "react";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 interface ParallaxSectionProps {
-  children: React.ReactNode
-  bgImage?: string
-  speed?: number
-  className?: string
-  overlayOpacity?: number
-  darkMode?: boolean
-  direction?: 'vertical' | 'horizontal'
+  children: React.ReactNode;
+  speed?: number;
+  className?: string;
+  direction?: "up" | "down";
 }
 
 export const ParallaxSection: React.FC<ParallaxSectionProps> = ({
   children,
-  bgImage,
   speed = 0.5,
-  className = '',
-  overlayOpacity = 0.3,
-  darkMode = false,
-  direction = 'vertical'
+  className = "",
+  direction = "up",
 }) => {
-  const sectionRef = useRef<HTMLDivElement>(null)
-  const bgRef = useRef<HTMLDivElement>(null)
-  const { gsap, ScrollTrigger, isReady } = useGSAP()
-  
+  const containerRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    if (!isReady || !gsap || !ScrollTrigger || !sectionRef.current || !bgRef.current) return
-    
-    const ctx = gsap.context(() => {
-      // Effet de parallaxe au scroll
-      const yMovement = direction === 'vertical' ? `-${30 * speed}%` : '0%'
-      const xMovement = direction === 'horizontal' ? `-${20 * speed}%` : '0%'
-      
-      gsap.fromTo(bgRef.current,
-        { 
-          y: direction === 'vertical' ? '0%' : undefined,
-          x: direction === 'horizontal' ? '0%' : undefined,
-          backgroundPosition: '50% 0%'
+    if (!containerRef.current) return;
+
+    // Enregistrer ScrollTrigger
+    gsap.registerPlugin(ScrollTrigger);
+
+    const element = containerRef.current;
+    const yMovement = direction === "up" ? -100 * speed : 100 * speed;
+
+    const animation = gsap.fromTo(
+      element,
+      { y: 0 },
+      {
+        y: yMovement,
+        ease: "none",
+        scrollTrigger: {
+          trigger: element,
+          start: "top bottom",
+          end: "bottom top",
+          scrub: true,
+          invalidateOnRefresh: true,
         },
-        {
-          y: direction === 'vertical' ? yMovement : undefined,
-          x: direction === 'horizontal' ? xMovement : undefined,
-          ease: "none",
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: "top bottom",
-            end: "bottom top",
-            scrub: true,
-            invalidateOnRefresh: true
-          }
+      },
+    );
+
+    return () => {
+      // Nettoyer l'animation au démontage
+      if (animation) animation.kill();
+      ScrollTrigger.getAll().forEach((trigger) => {
+        if (trigger.trigger === element) {
+          trigger.kill();
         }
-      )
-    }, sectionRef)
-    
-    return () => ctx.revert()
-  }, [isReady, gsap, ScrollTrigger, speed, direction])
-  
-  const backgroundStyle = bgImage 
-    ? { backgroundImage: `url(${bgImage})` }
-    : {};
-  
+      });
+    };
+  }, [speed, direction]);
+
   return (
-    <div 
-      ref={sectionRef} 
-      className={`relative overflow-hidden ${className}`}
-    >
-      {/* Background avec effet parallaxe */}
-      <div 
-        ref={bgRef}
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat w-full h-full"
-        style={backgroundStyle}
-      />
-      
-      {/* Overlay pour améliorer la lisibilité du contenu */}
-      {overlayOpacity > 0 && (
-        <div 
-          className={`absolute inset-0 ${darkMode ? 'bg-black' : 'bg-white'}`}
-          style={{ opacity: overlayOpacity }}
-        />
-      )}
-      
-      {/* Contenu de la section */}
-      <div className="relative z-10">
-        {children}
-      </div>
+    <div ref={containerRef} className={className}>
+      {children}
     </div>
   );
-}; 
+};

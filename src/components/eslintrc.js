@@ -5,6 +5,5 @@ module.exports = {
   env: {
     // ... other environments
     browser: true,
-  }
-}
-
+  },
+};

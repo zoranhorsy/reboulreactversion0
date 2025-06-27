@@ -1,4 +1,4 @@
-export type PromoCodeType = 'percentage' | 'fixed';
+export type PromoCodeType = "percentage" | "fixed";
 
 export interface PromoCode {
   code: string;
@@ -18,4 +18,4 @@ export interface PromoCode {
 export interface AppliedPromoCode extends PromoCode {
   appliedAt: Date;
   discountAmount: number;
-} 
+}

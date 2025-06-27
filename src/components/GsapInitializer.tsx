@@ -1,19 +1,16 @@
-'use client'
+"use client";
 
-import { useEffect } from 'react'
-import { useGSAP } from './GsapProvider'
+import { useEffect } from "react";
+import { initGSAP } from "@/lib/gsap-config";
 
-// Composant simple qui permet d'initialiser et vérifier GSAP
-export function GsapInitializer() {
-  const { isReady, gsap } = useGSAP()
-  
+export default function GsapInitializer() {
   useEffect(() => {
-    if (isReady && gsap) {
-      // GSAP est prêt à être utilisé
-      console.info('GSAP est initialisé et prêt à l\'emploi')
+    // Initialiser GSAP côté client uniquement
+    if (typeof window !== "undefined") {
+      initGSAP().catch(console.error);
     }
-  }, [isReady, gsap])
-  
-  return null
-}
+  }, []);
 
+  // Ce composant ne rend rien, il initialise juste GSAP
+  return null;
+}

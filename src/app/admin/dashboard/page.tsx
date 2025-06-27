@@ -1,111 +1,73 @@
-'use client'
-
-
-
-
-// Importer la configuration globale pour forcer le rendu dynamique
-import { dynamic, revalidate, fetchCache } from '@/app/config';
-import { ClientPageWrapper, defaultViewport } from '@/components/ClientPageWrapper';
-import type { Viewport } from 'next';
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { useAuth } from '@/app/contexts/AuthContext'
-import { AdminDashboard } from '@/components/admin/AdminDashboard'
-import { Loader2, ShieldAlert } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-
-// Fonction pour logger avec timestamp
-const logWithTime = (message: string, data?: any) => {
-  const timestamp = new Date().toISOString()
-  if (data) {
-    console.log(`[AdminDashboard][${timestamp}] ${message}`, data)
-  } else {
-    console.log(`[AdminDashboard][${timestamp}] ${message}`)
-  }
-}
-
-export const viewport: Viewport = defaultViewport;
+// Force le rendu dynamique - page admin dashboard isolée
+export const dynamic = "force-dynamic";
 
 export default function AdminDashboardPage() {
-    const { user, isLoading, isAuthenticated, isAdmin, checkAuthManually } = useAuth()
-    const router = useRouter()
-    
-    logWithTime("AdminDashboardPage rendu", { 
-        isLoading, 
-        isAuthenticated, 
-        isAdmin, 
-        hasUser: !!user 
-    })
-
-    useEffect(() => {
-        logWithTime("AdminDashboardPage useEffect", { 
-            isLoading, 
-            isAuthenticated, 
-            isAdmin 
-        })
-        
-        if (!isLoading) {
-            if (!isAuthenticated) {
-                logWithTime("Non authentifié - redirection vers /connexion")
-                router.push('/connexion')
-            } else if (!isAdmin) {
-                logWithTime("Authentifié mais non admin - redirection vers /")
-                router.push('/')
-            }
-        }
-    }, [isAuthenticated, isAdmin, isLoading, router])
-
-    if (isLoading) {
-        logWithTime("Affichage du chargement")
-        return (
-    <ClientPageWrapper>
-      <div className="flex flex-col items-center justify-center min-h-screen bg-background">
-                <Card className="w-[400px] shadow-none border-none bg-transparent">
-                    <CardContent className="flex flex-col items-center space-y-4 pt-6">
-                        <Loader2 className="h-16 w-16 animate-spin text-primary" />
-                        <CardDescription>Chargement du tableau de bord...</CardDescription>
-                    </CardContent>
-                </Card>
-            </div>
-    </ClientPageWrapper>
-  );}
-
-    if (!isAuthenticated || !isAdmin) {
-        logWithTime("Non authentifié ou non admin - affichage du message d'erreur")
-        return (
-            <div className="flex flex-col items-center justify-center min-h-screen bg-background">
-                <Card className="w-[400px]">
-                    <CardHeader>
-                        <div className="flex items-center gap-2">
-                            <ShieldAlert className="h-5 w-5 text-destructive" />
-                            <CardTitle>Accès Restreint</CardTitle>
-                        </div>
-                        <CardDescription>
-                            Vous n&apos;avez pas les permissions nécessaires pour accéder à cette page.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <Button 
-                            onClick={() => router.push('/')}
-                            className="w-full"
-                        >
-                            Retour à l&apos;accueil
-                        </Button>
-                    </CardContent>
-                </Card>
-            </div>
-        )
-    }
-
-    logWithTime("Affichage du tableau de bord")
-    return (
-        <div className="container mx-auto py-6">
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-3xl font-bold">Tableau de bord</h1>
-            </div>
-            
-            <AdminDashboard />
+  return (
+    <html lang="fr">
+      <head>
+        <meta charSet="utf-8" />
+        <title>Tableau de bord - Reboul Store</title>
+        <meta name="robots" content="noindex, nofollow" />
+      </head>
+      <body>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            minHeight: "100vh",
+            fontFamily: "system-ui, sans-serif",
+            backgroundColor: "#f9fafb",
+          }}
+        >
+          <div
+            style={{
+              textAlign: "center",
+              padding: "2rem",
+              backgroundColor: "white",
+              borderRadius: "8px",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+            }}
+          >
+            <div
+              style={{
+                width: "48px",
+                height: "48px",
+                border: "2px solid #e5e7eb",
+                borderTop: "2px solid #3b82f6",
+                borderRadius: "50%",
+                animation: "spin 1s linear infinite",
+                margin: "0 auto 1rem",
+              }}
+            ></div>
+            <p style={{ color: "#4b5563", margin: "0 0 0.5rem" }}>
+              Redirection vers le tableau de bord...
+            </p>
+            <p style={{ fontSize: "0.875rem", color: "#9ca3af", margin: 0 }}>
+              Veuillez patienter...
+            </p>
+          </div>
         </div>
-    )
-} 
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+                        setTimeout(function() {
+                            window.location.href = '/admin/dashboard/overview';
+                        }, 1000);
+                    `,
+          }}
+        />
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `
+                        @keyframes spin {
+                            from { transform: rotate(0deg); }
+                            to { transform: rotate(360deg); }
+                        }
+                    `,
+          }}
+        />
+      </body>
+    </html>
+  );
+}

@@ -1,50 +1,56 @@
-'use client'
+"use client";
 
-import React, { useState, useEffect } from 'react'
-import Image, { ImageProps } from 'next/image'
-import { cn } from '@/lib/utils'
-import { getImageSources, optimizedImageLoader } from '@/lib/imageOptimization'
+import React, { useState, useEffect } from "react";
+import Image, { ImageProps } from "next/image";
+import { cn } from "@/lib/utils";
+import { getImageSources, optimizedImageLoader } from "@/lib/imageOptimization";
 
 // Types d'images que nous gérons
-export type ImageType = 'hero' | 'product-card' | 'product-detail' | 'category' | 'logo' | 'icon'
+export type ImageType =
+  | "hero"
+  | "product-card"
+  | "product-detail"
+  | "category"
+  | "logo"
+  | "icon";
 
-interface OptimizedImageProps extends Omit<ImageProps, 'onLoadingComplete'> {
+interface OptimizedImageProps extends Omit<ImageProps, "onLoadingComplete"> {
   /**
    * Indique si cette image est le LCP (Largest Contentful Paint)
    * Si true, l'image aura priority=true et sera préchargée
    */
   isLCP?: boolean;
-  
+
   /**
    * Classe à appliquer quand l'image est en cours de chargement
    */
   loadingClassName?: string;
-  
+
   /**
    * Classe à appliquer quand l'image est chargée
    */
   loadedClassName?: string;
-  
+
   /**
    * Afficher un placeholder pendant le chargement
    */
   showPlaceholder?: boolean;
-  
+
   /**
    * URL du placeholder (si non spécifié, un dégradé sera utilisé)
    */
   placeholderUrl?: string;
-  
+
   /**
    * Type d'image (pour les paramètres d'optimisation spécifiques)
    */
   type?: ImageType;
-  
+
   /**
    * Utiliser l'élément <picture> pour un support avancé des formats WebP/AVIF
    */
   usePicture?: boolean;
-  
+
   /**
    * Callback appelé quand l'image est chargée
    */
@@ -62,7 +68,7 @@ interface OptimizedImageProps extends Omit<ImageProps, 'onLoadingComplete'> {
  */
 export function OptimizedImage({
   src,
-  alt = '',
+  alt = "",
   width,
   height,
   isLCP = false,
@@ -75,86 +81,101 @@ export function OptimizedImage({
   usePicture = true,
   onLoad,
   className,
-  sizes = isLCP ? '(max-width: 768px) 100vw, 50vw' : undefined,
+  sizes = isLCP ? "(max-width: 768px) 100vw, 50vw" : undefined,
   ...props
 }: OptimizedImageProps) {
-  const [isLoaded, setIsLoaded] = useState(false)
-  
+  const [isLoaded, setIsLoaded] = useState(false);
+
   // Si c'est l'image LCP, on force priority à true
-  const shouldPrioritize = isLCP || priority
-  
+  const shouldPrioritize = isLCP || priority;
+
   // Gérer le chargement de l'image
   const handleLoadingComplete = () => {
-    setIsLoaded(true)
-    if (onLoad) onLoad()
-  }
-  
+    setIsLoaded(true);
+    if (onLoad) onLoad();
+  };
+
   // Précharger l'image LCP
   useEffect(() => {
-    if (isLCP && typeof src === 'string') {
-      const preloadLink = document.createElement('link')
-      preloadLink.rel = 'preload'
-      preloadLink.as = 'image'
-      preloadLink.href = src
-      preloadLink.fetchPriority = 'high'
-      document.head.appendChild(preloadLink)
-      
+    if (isLCP && typeof src === "string") {
+      const preloadLink = document.createElement("link");
+      preloadLink.rel = "preload";
+      preloadLink.as = "image";
+      preloadLink.href = src;
+      preloadLink.fetchPriority = "high";
+      document.head.appendChild(preloadLink);
+
       return () => {
-        document.head.removeChild(preloadLink)
-      }
+        document.head.removeChild(preloadLink);
+      };
     }
-  }, [isLCP, src])
+  }, [isLCP, src]);
 
   // Créer un loader personnalisé qui inclut le type d'image
   const customLoader = (loaderProps: any) => {
     return optimizedImageLoader({
       ...loaderProps,
       src: loaderProps.src,
-      imageType: type || (typeof src === 'string' && src.includes('logo') ? 'logo' : undefined)
+      imageType:
+        type ||
+        (typeof src === "string" && src.includes("logo") ? "logo" : undefined),
     });
   };
-  
+
   // Obtenir les sources d'image pour le composant <picture>
-  const { webpSrcSet, avifSrcSet, defaultSrc } = typeof src === 'string' 
-    ? getImageSources(src)
-    : { webpSrcSet: '', avifSrcSet: '', defaultSrc: '' }
-    
+  const { webpSrcSet, avifSrcSet, defaultSrc } =
+    typeof src === "string"
+      ? getImageSources(src)
+      : { webpSrcSet: "", avifSrcSet: "", defaultSrc: "" };
+
   // Déterminer si on doit utiliser <picture> ou next/image
   // Pour les logos, désactiver l'élément picture
-  const isLogo = type === 'logo' || (typeof src === 'string' && src.includes('logo'));
-  const shouldUsePicture = usePicture && typeof src === 'string' && (webpSrcSet || avifSrcSet) && !isLogo;
-  
+  const isLogo =
+    type === "logo" || (typeof src === "string" && src.includes("logo"));
+  const shouldUsePicture =
+    usePicture &&
+    typeof src === "string" &&
+    (webpSrcSet || avifSrcSet) &&
+    !isLogo;
+
   return (
     <div className="relative overflow-hidden w-full h-full">
       {showPlaceholder && !isLoaded && (
-        <div 
+        <div
           className={cn(
             "absolute inset-0 bg-zinc-100 dark:bg-zinc-800 animate-pulse",
-            loadingClassName
+            loadingClassName,
           )}
-          style={placeholderUrl ? { backgroundImage: `url(${placeholderUrl})`, backgroundSize: 'cover' } : undefined}
+          style={
+            placeholderUrl
+              ? {
+                  backgroundImage: `url(${placeholderUrl})`,
+                  backgroundSize: "cover",
+                }
+              : undefined
+          }
         />
       )}
-      
+
       {shouldUsePicture ? (
         // Utiliser l'élément <picture> pour le support des formats modernes
         <picture>
           {avifSrcSet && (
-            <source 
-              type="image/avif" 
-              srcSet={avifSrcSet} 
-              sizes={sizes || '(max-width: 768px) 100vw, 50vw'} 
+            <source
+              type="image/avif"
+              srcSet={avifSrcSet}
+              sizes={sizes || "(max-width: 768px) 100vw, 50vw"}
             />
           )}
           {webpSrcSet && (
-            <source 
-              type="image/webp" 
-              srcSet={webpSrcSet} 
-              sizes={sizes || '(max-width: 768px) 100vw, 50vw'} 
+            <source
+              type="image/webp"
+              srcSet={webpSrcSet}
+              sizes={sizes || "(max-width: 768px) 100vw, 50vw"}
             />
           )}
           <img
-            src={defaultSrc || (typeof src === 'string' ? src : '')}
+            src={defaultSrc || (typeof src === "string" ? src : "")}
             alt={alt}
             width={width}
             height={height}
@@ -163,9 +184,10 @@ export function OptimizedImage({
               "w-full h-full transition-opacity duration-300 ease-in-out",
               !isLoaded && showPlaceholder ? "opacity-0" : "opacity-100",
               !isLoaded ? loadingClassName : loadedClassName,
-              className
+              className,
             )}
             fetchPriority={shouldPrioritize ? "high" : "auto"}
+            style={{ width: "auto", height: "auto" }}
             {...props}
           />
         </picture>
@@ -185,11 +207,11 @@ export function OptimizedImage({
             "transition-opacity duration-300 ease-in-out",
             !isLoaded && showPlaceholder ? "opacity-0" : "opacity-100",
             !isLoaded ? loadingClassName : loadedClassName,
-            className
+            className,
           )}
           {...props}
         />
       )}
     </div>
-  )
-} 
+  );
+}

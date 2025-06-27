@@ -3,6 +3,6 @@
  * Exporte toutes les fonctions utilitaires pour une importation simplifiée
  */
 
-export * from './optimized-utils';
+export * from "./optimized-utils";
 
-// Ré-exporter d'autres utilitaires ici si nécessaire 
+// Ré-exporter d'autres utilitaires ici si nécessaire

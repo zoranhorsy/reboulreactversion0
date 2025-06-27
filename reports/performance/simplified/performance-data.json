@@ -1,34 +1,30 @@
 [
   {
     "url": "http://localhost:3000",
-    "loadTime": 8398,
-    "domContentLoaded": 47.29999998211861,
-    "timeToInteractive": 1725.699999988079,
-    "firstPaint": 492,
-    "firstContentfulPaint": 492,
+    "loadTime": 15031,
+    "domContentLoaded": 95,
+    "timeToInteractive": 0,
+    "firstPaint": 10304,
+    "firstContentfulPaint": 10304,
     "longTasks": [
       {
-        "startTime": 584.9000000059605,
-        "duration": 162
+        "startTime": 7281.099999997765,
+        "duration": 104
       },
       {
-        "startTime": 793.0999999940395,
-        "duration": 82
-      },
-      {
-        "startTime": 1655.699999988079,
-        "duration": 70
+        "startTime": 7690.599999997765,
+        "duration": 90
       }
     ],
-    "totalJSSize": 4730684,
-    "totalJSTime": 1141.300000011921,
+    "totalJSSize": 4501357,
+    "totalJSTime": 5645.800000000745,
     "jsResourcesCount": 14,
     "screenshotPath": "/Users/tripleseptinteractive/code/reboulreactversion0/reports/performance/simplified/http___localhost_3000.png",
     "devtoolsMetrics": {
       "metrics": [
         {
           "name": "Timestamp",
-          "value": 260006.395215
+          "value": 17995.618538
         },
         {
           "name": "AudioHandlers",
@@ -40,19 +36,19 @@
         },
         {
           "name": "Documents",
-          "value": 3
+          "value": 6
         },
         {
           "name": "Frames",
-          "value": 2
+          "value": 4
         },
         {
           "name": "JSEventListeners",
-          "value": 592
+          "value": 439
         },
         {
           "name": "LayoutObjects",
-          "value": 790
+          "value": 787
         },
         {
           "name": "MediaKeySessions",
@@ -64,15 +60,15 @@
         },
         {
           "name": "Nodes",
-          "value": 1221
+          "value": 906
         },
         {
           "name": "Resources",
-          "value": 41
+          "value": 48
         },
         {
           "name": "ContextLifecycleStateObservers",
-          "value": 27
+          "value": 18
         },
         {
           "name": "V8PerContextDatas",
@@ -81,318 +77,6 @@
         {
           "name": "WorkerGlobalScopes",
           "value": 2
-        },
-        {
-          "name": "UACSSResources",
-          "value": 0
-        },
-        {
-          "name": "RTCPeerConnections",
-          "value": 0
-        },
-        {
-          "name": "ResourceFetchers",
-          "value": 5
-        },
-        {
-          "name": "AdSubframes",
-          "value": 0
-        },
-        {
-          "name": "DetachedScriptStates",
-          "value": 2
-        },
-        {
-          "name": "ArrayBufferContents",
-          "value": 0
-        },
-        {
-          "name": "LayoutCount",
-          "value": 25
-        },
-        {
-          "name": "RecalcStyleCount",
-          "value": 461
-        },
-        {
-          "name": "LayoutDuration",
-          "value": 0.043108
-        },
-        {
-          "name": "RecalcStyleDuration",
-          "value": 0.276068
-        },
-        {
-          "name": "DevToolsCommandDuration",
-          "value": 0.002207
-        },
-        {
-          "name": "ScriptDuration",
-          "value": 0.385632
-        },
-        {
-          "name": "V8CompileDuration",
-          "value": 0.000722
-        },
-        {
-          "name": "TaskDuration",
-          "value": 1.236471
-        },
-        {
-          "name": "TaskOtherDuration",
-          "value": 0.528734
-        },
-        {
-          "name": "ThreadTime",
-          "value": 1.002955
-        },
-        {
-          "name": "ProcessTime",
-          "value": 1.821413
-        },
-        {
-          "name": "JSHeapUsedSize",
-          "value": 21392780
-        },
-        {
-          "name": "JSHeapTotalSize",
-          "value": 46645248
-        },
-        {
-          "name": "FirstMeaningfulPaint",
-          "value": 259998.547083
-        },
-        {
-          "name": "DomContentLoaded",
-          "value": 259998.388297
-        },
-        {
-          "name": "NavigationStart",
-          "value": 259998.05602
-        }
-      ]
-    },
-    "resources": [
-      {
-        "name": "http://localhost:3000/_next/static/media/0912b6f5b5f18160-s.p.woff2",
-        "type": "link",
-        "size": 41752,
-        "duration": 11.900000005960464,
-        "startTime": 279
-      },
-      {
-        "name": "http://localhost:3000/_next/static/media/1dbd71bee75dcbe2-s.p.woff2",
-        "type": "link",
-        "size": 40280,
-        "duration": 16.30000001192093,
-        "startTime": 279.09999999403954
-      },
-      {
-        "name": "http://localhost:3000/_next/static/media/3e521957c464c122-s.p.woff2",
-        "type": "link",
-        "size": 41796,
-        "duration": 18.200000017881393,
-        "startTime": 279.19999998807907
-      },
-      {
-        "name": "http://localhost:3000/_next/static/media/5b17810d8f5e92ae-s.p.woff2",
-        "type": "link",
-        "size": 41256,
-        "duration": 19.799999982118607,
-        "startTime": 279.30000001192093
-      },
-      {
-        "name": "http://localhost:3000/_next/static/media/585969283d20b6b5.p.woff2",
-        "type": "link",
-        "size": 42984,
-        "duration": 19.299999982118607,
-        "startTime": 279.30000001192093
-      },
-      {
-        "name": "http://localhost:3000/_next/static/media/69a390d3fcb2378e-s.p.woff2",
-        "type": "link",
-        "size": 39536,
-        "duration": 20.599999994039536,
-        "startTime": 281
-      },
-      {
-        "name": "http://localhost:3000/_next/static/media/6aa0280f6054384f.p.woff2",
-        "type": "link",
-        "size": 43740,
-        "duration": 22.19999998807907,
-        "startTime": 281
-      },
-      {
-        "name": "http://localhost:3000/_next/static/media/92ddaa093d00abf9.p.woff2",
-        "type": "link",
-        "size": 42720,
-        "duration": 24.200000017881393,
-        "startTime": 281.09999999403954
-      },
-      {
-        "name": "http://localhost:3000/_next/static/media/811f4dd93c20bb43-s.p.ttf",
-        "type": "link",
-        "size": 35255,
-        "duration": 35.099999994039536,
-        "startTime": 281.09999999403954
-      },
-      {
-        "name": "http://localhost:3000/_next/static/media/939391cfa93e8d25-s.p.woff2",
-        "type": "link",
-        "size": 40216,
-        "duration": 24.400000005960464,
-        "startTime": 281.19999998807907
-      },
-      {
-        "name": "http://localhost:3000/_next/static/media/a34f9d1faa5f3315-s.p.woff2",
-        "type": "link",
-        "size": 48856,
-        "duration": 25,
-        "startTime": 281.19999998807907
-      },
-      {
-        "name": "http://localhost:3000/_next/static/media/b0a3f7573432c7ef-s.p.woff2",
-        "type": "link",
-        "size": 40184,
-        "duration": 26.600000023841858,
-        "startTime": 281.19999998807907
-      },
-      {
-        "name": "http://localhost:3000/_next/static/media/b2f4711c55f17d21.p.woff2",
-        "type": "link",
-        "size": 43960,
-        "duration": 35.900000005960464,
-        "startTime": 281.19999998807907
-      },
-      {
-        "name": "http://localhost:3000/_next/static/media/c1257d7db5a6288f.p.woff2",
-        "type": "link",
-        "size": 44168,
-        "duration": 38.5,
-        "startTime": 281.19999998807907
-      },
-      {
-        "name": "http://localhost:3000/_next/static/media/c848758d77f1aebb-s.p.woff2",
-        "type": "link",
-        "size": 41380,
-        "duration": 39.19999998807907,
-        "startTime": 281.30000001192093
-      },
-      {
-        "name": "http://localhost:3000/_next/static/media/d13238683f37b6cc.p.woff2",
-        "type": "link",
-        "size": 41812,
-        "duration": 41.19999998807907,
-        "startTime": 281.30000001192093
-      },
-      {
-        "name": "http://localhost:3000/_next/static/media/de728c3f576bec66.p.woff2",
-        "type": "link",
-        "size": 44368,
-        "duration": 41.69999998807907,
-        "startTime": 281.30000001192093
-      },
-      {
-        "name": "http://localhost:3000/_next/static/media/cd52f64c7d895aa2-s.p.ttf",
-        "type": "link",
-        "size": 30175,
-        "duration": 46.5,
-        "startTime": 281.30000001192093
-      },
-      {
-        "name": "http://localhost:3000/_next/static/media/e3434d0986b06b4b-s.p.woff2",
-        "type": "link",
-        "size": 41248,
-        "duration": 41.900000005960464,
-        "startTime": 281.40000000596046
-      },
-      {
-        "name": "http://localhost:3000/_next/static/css/app/layout.css?v=1746712121122",
-        "type": "link",
-        "size": 31312,
-        "duration": 39.400000005960464,
-        "startTime": 281.5
-      }
-    ]
-  },
-  {
-    "url": "http://localhost:3000/catalogue",
-    "loadTime": 9117,
-    "domContentLoaded": 941.4000000059605,
-    "timeToInteractive": 1690.5,
-    "firstPaint": 300,
-    "firstContentfulPaint": 300,
-    "longTasks": [
-      {
-        "startTime": 521.8000000119209,
-        "duration": 175
-      },
-      {
-        "startTime": 1636.5,
-        "duration": 54
-      }
-    ],
-    "totalJSSize": 5881043,
-    "totalJSTime": 1648.800000011921,
-    "jsResourcesCount": 14,
-    "screenshotPath": "/Users/tripleseptinteractive/code/reboulreactversion0/reports/performance/simplified/http___localhost_3000_catalogue.png",
-    "devtoolsMetrics": {
-      "metrics": [
-        {
-          "name": "Timestamp",
-          "value": 260017.012294
-        },
-        {
-          "name": "AudioHandlers",
-          "value": 0
-        },
-        {
-          "name": "AudioWorkletProcessors",
-          "value": 0
-        },
-        {
-          "name": "Documents",
-          "value": 3
-        },
-        {
-          "name": "Frames",
-          "value": 1
-        },
-        {
-          "name": "JSEventListeners",
-          "value": 2246
-        },
-        {
-          "name": "LayoutObjects",
-          "value": 1938
-        },
-        {
-          "name": "MediaKeySessions",
-          "value": 0
-        },
-        {
-          "name": "MediaKeys",
-          "value": 0
-        },
-        {
-          "name": "Nodes",
-          "value": 2591
-        },
-        {
-          "name": "Resources",
-          "value": 90
-        },
-        {
-          "name": "ContextLifecycleStateObservers",
-          "value": 27
-        },
-        {
-          "name": "V8PerContextDatas",
-          "value": 2
-        },
-        {
-          "name": "WorkerGlobalScopes",
-          "value": 5
         },
         {
           "name": "UACSSResources",
@@ -420,67 +104,67 @@
         },
         {
           "name": "LayoutCount",
-          "value": 52
+          "value": 17
         },
         {
           "name": "RecalcStyleCount",
-          "value": 531
+          "value": 264
         },
         {
           "name": "LayoutDuration",
-          "value": 0.060644
+          "value": 0.041211
         },
         {
           "name": "RecalcStyleDuration",
-          "value": 0.204507
+          "value": 0.174432
         },
         {
           "name": "DevToolsCommandDuration",
-          "value": 0.003511
+          "value": 0.000809
         },
         {
           "name": "ScriptDuration",
-          "value": 0.432383
+          "value": 0.296062
         },
         {
           "name": "V8CompileDuration",
-          "value": 0.000794
+          "value": 0.00086
         },
         {
           "name": "TaskDuration",
-          "value": 1.266838
+          "value": 1.221425
         },
         {
           "name": "TaskOtherDuration",
-          "value": 0.564999
+          "value": 0.708051
         },
         {
           "name": "ThreadTime",
-          "value": 1.132026
+          "value": 1.107104
         },
         {
           "name": "ProcessTime",
-          "value": 2.203486
+          "value": 1.831398
         },
         {
           "name": "JSHeapUsedSize",
-          "value": 29277876
+          "value": 22396744
         },
         {
           "name": "JSHeapTotalSize",
-          "value": 51347456
+          "value": 51167232
         },
         {
           "name": "FirstMeaningfulPaint",
-          "value": 260009.713862
+          "value": 0
         },
         {
           "name": "DomContentLoaded",
-          "value": 260009.000464
+          "value": 17987.613626
         },
         {
           "name": "NavigationStart",
-          "value": 260007.950156
+          "value": 17980.625529
         }
       ]
     },
@@ -489,170 +173,178 @@
         "name": "http://localhost:3000/_next/static/media/0912b6f5b5f18160-s.p.woff2",
         "type": "link",
         "size": 41752,
-        "duration": 12,
-        "startTime": 104.80000001192093
+        "duration": 37.30000000074506,
+        "startTime": 6889.39999999851
       },
       {
         "name": "http://localhost:3000/_next/static/media/1dbd71bee75dcbe2-s.p.woff2",
         "type": "link",
         "size": 40280,
-        "duration": 9.700000017881393,
-        "startTime": 104.90000000596046
-      },
-      {
-        "name": "http://localhost:3000/_next/static/media/5b17810d8f5e92ae-s.p.woff2",
-        "type": "link",
-        "size": 41256,
-        "duration": 12.700000017881393,
-        "startTime": 105
-      },
-      {
-        "name": "http://localhost:3000/_next/static/media/585969283d20b6b5.p.woff2",
-        "type": "link",
-        "size": 42984,
-        "duration": 12.200000017881393,
-        "startTime": 105
+        "duration": 39.29999999701977,
+        "startTime": 6889.5
       },
       {
         "name": "http://localhost:3000/_next/static/media/3e521957c464c122-s.p.woff2",
         "type": "link",
         "size": 41796,
-        "duration": 11.5,
-        "startTime": 105
+        "duration": 40.400000002235174,
+        "startTime": 6889.599999997765
+      },
+      {
+        "name": "http://localhost:3000/_next/static/media/585969283d20b6b5.p.woff2",
+        "type": "link",
+        "size": 42984,
+        "duration": 42.100000001490116,
+        "startTime": 6889.599999997765
+      },
+      {
+        "name": "http://localhost:3000/_next/static/media/5b17810d8f5e92ae-s.p.woff2",
+        "type": "link",
+        "size": 41256,
+        "duration": 49,
+        "startTime": 6889.699999999255
+      },
+      {
+        "name": "http://localhost:3000/_next/static/chunks/webpack.js",
+        "type": "link",
+        "size": 10850,
+        "duration": 50.100000001490116,
+        "startTime": 6893.79999999702
+      },
+      {
+        "name": "http://localhost:3000/_next/static/chunks/app-pages-internals.js",
+        "type": "script",
+        "size": 31537,
+        "duration": 90.90000000223517,
+        "startTime": 6893.79999999702
+      },
+      {
+        "name": "http://localhost:3000/_next/static/chunks/main-app.js",
+        "type": "script",
+        "size": 1341813,
+        "duration": 380.30000000074506,
+        "startTime": 6893.79999999702
       },
       {
         "name": "http://localhost:3000/_next/static/media/69a390d3fcb2378e-s.p.woff2",
         "type": "link",
         "size": 39536,
-        "duration": 18.200000017881393,
-        "startTime": 105.90000000596046
+        "duration": 6.800000000745058,
+        "startTime": 7382.39999999851
       },
       {
         "name": "http://localhost:3000/_next/static/media/6aa0280f6054384f.p.woff2",
         "type": "link",
         "size": 43740,
-        "duration": 16,
-        "startTime": 106
-      },
-      {
-        "name": "http://localhost:3000/_next/static/media/92ddaa093d00abf9.p.woff2",
-        "type": "link",
-        "size": 42720,
-        "duration": 18.600000023841858,
-        "startTime": 106
+        "duration": 7.299999997019768,
+        "startTime": 7382.5
       },
       {
         "name": "http://localhost:3000/_next/static/media/811f4dd93c20bb43-s.p.ttf",
         "type": "link",
         "size": 35255,
-        "duration": 25.30000001192093,
-        "startTime": 106
+        "duration": 18.5,
+        "startTime": 7382.5
+      },
+      {
+        "name": "http://localhost:3000/_next/static/media/92ddaa093d00abf9.p.woff2",
+        "type": "link",
+        "size": 42720,
+        "duration": 7.900000002235174,
+        "startTime": 7382.599999997765
       },
       {
         "name": "http://localhost:3000/_next/static/media/939391cfa93e8d25-s.p.woff2",
         "type": "link",
         "size": 40216,
-        "duration": 23.299999982118607,
-        "startTime": 106.10000002384186
-      },
-      {
-        "name": "http://localhost:3000/_next/static/media/b0a3f7573432c7ef-s.p.woff2",
-        "type": "link",
-        "size": 40184,
-        "duration": 23.799999982118607,
-        "startTime": 106.10000002384186
+        "duration": 8.400000002235174,
+        "startTime": 7382.599999997765
       },
       {
         "name": "http://localhost:3000/_next/static/media/a34f9d1faa5f3315-s.p.woff2",
         "type": "link",
         "size": 48856,
-        "duration": 23.5,
-        "startTime": 106.10000002384186
+        "duration": 8.599999997764826,
+        "startTime": 7382.699999999255
+      },
+      {
+        "name": "http://localhost:3000/_next/static/media/b0a3f7573432c7ef-s.p.woff2",
+        "type": "link",
+        "size": 40184,
+        "duration": 14.300000000745058,
+        "startTime": 7382.699999999255
       },
       {
         "name": "http://localhost:3000/_next/static/media/b2f4711c55f17d21.p.woff2",
         "type": "link",
         "size": 43960,
-        "duration": 26.799999982118607,
-        "startTime": 106.10000002384186
+        "duration": 15.300000000745058,
+        "startTime": 7382.79999999702
       },
       {
         "name": "http://localhost:3000/_next/static/media/c848758d77f1aebb-s.p.woff2",
         "type": "link",
         "size": 41380,
-        "duration": 27.099999994039536,
-        "startTime": 106.2000000178814
+        "duration": 15.600000001490116,
+        "startTime": 7382.89999999851
       },
       {
         "name": "http://localhost:3000/_next/static/media/c1257d7db5a6288f.p.woff2",
         "type": "link",
         "size": 44168,
-        "duration": 26.799999982118607,
-        "startTime": 106.2000000178814
-      },
-      {
-        "name": "http://localhost:3000/_next/static/media/d13238683f37b6cc.p.woff2",
-        "type": "link",
-        "size": 41812,
-        "duration": 29.900000005960464,
-        "startTime": 106.2000000178814
-      },
-      {
-        "name": "http://localhost:3000/_next/static/media/de728c3f576bec66.p.woff2",
-        "type": "link",
-        "size": 44368,
-        "duration": 30.599999994039536,
-        "startTime": 106.2000000178814
+        "duration": 15.5,
+        "startTime": 7382.89999999851
       },
       {
         "name": "http://localhost:3000/_next/static/media/cd52f64c7d895aa2-s.p.ttf",
         "type": "link",
         "size": 30175,
-        "duration": 34,
-        "startTime": 106.2000000178814
+        "duration": 26.699999999254942,
+        "startTime": 7383
       },
       {
-        "name": "http://localhost:3000/_next/static/media/e3434d0986b06b4b-s.p.woff2",
+        "name": "http://localhost:3000/_next/static/media/d13238683f37b6cc.p.woff2",
         "type": "link",
-        "size": 41248,
-        "duration": 30.80000001192093,
-        "startTime": 106.30000001192093
-      },
-      {
-        "name": "http://localhost:3000/_next/static/media/e6d758f16580c953.p.woff2",
-        "type": "link",
-        "size": 44180,
-        "duration": 31.099999994039536,
-        "startTime": 106.30000001192093
+        "size": 41812,
+        "duration": 20.400000002235174,
+        "startTime": 7383.099999997765
       }
     ]
   },
   {
-    "url": "http://localhost:3000/produit/1",
-    "loadTime": 8230,
-    "domContentLoaded": 45.89999997615814,
-    "timeToInteractive": 821.8000000119209,
-    "firstPaint": 344,
-    "firstContentfulPaint": 344,
+    "url": "http://localhost:3000/catalogue",
+    "loadTime": 11171,
+    "domContentLoaded": 1600.5999999977648,
+    "timeToInteractive": 6259.800000000745,
+    "firstPaint": 2380,
+    "firstContentfulPaint": 2380,
     "longTasks": [
       {
-        "startTime": 544.3000000119209,
-        "duration": 164
+        "startTime": 1758.5,
+        "duration": 106
       },
       {
-        "startTime": 756.8000000119209,
-        "duration": 65
+        "startTime": 2213.10000000149,
+        "duration": 56
+      },
+      {
+        "startTime": 3119.7000000029802,
+        "duration": 58
+      },
+      {
+        "startTime": 6204.800000000745,
+        "duration": 55
       }
     ],
-    "totalJSSize": 6357053,
-    "totalJSTime": 2230.699999988079,
-    "jsResourcesCount": 17,
-    "screenshotPath": "/Users/tripleseptinteractive/code/reboulreactversion0/reports/performance/simplified/http___localhost_3000_produit_1.png",
+    "totalJSSize": 5095407,
+    "totalJSTime": 1075.5,
+    "jsResourcesCount": 12,
+    "screenshotPath": "/Users/tripleseptinteractive/code/reboulreactversion0/reports/performance/simplified/http___localhost_3000_catalogue.png",
     "devtoolsMetrics": {
       "metrics": [
         {
           "name": "Timestamp",
-          "value": 260026.45606
+          "value": 18009.305067
         },
         {
           "name": "AudioHandlers",
@@ -664,7 +356,7 @@
         },
         {
           "name": "Documents",
-          "value": 2
+          "value": 1
         },
         {
           "name": "Frames",
@@ -672,11 +364,11 @@
         },
         {
           "name": "JSEventListeners",
-          "value": 830
+          "value": 2338
         },
         {
           "name": "LayoutObjects",
-          "value": 281
+          "value": 2263
         },
         {
           "name": "MediaKeySessions",
@@ -688,15 +380,15 @@
         },
         {
           "name": "Nodes",
-          "value": 903
+          "value": 2598
         },
         {
           "name": "Resources",
-          "value": 51
+          "value": 89
         },
         {
           "name": "ContextLifecycleStateObservers",
-          "value": 23
+          "value": 13
         },
         {
           "name": "V8PerContextDatas",
@@ -704,7 +396,7 @@
         },
         {
           "name": "WorkerGlobalScopes",
-          "value": 2
+          "value": 5
         },
         {
           "name": "UACSSResources",
@@ -716,7 +408,7 @@
         },
         {
           "name": "ResourceFetchers",
-          "value": 4
+          "value": 6
         },
         {
           "name": "AdSubframes",
@@ -728,71 +420,71 @@
         },
         {
           "name": "ArrayBufferContents",
-          "value": 4
+          "value": 0
         },
         {
           "name": "LayoutCount",
-          "value": 48
+          "value": 43
         },
         {
           "name": "RecalcStyleCount",
-          "value": 485
+          "value": 508
         },
         {
           "name": "LayoutDuration",
-          "value": 0.064455
+          "value": 0.029792
         },
         {
           "name": "RecalcStyleDuration",
-          "value": 0.212732
+          "value": 0.267058
         },
         {
           "name": "DevToolsCommandDuration",
-          "value": 0.009873
+          "value": 0.000858
         },
         {
           "name": "ScriptDuration",
-          "value": 0.36752
+          "value": 0.362084
         },
         {
           "name": "V8CompileDuration",
-          "value": 0.000676
+          "value": 0.000711
         },
         {
           "name": "TaskDuration",
-          "value": 1.049625
+          "value": 1.363958
         },
         {
           "name": "TaskOtherDuration",
-          "value": 0.394369
+          "value": 0.703455
         },
         {
           "name": "ThreadTime",
-          "value": 0.933244
+          "value": 1.322585
         },
         {
           "name": "ProcessTime",
-          "value": 1.90778
+          "value": 2.258158
         },
         {
           "name": "JSHeapUsedSize",
-          "value": 26384304
+          "value": 31168824
         },
         {
           "name": "JSHeapTotalSize",
-          "value": 48693248
+          "value": 54296576
         },
         {
           "name": "FirstMeaningfulPaint",
-          "value": 260018.613951
+          "value": 18000.560447
         },
         {
           "name": "DomContentLoaded",
-          "value": 260018.438133
+          "value": 18001.299851
         },
         {
           "name": "NavigationStart",
-          "value": 260018.272206
+          "value": 17998.181499
         }
       ]
     },
@@ -801,178 +493,170 @@
         "name": "http://localhost:3000/_next/static/media/0912b6f5b5f18160-s.p.woff2",
         "type": "link",
         "size": 41752,
-        "duration": 23.599999994039536,
-        "startTime": 117.7000000178814
-      },
-      {
-        "name": "http://localhost:3000/_next/static/media/585969283d20b6b5.p.woff2",
-        "type": "link",
-        "size": 42984,
-        "duration": 24.700000017881393,
-        "startTime": 118
-      },
-      {
-        "name": "http://localhost:3000/_next/static/media/3e521957c464c122-s.p.woff2",
-        "type": "link",
-        "size": 41796,
-        "duration": 22.400000005960464,
-        "startTime": 118
-      },
-      {
-        "name": "http://localhost:3000/_next/static/media/5b17810d8f5e92ae-s.p.woff2",
-        "type": "link",
-        "size": 41256,
-        "duration": 24.400000005960464,
-        "startTime": 118
+        "duration": 6.100000001490116,
+        "startTime": 1516.1000000014901
       },
       {
         "name": "http://localhost:3000/_next/static/media/1dbd71bee75dcbe2-s.p.woff2",
         "type": "link",
         "size": 40280,
-        "duration": 20.30000001192093,
-        "startTime": 118
+        "duration": 12.199999999254942,
+        "startTime": 1516.2000000029802
+      },
+      {
+        "name": "http://localhost:3000/_next/static/media/3e521957c464c122-s.p.woff2",
+        "type": "link",
+        "size": 41796,
+        "duration": 12.400000002235174,
+        "startTime": 1516.300000000745
+      },
+      {
+        "name": "http://localhost:3000/_next/static/media/585969283d20b6b5.p.woff2",
+        "type": "link",
+        "size": 42984,
+        "duration": 14.100000001490116,
+        "startTime": 1516.300000000745
+      },
+      {
+        "name": "http://localhost:3000/_next/static/media/5b17810d8f5e92ae-s.p.woff2",
+        "type": "link",
+        "size": 41256,
+        "duration": 14.800000000745058,
+        "startTime": 1516.300000000745
+      },
+      {
+        "name": "http://localhost:3000/_next/static/chunks/webpack.js",
+        "type": "link",
+        "size": 10848,
+        "duration": 20.100000001490116,
+        "startTime": 1516.6000000014901
+      },
+      {
+        "name": "http://localhost:3000/_next/static/chunks/main-app.js",
+        "type": "script",
+        "size": 1341813,
+        "duration": 233.80000000074506,
+        "startTime": 1516.6000000014901
+      },
+      {
+        "name": "http://localhost:3000/_next/static/chunks/app-pages-internals.js",
+        "type": "script",
+        "size": 31537,
+        "duration": 25.599999997764826,
+        "startTime": 1516.7000000029802
       },
       {
         "name": "http://localhost:3000/_next/static/media/69a390d3fcb2378e-s.p.woff2",
         "type": "link",
         "size": 39536,
-        "duration": 28,
-        "startTime": 124.40000000596046
+        "duration": 13.700000002980232,
+        "startTime": 1861.5
       },
       {
         "name": "http://localhost:3000/_next/static/media/6aa0280f6054384f.p.woff2",
         "type": "link",
         "size": 43740,
-        "duration": 28.400000005960464,
-        "startTime": 124.5
-      },
-      {
-        "name": "http://localhost:3000/_next/static/media/811f4dd93c20bb43-s.p.ttf",
-        "type": "link",
-        "size": 35255,
-        "duration": 35.89999997615814,
-        "startTime": 124.60000002384186
+        "duration": 9.100000001490116,
+        "startTime": 1861.6000000014901
       },
       {
         "name": "http://localhost:3000/_next/static/media/92ddaa093d00abf9.p.woff2",
         "type": "link",
         "size": 42720,
-        "duration": 28.5,
-        "startTime": 124.7000000178814
+        "duration": 9.299999997019768,
+        "startTime": 1861.7000000029802
+      },
+      {
+        "name": "http://localhost:3000/_next/static/media/811f4dd93c20bb43-s.p.ttf",
+        "type": "link",
+        "size": 35255,
+        "duration": 21.199999999254942,
+        "startTime": 1861.7000000029802
       },
       {
         "name": "http://localhost:3000/_next/static/media/939391cfa93e8d25-s.p.woff2",
         "type": "link",
         "size": 40216,
-        "duration": 31.900000005960464,
-        "startTime": 124.7000000178814
-      },
-      {
-        "name": "http://localhost:3000/_next/static/media/b0a3f7573432c7ef-s.p.woff2",
-        "type": "link",
-        "size": 40184,
-        "duration": 32.80000001192093,
-        "startTime": 124.80000001192093
+        "duration": 14.300000000745058,
+        "startTime": 1861.800000000745
       },
       {
         "name": "http://localhost:3000/_next/static/media/a34f9d1faa5f3315-s.p.woff2",
         "type": "link",
         "size": 48856,
-        "duration": 32.099999994039536,
-        "startTime": 124.80000001192093
+        "duration": 18.099999997764826,
+        "startTime": 1861.9000000022352
+      },
+      {
+        "name": "http://localhost:3000/_next/static/media/b0a3f7573432c7ef-s.p.woff2",
+        "type": "link",
+        "size": 40184,
+        "duration": 18.800000000745058,
+        "startTime": 1861.9000000022352
       },
       {
         "name": "http://localhost:3000/_next/static/media/b2f4711c55f17d21.p.woff2",
         "type": "link",
         "size": 43960,
-        "duration": 35.900000005960464,
-        "startTime": 124.90000000596046
+        "duration": 18.900000002235174,
+        "startTime": 1862
       },
       {
         "name": "http://localhost:3000/_next/static/media/c1257d7db5a6288f.p.woff2",
         "type": "link",
         "size": 44168,
-        "duration": 36.70000001788139,
-        "startTime": 125
+        "duration": 23.100000001490116,
+        "startTime": 1862
       },
       {
         "name": "http://localhost:3000/_next/static/media/c848758d77f1aebb-s.p.woff2",
         "type": "link",
         "size": 41380,
-        "duration": 37.19999998807907,
-        "startTime": 125.10000002384186
+        "duration": 23.100000001490116,
+        "startTime": 1862.1000000014901
       },
       {
         "name": "http://localhost:3000/_next/static/media/cd52f64c7d895aa2-s.p.ttf",
         "type": "link",
         "size": 30175,
-        "duration": 65.39999997615814,
-        "startTime": 125.10000002384186
+        "duration": 31.699999999254942,
+        "startTime": 1862.1000000014901
       },
       {
         "name": "http://localhost:3000/_next/static/media/d13238683f37b6cc.p.woff2",
         "type": "link",
         "size": 41812,
-        "duration": 46.5,
-        "startTime": 125.30000001192093
-      },
-      {
-        "name": "http://localhost:3000/_next/static/media/de728c3f576bec66.p.woff2",
-        "type": "link",
-        "size": 44368,
-        "duration": 47.099999994039536,
-        "startTime": 125.30000001192093
-      },
-      {
-        "name": "http://localhost:3000/_next/static/media/e3434d0986b06b4b-s.p.woff2",
-        "type": "link",
-        "size": 41248,
-        "duration": 47.599999994039536,
-        "startTime": 125.30000001192093
-      },
-      {
-        "name": "http://localhost:3000/_next/static/css/app/layout.css?v=1746712141328",
-        "type": "link",
-        "size": 31312,
-        "duration": 35.900000005960464,
-        "startTime": 125.40000000596046
+        "duration": 24.5,
+        "startTime": 1862.2000000029802
       }
     ]
   },
   {
-    "url": "http://localhost:3000/checkout",
-    "loadTime": 10686,
-    "domContentLoaded": 234.19999998807907,
-    "timeToInteractive": 5329.300000011921,
-    "firstPaint": 2684,
-    "firstContentfulPaint": 2684,
+    "url": "http://localhost:3000/produit/1",
+    "loadTime": 9965,
+    "domContentLoaded": 8.600000001490116,
+    "timeToInteractive": 2565.89999999851,
+    "firstPaint": 2688,
+    "firstContentfulPaint": 2688,
     "longTasks": [
       {
-        "startTime": 2409,
-        "duration": 178
+        "startTime": 2108.699999999255,
+        "duration": 105
       },
       {
-        "startTime": 2861.800000011921,
-        "duration": 169
-      },
-      {
-        "startTime": 3073.9000000059605,
-        "duration": 80
-      },
-      {
-        "startTime": 5267.300000011921,
-        "duration": 62
+        "startTime": 2480.89999999851,
+        "duration": 85
       }
     ],
-    "totalJSSize": 5655163,
-    "totalJSTime": 2212.100000053644,
-    "jsResourcesCount": 17,
-    "screenshotPath": "/Users/tripleseptinteractive/code/reboulreactversion0/reports/performance/simplified/http___localhost_3000_checkout.png",
+    "totalJSSize": 5844705,
+    "totalJSTime": 1058.9000000059605,
+    "jsResourcesCount": 13,
+    "screenshotPath": "/Users/tripleseptinteractive/code/reboulreactversion0/reports/performance/simplified/http___localhost_3000_produit_1.png",
     "devtoolsMetrics": {
       "metrics": [
         {
           "name": "Timestamp",
-          "value": 260038.975393
+          "value": 18020.986162
         },
         {
           "name": "AudioHandlers",
@@ -984,19 +668,19 @@
         },
         {
           "name": "Documents",
-          "value": 5
+          "value": 1
         },
         {
           "name": "Frames",
-          "value": 6
+          "value": 1
         },
         {
           "name": "JSEventListeners",
-          "value": 813
+          "value": 748
         },
         {
           "name": "LayoutObjects",
-          "value": 754
+          "value": 345
         },
         {
           "name": "MediaKeySessions",
@@ -1008,15 +692,15 @@
         },
         {
           "name": "Nodes",
-          "value": 1204
+          "value": 529
         },
         {
           "name": "Resources",
-          "value": 40
+          "value": 38
         },
         {
           "name": "ContextLifecycleStateObservers",
-          "value": 35
+          "value": 10
         },
         {
           "name": "V8PerContextDatas",
@@ -1036,7 +720,7 @@
         },
         {
           "name": "ResourceFetchers",
-          "value": 7
+          "value": 3
         },
         {
           "name": "AdSubframes",
@@ -1052,67 +736,67 @@
         },
         {
           "name": "LayoutCount",
-          "value": 42
+          "value": 40
         },
         {
           "name": "RecalcStyleCount",
-          "value": 472
+          "value": 460
         },
         {
           "name": "LayoutDuration",
-          "value": 0.175082
+          "value": 0.033556
         },
         {
           "name": "RecalcStyleDuration",
-          "value": 0.24391
+          "value": 0.25559
         },
         {
           "name": "DevToolsCommandDuration",
-          "value": 0.001215
+          "value": 0.000611
         },
         {
           "name": "ScriptDuration",
-          "value": 0.469281
+          "value": 0.272472
         },
         {
           "name": "V8CompileDuration",
-          "value": 0.001984
+          "value": 0.000526
         },
         {
           "name": "TaskDuration",
-          "value": 1.437887
+          "value": 1.23684
         },
         {
           "name": "TaskOtherDuration",
-          "value": 0.546415
+          "value": 0.674085
         },
         {
           "name": "ThreadTime",
-          "value": 1.121218
+          "value": 1.195202
         },
         {
           "name": "ProcessTime",
-          "value": 2.075058
+          "value": 1.991285
         },
         {
           "name": "JSHeapUsedSize",
-          "value": 27091380
+          "value": 25666248
         },
         {
           "name": "JSHeapTotalSize",
-          "value": 53411840
+          "value": 52690944
         },
         {
           "name": "FirstMeaningfulPaint",
-          "value": 260031.014076
+          "value": 18013.743888
         },
         {
           "name": "DomContentLoaded",
-          "value": 260030.923998
+          "value": 18012.983734
         },
         {
           "name": "NavigationStart",
-          "value": 260028.330596
+          "value": 18011.057453
         }
       ]
     },
@@ -1121,141 +805,461 @@
         "name": "http://localhost:3000/_next/static/media/0912b6f5b5f18160-s.p.woff2",
         "type": "link",
         "size": 41752,
-        "duration": 16.600000023841858,
-        "startTime": 2349.5999999940395
+        "duration": 6.800000000745058,
+        "startTime": 1915.5
       },
       {
         "name": "http://localhost:3000/_next/static/media/1dbd71bee75dcbe2-s.p.woff2",
         "type": "link",
         "size": 40280,
-        "duration": 16,
-        "startTime": 2349.800000011921
-      },
-      {
-        "name": "http://localhost:3000/_next/static/media/585969283d20b6b5.p.woff2",
-        "type": "link",
-        "size": 42984,
-        "duration": 17.900000005960464,
-        "startTime": 2350.0999999940395
-      },
-      {
-        "name": "http://localhost:3000/_next/static/media/5b17810d8f5e92ae-s.p.woff2",
-        "type": "link",
-        "size": 41256,
-        "duration": 20.100000023841858,
-        "startTime": 2350.0999999940395
+        "duration": 7.600000001490116,
+        "startTime": 1915.699999999255
       },
       {
         "name": "http://localhost:3000/_next/static/media/3e521957c464c122-s.p.woff2",
         "type": "link",
         "size": 41796,
-        "duration": 16.30000001192093,
-        "startTime": 2350.0999999940395
+        "duration": 8.5,
+        "startTime": 1915.699999999255
+      },
+      {
+        "name": "http://localhost:3000/_next/static/media/585969283d20b6b5.p.woff2",
+        "type": "link",
+        "size": 42984,
+        "duration": 9.300000000745058,
+        "startTime": 1915.699999999255
+      },
+      {
+        "name": "http://localhost:3000/_next/static/media/5b17810d8f5e92ae-s.p.woff2",
+        "type": "link",
+        "size": 41256,
+        "duration": 10.5,
+        "startTime": 1915.800000000745
+      },
+      {
+        "name": "http://localhost:3000/_next/static/chunks/webpack.js",
+        "type": "link",
+        "size": 10850,
+        "duration": 12.5,
+        "startTime": 1916.1000000014901
+      },
+      {
+        "name": "http://localhost:3000/_next/static/chunks/app-pages-internals.js",
+        "type": "script",
+        "size": 31537,
+        "duration": 18.5,
+        "startTime": 1916.1000000014901
+      },
+      {
+        "name": "http://localhost:3000/_next/static/chunks/main-app.js",
+        "type": "script",
+        "size": 1341813,
+        "duration": 186,
+        "startTime": 1916.1000000014901
       },
       {
         "name": "http://localhost:3000/_next/static/media/69a390d3fcb2378e-s.p.woff2",
         "type": "link",
         "size": 39536,
-        "duration": 18,
-        "startTime": 2352.300000011921
-      },
-      {
-        "name": "http://localhost:3000/_next/static/media/92ddaa093d00abf9.p.woff2",
-        "type": "link",
-        "size": 42720,
-        "duration": 19.69999998807907,
-        "startTime": 2352.4000000059605
+        "duration": 8,
+        "startTime": 2209.199999999255
       },
       {
         "name": "http://localhost:3000/_next/static/media/6aa0280f6054384f.p.woff2",
         "type": "link",
         "size": 43740,
-        "duration": 20,
-        "startTime": 2352.4000000059605
+        "duration": 8.300000000745058,
+        "startTime": 2209.300000000745
+      },
+      {
+        "name": "http://localhost:3000/_next/static/media/92ddaa093d00abf9.p.woff2",
+        "type": "link",
+        "size": 42720,
+        "duration": 9,
+        "startTime": 2209.39999999851
       },
       {
         "name": "http://localhost:3000/_next/static/media/811f4dd93c20bb43-s.p.ttf",
         "type": "link",
         "size": 35255,
-        "duration": 36.19999998807907,
-        "startTime": 2352.4000000059605
+        "duration": 15.100000001490116,
+        "startTime": 2209.39999999851
       },
       {
         "name": "http://localhost:3000/_next/static/media/939391cfa93e8d25-s.p.woff2",
         "type": "link",
         "size": 40216,
-        "duration": 30.700000017881393,
-        "startTime": 2352.5
+        "duration": 9.099999997764826,
+        "startTime": 2209.60000000149
       },
       {
         "name": "http://localhost:3000/_next/static/media/a34f9d1faa5f3315-s.p.woff2",
         "type": "link",
         "size": 48856,
-        "duration": 32.80000001192093,
-        "startTime": 2352.5
-      },
-      {
-        "name": "http://localhost:3000/_next/static/media/b0a3f7573432c7ef-s.p.woff2",
-        "type": "link",
-        "size": 40184,
-        "duration": 31.600000023841858,
-        "startTime": 2352.5999999940395
+        "duration": 9.300000000745058,
+        "startTime": 2209.699999999255
       },
       {
         "name": "http://localhost:3000/_next/static/media/b2f4711c55f17d21.p.woff2",
         "type": "link",
         "size": 43960,
-        "duration": 34.30000001192093,
-        "startTime": 2352.5999999940395
+        "duration": 12.900000002235174,
+        "startTime": 2209.699999999255
+      },
+      {
+        "name": "http://localhost:3000/_next/static/media/b0a3f7573432c7ef-s.p.woff2",
+        "type": "link",
+        "size": 40184,
+        "duration": 12.600000001490116,
+        "startTime": 2209.699999999255
       },
       {
         "name": "http://localhost:3000/_next/static/media/c1257d7db5a6288f.p.woff2",
         "type": "link",
         "size": 44168,
-        "duration": 37.10000002384186,
-        "startTime": 2352.5999999940395
+        "duration": 13.100000001490116,
+        "startTime": 2209.699999999255
       },
       {
         "name": "http://localhost:3000/_next/static/media/c848758d77f1aebb-s.p.woff2",
         "type": "link",
         "size": 41380,
-        "duration": 37.599999994039536,
-        "startTime": 2352.7000000178814
+        "duration": 13.300000000745058,
+        "startTime": 2209.800000000745
       },
       {
         "name": "http://localhost:3000/_next/static/media/d13238683f37b6cc.p.woff2",
         "type": "link",
         "size": 41812,
-        "duration": 51.599999994039536,
-        "startTime": 2352.7000000178814
-      },
-      {
-        "name": "http://localhost:3000/_next/static/media/de728c3f576bec66.p.woff2",
-        "type": "link",
-        "size": 44368,
-        "duration": 59.89999997615814,
-        "startTime": 2352.7000000178814
+        "duration": 16.100000001490116,
+        "startTime": 2209.89999999851
       },
       {
         "name": "http://localhost:3000/_next/static/media/cd52f64c7d895aa2-s.p.ttf",
         "type": "link",
         "size": 30175,
-        "duration": 63.5,
-        "startTime": 2352.7000000178814
+        "duration": 22.800000000745058,
+        "startTime": 2209.89999999851
+      }
+    ]
+  },
+  {
+    "url": "http://localhost:3000/checkout",
+    "loadTime": 8830,
+    "domContentLoaded": 3.400000002235174,
+    "timeToInteractive": 2669.199999999255,
+    "firstPaint": 1632,
+    "firstContentfulPaint": 1632,
+    "longTasks": [
+      {
+        "startTime": 970.6999999992549,
+        "duration": 105
       },
       {
-        "name": "http://localhost:3000/_next/static/media/e3434d0986b06b4b-s.p.woff2",
-        "type": "link",
-        "size": 41248,
-        "duration": 62.099999994039536,
-        "startTime": 2352.7000000178814
+        "startTime": 1389.300000000745,
+        "duration": 55
       },
       {
-        "name": "http://localhost:3000/_next/static/css/app/layout.css?v=1746712153544",
+        "startTime": 1444.6000000014901,
+        "duration": 68
+      },
+      {
+        "startTime": 2617.199999999255,
+        "duration": 52
+      }
+    ],
+    "totalJSSize": 5165856,
+    "totalJSTime": 1132.0999999940395,
+    "jsResourcesCount": 16,
+    "screenshotPath": "/Users/tripleseptinteractive/code/reboulreactversion0/reports/performance/simplified/http___localhost_3000_checkout.png",
+    "devtoolsMetrics": {
+      "metrics": [
+        {
+          "name": "Timestamp",
+          "value": 18030.591554
+        },
+        {
+          "name": "AudioHandlers",
+          "value": 0
+        },
+        {
+          "name": "AudioWorkletProcessors",
+          "value": 0
+        },
+        {
+          "name": "Documents",
+          "value": 3
+        },
+        {
+          "name": "Frames",
+          "value": 6
+        },
+        {
+          "name": "JSEventListeners",
+          "value": 805
+        },
+        {
+          "name": "LayoutObjects",
+          "value": 793
+        },
+        {
+          "name": "MediaKeySessions",
+          "value": 0
+        },
+        {
+          "name": "MediaKeys",
+          "value": 0
+        },
+        {
+          "name": "Nodes",
+          "value": 902
+        },
+        {
+          "name": "Resources",
+          "value": 41
+        },
+        {
+          "name": "ContextLifecycleStateObservers",
+          "value": 16
+        },
+        {
+          "name": "V8PerContextDatas",
+          "value": 2
+        },
+        {
+          "name": "WorkerGlobalScopes",
+          "value": 2
+        },
+        {
+          "name": "UACSSResources",
+          "value": 0
+        },
+        {
+          "name": "RTCPeerConnections",
+          "value": 0
+        },
+        {
+          "name": "ResourceFetchers",
+          "value": 5
+        },
+        {
+          "name": "AdSubframes",
+          "value": 0
+        },
+        {
+          "name": "DetachedScriptStates",
+          "value": 2
+        },
+        {
+          "name": "ArrayBufferContents",
+          "value": 0
+        },
+        {
+          "name": "LayoutCount",
+          "value": 27
+        },
+        {
+          "name": "RecalcStyleCount",
+          "value": 428
+        },
+        {
+          "name": "LayoutDuration",
+          "value": 0.016876
+        },
+        {
+          "name": "RecalcStyleDuration",
+          "value": 0.248852
+        },
+        {
+          "name": "DevToolsCommandDuration",
+          "value": 0.000335
+        },
+        {
+          "name": "ScriptDuration",
+          "value": 0.333401
+        },
+        {
+          "name": "V8CompileDuration",
+          "value": 0.00047
+        },
+        {
+          "name": "TaskDuration",
+          "value": 1.390619
+        },
+        {
+          "name": "TaskOtherDuration",
+          "value": 0.790685
+        },
+        {
+          "name": "ThreadTime",
+          "value": 1.339478
+        },
+        {
+          "name": "ProcessTime",
+          "value": 2.170001
+        },
+        {
+          "name": "JSHeapUsedSize",
+          "value": 27570340
+        },
+        {
+          "name": "JSHeapTotalSize",
+          "value": 55853056
+        },
+        {
+          "name": "FirstMeaningfulPaint",
+          "value": 18023.427301
+        },
+        {
+          "name": "DomContentLoaded",
+          "value": 18022.584761
+        },
+        {
+          "name": "NavigationStart",
+          "value": 18021.798469
+        }
+      ]
+    },
+    "resources": [
+      {
+        "name": "http://localhost:3000/_next/static/media/0912b6f5b5f18160-s.p.woff2",
         "type": "link",
-        "size": 31312,
-        "duration": 38.29999998211861,
-        "startTime": 2352.800000011921
+        "size": 41752,
+        "duration": 5,
+        "startTime": 781
+      },
+      {
+        "name": "http://localhost:3000/_next/static/media/1dbd71bee75dcbe2-s.p.woff2",
+        "type": "link",
+        "size": 40280,
+        "duration": 6.099999997764826,
+        "startTime": 781.1000000014901
+      },
+      {
+        "name": "http://localhost:3000/_next/static/media/3e521957c464c122-s.p.woff2",
+        "type": "link",
+        "size": 41796,
+        "duration": 6.699999999254942,
+        "startTime": 781.1000000014901
+      },
+      {
+        "name": "http://localhost:3000/_next/static/media/585969283d20b6b5.p.woff2",
+        "type": "link",
+        "size": 42984,
+        "duration": 10.099999997764826,
+        "startTime": 781.1000000014901
+      },
+      {
+        "name": "http://localhost:3000/_next/static/media/5b17810d8f5e92ae-s.p.woff2",
+        "type": "link",
+        "size": 41256,
+        "duration": 11,
+        "startTime": 781.1999999992549
+      },
+      {
+        "name": "http://localhost:3000/_next/static/chunks/webpack.js",
+        "type": "link",
+        "size": 10848,
+        "duration": 13.199999999254942,
+        "startTime": 781.5
+      },
+      {
+        "name": "http://localhost:3000/_next/static/chunks/app-pages-internals.js",
+        "type": "script",
+        "size": 31537,
+        "duration": 16.899999998509884,
+        "startTime": 781.5
+      },
+      {
+        "name": "http://localhost:3000/_next/static/chunks/main-app.js",
+        "type": "script",
+        "size": 1341813,
+        "duration": 181.60000000149012,
+        "startTime": 781.5
+      },
+      {
+        "name": "http://localhost:3000/_next/static/media/69a390d3fcb2378e-s.p.woff2",
+        "type": "link",
+        "size": 39536,
+        "duration": 13,
+        "startTime": 1072.1000000014901
+      },
+      {
+        "name": "http://localhost:3000/_next/static/media/6aa0280f6054384f.p.woff2",
+        "type": "link",
+        "size": 43740,
+        "duration": 11.199999999254942,
+        "startTime": 1072.199999999255
+      },
+      {
+        "name": "http://localhost:3000/_next/static/media/92ddaa093d00abf9.p.woff2",
+        "type": "link",
+        "size": 42720,
+        "duration": 13.899999998509884,
+        "startTime": 1072.300000000745
+      },
+      {
+        "name": "http://localhost:3000/_next/static/media/811f4dd93c20bb43-s.p.ttf",
+        "type": "link",
+        "size": 35255,
+        "duration": 26.899999998509884,
+        "startTime": 1072.300000000745
+      },
+      {
+        "name": "http://localhost:3000/_next/static/media/939391cfa93e8d25-s.p.woff2",
+        "type": "link",
+        "size": 40216,
+        "duration": 14.5,
+        "startTime": 1072.3999999985099
+      },
+      {
+        "name": "http://localhost:3000/_next/static/media/a34f9d1faa5f3315-s.p.woff2",
+        "type": "link",
+        "size": 48856,
+        "duration": 14.100000001490116,
+        "startTime": 1072.5
+      },
+      {
+        "name": "http://localhost:3000/_next/static/media/b0a3f7573432c7ef-s.p.woff2",
+        "type": "link",
+        "size": 40184,
+        "duration": 22.699999999254942,
+        "startTime": 1072.5
+      },
+      {
+        "name": "http://localhost:3000/_next/static/media/b2f4711c55f17d21.p.woff2",
+        "type": "link",
+        "size": 43960,
+        "duration": 22.300000000745058,
+        "startTime": 1072.5
+      },
+      {
+        "name": "http://localhost:3000/_next/static/media/c1257d7db5a6288f.p.woff2",
+        "type": "link",
+        "size": 44168,
+        "duration": 24,
+        "startTime": 1072.6000000014901
+      },
+      {
+        "name": "http://localhost:3000/_next/static/media/c848758d77f1aebb-s.p.woff2",
+        "type": "link",
+        "size": 41380,
+        "duration": 24.599999997764826,
+        "startTime": 1072.6000000014901
+      },
+      {
+        "name": "http://localhost:3000/_next/static/media/cd52f64c7d895aa2-s.p.ttf",
+        "type": "link",
+        "size": 30175,
+        "duration": 35.19999999925494,
+        "startTime": 1072.699999999255
+      },
+      {
+        "name": "http://localhost:3000/_next/static/media/d13238683f37b6cc.p.woff2",
+        "type": "link",
+        "size": 41812,
+        "duration": 28.199999999254942,
+        "startTime": 1072.800000000745
       }
     ]
   }

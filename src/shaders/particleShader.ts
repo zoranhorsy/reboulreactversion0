@@ -19,4 +19,3 @@ export const fragmentShader = `
     gl_FragColor = vec4(vColor, 1.0) * texture2D(pointTexture, gl_PointCoord);
   }
 `;
-

@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from "react";
 
 interface UseImageWorkerOptions {
   width?: number;
   height?: number;
   quality?: number;
-  format?: 'webp' | 'avif' | 'jpeg';
+  format?: "webp" | "avif" | "jpeg";
 }
 
 interface UseImageWorkerResult {
@@ -14,22 +14,27 @@ interface UseImageWorkerResult {
   processImage: (imageData: ImageData) => Promise<void>;
 }
 
-export function useImageWorker(options: UseImageWorkerOptions = {}): UseImageWorkerResult {
+export function useImageWorker(
+  options: UseImageWorkerOptions = {},
+): UseImageWorkerResult {
   const [worker, setWorker] = useState<Worker | null>(null);
-  const [processedImage, setProcessedImage] = useState<ImageData | null>(null);
+  const [processedImage, setProcessedImage] = useState(null);
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
   // Initialiser le worker
   useEffect(() => {
-    const imageWorker = new Worker(new URL('../workers/imageWorker.ts', import.meta.url), {
-      type: 'module'
-    });
+    const imageWorker = new Worker(
+      new URL("../workers/imageWorker.ts", import.meta.url),
+      {
+        type: "module",
+      },
+    );
 
     imageWorker.onmessage = (e: MessageEvent) => {
       const { type, processedImage: result, error: workerError } = e.data;
-      
-      if (type === 'process') {
+
+      if (type === "process") {
         if (workerError) {
           setError(workerError);
         } else {
@@ -52,26 +57,29 @@ export function useImageWorker(options: UseImageWorkerOptions = {}): UseImageWor
   }, []);
 
   // Fonction pour traiter une image
-  const processImage = useCallback(async (imageData: ImageData) => {
-    if (!worker) {
-      setError('Worker non initialisé');
-      return;
-    }
+  const processImage = useCallback(
+    async (imageData: ImageData) => {
+      if (!worker) {
+        setError("Worker non initialisé");
+        return;
+      }
 
-    setIsProcessing(true);
-    setError(null);
+      setIsProcessing(true);
+      setError(null);
 
-    worker.postMessage({
-      type: 'process',
-      imageData,
-      options
-    });
-  }, [worker, options]);
+      worker.postMessage({
+        type: "process",
+        imageData,
+        options,
+      });
+    },
+    [worker, options],
+  );
 
   return {
     processedImage,
     error,
     isProcessing,
-    processImage
+    processImage,
   };
-} 
+}

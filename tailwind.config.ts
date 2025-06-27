@@ -80,38 +80,46 @@ const config: Config = {
     			md: 'calc(var(--radius) - 2px)',
     			sm: 'calc(var(--radius) - 4px)'
     		},
-    		animation: {
-    			'ping-slow': 'ping-slow 2s cubic-bezier(0, 0, 0.2, 1) infinite',
-    			'pulse-slow': 'pulse-slow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-    			'float': 'float 3s ease-in-out infinite',
-    			'grain': 'grain 8s steps(10) infinite',
-    		},
-    		keyframes: {
-    			'ping-slow': {
-    				'0%, 100%': { opacity: '1' },
-    				'50%': { opacity: '0.5' },
-    			},
-    			'pulse-slow': {
-    				'0%, 100%': { transform: 'scale(1)' },
-    				'50%': { transform: 'scale(1.05)' },
-    			},
-    			'float': {
-    				'0%, 100%': { transform: 'translateY(0)' },
-    				'50%': { transform: 'translateY(-10px)' },
-    			},
-    			'grain': {
-    				'0%, 100%': { transform: 'translate(0, 0)' },
-    				'10%': { transform: 'translate(-2%, -2%)' },
-    				'20%': { transform: 'translate(2%, 2%)' },
-    				'30%': { transform: 'translate(-1%, 1%)' },
-    				'40%': { transform: 'translate(1%, -1%)' },
-    				'50%': { transform: 'translate(-2%, 2%)' },
-    				'60%': { transform: 'translate(2%, -2%)' },
-    				'70%': { transform: 'translate(-1%, -1%)' },
-    				'80%': { transform: 'translate(1%, 1%)' },
-    				'90%': { transform: 'translate(-2%, -2%)' },
-    			}
-    		}
+    				animation: {
+			'ping-slow': 'ping-slow 2s cubic-bezier(0, 0, 0.2, 1) infinite',
+			'pulse-slow': 'pulse-slow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+			'float': 'float 3s ease-in-out infinite',
+			'grain': 'grain 8s steps(10) infinite',
+			'marquee': 'marquee 15s linear infinite',
+		},
+		translate: {
+			'101': '101%',
+		},
+    				keyframes: {
+			'ping-slow': {
+				'0%, 100%': { opacity: '1' },
+				'50%': { opacity: '0.5' },
+			},
+			'pulse-slow': {
+				'0%, 100%': { transform: 'scale(1)' },
+				'50%': { transform: 'scale(1.05)' },
+			},
+			'float': {
+				'0%, 100%': { transform: 'translateY(0)' },
+				'50%': { transform: 'translateY(-10px)' },
+			},
+			'grain': {
+				'0%, 100%': { transform: 'translate(0, 0)' },
+				'10%': { transform: 'translate(-2%, -2%)' },
+				'20%': { transform: 'translate(2%, 2%)' },
+				'30%': { transform: 'translate(-1%, 1%)' },
+				'40%': { transform: 'translate(1%, -1%)' },
+				'50%': { transform: 'translate(-2%, 2%)' },
+				'60%': { transform: 'translate(2%, -2%)' },
+				'70%': { transform: 'translate(-1%, -1%)' },
+				'80%': { transform: 'translate(1%, 1%)' },
+				'90%': { transform: 'translate(-2%, -2%)' },
+			},
+			'marquee': {
+				'from': { transform: 'translateX(0%)' },
+				'to': { transform: 'translateX(-50%)' }
+			}
+		}
     	}
     },
 	plugins: [require("tailwindcss-animate")],

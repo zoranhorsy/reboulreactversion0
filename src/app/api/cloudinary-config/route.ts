@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server';
-import { cloudinaryConfig } from '@/config/cloudinary';
+import { NextResponse } from "next/server";
+import { cloudinaryConfig } from "@/config/cloudinary";
 
 export async function GET() {
   // Ne pas exposer les clés API secrètes
@@ -10,10 +10,12 @@ export async function GET() {
     defaultTransformations: cloudinaryConfig.defaultTransformations,
     imageSizes: cloudinaryConfig.imageSizes,
     env: {
-      NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
-      NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET: process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET,
-    }
+      NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME:
+        process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+      NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET:
+        process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET,
+    },
   };
 
   return NextResponse.json(safeConfig);
-} 
+}

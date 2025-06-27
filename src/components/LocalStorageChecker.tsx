@@ -1,56 +1,61 @@
-'use client'
+"use client";
 
-import { useEffect } from 'react'
+import { useEffect } from "react";
 
 interface Product {
-    id: string;
-    name: string;
-    price: number;
-    category: string;
-    brand: string;
-    variants?: unknown[];
-    tags?: string[];
-    reviews?: unknown[];
-    questions?: unknown[];
-    faqs?: unknown[];
-    sizeChart?: unknown[];
+  id: string;
+  name: string;
+  price: number;
+  category: string;
+  brand: string;
+  variants?: unknown[];
+  tags?: string[];
+  reviews?: unknown[];
+  questions?: unknown[];
+  faqs?: unknown[];
+  sizeChart?: unknown[];
 }
 
 export function LocalStorageChecker() {
-    useEffect(() => {
-        const checkLocalStorage = () => {
-            const productsJson = localStorage.getItem('products')
-            console.log('Contenu brut du localStorage (products):', productsJson)
+  useEffect(() => {
+    const checkLocalStorage = () => {
+      const productsJson = localStorage.getItem("products");
+      console.log("Contenu brut du localStorage (products):", productsJson);
 
-            if (productsJson) {
-                try {
-                    const products: Product[] = JSON.parse(productsJson)
-                    console.log('Nombre de produits dans le localStorage:', products.length)
-                    products.forEach((product: Product, index: number) => {
-                        console.log(`\nProduit ${index + 1}:`)
-                        console.log('ID:', product.id)
-                        console.log('Nom:', product.name)
-                        console.log('Prix:', product.price)
-                        console.log('Catégorie:', product.category)
-                        console.log('Marque:', product.brand)
-                        console.log('Nombre de variantes:', product.variants?.length || 0)
-                        console.log('Tags:', product.tags?.join(', ') || 'Aucun')
-                        console.log('Nombre d\'avis:', product.reviews?.length || 0)
-                        console.log('Nombre de questions:', product.questions?.length || 0)
-                        console.log('Nombre de FAQs:', product.faqs?.length || 0)
-                        console.log('Nombre de tailles dans le guide:', product.sizeChart?.length || 0)
-                    })
-                } catch (error) {
-                    console.error('Erreur lors du parsing du JSON:', error)
-                }
-            } else {
-                console.log('Aucun produit trouvé dans le localStorage.')
-            }
+      if (productsJson) {
+        try {
+          const products: Product[] = JSON.parse(productsJson);
+          console.log(
+            "Nombre de produits dans le localStorage:",
+            products.length,
+          );
+          products.forEach((product: Product, index: number) => {
+            console.log(`\nProduit ${index + 1}:`);
+            console.log("ID:", product.id);
+            console.log("Nom:", product.name);
+            console.log("Prix:", product.price);
+            console.log("Catégorie:", product.category);
+            console.log("Marque:", product.brand);
+            console.log("Nombre de variantes:", product.variants?.length || 0);
+            console.log("Tags:", product.tags?.join(", ") || "Aucun");
+            console.log("Nombre d'avis:", product.reviews?.length || 0);
+            console.log("Nombre de questions:", product.questions?.length || 0);
+            console.log("Nombre de FAQs:", product.faqs?.length || 0);
+            console.log(
+              "Nombre de tailles dans le guide:",
+              product.sizeChart?.length || 0,
+            );
+          });
+        } catch (error) {
+          console.error("Erreur lors du parsing du JSON:", error);
         }
+      } else {
+        console.log("Aucun produit trouvé dans le localStorage.");
+      }
+    };
 
-        checkLocalStorage()
-    }, [])
+    checkLocalStorage();
+  }, []);
 
-    return null
+  return null;
 }
-

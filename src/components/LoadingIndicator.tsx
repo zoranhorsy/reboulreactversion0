@@ -1,41 +1,30 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
-import { usePathname } from 'next/navigation'
-import { LoaderComponent } from '@/components/ui/Loader'
+import { useEffect, useState } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 
 export function LoadingIndicator() {
-    const [loading, setLoading] = useState(false)
-    const pathname = usePathname()
+  const [loading, setLoading] = useState(true);
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
-    useEffect(() => {
-        const handleRouteChange = () => {
-            setLoading(true)
-        }
+  useEffect(() => {
+    // Simuler un temps de chargement minimal
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 500);
 
-        const handleRouteComplete = () => {
-            setLoading(false)
-        }
+    return () => clearTimeout(timer);
+  }, [pathname, searchParams]);
 
-        // Simulating route change events
-        window.addEventListener('routeChangeStart', handleRouteChange)
-        window.addEventListener('routeChangeComplete', handleRouteComplete)
-        window.addEventListener('routeChangeError', handleRouteComplete)
+  if (!loading) return null;
 
-        return () => {
-            window.removeEventListener('routeChangeStart', handleRouteChange)
-            window.removeEventListener('routeChangeComplete', handleRouteComplete)
-            window.removeEventListener('routeChangeError', handleRouteComplete)
-        }
-    }, [])
-
-    // Reset loading state when pathname changes
-    useEffect(() => {
-        setLoading(false)
-    }, [pathname])
-
-    if (!loading) return null
-
-    return <LoaderComponent />
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+      <div className="flex flex-col items-center space-y-4">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+        <p className="text-sm text-muted-foreground">Chargement...</p>
+      </div>
+    </div>
+  );
 }
-

@@ -1,42 +1,41 @@
-export interface User {
-  id: string
-  name: string
-  email: string
-  isAdmin: boolean
-  avatarUrl?: string
-  address?: string
-}
-
 export interface UserInfo {
-  id: number
-  name: string
-  email: string
+  id: string;
+  username: string;
+  email: string;
+  avatar_url?: string;
 }
 
 export interface Address {
-  street: string
-  city: string
-  postal_code: string
-  country: string
+  street: string;
+  city: string;
+  postal_code: string;
+  country: string;
 }
 
 export interface LoginCredentials {
-  email: string
-  password: string
+  email: string;
+  password: string;
 }
 
 export interface LoginResponse {
-  user: User
-  token: string
+  user: UserInfo;
+  token: string;
 }
 
 export interface RegisterData {
-  name: string
-  email: string
-  password: string
+  username: string;
+  email: string;
+  password: string;
 }
 
 export interface ChangePasswordData {
-  currentPassword: string
-  newPassword: string
-} 
+  currentPassword: string;
+  newPassword: string;
+}
+
+// Type pour la mise à jour des informations utilisateur
+export interface UserUpdateData {
+  username?: string;
+  email?: string;
+  avatar_url?: string;
+}

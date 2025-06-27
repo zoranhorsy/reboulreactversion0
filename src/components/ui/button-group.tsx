@@ -1,17 +1,17 @@
-import React from 'react'
-import { cn } from '@/lib/utils'
+import React from "react";
+import { cn } from "@/lib/utils";
 
 interface ButtonProps {
-  variant?: 'solid' | 'outline' | 'ghost'
-  [key: string]: any
+  variant?: "solid" | "outline" | "ghost";
+  [key: string]: any;
 }
 
 interface ButtonGroupProps extends React.HTMLAttributes<HTMLDivElement> {
-  spacing?: number
-  children: React.ReactNode
-  direction?: 'row' | 'column'
-  isAttached?: boolean
-  variant?: 'solid' | 'outline' | 'ghost'
+  spacing?: number;
+  children: React.ReactNode;
+  direction?: "row" | "column";
+  isAttached?: boolean;
+  variant?: "solid" | "outline" | "ghost";
 }
 
 /**
@@ -22,30 +22,30 @@ export function ButtonGroup({
   spacing = 4,
   className,
   children,
-  direction = 'row',
+  direction = "row",
   isAttached = false,
   variant,
   ...props
 }: ButtonGroupProps) {
   // Convertir l'espacement Chakra en taille Tailwind
   const gap = `gap-${spacing}`;
-  
+
   // Appliquer la direction (row ou column)
-  const flexDirection = direction === 'column' ? 'flex-col' : 'flex-row';
-  
+  const flexDirection = direction === "column" ? "flex-col" : "flex-row";
+
   // Gérer les boutons attachés (sans espace entre eux)
-  const attachedStyles = isAttached 
-    ? 'divide-x divide-gray-200 dark:divide-gray-700 [&>*:first-child]:rounded-r-none [&>*:not(:first-child):not(:last-child)]:rounded-none [&>*:last-child]:rounded-l-none'
+  const attachedStyles = isAttached
+    ? "divide-x divide-gray-200 dark:divide-gray-700 [&>*:first-child]:rounded-r-none [&>*:not(:first-child):not(:last-child)]:rounded-none [&>*:last-child]:rounded-l-none"
     : gap;
-  
+
   return (
-    <div 
+    <div
       className={cn(
-        'flex',
+        "flex",
         flexDirection,
         !isAttached && gap,
         isAttached && attachedStyles,
-        className
+        className,
       )}
       {...props}
     >
@@ -64,5 +64,5 @@ export function ButtonGroup({
           })
         : children}
     </div>
-  )
-} 
+  );
+}

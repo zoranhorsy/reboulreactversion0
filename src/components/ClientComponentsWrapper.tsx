@@ -1,23 +1,25 @@
-'use client'
+"use client";
 
-import dynamic from 'next/dynamic'
-import { useEffect, useState } from 'react'
+import dynamic from "next/dynamic";
+import { useEffect, useState } from "react";
 
-const ClientComponents = dynamic(() => import('@/components/ClientComponents'), {
-  ssr: false
-})
+const ClientComponents = dynamic(
+  () => import("@/components/ClientComponents"),
+  {
+    ssr: false,
+  },
+);
 
 export default function ClientComponentsWrapper() {
-  const [isMounted, setIsMounted] = useState(false)
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    setIsMounted(true)
-  }, [])
+    setIsMounted(true);
+  }, []);
 
   if (!isMounted) {
-    return null
+    return null;
   }
 
-  return <ClientComponents />
+  return;
 }
-

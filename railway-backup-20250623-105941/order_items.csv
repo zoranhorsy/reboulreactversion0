@@ -1,0 +1,7 @@
+id,order_id,product_id,product_name,quantity,price,created_at,updated_at,variant_info,is_corner_product,corner_product_id
+1,72,72,Mercer The Re-Run Dot,1,180.00,2025-05-10 15:14:48.94198+00,2025-05-10 15:14:48.94198+00,"{""size"": ""EU 41"", ""color"": ""Argent""}",f,
+3,78,72,Mercer The Re-Run Dot,1,180.00,2025-05-13 10:41:02.824972+00,2025-05-13 10:41:02.824972+00,"{""size"": ""EU 42"", ""color"": ""Argent"", ""stock"": 2, ""colorLabel"": ""Argent""}",f,
+4,80,85,Sacoche Off White,1,400.00,2025-05-13 11:25:40.67866+00,2025-05-13 11:25:40.67866+00,"{""size"": ""UNI"", ""color"": ""Noir"", ""stock"": 1, ""colorLabel"": ""Noir""}",f,
+5,84,55,MERCER RE-RUN SPEED GOLD,1,165.00,2025-05-13 19:38:36.122282+00,2025-05-13 19:38:36.122282+00,"{""size"": ""41"", ""color"": ""Gold"", ""stock"": 1, ""colorLabel"": ""Gold""}",f,
+6,85,55,MERCER RE-RUN SPEED GOLD,1,165.00,2025-05-22 10:22:32.46224+00,2025-05-22 10:22:32.46224+00,"{""size"": ""41"", ""color"": ""Gold"", ""stock"": 1, ""colorLabel"": ""Gold""}",f,
+8,87,61,The Re-Run Baseball,1,99.99,2025-05-24 21:29:28.03634+00,2025-05-24 21:29:28.03634+00,"{""size"": ""M"", ""color"": ""Noir""}",f,

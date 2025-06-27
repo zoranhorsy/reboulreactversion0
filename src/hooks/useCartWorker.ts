@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useState } from "react";
 
 // Types alignés avec ceux du CartContext
 export interface CartItem {
@@ -16,7 +16,7 @@ export interface CartItem {
 }
 
 type CartOptions = {
-  shippingMethod?: 'standard' | 'express' | 'pickup';
+  shippingMethod?: "standard" | "express" | "pickup";
   discountCode?: string;
 };
 
@@ -29,101 +29,88 @@ export interface CartTotal {
 }
 
 export function useCartWorker() {
-  const workerRef = useRef<Worker | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    // Vérifier si Window est disponible (côté client uniquement)
-    if (typeof window !== 'undefined') {
-      try {
-        // Initialisation du worker
-        workerRef.current = new Worker('/workers/cartWorker.js');
-        
-        console.log('CartWorker initialized successfully');
-      } catch (err) {
-        console.error('Failed to initialize CartWorker:', err);
-        setError('Impossible d\'initialiser le worker de calcul du panier');
+  const calculateShipping = useCallback(
+    (subtotal: number, method?: string): number => {
+      // Convertir le subtotal en centimes pour correspondre à la logique de route.ts
+      const subtotalInCents = subtotal * 100;
+
+      switch (method) {
+        case "express":
+          return 9.9; // 990 centimes = 9.90€
+        case "pickup":
+          return 0;
+        case "standard":
+        default:
+          // Livraison standard gratuite à partir de 200€
+          return subtotalInCents >= 20000 ? 0 : 5.9; // 590 centimes = 5.90€
       }
-    }
+    },
+    [],
+  );
 
-    // Nettoyage
-    return () => {
-      workerRef.current?.terminate();
-    };
-  }, []);
+  const calculateDiscount = useCallback(
+    (subtotal: number, code?: string): number => {
+      if (!code) return 0;
 
-  const calculateCartTotals = useCallback(async (items: CartItem[], options: CartOptions = {}) => {
-    if (!workerRef.current) {
-      console.warn('Worker non initialisé, utilisation du calcul synchrone');
-      // Calcul de secours côté UI si le worker n'est pas disponible
-      const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-      const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
-      const shipping = calculateShippingFallback(subtotal, options.shippingMethod);
-      const discount = calculateDiscountFallback(subtotal, options.discountCode);
-      
-      return {
-        subtotal,
-        shipping,
-        discount,
-        total: subtotal + shipping - discount,
-        itemCount
-      };
-    }
+      switch (code.toUpperCase()) {
+        case "WELCOME10":
+          return subtotal * 0.1;
+        case "SUMMER20":
+          return subtotal * 0.2;
+        case "REBOUL25":
+          return subtotal * 0.25;
+        case "FREE50":
+          // Si le sous-total est >= 50€, on offre les frais de port standard (5.90€)
+          return subtotal >= 50 ? 5.9 : 0;
+        default:
+          return 0;
+      }
+    },
+    [],
+  );
 
-    setIsLoading(true);
-    setError(null);
+  const calculateCartTotals = useCallback(
+    async (
+      items: CartItem[],
+      options: CartOptions = {},
+    ): Promise<CartTotal> => {
+      console.log("CartWorker - Calculating totals:", { items, options });
 
-    return new Promise<CartTotal>((resolve, reject) => {
-      const messageHandler = (e: MessageEvent) => {
-        if (e.data.type === 'CALCULATE_SUCCESS') {
-          setIsLoading(false);
-          resolve(e.data.result);
-        } else if (e.data.type === 'ERROR') {
-          setIsLoading(false);
-          setError(e.data.error);
-          reject(new Error(e.data.error));
-        }
-      };
+      try {
+        setIsLoading(true);
+        setError(null);
 
-      workerRef.current?.addEventListener('message', messageHandler, { once: true });
-      workerRef.current?.postMessage({
-        type: 'CALCULATE_TOTAL',
-        items,
-        options,
-      });
-    });
-  }, []);
+        const subtotal = items.reduce(
+          (sum, item) => sum + item.price * item.quantity,
+          0,
+        );
+        const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
+        const shipping = calculateShipping(subtotal, options.shippingMethod);
+        const discount = calculateDiscount(subtotal, options.discountCode);
 
-  // Fonctions de secours au cas où le worker n'est pas disponible
-  function calculateShippingFallback(subtotal: number, method?: string): number {
-    switch (method) {
-      case 'express':
-        return subtotal > 100 ? 0 : 15;
-      case 'pickup':
-        return 0;
-      case 'standard':
-      default:
-        return subtotal > 50 ? 0 : 8;
-    }
-  }
+        const result = {
+          subtotal,
+          shipping,
+          discount,
+          total: subtotal + shipping - discount,
+          itemCount,
+        };
 
-  function calculateDiscountFallback(subtotal: number, code?: string): number {
-    if (!code) return 0;
-    
-    switch (code.toUpperCase()) {
-      case 'WELCOME10':
-        return subtotal * 0.1;
-      case 'SUMMER20':
-        return subtotal * 0.2;
-      default:
-        return 0;
-    }
-  }
+        console.log("CartWorker - Calculation result:", result);
+        return result;
+      } catch (error) {
+        console.error("CartWorker - Error during calculation:", error);
+        setError(error instanceof Error ? error.message : "Erreur de calcul");
+        throw error;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [calculateShipping, calculateDiscount],
+  );
 
-  return {
-    calculateCartTotals,
-    isLoading,
-    error,
-  };
-} 
+  return { calculateCartTotals, isLoading, error };
+}

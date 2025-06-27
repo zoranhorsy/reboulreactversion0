@@ -1,444 +1,356 @@
-'use client'
+"use client";
 
-import React, { useEffect, useState, useCallback } from 'react'
-import Image from 'next/image'
-import Link from 'next/link'
-import { motion } from 'framer-motion'
-// TODO: Envisager de remplacer framer-motion par des animations CSS pour réduire la taille du bundle
-// TODO: Envisager de remplacer framer-motion par des animations CSS pour réduire la taille du bundle
-import { ChevronRight, ArrowLeft, ArrowRight } from 'lucide-react'
-import { useInView } from 'react-intersection-observer'
-import { cn } from '@/lib/utils'
-import useEmblaCarousel from 'embla-carousel-react'
-import Autoplay from 'embla-carousel-autoplay'
-import { toast } from '@/components/ui/use-toast'
-import { Api } from '@/lib/api'
+import React, { useEffect, useState, useCallback, useRef } from "react";
+import { gsap } from "gsap";
+import { Api } from "@/lib/api";
+import { toast } from "@/components/ui/use-toast";
+import { useTheme } from "next-themes";
 
 // Types pour les données de collections
 interface StoreCollection {
-    id: string;        // Identifiant unique de la collection
-    title: string;     // Titre affiché
-    image: string;     // Image de la collection
-    href: string;      // Lien vers la page de la collection
-    description: string; // Description courte (badge)
-    tagline: string;   // Phrase d'accroche
-    
-    // Ces propriétés seront remplies dynamiquement
-    productCount?: number;   // Nombre de produits
-    newProductsCount?: number; // Nombre de nouveaux produits
-    hasNewProducts?: boolean; // Si la collection a des nouveautés
+  id: string;
+  title: string;
+  image: string;
+  href: string;
+  description: string;
+  tagline: string;
+  productCount?: number;
+  newProductsCount?: number;
+  hasNewProducts?: boolean;
 }
 
-// Données statiques des collections - correspond aux valeurs dans le champ store_type
+// Type pour les props du MenuItem
+interface MenuItemProps extends StoreCollection {
+  index: number;
+}
+
+// Données statiques des collections
 const STORE_COLLECTIONS: StoreCollection[] = [
-    {
-        id: 'adult',
-        title: 'REBOUL ADULTE',
-        image: '/images/collections/adult-collection.jpg',
-        href: '/catalogue?store_type=adult',
-        description: 'COLLECTION ADULTE',
-        tagline: 'Style et élégance pour tous'
-    },
-    {
-        id: 'kids',
-        title: 'LES MINOTS DE REBOUL',
-        image: '/images/collections/kids-collection.jpg',
-        href: '/catalogue?store_type=kids',
-        description: 'COLLECTION ENFANT',
-        tagline: 'Mode tendance pour les petits'
-    },
-    {
-        id: 'sneakers',
-        title: 'SNEAKERS',
-        image: '/images/collections/sneakers-collection.jpg',
-        href: '/catalogue?store_type=sneakers',
-        description: 'ÉDITION LIMITÉE',
-        tagline: 'Pour les passionnés de streetwear'
-    },
-    {
-        id: 'cpcompany',
-        title: 'THE CORNER MARSEILLE',
-        image: '/images/collections/cp-company.jpg',
-        href: '/the-corner',
-        description: 'C.P.COMPANY',
-        tagline: 'L\'exclusivité à l\'italienne'
-    }
-]
+  {
+    id: "adult",
+    title: "REBOUL ADULTE",
+    image: "/images/collections/adult-collection.jpg",
+    href: "/catalogue?store_type=adult",
+    description: "COLLECTION ADULTE",
+    tagline: "Style et élégance pour tous",
+  },
+  {
+    id: "kids",
+    title: "LES MINOTS DE REBOUL",
+    image: "/images/collections/kids-collection.jpg",
+    href: "/catalogue?store_type=kids",
+    description: "COLLECTION ENFANT",
+    tagline: "Mode tendance pour les petits",
+  },
+  {
+    id: "sneakers",
+    title: "SNEAKERS",
+    image: "/images/collections/sneakers-collection.jpg",
+    href: "/catalogue?store_type=sneakers",
+    description: "ÉDITION LIMITÉE",
+    tagline: "Pour les passionnés de streetwear",
+  },
+  {
+    id: "cpcompany",
+    title: "THE CORNER MARSEILLE",
+    image: "/images/collections/cp-company.jpg",
+    href: "/the-corner",
+    description: "C.P.COMPANY",
+    tagline: "L'exclusivité à l'italienne",
+  },
+];
 
-// Dégradés sobres pour les cartes
-const CARD_GRADIENTS = [
-    "from-black/50 via-black/40 to-black/60",
-    "from-black/50 via-black/45 to-black/55",
-    "from-black/55 via-black/45 to-black/60",
-    "from-black/50 via-black/40 to-black/55"
-]
+// Composant MenuItem avec flowing menu effect
+const MenuItem: React.FC<MenuItemProps> = ({
+  title,
+  image,
+  href,
+  description,
+  tagline,
+  productCount,
+  hasNewProducts,
+  newProductsCount,
+  index,
+}) => {
+  const itemRef = useRef<HTMLDivElement>(null);
+  const marqueeRef = useRef<HTMLDivElement>(null);
+  const marqueeInnerRef = useRef<HTMLDivElement>(null);
+  const { resolvedTheme } = useTheme();
 
-export function StoreSelection() {
-    const [ref, inView] = useInView({ 
-        triggerOnce: true,
-        threshold: 0.1
-    })
-    
-    const [emblaRef, emblaApi] = useEmblaCarousel(
-        { 
-            loop: true,
-            align: 'center',
-            slidesToScroll: 1,
-            dragFree: true,
-            containScroll: 'trimSnaps',
-        }, 
-        [
-            Autoplay({
-                delay: 6000,
-                stopOnInteraction: false,
-                stopOnMouseEnter: true,
-                playOnInit: true
-            })
-        ]
-    )
-    
-    const [selectedSlide, setSelectedSlide] = useState(0)
-    const [isHovering, setIsHovering] = useState(false)
-    const [prevBtnEnabled, setPrevBtnEnabled] = useState(true)
-    const [nextBtnEnabled, setNextBtnEnabled] = useState(true)
-    const [collections, setCollections] = useState<StoreCollection[]>(STORE_COLLECTIONS)
-    const [isLoading, setIsLoading] = useState(true)
-    
-    // Fonction pour charger les données des collections à partir de l'API
-    const loadCollectionsData = useCallback(async () => {
-        try {
-            setIsLoading(true)
-            
-            // Utiliser l'API pour récupérer les statistiques des collections
-            const api = new Api()
-            const stats = await api.fetchCollectionStats()
-            
-            // Mettre à jour les collections avec les données récupérées
-            const enrichedCollections = STORE_COLLECTIONS.map(collection => {
-                const storeStats = stats[collection.id] || { total: 0, new: 0 }
-                
-                return {
-                    ...collection,
-                    productCount: storeStats.total,
-                    newProductsCount: storeStats.new,
-                    hasNewProducts: storeStats.new > 0
-                }
-            })
-            
-            setCollections(enrichedCollections)
-        } catch (error) {
-            console.error("Erreur lors du chargement des données des collections:", error)
-            
-            // En cas d'erreur, utiliser des données simulées
-            const simulatedData = STORE_COLLECTIONS.map(collection => ({
-                ...collection,
-                productCount: collection.id === 'adult' ? 178 : 
-                               collection.id === 'kids' ? 94 : 
-                               collection.id === 'sneakers' ? 67 : 42,
-                newProductsCount: collection.id === 'adult' ? 12 :
-                                   collection.id === 'kids' ? 8 : 0,
-                hasNewProducts: ['adult', 'kids'].includes(collection.id)
-            }))
-            
-            setCollections(simulatedData)
-            
-            toast({
-                title: "Information",
-                description: "Chargement des données de démonstration (mode hors ligne)",
-                variant: "default"
-            })
-        } finally {
-            setIsLoading(false)
-        }
-    }, [])
-    
-    // Charger les données au montage du composant
-    useEffect(() => {
-        loadCollectionsData()
-    }, [loadCollectionsData])
-    
-    // Mettre à jour l'index du slide actif lors du défilement
-    const onSelect = useCallback(() => {
-        if (!emblaApi) return
-        setSelectedSlide(emblaApi.selectedScrollSnap())
-        setPrevBtnEnabled(emblaApi.canScrollPrev())
-        setNextBtnEnabled(emblaApi.canScrollNext())
-    }, [emblaApi])
-    
-    useEffect(() => {
-        if (!emblaApi) return
-        
-        onSelect()
-        emblaApi.on('select', onSelect)
-        emblaApi.on('reInit', onSelect)
-        
-        return () => {
-            emblaApi.off('select', onSelect)
-            emblaApi.off('reInit', onSelect)
-        }
-    }, [emblaApi, onSelect])
-    
-    // Naviguer vers le slide précédent
-    const scrollPrev = useCallback(() => {
-        if (emblaApi) emblaApi.scrollPrev()
-    }, [emblaApi])
-    
-    // Naviguer vers le slide suivant
-    const scrollNext = useCallback(() => {
-        if (emblaApi) emblaApi.scrollNext()
-    }, [emblaApi])
+  const animationDefaults = { duration: 0.6, ease: "expo" };
 
-    // Récupérer le dégradé pour une carte en fonction de son index
-    const getCardGradient = useCallback((index: number) => {
-        return CARD_GRADIENTS[index % CARD_GRADIENTS.length]
-    }, [])
+  const findClosestEdge = (
+    mouseX: number,
+    mouseY: number,
+    width: number,
+    height: number,
+  ): "top" | "bottom" => {
+    const topEdgeDist = Math.pow(mouseX - width / 2, 2) + Math.pow(mouseY, 2);
+    const bottomEdgeDist =
+      Math.pow(mouseX - width / 2, 2) + Math.pow(mouseY - height, 2);
+    return topEdgeDist < bottomEdgeDist ? "top" : "bottom";
+  };
 
-    // État de chargement
-    if (isLoading) {
-        return (
-            <section className="w-full bg-white dark:bg-zinc-950 py-12 md:py-20 lg:py-24 overflow-hidden">
-                <div className="w-full max-w-7xl mx-auto px-4">
-                    <div className="text-center mb-10">
-                        <div className="h-8 w-48 bg-zinc-200 dark:bg-zinc-800 rounded-md mx-auto mb-4 animate-pulse" />
-                        <div className="h-4 w-64 bg-zinc-200 dark:bg-zinc-800 rounded-md mx-auto animate-pulse" />
-                    </div>
-                    <div className="w-full aspect-[16/9] bg-zinc-200 dark:bg-zinc-800 rounded-xl animate-pulse" />
-                </div>
-            </section>
-        )
-    }
+  const handleMouseEnter = (ev: React.MouseEvent<HTMLAnchorElement>) => {
+    if (!itemRef.current || !marqueeRef.current || !marqueeInnerRef.current)
+      return;
 
-    return (
-        <section 
-            ref={ref} 
-            className="w-full bg-white dark:bg-zinc-950 py-12 md:py-20 lg:py-24 overflow-hidden"
-        >
-            <div className="w-full mx-auto px-0">
-                {/* Titre de la section */}
-                <motion.div 
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={inView ? { opacity: 1, y: 0 } : {}}
-                    transition={{ duration: 0.7, ease: [0.215, 0.61, 0.355, 1] }}
-                    className="text-center mb-10 md:mb-14 lg:mb-16 px-4"
-                >
-                    <div className="relative inline-block mb-4">
-                        <motion.h2 
-                            className="font-geist text-sm md:text-base lg:text-lg text-foreground/90 tracking-[0.3em] uppercase font-medium"
-                            initial={{ letterSpacing: "0.2em", opacity: 0.7 }}
-                            animate={inView ? { letterSpacing: "0.3em", opacity: 1 } : {}}
-                            transition={{ duration: 1.2, ease: [0.215, 0.61, 0.355, 1] }}
-                        >
-                            Nos collections
-                        </motion.h2>
-                        <motion.div 
-                            className="w-full h-[1px] bg-foreground/20 absolute -bottom-2"
-                            initial={{ width: '0%' }}
-                            animate={inView ? { width: '100%' } : {}}
-                            transition={{ duration: 1, delay: 0.4, ease: [0.215, 0.61, 0.355, 1] }}
-                        />
-                    </div>
-                    <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={inView ? { opacity: 1, y: 0 } : {}}
-                        transition={{ duration: 0.7, delay: 0.3, ease: [0.215, 0.61, 0.355, 1] }}
-                    >
-                        <p className="text-foreground/60 text-sm md:text-base max-w-md mx-auto">
-                            Découvrez notre sélection exclusive de vêtements et accessoires pour tous les styles
-                        </p>
-                    </motion.div>
-                </motion.div>
+    const rect = itemRef.current.getBoundingClientRect();
+    const edge = findClosestEdge(
+      ev.clientX - rect.left,
+      ev.clientY - rect.top,
+      rect.width,
+      rect.height,
+    );
 
-                {/* Carousel principal */}
-                <motion.div
-                    initial={{ opacity: 0, y: 30 }}
-                    animate={inView ? { opacity: 1, y: 0 } : {}}
-                    transition={{ duration: 0.7, delay: 0.2, ease: [0.215, 0.61, 0.355, 1] }}
-                    className="relative w-screen left-[50%] right-[50%] ml-[-50vw] mr-[-50vw]"
-                    onMouseEnter={() => setIsHovering(true)}
-                    onMouseLeave={() => setIsHovering(false)}
-                >
-                    <div className="overflow-hidden" ref={emblaRef}>
-                        <div className="flex py-3 md:py-4 lg:py-6 pl-0">
-                            {collections.map((store, index) => (
-                                <div 
-                                    key={store.id} 
-                                    className={cn(
-                                        "relative flex-grow-0 flex-shrink-0",
-                                        "w-[95vw] px-3 sm:w-[85vw] sm:px-4 md:w-[75vw] lg:w-[65vw] xl:w-[55vw]",
-                                        "transition-all duration-500 ease-out", 
-                                        selectedSlide === index ? "" : "scale-[0.98] opacity-85"
-                                    )}
-                                >
-                                    <Link 
-                                        href={store.href} 
-                                        className={cn(
-                                            "block w-full aspect-[4/3] xs:aspect-[16/9] md:aspect-[21/9] relative overflow-hidden rounded-lg md:rounded-xl",
-                                            "shadow-md hover:shadow-lg",
-                                            "transition-all duration-500 ease-out group"
-                                        )}
-                                    >
-                                        {/* Image principale */}
-                                        <div className="absolute inset-0 w-full h-full overflow-hidden">
-                                            <Image
-                                                src={store.image}
-                                                alt={`Collection ${store.title} - REBOUL`}
-                                                fill
-                                                className={cn(
-                                                    "object-cover transition-all duration-1000 ease-out",
-                                                    selectedSlide === index 
-                                                        ? "scale-105 brightness-105" 
-                                                        : "scale-100 brightness-95",
-                                                    "group-hover:scale-[1.03]"
-                                                )}
-                                                sizes="(max-width: 768px) 95vw, (max-width: 1024px) 85vw, (max-width: 1280px) 75vw, 65vw"
-                                                priority
-                                                quality={90}
-                                            />
-                                            
-                                            {/* Overlay */}
-                                            <div className={cn(
-                                                "absolute inset-0 bg-gradient-to-b",
-                                                getCardGradient(index),
-                                                "transition-opacity duration-700 z-20",
-                                                selectedSlide === index ? "opacity-65" : "opacity-75"
-                                            )} />
+    const tl = gsap.timeline({ defaults: animationDefaults });
+    tl.set(marqueeRef.current, { y: edge === "top" ? "-101%" : "101%" })
+      .set(marqueeInnerRef.current, { y: edge === "top" ? "101%" : "-101%" })
+      .to([marqueeRef.current, marqueeInnerRef.current], { y: "0%" });
+  };
 
-                                            {/* Léger effet de brillance au hover */}
-                                            <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-20 transition-opacity duration-500 z-25"></div>
-                                        </div>
-                                        
-                                        {/* Contenu principal */}
-                                        <div className="absolute inset-0 p-3 xs:p-4 sm:p-6 md:p-10 lg:p-12 
-                                                flex flex-col justify-center items-center text-center z-40">
-                                            <div className={cn(
-                                                "transform transition-all duration-700 w-full max-w-lg",
-                                                selectedSlide === index ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0"
-                                            )}>
-                                                {/* Badge catégorie */}
-                                                <motion.div 
-                                                    initial={{ opacity: 0, y: -10 }}
-                                                    animate={selectedSlide === index ? { opacity: 1, y: 0 } : {}}
-                                                    transition={{ duration: 0.5, delay: 0.3 }}
-                                                    className="inline-block px-1.5 py-0.5 xs:px-2 xs:py-1 sm:px-4 sm:py-1.5 rounded-full bg-white/15 backdrop-blur-sm mb-2 xs:mb-3 md:mb-5"
-                                                >
-                                                    <p className="font-geist text-[8px] xs:text-[10px] sm:text-xs tracking-[0.1em] xs:tracking-[0.15em] text-white uppercase font-light">
-                                                        {store.description}
-                                                    </p>
-                                                </motion.div>
-                                                
-                                                {/* Titre */}
-                                                <motion.h3
-                                                    initial={{ opacity: 0, y: 10 }}
-                                                    animate={selectedSlide === index ? { opacity: 1, y: 0 } : {}}
-                                                    transition={{ duration: 0.5, delay: 0.5 }}
-                                                    className="font-geist text-lg xs:text-xl sm:text-3xl md:text-4xl lg:text-5xl font-medium tracking-[0.08em] xs:tracking-[0.1em] 
-                                                     text-white mb-1 xs:mb-2 md:mb-4 uppercase"
-                                                >
-                                                    {store.title}
-                                                </motion.h3>
-                                                
-                                                {/* Tagline */}
-                                                <motion.p
-                                                    initial={{ opacity: 0, y: 10 }}
-                                                    animate={selectedSlide === index ? { opacity: 1, y: 0 } : {}}
-                                                    transition={{ duration: 0.5, delay: 0.6 }}
-                                                    className="text-white/80 text-[10px] xs:text-xs sm:text-sm md:text-base mb-2 xs:mb-3 sm:mb-5 md:mb-6 max-w-xs xs:max-w-sm mx-auto"
-                                                >
-                                                    {store.tagline}
-                                                </motion.p>
-                                                
-                                                {/* Bouton */}
-                                                <motion.div 
-                                                    initial={{ opacity: 0, y: 10 }}
-                                                    animate={selectedSlide === index ? { opacity: 1, y: 0 } : {}}
-                                                    transition={{ duration: 0.5, delay: 0.7 }}
-                                                    className="inline-block overflow-hidden rounded-full bg-white/15 hover:bg-white/25 
-                                                        backdrop-blur-sm transition-all duration-300
-                                                        px-3 py-1.5 xs:px-4 xs:py-2 sm:px-6 sm:py-3 group/btn"
-                                                    whileHover={{ scale: 1.03 }}
-                                                    whileTap={{ scale: 0.98 }}
-                                                >
-                                                    <span className="font-geist text-[10px] xs:text-xs sm:text-sm md:text-base text-white flex items-center gap-1 xs:gap-1.5 sm:gap-2">
-                                                        Découvrir
-                                                        <ChevronRight className="w-3 h-3 xs:w-3.5 xs:h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 transform group-hover/btn:translate-x-1 transition-transform duration-300" />
-                                                    </span>
-                                                </motion.div>
-                                            </div>
-                                        </div>
+  const handleMouseLeave = (ev: React.MouseEvent<HTMLAnchorElement>) => {
+    if (!itemRef.current || !marqueeRef.current || !marqueeInnerRef.current)
+      return;
 
-                                        {/* Badge nouveautés - basé sur hasNewProducts de l'API */}
-                                        {store.hasNewProducts && (
-                                            <motion.div 
-                                                initial={{ opacity: 0, x: 20 }}
-                                                animate={selectedSlide === index ? { opacity: 1, x: 0 } : { opacity: 0, x: 20 }}
-                                                transition={{ duration: 0.5, delay: 0.4 }}
-                                                className="absolute top-3 right-3 md:top-4 md:right-4 lg:top-5 lg:right-5 z-40"
-                                            >
-                                                <div className="bg-red-500/90 text-white px-1.5 py-0.5 xs:px-2 sm:px-3 md:px-4 md:py-1.5 rounded-full 
-    text-[7px] xs:text-[8px] sm:text-[10px] md:text-xs uppercase tracking-wide xs:tracking-wider shadow-sm flex items-center gap-1 xs:gap-1.5">
-                                                    <span className="w-1 h-1 xs:w-1.5 xs:h-1.5 rounded-full bg-white animate-ping-slow"></span>
-                                                    <span>Nouveautés</span>
-                                                </div>
-                                            </motion.div>
-                                        )}
+    const rect = itemRef.current.getBoundingClientRect();
+    const edge = findClosestEdge(
+      ev.clientX - rect.left,
+      ev.clientY - rect.top,
+      rect.width,
+      rect.height,
+    );
 
-                                        {/* Compteur de produits - basé sur productCount de l'API */}
-                                        {store.productCount !== undefined && store.productCount > 0 && (
-                                            <motion.div 
-                                                initial={{ opacity: 0, y: 20 }}
-                                                animate={selectedSlide === index ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-                                                transition={{ duration: 0.5, delay: 0.6 }}
-                                                className="absolute bottom-3 left-3 md:bottom-4 md:left-4 lg:bottom-5 lg:left-5 z-40"
-                                            >
-                                                <div className="bg-black/40 backdrop-blur-sm text-white px-1 py-0.5 xs:px-1.5 sm:px-2 md:px-2.5 md:py-1
-    text-[7px] xs:text-[8px] sm:text-[10px] md:text-xs rounded-md">
-                                                    {store.productCount} {store.productCount > 1 ? 'produits' : 'produit'}
-                                                </div>
-                                            </motion.div>
-                                        )}
-                                        
-                                        {/* Légère bordure intérieure */}
-                                        <div className="absolute inset-0 border border-white/10 rounded-lg md:rounded-xl z-30" />
-                                    </Link>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                    
-                    {/* Flèches de navigation */}
-                    <div className={cn(
-                        "absolute top-1/2 -translate-y-1/2 left-2 right-2 sm:left-4 sm:right-4 md:left-6 md:right-6 lg:left-8 lg:right-8 flex justify-between z-50 transition-opacity duration-300 pointer-events-none",
-                        isHovering ? "opacity-100" : "opacity-0 sm:opacity-60"
-                    )}>
-                        <motion.button
-                            onClick={scrollPrev}
-                            className="flex items-center justify-center w-8 h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 rounded-full
-                                bg-black/40 backdrop-blur-md
-                                text-white border border-white/10 hover:bg-black/60 hover:border-white/30
-                                transition-all duration-300 shadow-md pointer-events-auto"
-                            whileHover={{ scale: 1.08 }}
-                            whileTap={{ scale: 0.95 }}
-                            aria-label="Collection précédente"
-                            disabled={!prevBtnEnabled}
-                        >
-                            <ArrowLeft className="w-3.5 h-3.5 md:w-4 md:h-4 lg:w-5 lg:h-5" />
-                        </motion.button>
-                        <motion.button
-                            onClick={scrollNext}
-                            className="flex items-center justify-center w-8 h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 rounded-full
-                                bg-black/40 backdrop-blur-md
-                                text-white border border-white/10 hover:bg-black/60 hover:border-white/30
-                                transition-all duration-300 shadow-md pointer-events-auto"
-                            whileHover={{ scale: 1.08 }}
-                            whileTap={{ scale: 0.95 }}
-                            aria-label="Collection suivante"
-                            disabled={!nextBtnEnabled}
-                        >
-                            <ArrowRight className="w-3.5 h-3.5 md:w-4 md:h-4 lg:w-5 lg:h-5" />
-                        </motion.button>
-                    </div>
-                </motion.div>
+    const tl = gsap.timeline({ defaults: animationDefaults });
+    tl.to(marqueeRef.current, { y: edge === "top" ? "-101%" : "101%" }).to(
+      marqueeInnerRef.current,
+      { y: edge === "top" ? "101%" : "-101%" },
+      "-=0.6",
+    );
+  };
+
+  // Contenu du marquee répété
+  const marqueeContent = Array.from({ length: 4 }).map((_, idx) => (
+    <div key={idx} className="flex items-center gap-6 mx-12">
+      <div className="flex flex-col items-start">
+        <span className="uppercase font-geist text-[4vh] leading-[1.2] whitespace-nowrap text-black">
+          {title}
+        </span>
+        <span className="text-sm font-light font-geist whitespace-nowrap text-zinc-600">
+          {tagline}
+        </span>
+        {productCount !== undefined && (
+          <span className="text-xs mt-1 font-geist text-zinc-500">
+            {productCount} articles disponibles
+          </span>
+        )}
+      </div>
+      <div
+        className="w-[300px] h-[15vh] rounded-xl bg-cover bg-center shadow-sm"
+        style={{ backgroundImage: `url(${image})` }}
+      />
+    </div>
+  ));
+
+  return (
+    <div
+      ref={itemRef}
+      className={`flex-1 relative overflow-hidden text-center
+                     animate-fade-in-up [animation-delay:${index * 150}ms]
+                     [animation-fill-mode:backwards]`}
+      style={{ animationDelay: `${index * 150}ms` }}
+    >
+      <a
+        className="flex items-center justify-center h-full relative cursor-pointer 
+                         uppercase no-underline font-geist font-medium text-zinc-800 dark:text-zinc-200 text-[4vh] 
+                         hover:text-black dark:hover:text-black
+                         focus:text-zinc-800 focus-visible:text-black 
+                         dark:focus:text-zinc-200 dark:focus-visible:text-white
+                         transition-all duration-300 py-16 group
+                         hover:bg-zinc-50 dark:hover:bg-white"
+        href={href}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      >
+        <div className="flex flex-col items-center gap-2">
+          <span className="relative">
+            {title}
+            <span
+              className="absolute -bottom-1 left-0 w-0 h-0.5 bg-black dark:bg-white 
+                                     group-hover:bg-black dark:group-hover:bg-black group-hover:w-full transition-all duration-300"
+            ></span>
+          </span>
+          <span
+            className="text-sm font-light font-geist text-zinc-500 dark:text-zinc-400 
+                                 group-hover:text-zinc-600 dark:group-hover:text-zinc-600 
+                                 transition-colors duration-300"
+          >
+            {description}
+          </span>
+          {hasNewProducts && (
+            <div
+              className="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded-full 
+                            text-xs uppercase tracking-wider shadow-sm flex items-center gap-1.5"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping-slow"></span>
+              <span>{newProductsCount} nouveautés</span>
             </div>
-        </section>
-    )
-} 
+          )}
+        </div>
+      </a>
+
+      {/* Flowing marquee overlay */}
+      <div
+        ref={marqueeRef}
+        className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none 
+                         bg-white backdrop-blur-[2px] translate-y-[101%]"
+      >
+        <div
+          ref={marqueeInnerRef}
+          className="h-full w-[200%] flex translate-y-[-101%]"
+        >
+          <div className="flex items-center relative h-full w-[200%] animate-marquee">
+            {marqueeContent}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default function StoreSelection() {
+  const { resolvedTheme } = useTheme();
+  const [collections, setCollections] =
+    useState<StoreCollection[]>(STORE_COLLECTIONS);
+  const [isLoading, setIsLoading] = useState(true);
+  const sectionRef = useRef<HTMLElement>(null);
+
+  // Animation optimisée au scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && sectionRef.current) {
+            const ctx = gsap.context(() => {
+              gsap.to(sectionRef.current, {
+                opacity: 1,
+                y: 0,
+                duration: 0.8,
+                ease: "power3.out",
+                clearProps: "transform",
+              });
+            });
+            observer.disconnect();
+            return () => ctx.revert();
+          }
+        });
+      },
+      { threshold: 0.1 },
+    );
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
+  const loadCollectionsData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const api = new Api();
+      const stats = await api.fetchCollectionStats();
+
+      const enrichedCollections = STORE_COLLECTIONS.map((collection) => {
+        const storeStats = stats[collection.id] || { total: 0, new: 0 };
+        return {
+          ...collection,
+          productCount: storeStats.total,
+          newProductsCount: storeStats.new,
+          hasNewProducts: storeStats.new > 0,
+        };
+      });
+
+      setCollections(enrichedCollections);
+    } catch (error) {
+      console.error(
+        "Erreur lors du chargement des données des collections:",
+        error,
+      );
+
+      const simulatedData = STORE_COLLECTIONS.map((collection) => ({
+        ...collection,
+        productCount:
+          collection.id === "adult"
+            ? 178
+            : collection.id === "kids"
+              ? 94
+              : collection.id === "sneakers"
+                ? 67
+                : 42,
+        newProductsCount:
+          collection.id === "adult" ? 12 : collection.id === "kids" ? 8 : 0,
+        hasNewProducts: ["adult", "kids"].includes(collection.id),
+      }));
+
+      setCollections(simulatedData);
+      toast({
+        title: "Information",
+        description:
+          "Chargement des données de démonstration (mode hors ligne)",
+        variant: "default",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadCollectionsData();
+  }, [loadCollectionsData]);
+
+  if (isLoading) {
+    return (
+      <section
+        ref={sectionRef}
+        className={`w-full min-h-[80vh] animate-fade-in-up
+                         ${resolvedTheme === "dark" ? "bg-zinc-950" : "bg-white"}`}
+      >
+        <div className="w-full">
+          <div className="animate-pulse space-y-8 py-12">
+            {[...Array(4)].map((_, i) => (
+              <div
+                key={i}
+                className={`h-48 rounded-lg
+                                         ${resolvedTheme === "dark" ? "bg-zinc-900/50" : "bg-zinc-100/50"}`}
+                style={{
+                  animationDelay: `${i * 150}ms`,
+                  contain: "strict",
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section
+      ref={sectionRef}
+      className={`w-full animate-fade-in-up
+                     ${resolvedTheme === "dark" ? "bg-zinc-950" : "bg-white"}`}
+    >
+      <div className="w-full">
+        <div
+          className={`flex flex-col divide-y
+                              ${resolvedTheme === "dark" ? "divide-white/5" : "divide-zinc-100"}`}
+        >
+          {collections.map((collection, index) => (
+            <MenuItem key={collection.id} {...collection} index={index} />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}

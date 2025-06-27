@@ -1,130 +1,147 @@
-import nodemailer from 'nodemailer';
-import config from '@/config';
+import nodemailer from "nodemailer";
+import config from "@/config";
 
 const transporter = nodemailer.createTransport({
-    host: config.smtp.host,
-    port: config.smtp.port,
-    secure: config.smtp.secure,
-    auth: {
-        user: config.smtp.user,
-        pass: config.smtp.pass,
-    },
+  host: config.smtp.host,
+  port: config.smtp.port,
+  secure: config.smtp.secure,
+  auth: {
+    user: config.smtp.user,
+    pass: config.smtp.pass,
+  },
 });
 
 interface OrderItem {
-    name: string;
-    quantity: number;
-    price: number;
+  name: string;
+  quantity: number;
+  price: number;
 }
 
 interface OrderDetails {
-    id: string;
-    customerName: string;
-    email: string;
-    shippingAddress: string;
-    items: OrderItem[];
-    total: number;
-    trackingNumber?: string;
-    language?: 'fr' | 'en';
+  id: string;
+  customerName: string;
+  email: string;
+  shippingAddress: string;
+  items: OrderItem[];
+  total: number;
+  trackingNumber?: string;
+  language?: "fr" | "en";
 }
 
 interface RecommendedProduct {
-    name: string;
-    price: number;
-    imageUrl: string;
-    productUrl: string;
+  name: string;
+  price: number;
+  imageUrl: string;
+  productUrl: string;
 }
 
 const recommendedProducts: RecommendedProduct[] = [
-    {
-        name: "T-shirt Premium",
-        price: 29.99,
-        imageUrl: `${config.api.baseUrlPublic}/images/tshirt-premium.jpg`,
-        productUrl: `${config.api.baseUrlPublic}/produit/tshirt-premium`,
-    },
-    {
-        name: "Jeans Classique",
-        price: 59.99,
-        imageUrl: `${config.api.baseUrlPublic}/images/jeans-classique.jpg`,
-        productUrl: `${config.api.baseUrlPublic}/produit/jeans-classique`,
-    },
-    {
-        name: "Chaussures de Sport",
-        price: 89.99,
-        imageUrl: `${config.api.baseUrlPublic}/images/chaussures-sport.jpg`,
-        productUrl: `${config.api.baseUrlPublic}/produit/chaussures-sport`,
-    },
+  {
+    name: "T-shirt Premium",
+    price: 29.99,
+    imageUrl: `${config.api.baseUrlPublic}/images/tshirt-premium.jpg`,
+    productUrl: `${config.api.baseUrlPublic}/produit/tshirt-premium`,
+  },
+  {
+    name: "Jeans Classique",
+    price: 59.99,
+    imageUrl: `${config.api.baseUrlPublic}/images/jeans-classique.jpg`,
+    productUrl: `${config.api.baseUrlPublic}/produit/jeans-classique`,
+  },
+  {
+    name: "Chaussures de Sport",
+    price: 89.99,
+    imageUrl: `${config.api.baseUrlPublic}/images/chaussures-sport.jpg`,
+    productUrl: `${config.api.baseUrlPublic}/produit/chaussures-sport`,
+  },
 ];
 
 const translations = {
-    fr: {
-        subject: "Confirmation de votre commande",
-        thankYou: "Merci pour votre commande !",
-        greeting: "Cher(e)",
-        orderConfirmation: "Nous sommes ravis de vous confirmer que votre commande (ID: {orderId}) a été reçue et est en cours de traitement.",
-        orderSummary: "Récapitulatif de votre commande :",
-        product: "Produit",
-        quantity: "Quantité",
-        price: "Prix",
-        total: "Total",
-        nextSteps: "Prochaines étapes :",
-        step1: "Nous allons préparer votre commande avec le plus grand soin.",
-        step2: "Vous recevrez un e-mail de confirmation d'expédition avec les informations de suivi.",
-        step3: "Votre colis sera livré à l'adresse que vous avez fournie lors de la commande.",
-        trackingInfo: "Vous pouvez suivre votre commande avec le numéro de suivi suivant :",
-        questions: "Si vous avez des questions concernant votre commande, n'hésitez pas à nous contacter à l'adresse suivante :",
-        thanks: "Merci encore pour votre confiance et votre achat chez Reboul Store !",
-        regards: "Cordialement,",
-        team: "L'équipe Reboul Store",
-        recommendations: "Vous pourriez aussi aimer :",
-        promoCode: "Utilisez le code promo MERCI10 pour bénéficier de 10% de réduction sur votre prochaine commande !",
-    },
-    en: {
-        subject: "Order Confirmation",
-        thankYou: "Thank you for your order!",
-        greeting: "Dear",
-        orderConfirmation: "We are pleased to confirm that your order (ID: {orderId}) has been received and is being processed.",
-        orderSummary: "Order Summary:",
-        product: "Product",
-        quantity: "Quantity",
-        price: "Price",
-        total: "Total",
-        nextSteps: "Next Steps:",
-        step1: "We will prepare your order with the utmost care.",
-        step2: "You will receive a shipping confirmation email with tracking information.",
-        step3: "Your package will be delivered to the address you provided during checkout.",
-        trackingInfo: "You can track your order with the following tracking number:",
-        questions: "If you have any questions about your order, please don't hesitate to contact us at:",
-        thanks: "Thank you again for your trust and your purchase from Reboul Store!",
-        regards: "Best regards,",
-        team: "The Reboul Store Team",
-        recommendations: "You might also like:",
-        promoCode: "Use promo code THANKS10 to get 10% off your next order!",
-    },
+  fr: {
+    subject: "Confirmation de votre commande",
+    thankYou: "Merci pour votre commande !",
+    greeting: "Cher(e)",
+    orderConfirmation:
+      "Nous sommes ravis de vous confirmer que votre commande (ID: {orderId}) a été reçue et est en cours de traitement.",
+    orderSummary: "Récapitulatif de votre commande :",
+    product: "Produit",
+    quantity: "Quantité",
+    price: "Prix",
+    total: "Total",
+    nextSteps: "Prochaines étapes :",
+    step1: "Nous allons préparer votre commande avec le plus grand soin.",
+    step2:
+      "Vous recevrez un e-mail de confirmation d'expédition avec les informations de suivi.",
+    step3:
+      "Votre colis sera livré à l'adresse que vous avez fournie lors de la commande.",
+    trackingInfo:
+      "Vous pouvez suivre votre commande avec le numéro de suivi suivant :",
+    questions:
+      "Si vous avez des questions concernant votre commande, n'hésitez pas à nous contacter à l'adresse suivante :",
+    thanks:
+      "Merci encore pour votre confiance et votre achat chez Reboul Store !",
+    regards: "Cordialement,",
+    team: "L'équipe Reboul Store",
+    recommendations: "Vous pourriez aussi aimer :",
+    promoCode:
+      "Utilisez le code promo MERCI10 pour bénéficier de 10% de réduction sur votre prochaine commande !",
+  },
+  en: {
+    subject: "Order Confirmation",
+    thankYou: "Thank you for your order!",
+    greeting: "Dear",
+    orderConfirmation:
+      "We are pleased to confirm that your order (ID: {orderId}) has been received and is being processed.",
+    orderSummary: "Order Summary:",
+    product: "Product",
+    quantity: "Quantity",
+    price: "Price",
+    total: "Total",
+    nextSteps: "Next Steps:",
+    step1: "We will prepare your order with the utmost care.",
+    step2:
+      "You will receive a shipping confirmation email with tracking information.",
+    step3:
+      "Your package will be delivered to the address you provided during checkout.",
+    trackingInfo:
+      "You can track your order with the following tracking number:",
+    questions:
+      "If you have any questions about your order, please don't hesitate to contact us at:",
+    thanks:
+      "Thank you again for your trust and your purchase from Reboul Store!",
+    regards: "Best regards,",
+    team: "The Reboul Store Team",
+    recommendations: "You might also like:",
+    promoCode: "Use promo code THANKS10 to get 10% off your next order!",
+  },
 };
 
 type TranslationKey = keyof typeof translations;
 
 export async function sendConfirmationEmail(orderDetails: OrderDetails) {
-    if (config.debug) {
-        console.log('SMTP Configuration:', {
-            host: config.smtp.host,
-            port: config.smtp.port,
-            secure: config.smtp.secure,
-            user: config.smtp.user,
-        });
-    }
+  if (config.debug) {
+    console.log("SMTP Configuration:", {
+      host: config.smtp.host,
+      port: config.smtp.port,
+      secure: config.smtp.secure,
+      user: config.smtp.user,
+    });
+  }
 
-    const logoUrl = `${config.api.baseUrlPublic}/images/logo_black.png`;
-    const lang = (orderDetails.language && orderDetails.language in translations ? orderDetails.language : 'fr') as TranslationKey;
-    const t = translations[lang];
+  const logoUrl = `${config.api.baseUrlPublic}/images/logo_black.png`;
+  const lang = (
+    orderDetails.language && orderDetails.language in translations
+      ? orderDetails.language
+      : "fr"
+  ) as TranslationKey;
+  const t = translations[lang];
 
-    try {
-        const info = await transporter.sendMail({
-            from: `"Reboul Store" <${config.smtp.user}>`,
-            to: orderDetails.email,
-            subject: `${t.subject} ${orderDetails.id}`,
-            html: `
+  try {
+    const info = await transporter.sendMail({
+      from: `"Reboul Store" <${config.smtp.user}>`,
+      to: orderDetails.email,
+      subject: `${t.subject} ${orderDetails.id}`,
+      html: `
         <!DOCTYPE html>
         <html lang="${lang}">
         <head>
@@ -145,7 +162,7 @@ export async function sendConfirmationEmail(orderDetails: OrderDetails) {
                 
                 <p style="font-size: 16px;">${t.greeting} ${orderDetails.customerName},</p>
                 
-                <p style="font-size: 16px;">${t.orderConfirmation.replace('{orderId}', orderDetails.id)}</p>
+                <p style="font-size: 16px;">${t.orderConfirmation.replace("{orderId}", orderDetails.id)}</p>
                 
                 <h2 style="color: #4a4a4a; border-bottom: 1px solid #4a4a4a; padding-bottom: 5px;">${t.orderSummary}</h2>
                 
@@ -158,13 +175,17 @@ export async function sendConfirmationEmail(orderDetails: OrderDetails) {
                     </tr>
                   </thead>
                   <tbody>
-                    ${orderDetails.items.map(item => `
+                    ${orderDetails.items
+                      .map(
+                        (item) => `
                       <tr>
                         <td style="padding: 10px; border: 1px solid #ddd;">${item.name}</td>
                         <td style="padding: 10px; text-align: center; border: 1px solid #ddd;">${item.quantity}</td>
                         <td style="padding: 10px; text-align: right; border: 1px solid #ddd;">${(item.price * item.quantity).toFixed(2)} €</td>
                       </tr>
-                    `).join('')}
+                    `,
+                      )
+                      .join("")}
                   </tbody>
                   <tfoot>
                     <tr style="background-color: #f0f0f0;">
@@ -183,11 +204,15 @@ export async function sendConfirmationEmail(orderDetails: OrderDetails) {
                   </ol>
                 </div>
                 
-                ${orderDetails.trackingNumber ? `
+                ${
+                  orderDetails.trackingNumber
+                    ? `
                   <p style="font-size: 16px; margin-top: 20px;">
                     ${t.trackingInfo} <strong>${orderDetails.trackingNumber}</strong>
                   </p>
-                ` : ''}
+                `
+                    : ""
+                }
                 
                 <p style="font-size: 16px; margin-top: 20px;">${t.questions} <a href="mailto:support@reboulstore.com" style="color: #4a4a4a; text-decoration: none; font-weight: bold;">support@reboulstore.com</a></p>
                 
@@ -197,14 +222,18 @@ export async function sendConfirmationEmail(orderDetails: OrderDetails) {
                   <h3 style="color: #4a4a4a;">${t.recommendations}</h3>
                   <table cellpadding="0" cellspacing="0" border="0" width="100%">
                     <tr>
-                      ${recommendedProducts.map(product => `
+                      ${recommendedProducts
+                        .map(
+                          (product) => `
                         <td style="width: 33.33%; padding: 10px; text-align: center;">
                           <img src="${product.imageUrl}" alt="${product.name}" style="max-width: 100%; height: auto;">
                           <p style="margin: 10px 0 5px;">${product.name}</p>
                           <p style="font-weight: bold;">${product.price.toFixed(2)} €</p>
                           <a href="${product.productUrl}" style="display: inline-block; padding: 5px 10px; background-color: #4a4a4a; color: #ffffff; text-decoration: none; border-radius: 3px;">Voir le produit</a>
                         </td>
-                      `).join('')}
+                      `,
+                        )
+                        .join("")}
                     </tr>
                   </table>
                 </div>
@@ -228,13 +257,12 @@ export async function sendConfirmationEmail(orderDetails: OrderDetails) {
         </body>
         </html>
       `,
-        });
+    });
 
-        console.log('Email sent successfully:', info.messageId);
-        return info;
-    } catch (error) {
-        console.error('Error sending email:', error);
-        throw error;
-    }
+    console.log("Email sent successfully:", info.messageId);
+    return info;
+  } catch (error) {
+    console.error("Error sending email:", error);
+    throw error;
+  }
 }
-

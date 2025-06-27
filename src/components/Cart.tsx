@@ -1,53 +1,59 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useCart } from "@/app/contexts/CartContext"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { CartItem } from "@/components/cart/CartItem"
-import { useToast } from "@/components/ui/use-toast"
-import Link from "next/link"
+import { useState } from "react";
+import { useCart } from "@/app/contexts/CartContext";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { CartItem } from "@/components/cart/CartItem";
+import { useToast } from "@/components/ui/use-toast";
+import Link from "next/link";
+import CheckoutButton from "@/components/cart/CheckoutButton";
 
 export function Cart() {
-  const { items: cartItems, removeItem, updateQuantity, clearCart } = useCart()
-  const [discount, setDiscount] = useState(0)
-  const [promoCode, setPromoCode] = useState("")
-  const { toast } = useToast()
+  const { items: cartItems, removeItem, updateQuantity, clearCart } = useCart();
+  const [discount, setDiscount] = useState(0);
+  const [promoCode, setPromoCode] = useState("");
+  const { toast } = useToast();
 
-  const subtotal = cartItems.reduce((total, item) => total + item.price * item.quantity, 0)
-  const shippingCost = subtotal > 100 ? 0 : 5.99
-  const totalSavings = discount + (subtotal > 100 ? 5.99 : 0)
-  const finalTotal = subtotal - discount + shippingCost
+  const subtotal = cartItems.reduce(
+    (total, item) => total + item.price * item.quantity,
+    0,
+  );
+  const shippingCost = subtotal > 100 ? 0 : 5.99;
+  const totalSavings = discount + (subtotal > 100 ? 5.99 : 0);
+  const finalTotal = subtotal - discount + shippingCost;
 
   const applyPromoCode = () => {
     // Simuler l'application d'un code promo
     if (promoCode.toLowerCase() === "reboul10") {
-      const newDiscount = subtotal * 0.1
-      setDiscount(newDiscount)
+      const newDiscount = subtotal * 0.1;
+      setDiscount(newDiscount);
       toast({
         title: "Code promo appliqué",
         description: `Vous avez économisé ${newDiscount.toFixed(2)} €`,
-      })
+      });
     } else {
       toast({
         title: "Code promo invalide",
         description: "Le code promo entré n'est pas valide.",
         variant: "destructive",
-      })
+      });
     }
-    setPromoCode("")
-  }
+    setPromoCode("");
+  };
 
   if (cartItems.length === 0) {
     return (
       <div className="container mx-auto px-4 py-8 text-center">
         <h1 className="text-2xl font-bold mb-4">Votre panier est vide</h1>
-        <p className="mb-4">Ajoutez des articles à votre panier pour commencer vos achats.</p>
+        <p className="mb-4">
+          Ajoutez des articles à votre panier pour commencer vos achats.
+        </p>
         <Link href="/catalogue">
           <Button>Continuer mes achats</Button>
         </Link>
       </div>
-    )
+    );
   }
 
   return (
@@ -71,7 +77,10 @@ export function Cart() {
                 } catch (error) {
                   toast({
                     title: "Stock insuffisant",
-                    description: error instanceof Error ? error.message : "Erreur de mise à jour de la quantité",
+                    description:
+                      error instanceof Error
+                        ? error.message
+                        : "Erreur de mise à jour de la quantité",
                     variant: "destructive",
                   });
                 }
@@ -81,7 +90,9 @@ export function Cart() {
         </div>
         <div className="md:col-span-1">
           <div className="bg-gray-100 p-4 rounded-lg">
-            <h2 className="text-xl font-semibold mb-4">Résumé de la commande</h2>
+            <h2 className="text-xl font-semibold mb-4">
+              Résumé de la commande
+            </h2>
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span>Sous-total:</span>
@@ -120,9 +131,6 @@ export function Cart() {
               </div>
             </div>
             <div className="mt-4 space-y-2">
-              <Button className="w-full" asChild>
-                <Link href="/checkout">Passer à la caisse</Link>
-              </Button>
               <Button variant="outline" className="w-full" onClick={clearCart}>
                 Vider le panier
               </Button>
@@ -131,6 +139,5 @@ export function Cart() {
         </div>
       </div>
     </div>
-  )
+  );
 }
-

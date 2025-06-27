@@ -10,10 +10,9 @@ export interface Order {
   id: number;
   user_id: number;
   total_amount: number;
-  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  status: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
   created_at: string;
   updated_at: string;
   items?: OrderItem[];
   [key: string]: string | number | OrderItem[] | undefined;
 }
-

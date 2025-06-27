@@ -1,109 +1,144 @@
-'use client'
+"use client";
 
-import { useEffect, useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { fetchMonthlyStats, fetchTopProductsByCategory, fetchCustomerStats, type MonthlyStats, type TopProductByCategory, type CustomerStats } from '@/lib/api'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts'
-import { Loader2, AlertCircle } from "lucide-react"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { format } from 'date-fns/format'
-import { fr } from 'date-fns/locale'
+import { useEffect, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  fetchMonthlyStats,
+  fetchTopProductsByCategory,
+  fetchCustomerStats,
+  type MonthlyStats,
+  type TopProductByCategory,
+  type CustomerStats,
+} from "@/lib/api";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+} from "recharts";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { format } from "date-fns/format";
+import { fr } from "date-fns/locale";
 
 export function DashboardStats() {
-  const [monthlyStats, setMonthlyStats] = useState<MonthlyStats[]>([])
-  const [topProducts, setTopProducts] = useState<TopProductByCategory[]>([])
-  const [customerStats, setCustomerStats] = useState<CustomerStats[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [monthlyStats, setMonthlyStats] = useState<MonthlyStats[]>([]);
+  const [topProducts, setTopProducts] = useState<TopProductByCategory[]>([]);
+  const [customerStats, setCustomerStats] = useState<CustomerStats[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadStats = async () => {
       try {
-        setIsLoading(true)
-        setError(null)
-        console.log('Chargement des statistiques...')
+        setIsLoading(true);
+        setError(null);
+        console.log("Chargement des statistiques...");
 
         // Charger les statistiques mensuelles d'abord
-        const monthly = await fetchMonthlyStats()
-        console.log('Statistiques mensuelles reçues:', monthly)
+        const monthly = await fetchMonthlyStats();
+        console.log("Statistiques mensuelles reçues:", monthly);
 
         if (!Array.isArray(monthly)) {
-          throw new Error('Format invalide pour les statistiques mensuelles')
+          throw new Error("Format invalide pour les statistiques mensuelles");
         }
 
         // Formater les dates pour les statistiques mensuelles
-        const formattedMonthly = monthly.map(stat => {
-          console.log('Traitement stat mensuelle:', stat)
+        const formattedMonthly = monthly.map((stat) => {
+          console.log("Traitement stat mensuelle:", stat);
           return {
             ...stat,
-            month: format(new Date(stat.month), 'MMM yyyy', { locale: fr }),
-            revenue: typeof stat.revenue === 'string' ? parseFloat(stat.revenue) : stat.revenue,
-            order_count: typeof stat.order_count === 'string' ? parseInt(stat.order_count) : stat.order_count,
-            unique_customers: typeof stat.unique_customers === 'string' ? parseInt(stat.unique_customers) : stat.unique_customers
-          }
-        })
+            month: format(new Date(stat.month), "MMM yyyy", { locale: fr }),
+            revenue:
+              typeof stat.revenue === "string"
+                ? parseFloat(stat.revenue)
+                : stat.revenue,
+            order_count:
+              typeof stat.order_count === "string"
+                ? parseInt(stat.order_count)
+                : stat.order_count,
+            unique_customers:
+              typeof stat.unique_customers === "string"
+                ? parseInt(stat.unique_customers)
+                : stat.unique_customers,
+          };
+        });
 
-        console.log('Statistiques mensuelles formatées:', formattedMonthly)
-        setMonthlyStats(formattedMonthly.reverse())
+        console.log("Statistiques mensuelles formatées:", formattedMonthly);
+        setMonthlyStats(formattedMonthly.reverse());
 
         // Charger les autres statistiques
         const [products, customers] = await Promise.all([
           fetchTopProductsByCategory(),
-          fetchCustomerStats()
-        ])
+          fetchCustomerStats(),
+        ]);
 
-        console.log('Produits par catégorie:', products)
-        console.log('Statistiques clients:', customers)
+        console.log("Produits par catégorie:", products);
+        console.log("Statistiques clients:", customers);
 
         if (Array.isArray(products)) {
-          setTopProducts(products)
+          setTopProducts(products);
         }
 
         if (Array.isArray(customers)) {
-          const formattedCustomers = customers.map(stat => ({
+          const formattedCustomers = customers.map((stat) => ({
             ...stat,
-            month: format(new Date(stat.month), 'MMM yyyy', { locale: fr }),
-            new_users: typeof stat.new_users === 'string' ? parseInt(stat.new_users) : stat.new_users,
-            active_users: typeof stat.active_users === 'string' ? parseInt(stat.active_users) : stat.active_users
-          }))
-          setCustomerStats(formattedCustomers.reverse())
+            month: format(new Date(stat.month), "MMM yyyy", { locale: fr }),
+            new_users:
+              typeof stat.new_users === "string"
+                ? parseInt(stat.new_users)
+                : stat.new_users,
+            active_users:
+              typeof stat.active_users === "string"
+                ? parseInt(stat.active_users)
+                : stat.active_users,
+          }));
+          setCustomerStats(formattedCustomers.reverse());
         }
-
       } catch (error) {
-        console.error('Erreur détaillée lors du chargement des statistiques:', error)
-        setError('Impossible de charger les statistiques. Veuillez réessayer.')
+        console.error(
+          "Erreur détaillée lors du chargement des statistiques:",
+          error,
+        );
+        setError("Impossible de charger les statistiques. Veuillez réessayer.");
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
+    };
 
-    loadStats()
-  }, [])
+    loadStats();
+  }, []);
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin" />
+        <span>⏳</span>
       </div>
-    )
+    );
   }
 
   if (error) {
     return (
       <Alert variant="destructive">
-        <AlertCircle className="h-4 w-4" />
+        <span>⚠️</span>
         <AlertDescription>{error}</AlertDescription>
       </Alert>
-    )
+    );
   }
 
   if (!monthlyStats.length && !topProducts.length && !customerStats.length) {
     return (
       <Alert>
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>Aucune donnée statistique disponible.</AlertDescription>
+        <span>⚠️</span>
+        <AlertDescription>
+          Aucune donnée statistique disponible.
+        </AlertDescription>
       </Alert>
-    )
+    );
   }
 
   return (
@@ -155,8 +190,16 @@ export function DashboardStats() {
                 <XAxis dataKey="month" />
                 <YAxis />
                 <Tooltip />
-                <Bar dataKey="new_users" fill="#8884d8" name="Nouveaux clients" />
-                <Bar dataKey="active_users" fill="#82ca9d" name="Clients actifs" />
+                <Bar
+                  dataKey="new_users"
+                  fill="#8884d8"
+                  name="Nouveaux clients"
+                />
+                <Bar
+                  dataKey="active_users"
+                  fill="#82ca9d"
+                  name="Clients actifs"
+                />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -178,11 +221,15 @@ export function DashboardStats() {
                 >
                   <div>
                     <p className="font-medium">{product.product_name}</p>
-                    <p className="text-sm text-gray-500">{product.category_name}</p>
+                    <p className="text-sm text-gray-500">
+                      {product.category_name}
+                    </p>
                   </div>
                   <div className="text-right">
                     <p className="font-medium">{product.total_sold} vendus</p>
-                    <p className="text-sm text-gray-500">{product.revenue.toFixed(2)} €</p>
+                    <p className="text-sm text-gray-500">
+                      {product.revenue.toFixed(2)} €
+                    </p>
                   </div>
                 </div>
               ))}
@@ -194,7 +241,7 @@ export function DashboardStats() {
       {/* Résumé des statistiques */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader>
             <CardTitle className="text-sm font-medium">
               Commandes Totales
             </CardTitle>
@@ -206,19 +253,22 @@ export function DashboardStats() {
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader>
             <CardTitle className="text-sm font-medium">
               Revenus Totaux
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {monthlyStats.reduce((acc, curr) => acc + curr.revenue, 0).toFixed(2)} €
+              {monthlyStats
+                .reduce((acc, curr) => acc + curr.revenue, 0)
+                .toFixed(2)}{" "}
+              €
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader>
             <CardTitle className="text-sm font-medium">
               Nouveaux Clients
             </CardTitle>
@@ -230,7 +280,7 @@ export function DashboardStats() {
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader>
             <CardTitle className="text-sm font-medium">
               Clients Actifs
             </CardTitle>
@@ -243,5 +293,5 @@ export function DashboardStats() {
         </Card>
       </div>
     </div>
-  )
-} 
+  );
+}

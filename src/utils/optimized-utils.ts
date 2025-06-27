@@ -1,6 +1,6 @@
 /**
  * Utilitaires optimisés pour remplacer les fonctions Lodash
- * 
+ *
  * Ces fonctions sont des implémentations natives légères des fonctions
  * Lodash les plus couramment utilisées dans l'application Reboul.
  */
@@ -11,20 +11,20 @@
  */
 export function debounce<T extends (...args: any[]) => any>(
   func: T,
-  wait = 300
+  wait = 300,
 ): (...args: Parameters<T>) => void {
   let timeout: ReturnType<typeof setTimeout> | null = null;
-  
-  return function(this: any, ...args: Parameters<T>): void {
+
+  return function (this: any, ...args: Parameters<T>): void {
     const later = () => {
       timeout = null;
       func.apply(this, args);
     };
-    
+
     if (timeout !== null) {
       clearTimeout(timeout);
     }
-    
+
     timeout = setTimeout(later, wait);
   };
 }
@@ -35,22 +35,22 @@ export function debounce<T extends (...args: any[]) => any>(
  */
 export function throttle<T extends (...args: any[]) => any>(
   func: T,
-  wait = 300
+  wait = 300,
 ): (...args: Parameters<T>) => void {
   let isThrottled = false;
   let lastArgs: Parameters<T> | null = null;
   let lastThis: any = null;
-  
+
   function wrapper(this: any, ...args: Parameters<T>): void {
     if (isThrottled) {
       lastArgs = args;
       lastThis = this;
       return;
     }
-    
+
     func.apply(this, args);
     isThrottled = true;
-    
+
     setTimeout(() => {
       isThrottled = false;
       if (lastArgs) {
@@ -60,7 +60,7 @@ export function throttle<T extends (...args: any[]) => any>(
       }
     }, wait);
   }
-  
+
   return wrapper;
 }
 
@@ -69,29 +69,29 @@ export function throttle<T extends (...args: any[]) => any>(
  * Crée une copie profonde d'un objet
  */
 export function deepClone<T>(obj: T): T {
-  if (obj === null || typeof obj !== 'object') {
+  if (obj === null || typeof obj !== "object") {
     return obj;
   }
-  
+
   // Date, RegExp, etc.
   if (obj instanceof Date) {
     return new Date(obj.getTime()) as any;
   }
-  
+
   if (obj instanceof RegExp) {
     return new RegExp(obj.source, obj.flags) as any;
   }
-  
+
   if (Array.isArray(obj)) {
-    return obj.map(item => deepClone(item)) as any;
+    return obj.map((item) => deepClone(item)) as any;
   }
-  
+
   const clone = {} as T;
-  
-  Object.keys(obj).forEach(key => {
+
+  Object.keys(obj).forEach((key) => {
     clone[key as keyof T] = deepClone(obj[key as keyof T]);
   });
-  
+
   return clone;
 }
 
@@ -102,19 +102,19 @@ export function deepClone<T>(obj: T): T {
 export function get<T>(
   obj: Record<string, any>,
   path: string | string[],
-  defaultValue?: T
+  defaultValue?: T,
 ): T | undefined {
-  const keys = Array.isArray(path) ? path : path.split('.');
+  const keys = Array.isArray(path) ? path : path.split(".");
   let result = obj;
-  
+
   for (const key of keys) {
-    if (result === null || result === undefined || typeof result !== 'object') {
+    if (result === null || result === undefined || typeof result !== "object") {
       return defaultValue;
     }
     result = result[key];
   }
-  
-  return (result === undefined) ? defaultValue : result as T;
+
+  return result === undefined ? defaultValue : (result as T);
 }
 
 /**
@@ -123,16 +123,19 @@ export function get<T>(
  */
 export function groupBy<T>(
   array: T[],
-  iteratee: (item: T) => string | number
+  iteratee: (item: T) => string | number,
 ): Record<string, T[]> {
-  return array.reduce((result, item) => {
-    const key = iteratee(item);
-    if (!result[key]) {
-      result[key] = [];
-    }
-    result[key].push(item);
-    return result;
-  }, {} as Record<string, T[]>);
+  return array.reduce(
+    (result, item) => {
+      const key = iteratee(item);
+      if (!result[key]) {
+        result[key] = [];
+      }
+      result[key].push(item);
+      return result;
+    },
+    {} as Record<string, T[]>,
+  );
 }
 
 /**
@@ -147,12 +150,9 @@ export function uniq<T>(array: T[]): T[] {
  * Version native de uniqBy de Lodash
  * Retourne un tableau sans doublons selon une fonction de critère
  */
-export function uniqBy<T>(
-  array: T[],
-  iteratee: (item: T) => any
-): T[] {
+export function uniqBy<T>(array: T[], iteratee: (item: T) => any): T[] {
   const seen = new Map();
-  return array.filter(item => {
+  return array.filter((item) => {
     const key = iteratee(item);
     if (seen.has(key)) {
       return false;
@@ -168,12 +168,12 @@ export function uniqBy<T>(
  */
 export function chunk<T>(array: T[], size = 1): T[][] {
   if (size < 1) return [];
-  
+
   const result: T[][] = [];
   for (let i = 0; i < array.length; i += size) {
     result.push(array.slice(i, i + size));
   }
-  
+
   return result;
 }
 
@@ -183,10 +183,10 @@ export function chunk<T>(array: T[], size = 1): T[][] {
  */
 export function omit<T extends Record<string, any>, K extends keyof T>(
   obj: T,
-  keys: K[]
+  keys: K[],
 ): Omit<T, K> {
   const result = { ...obj };
-  keys.forEach(key => {
+  keys.forEach((key) => {
     delete result[key];
   });
   return result;
@@ -198,10 +198,10 @@ export function omit<T extends Record<string, any>, K extends keyof T>(
  */
 export function pick<T extends Record<string, any>, K extends keyof T>(
   obj: T,
-  keys: K[]
+  keys: K[],
 ): Pick<T, K> {
   const result = {} as Pick<T, K>;
-  keys.forEach(key => {
+  keys.forEach((key) => {
     if (key in obj) {
       result[key] = obj[key];
     }
@@ -214,12 +214,12 @@ export function pick<T extends Record<string, any>, K extends keyof T>(
  * Throttle optimisé pour les gestionnaires d'événements visuels
  */
 export function rafThrottle<T extends (...args: any[]) => any>(
-  callback: T
+  callback: T,
 ): (...args: Parameters<T>) => void {
   let requestId: number | null = null;
   let lastArgs: Parameters<T> | null = null;
   let lastThis: any = null;
-  
+
   function rafCallback(this: any) {
     requestId = null;
     if (lastArgs) {
@@ -228,11 +228,11 @@ export function rafThrottle<T extends (...args: any[]) => any>(
       lastThis = null;
     }
   }
-  
+
   return function throttled(this: any, ...args: Parameters<T>): void {
     lastArgs = args;
     lastThis = this;
-    
+
     if (requestId === null) {
       requestId = requestAnimationFrame(rafCallback);
     }
@@ -247,15 +247,15 @@ export function isEmpty(value: any): boolean {
   if (value == null) {
     return true;
   }
-  
-  if (typeof value === 'string' || Array.isArray(value)) {
+
+  if (typeof value === "string" || Array.isArray(value)) {
     return value.length === 0;
   }
-  
-  if (typeof value === 'object') {
+
+  if (typeof value === "object") {
     return Object.keys(value).length === 0;
   }
-  
+
   return false;
 }
 
@@ -273,9 +273,7 @@ export function flatten<T>(array: (T | T[])[]): T[] {
  */
 export function flattenDeep<T>(array: any[]): T[] {
   return array.reduce((result, item) => {
-    return result.concat(
-      Array.isArray(item) ? flattenDeep(item) : item
-    );
+    return result.concat(Array.isArray(item) ? flattenDeep(item) : item);
   }, []);
 }
 
@@ -284,22 +282,22 @@ export function flattenDeep<T>(array: any[]): T[] {
  */
 export function memoize<T extends (...args: any[]) => any>(
   fn: T,
-  resolver?: (...args: Parameters<T>) => string
+  resolver?: (...args: Parameters<T>) => string,
 ): T & { cache: Map<string, ReturnType<T>> } {
   const cache = new Map<string, ReturnType<T>>();
-  
-  const memoized = function(this: any, ...args: Parameters<T>): ReturnType<T> {
-    const key = resolver ? resolver(...args) : args[0]?.toString() || '_';
-    
+
+  const memoized = function (this: any, ...args: Parameters<T>): ReturnType<T> {
+    const key = resolver ? resolver(...args) : args[0]?.toString() || "_";
+
     if (cache.has(key)) {
       return cache.get(key)!;
     }
-    
+
     const result = fn.apply(this, args);
     cache.set(key, result);
     return result;
   } as T & { cache: typeof cache };
-  
+
   memoized.cache = cache;
   return memoized;
 }
@@ -319,7 +317,7 @@ const optimizedUtils = {
   isEmpty,
   flatten,
   flattenDeep,
-  memoize
+  memoize,
 };
 
-export default optimizedUtils; 
+export default optimizedUtils;

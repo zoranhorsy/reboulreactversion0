@@ -1,28 +1,27 @@
-import Link from "next/link"
-import { ChevronLeft, ChevronRight } from "lucide-react"
-import { cn } from "@/lib/utils"
-import Image from "next/image"
+import Link from "next/link";
+import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 interface Breadcrumb {
-  label: string
-  href: string
+  label: string;
+  href: string;
 }
 
 interface Action {
-  icon: React.ReactNode
-  onClick: () => void
-  label: string
+  icon: React.ReactNode;
+  onClick: () => void;
+  label: string;
 }
 
 interface ReboulPageHeaderProps {
-  title: string
-  subtitle?: string
-  backLink: string
-  backText: string
-  breadcrumbs: Breadcrumb[]
-  actions?: Action[]
-  backgroundImage?: string
-  logoImage?: string
+  title: string;
+  subtitle?: string;
+  backLink: string;
+  backText: string;
+  breadcrumbs: Breadcrumb[];
+  actions?: Action[];
+  backgroundImage?: string;
+  logoImage?: string;
 }
 
 export function ReboulPageHeader({
@@ -33,7 +32,7 @@ export function ReboulPageHeader({
   breadcrumbs,
   actions = [],
   backgroundImage = "/images/header/reboul/1.png",
-  logoImage = "/images/logotype_w.png"
+  logoImage = "/images/logotype_w.png",
 }: ReboulPageHeaderProps) {
   return (
     <div className="relative w-full h-[220px] overflow-hidden bg-zinc-900 transition-all duration-500 ease-out">
@@ -58,22 +57,26 @@ export function ReboulPageHeader({
         {/* Navigation simplifiée avec ombre */}
         <div className="flex items-center justify-between px-4 py-4 sm:px-6 md:px-8 lg:px-10">
           <div className="flex items-center gap-1.5 text-xs sm:text-sm text-white/80">
-            <Link 
+            <Link
               href={backLink}
               className="flex items-center gap-1 hover:text-white transition-colors duration-300 font-medium"
             >
-              <ChevronLeft className="w-3.5 h-3.5" />
-              <span className="transition-all duration-300 ease-out">{backText}</span>
+              <span>←</span>
+              <span className="transition-all duration-300 ease-out">
+                {backText}
+              </span>
             </Link>
             <div className="flex items-center gap-1">
               {breadcrumbs.map((crumb, index) => (
                 <div key={index} className="flex items-center gap-1">
-                  {index > 0 && <ChevronRight className="w-3 h-3 text-white/40" />}
+                  {index > 0 && <span>→</span>}
                   <Link
                     href={crumb.href}
                     className={cn(
                       "hover:text-white transition-all duration-300 ease-out truncate max-w-[80px] sm:max-w-[200px]",
-                      index === breadcrumbs.length - 1 ? "text-white" : "text-white/80"
+                      index === breadcrumbs.length - 1
+                        ? "text-white"
+                        : "text-white/80",
                     )}
                   >
                     {crumb.label}
@@ -110,7 +113,7 @@ export function ReboulPageHeader({
           </div>
 
           {/* Actions améliorées */}
-          {actions.length > 0 && (
+          {actions?.length > 0 && (
             <div className="flex items-center gap-2 mt-4 transition-all duration-300 ease-out">
               {actions.map((action, index) => (
                 <button
@@ -127,5 +130,5 @@ export function ReboulPageHeader({
         </div>
       </div>
     </div>
-  )
-} 
+  );
+}

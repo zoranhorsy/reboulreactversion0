@@ -1,27 +1,32 @@
-"use client"
-import { memo, useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Skeleton } from "@/components/ui/skeleton"
-import { ChevronLeft, ChevronRight } from "lucide-react"
-import type { Product } from "@/lib/types/product"
-import { cn } from "@/lib/utils"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
-import Link from "next/link"
-import { Pagination } from "@/components/ui/pagination"
-import { ProductCard } from "@/components/products/ProductCard"
-import { type FilterChangeHandler } from '@/lib/types/filters'
+"use client";
+import { memo, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import type { Product } from "@/lib/types/product";
+import { cn } from "@/lib/utils";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
+import { Pagination } from "@/components/ui/pagination";
+import { DefinitiveProductCard } from "@/components/DefinitiveProductCard";
+import { type FilterChangeHandler } from "@/lib/types/filters";
 
 export interface ProductGridProps {
-  products: Product[]
-  isLoading?: boolean
-  error?: string | null
-  page: number
-  limit: number
-  totalProducts: number
-  totalPages: number
-  onPageChange: (page: number) => void
-  _onFilterChange?: FilterChangeHandler
+  products: Product[];
+  isLoading?: boolean;
+  error?: string | null;
+  page: number;
+  limit: number;
+  totalProducts: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+  _onFilterChange?: FilterChangeHandler;
 }
 
 const ProductGrid = memo(function ProductGrid({
@@ -35,7 +40,7 @@ const ProductGrid = memo(function ProductGrid({
   onPageChange,
   _onFilterChange,
 }: ProductGridProps) {
-  const productsCount = Array.isArray(products) ? products.length : 0
+  const productsCount = Array.isArray(products) ? products.length : 0;
 
   if (isLoading) {
     return (
@@ -57,15 +62,19 @@ const ProductGrid = memo(function ProductGrid({
           ))}
         </div>
       </div>
-    )
+    );
   }
 
   if (error) {
     return (
-      <div className="rounded-lg bg-destructive/10 p-6 text-center" role="alert" aria-live="assertive">
+      <div
+        className="rounded-lg bg-destructive/10 p-6 text-center"
+        role="alert"
+        aria-live="assertive"
+      >
         <p className="text-sm font-medium text-destructive">{error}</p>
       </div>
-    )
+    );
   }
 
   if (!Array.isArray(products) || productsCount === 0) {
@@ -73,7 +82,7 @@ const ProductGrid = memo(function ProductGrid({
       <div className="rounded-lg bg-muted/50 p-8 text-center">
         <p className="text-sm text-muted-foreground">Aucun produit trouvé</p>
       </div>
-    )
+    );
   }
 
   return (
@@ -89,9 +98,11 @@ const ProductGrid = memo(function ProductGrid({
         <div className="flex items-center gap-2">
           <Select
             value={limit.toString()}
-            onValueChange={(value) => _onFilterChange && _onFilterChange({ limit: value, page: "1" })}
+            onValueChange={(value) =>
+              _onFilterChange && _onFilterChange({ limit: value, page: "1" })
+            }
           >
-            <SelectTrigger className="w-[110px] h-9 text-xs sm:text-sm">
+            <SelectTrigger>
               <SelectValue placeholder="Articles par page" />
             </SelectTrigger>
             <SelectContent>
@@ -103,10 +114,12 @@ const ProductGrid = memo(function ProductGrid({
           </Select>
 
           <Select
-            value={"default"}
-            onValueChange={(value) => _onFilterChange && _onFilterChange({ sort: value })}
+            value="default"
+            onValueChange={(value) =>
+              _onFilterChange && _onFilterChange({ sort: value })
+            }
           >
-            <SelectTrigger className="w-[110px] h-9 text-xs sm:text-sm">
+            <SelectTrigger>
               <SelectValue placeholder="Trier par" />
             </SelectTrigger>
             <SelectContent>
@@ -124,8 +137,13 @@ const ProductGrid = memo(function ProductGrid({
         className="grid gap-4 sm:gap-6 grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
         aria-live="polite"
       >
-        {products.map((product) => (
-          <ProductCard key={product.id} product={product} />
+        {products.map((product, index) => (
+          <DefinitiveProductCard 
+            key={product.id} 
+            product={product} 
+            index={index}
+            size="medium"
+          />
         ))}
       </div>
 
@@ -140,8 +158,7 @@ const ProductGrid = memo(function ProductGrid({
         </div>
       )}
     </div>
-  )
-})
+  );
+});
 
-export { ProductGrid }
-
+export { ProductGrid };

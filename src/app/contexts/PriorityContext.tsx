@@ -1,57 +1,59 @@
-'use client'
+"use client";
 
-import React, { createContext, useContext, ReactNode } from 'react'
-import { usePriorityWorker } from '@/hooks/usePriorityWorker'
+import React, { createContext, useContext, ReactNode } from "react";
+import { usePriorityWorker } from "@/hooks/usePriorityWorker";
 
 // Types
-export type Priority = 'high' | 'medium' | 'low'
+export type Priority = "high" | "medium" | "low";
 
 export type PriorityTask = {
-  id: string
-  priority: Priority
-  type: string
-  data: any
-}
+  id: string;
+  priority: Priority;
+  type: string;
+  data: any;
+};
 
 export type TaskResult = {
-  success: boolean
-  data: any
-}
+  success: boolean;
+  data: any;
+};
 
 // Interface du contexte
 interface PriorityContextType {
-  addTask: (task: PriorityTask) => void
-  processTasks: () => void
-  clearQueue: () => void
-  executeTask: (task: PriorityTask) => Promise<TaskResult>
-  isProcessing: boolean
-  error: string | null
-  completedTasks: Map<string, TaskResult>
-  taskCount: number
-  getResultsByType: (type: string) => TaskResult[]
-  getResultById: (taskId: string) => TaskResult | undefined
+  addTask: (task: PriorityTask) => void;
+  processTasks: () => void;
+  clearQueue: () => void;
+  executeTask: (task: PriorityTask) => Promise<TaskResult>;
+  isProcessing: boolean;
+  error: string | null;
+  completedTasks: Map<string, TaskResult>;
+  taskCount: number;
+  getResultsByType: (type: string) => TaskResult[];
+  getResultById: (taskId: string) => TaskResult | undefined;
 }
 
 // Création du contexte
-const PriorityContext = createContext<PriorityContextType | undefined>(undefined)
+const PriorityContext = createContext<PriorityContextType | undefined>(undefined);
 
 // Hook personnalisé pour utiliser le contexte
 export function usePriority() {
-  const context = useContext(PriorityContext)
+  const context = useContext(PriorityContext);
   if (!context) {
-    throw new Error('usePriority doit être utilisé à l\'intérieur d\'un PriorityProvider')
+    throw new Error(
+      "usePriority doit être utilisé à l'intérieur d'un PriorityProvider",
+    );
   }
-  return context
+  return context;
 }
 
 // Props du Provider
 interface PriorityProviderProps {
-  children: ReactNode
+  children: ReactNode;
 }
 
 // Composant Provider
 export function PriorityProvider({ children }: PriorityProviderProps) {
-  const priorityWorker = usePriorityWorker()
+  const priorityWorker = usePriorityWorker();
 
   // Valeur du contexte
   const value: PriorityContextType = {
@@ -64,12 +66,12 @@ export function PriorityProvider({ children }: PriorityProviderProps) {
     completedTasks: priorityWorker.completedTasks,
     taskCount: priorityWorker.taskCount,
     getResultsByType: priorityWorker.getResultsByType,
-    getResultById: priorityWorker.getResultById
-  }
+    getResultById: priorityWorker.getResultById,
+  };
 
   return (
     <PriorityContext.Provider value={value}>
       {children}
     </PriorityContext.Provider>
-  )
-} 
+  );
+}

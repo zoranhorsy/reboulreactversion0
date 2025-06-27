@@ -1,19 +1,19 @@
-import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
-import { getColorInfo, isWhiteColor } from '@/config/productColors'
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { getColorInfo, isWhiteColor } from "@/config/productColors";
 
 interface TheCornerColorSelectorProps {
-  colors: string[]
-  selectedColor: string
-  onColorChange: (color: string) => void
-  getColorStock: (color: string) => number
+  colors: string[];
+  selectedColor: string;
+  onColorChange: (color: string) => void;
+  getColorStock: (color: string) => number;
 }
 
 export function TheCornerColorSelector({
   colors,
   selectedColor,
   onColorChange,
-  getColorStock
+  getColorStock,
 }: TheCornerColorSelectorProps) {
   return (
     <div className="space-y-2">
@@ -22,7 +22,7 @@ export function TheCornerColorSelector({
       </div>
       <div className="flex flex-wrap gap-2">
         {colors.map((color) => {
-          const stock = getColorStock(color)
+          const stock = getColorStock(color);
           return (
             <Button
               key={color}
@@ -31,14 +31,14 @@ export function TheCornerColorSelector({
               disabled={stock === 0}
               className={cn(
                 "h-8 px-3 text-sm font-normal",
-                stock === 0 && "opacity-50"
+                stock === 0 && "opacity-50",
               )}
             >
               {color}
             </Button>
-          )
+          );
         })}
       </div>
     </div>
-  )
-} 
+  );
+}

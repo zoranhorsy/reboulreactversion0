@@ -1,60 +1,38 @@
-"use client"
+"use client";
 
-import React, { useState } from "react"
-import PropTypes from "prop-types"
-import { ProductGallery } from "@/components/ProductGallery"
-import { ColorSelector, SizeSelector } from "@/components/optimized/MemoizedComponents"
-import { StockIndicator } from "@/components/StockIndicator"
-import { SimilarProducts } from "@/components/SimilarProducts"
-import { PageHeader } from "@/components/products/PageHeader"
-import { ProductInfo } from "@/components/products/ProductInfo"
-import { ProductActions } from "@/components/products/ProductActions"
+import React, { useState } from "react";
+import PropTypes from "prop-types";
+import { ProductGallery } from "@/components/ProductGallery";
+import {
+  ColorSelector,
+  SizeSelector,
+} from "@/components/optimized/MemoizedComponents";
+import { StockIndicator } from "@/components/StockIndicator";
+import { SimilarProducts } from "@/components/SimilarProducts";
+import { PageHeader } from "@/components/products/PageHeader";
+import { ProductInfo } from "@/components/products/ProductInfo";
+import { ProductActions } from "@/components/products/ProductActions";
 
 const FAVORITE_ICON_URL =
-  "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/favoris-rFbzZ8XXTdAshbnnWySWyYGmzz830d.png"
+  "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/favoris-rFbzZ8XXTdAshbnnWySWyYGmzz830d.png";
 const DELIVERY_ICON_URL =
-  "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/livraison-kt21gvf0xi94NZI1mJAbRMOxk8Xw8s.png"
+  "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/livraison-kt21gvf0xi94NZI1mJAbRMOxk8Xw8s.png";
 
 export function ProductDetails({ product, onAddToCart }) {
-  const [selectedSize, setSelectedSize] = useState("")
-  const [selectedColor, setSelectedColor] = useState("")
+  const [selectedSize, setSelectedSize] = useState("");
+  const [selectedColor, setSelectedColor] = useState("");
 
-  const { id, name, description, price, images } = product
+  const { id, name, description, price, images } = product;
 
   return (
     <div className="max-w-[1400px] mx-auto px-4">
-      <PageHeader />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <ProductGallery images={images} productName={name} />
-
         <div className="space-y-6">
-          <ProductInfo name={name} description={description} price={price} />
-
-          <ColorSelector
-            colors={product.colors}
-            variants={product.variants}
-            selectedColor={selectedColor}
-            selectedSize={selectedSize}
-            onColorChange={setSelectedColor}
-          />
-
-          <SizeSelector selectedSize={selectedSize} onSizeChange={setSelectedSize} />
-
           <StockIndicator />
-
-          <ProductActions
-            onAddToCart={onAddToCart}
-            selectedColor={selectedColor}
-            selectedSize={selectedSize}
-            favoriteIconUrl={FAVORITE_ICON_URL}
-            deliveryIconUrl={DELIVERY_ICON_URL}
-          />
         </div>
       </div>
-
-      <SimilarProducts currentProductId={id} />
     </div>
-  )
+  );
 }
 
 ProductDetails.propTypes = {
@@ -74,5 +52,4 @@ ProductDetails.propTypes = {
     ).isRequired,
   }).isRequired,
   onAddToCart: PropTypes.func.isRequired,
-}
-
+};

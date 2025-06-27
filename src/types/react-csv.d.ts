@@ -1,5 +1,5 @@
-declare module 'react-csv' {
-  import { ComponentType, ReactNode } from 'react';
+declare module "react-csv" {
+  import { ComponentType, ReactNode } from "react";
 
   export interface CSVData {
     [key: string]: string | number | boolean | null;

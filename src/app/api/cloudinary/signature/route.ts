@@ -1,18 +1,18 @@
-import { NextResponse } from 'next/server';
-import crypto from 'crypto';
+import { NextResponse } from "next/server";
+import crypto from "crypto";
 
 const generateSHA1 = (data: string) => {
-  const hash = crypto.createHash('sha1');
+  const hash = crypto.createHash("sha1");
   hash.update(data);
-  return hash.digest('hex');
+  return hash.digest("hex");
 };
 
 const generateSignature = (timestamp: number, folder: string) => {
   const secret = process.env.CLOUDINARY_API_SECRET;
   if (!secret) {
-    throw new Error('CLOUDINARY_API_SECRET is not defined');
+    throw new Error("CLOUDINARY_API_SECRET is not defined");
   }
-  
+
   const str = `folder=${folder}&timestamp=${timestamp}${secret}`;
   return generateSHA1(str);
 };
@@ -24,8 +24,8 @@ export async function POST(request: Request) {
 
     if (!timestamp || !folder) {
       return NextResponse.json(
-        { error: 'Missing required parameters' },
-        { status: 400 }
+        { error: "Missing required parameters" },
+        { status: 400 },
       );
     }
 
@@ -33,10 +33,10 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ signature });
   } catch (error) {
-    console.error('Error generating signature:', error);
+    console.error("Error generating signature:", error);
     return NextResponse.json(
-      { error: 'Failed to generate signature' },
-      { status: 500 }
+      { error: "Failed to generate signature" },
+      { status: 500 },
     );
   }
-} 
+}

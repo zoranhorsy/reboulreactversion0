@@ -1,53 +1,99 @@
-'use client'
+"use client";
 
-import dynamic from 'next/dynamic'
-import { ComponentType } from 'react'
+import dynamic from "next/dynamic";
+import { ComponentType } from "react";
+import React from "react";
+import { DynamicOptionsLoadingProps } from "next/dynamic";
 
-// Imports dynamiques des composants volumineux avec paramètres optimisés de code splitting
-export const DynamicProductVariantModal = dynamic(
-  () => import('./ProductVariantModal').then(mod => ({ default: mod.ProductVariantModal })),
-  { ssr: false, loading: () => null }
-)
+const LoadingFallback = (props: DynamicOptionsLoadingProps): JSX.Element => {
+  if (props.error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[200px] gap-4">
+        <p className="text-red-500">
+          Une erreur est survenue lors du chargement
+        </p>
+        <button onClick={props.retry} className="text-blue-500 hover:underline">
+          Réessayer
+        </button>
+      </div>
+    );
+  }
 
-export const DynamicUserProfile = dynamic(
-  () => import('./UserProfile'),
-  { ssr: false, loading: () => null }
-)
+  return (
+    <div className="flex justify-center items-center min-h-[200px]">
+      <span>⏳</span>
+    </div>
+  );
+};
 
-export const DynamicOrderHistory = dynamic(
-  () => import('./OrderHistory'),
-  { ssr: false, loading: () => null }
-)
+// Composant de profil utilisateur - Client only
+export const DynamicUserProfile = dynamic(() => import("./user/UserProfile"), {
+  loading: LoadingFallback,
+  ssr: false,
+});
 
+// Composant de tableau de bord administrateur - Client only
+export const DynamicAdminDashboard = dynamic(
+  () => import("./admin/AdminDashboard"),
+  {
+    loading: LoadingFallback,
+    ssr: false,
+  },
+);
+
+// Composant de liste des favoris - Client only
+export const DynamicFavoritesList = dynamic(
+  () => import("./favorites/FavoritesList"),
+  {
+    loading: LoadingFallback,
+    ssr: false,
+  },
+);
+
+// Composant de sélection de magasin - SSR enabled
+export const DynamicStoreSelection = dynamic(() => import("./StoreSelection"), {
+  loading: LoadingFallback,
+  ssr: true,
+});
+
+// Composant des dernières collections - SSR enabled
 export const DynamicLatestCollections = dynamic(
-  () => import('./LatestCollections').then(mod => ({ default: mod.LatestCollections })),
-  { ssr: false, loading: () => null }
-)
+  () => import("./LatestCollections"),
+  {
+    loading: LoadingFallback,
+    ssr: true,
+  },
+);
 
-export const DynamicStoreSelection = dynamic(
-  () => import('./StoreSelection').then(mod => ({ default: mod.StoreSelection })),
-  { ssr: false, loading: () => null }
-)
+// Composant de modal des variantes de produit - Client only
+export const DynamicProductVariantModal = dynamic(
+  () =>
+    import("./ProductVariantModal").then((mod) => ({
+      default: mod.ProductVariantModal,
+    })),
+  {
+    loading: LoadingFallback,
+    ssr: false,
+  },
+);
 
 // Fonction pour précharger des modules spécifiques
-export function preloadComponent(
-  importFn: () => Promise<any>
-) {
-  if (typeof window !== 'undefined') {
+export function preloadComponent(importFn: () => Promise<any>) {
+  if (typeof window !== "undefined") {
     // Précharger après l'hydratation pour améliorer la performance perçue
     setTimeout(() => {
       importFn().catch(() => {
         // Ignorer les erreurs de préchargement silencieusement
-      })
-    }, 0)
+      });
+    }, 0);
   }
 }
 
 // Précharger les composants importants lors de l'hydratation initiale
-if (typeof window !== 'undefined') {
+if (typeof window !== "undefined") {
   // Utilisation d'un délai minimal pour donner la priorité à l'hydratation
   setTimeout(() => {
-    preloadComponent(() => import('./ProductVariantModal'))
-    preloadComponent(() => import('./UserProfile'))
-  }, 2000) // Délai pour permettre l'hydratation complète d'abord
-} 
+    preloadComponent(() => import("./ProductVariantModal"));
+    preloadComponent(() => import("./user/UserProfile"));
+  }, 2000); // Délai pour permettre l'hydratation complète d'abord
+}
