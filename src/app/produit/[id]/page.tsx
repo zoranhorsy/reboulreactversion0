@@ -216,7 +216,8 @@ export default function ProductPage() {
       }
 
       setProduct(data);
-      setIsWishlist(isFavorite(data.id));
+      const storeType = data.store_type === "cpcompany" ? "corner" : "main";
+      setIsWishlist(isFavorite(data.id, storeType));
 
       // Sélectionner automatiquement la première variante disponible
       if (data.variants && data.variants.length > 0) {
@@ -342,15 +343,18 @@ export default function ProductPage() {
   const toggleWishlist = useCallback(() => {
     if (!product) return;
 
+    // Déterminer le type de store basé sur les propriétés du produit
+    const storeType = product.store_type === "cpcompany" ? "corner" : "main";
+
     if (isWishlist) {
-      removeFromFavorites(product.id);
+      removeFromFavorites(product.id, storeType);
       setIsWishlist(false);
       toast({
         title: "Produit retiré des favoris",
         description: `${product.name} a été retiré de vos favoris.`,
       });
     } else {
-      addToFavorites(product);
+      addToFavorites(product.id, storeType);
       setIsWishlist(true);
       toast({
         title: "Produit ajouté aux favoris",

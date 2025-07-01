@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
 import { createClientPage } from "@/components/ClientPageWrapper";
+import { useAuth } from "@/app/contexts/AuthContext";
 
 // Fonction pour logger avec timestamp
 const logWithTime = (message: string, data?: any) => {
@@ -43,61 +44,46 @@ function LoginFormContent() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
+  
+  // Utiliser le contexte d'authentification NextAuth
+  const { login, isLoading, isAuthenticated, user } = useAuth();
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  // Rediriger si déjà connecté
+  useEffect(() => {
+    if (mounted && isAuthenticated && user) {
+      if (user.is_admin) {
+        router.push("/admin");
+      } else {
+        router.push("/profil");
+      }
+    }
+  }, [mounted, isAuthenticated, user, router]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
 
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/auth/login`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ email, password }),
-        },
-      );
-
-      const data = await response.json();
-
-      if (response.ok) {
-        localStorage.setItem("token", data.token);
-
-        toast({
-          title: "Connexion réussie",
-          description: "Vous allez être redirigé...",
-        });
-
-        if (data.user.is_admin) {
-          router.push("/admin/dashboard");
+      await login(email, password);
+      
+      // Attendre un petit délai pour que la session soit mise à jour
+      setTimeout(() => {
+        if (user?.is_admin) {
+          router.push("/admin");
         } else {
           router.push("/profil");
         }
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Erreur de connexion",
-          description: data.message || "Une erreur est survenue",
-        });
-      }
+      }, 1000);
+      
     } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Impossible de se connecter au serveur",
-      });
-    } finally {
-      setIsLoading(false);
+      console.error("Erreur de connexion:", error);
+      // Le toast d'erreur est déjà géré dans le contexte d'authentification
     }
   };
 

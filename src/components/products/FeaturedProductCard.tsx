@@ -176,7 +176,10 @@ export function FeaturedProductCard({
 
       if (isFavorite) {
         // Supprimer des favoris
-        await api.removeFromFavorites(product.id);
+        await api.removeFromFavorites(
+          product.id,
+          product.is_corner_product ? "corner" : "main",
+        );
         toast({
           title: "Supprimé des favoris",
           description: `${product.name} a été retiré de vos favoris`,

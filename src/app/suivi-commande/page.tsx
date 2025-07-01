@@ -7,103 +7,63 @@ import {
   defaultViewport,
 } from "@/components/ClientPageWrapper";
 import type { Viewport } from "next";
-import { useState } from "react";
+import { UserOrders } from "@/components/UserOrders";
+import { useAuth } from "@/app/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-
-type OrderStatus = "processing" | "shipped" | "delivered";
-
-const orderStatuses: Record<
-  OrderStatus,
-  { icon: React.ReactNode; text: string }
-> = {
-  processing: {
-    icon: <span>📦</span>,
-    text: "Commande en cours de traitement",
-  },
-  shipped: { icon: <span>🚚</span>, text: "Commande expédiée" },
-  delivered: { icon: <span>✅</span>, text: "Commande livrée" },
-};
+import Link from "next/link";
 
 export const viewport: Viewport = defaultViewport;
 
 export default function TrackOrder() {
-  const [orderNumber, setOrderNumber] = useState("");
-  const [orderStatus, setOrderStatus] = useState<OrderStatus | null>(null);
+  const { user, isLoading } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Simuler une requête API pour obtenir le statut de la commande
-    const statuses: OrderStatus[] = ["processing", "shipped", "delivered"];
-    const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
-    setOrderStatus(randomStatus);
-  };
+  if (isLoading) {
+    return (
+      <ClientPageWrapper>
+        <div className="container mx-auto px-4 py-8">
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-200 rounded w-64 mb-8"></div>
+            <div className="space-y-4">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="h-32 bg-gray-200 rounded"></div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </ClientPageWrapper>
+    );
+  }
+
+  if (!user) {
+    return (
+      <ClientPageWrapper>
+        <div className="container mx-auto px-4 py-16">
+          <div className="text-center max-w-md mx-auto">
+            <h1 className="text-2xl font-bold mb-4">Mes Commandes</h1>
+            <p className="text-muted-foreground mb-6">
+              Vous devez être connecté pour voir vos commandes.
+            </p>
+            <Button asChild>
+              <Link href="/connexion">Se connecter</Link>
+            </Button>
+          </div>
+        </div>
+      </ClientPageWrapper>
+    );
+  }
 
   return (
     <ClientPageWrapper>
-      <div className="container mx-auto px-4 py-16">
-        <Card className="max-w-2xl mx-auto">
-          <CardHeader>
-            <CardTitle className="text-2xl">Suivi de commande</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="flex space-x-2">
-                <Input
-                  type="text"
-                  placeholder="Entrez votre numéro de commande"
-                  value={orderNumber}
-                  onChange={(e) => setOrderNumber(e.target.value)}
-                  required
-                />
-                <Button type="submit">Suivre</Button>
-              </div>
-            </form>
-
-            {orderStatus && (
-              <div className="mt-8 space-y-6">
-                <Separator />
-                <div className="space-y-2">
-                  <h3 className="font-semibold text-lg">
-                    État de votre commande :
-                  </h3>
-                  <div className="flex items-center space-x-2 text-green-600">
-                    {orderStatuses[orderStatus].icon}
-                    <span>{orderStatuses[orderStatus].text}</span>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <h3 className="font-semibold">Étapes de livraison :</h3>
-                  <ul className="space-y-4">
-                    {Object.entries(orderStatuses).map(
-                      ([status, { icon, text }]) => (
-                        <li
-                          key={status}
-                          className="flex items-center space-x-2"
-                        >
-                          <div
-                            className={`text-2xl ${orderStatus === status ? "text-green-600" : "text-gray-400"}`}
-                          >
-                            {icon}
-                          </div>
-                          <span
-                            className={
-                              orderStatus === status ? "font-semibold" : ""
-                            }
-                          >
-                            {text}
-                          </span>
-                        </li>
-                      ),
-                    )}
-                  </ul>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center justify-between mb-8">
+            <h1 className="text-2xl font-bold">Mes Commandes</h1>
+            <Button variant="outline" asChild>
+              <Link href="/catalogue">Continuer mes achats</Link>
+            </Button>
+          </div>
+          <UserOrders />
+        </div>
       </div>
     </ClientPageWrapper>
   );

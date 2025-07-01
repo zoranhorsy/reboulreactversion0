@@ -15,9 +15,24 @@ import {
 import { useAuth } from "@/app/contexts/AuthContext";
 import Image from "next/image";
 
+interface ExtendedOrderItem extends OrderItem {
+  image_url?: string;
+  image?: string;
+}
+
 interface Order extends Omit<ApiOrder, "items"> {
   order_number: string;
-  items: OrderItem[];
+  items: ExtendedOrderItem[];
+  shipping_info?: {
+    email?: string;
+    address?: string;
+    postalCode?: string;
+    city?: string;
+    country?: string;
+    phone?: string;
+    firstName?: string;
+    lastName?: string;
+  };
 }
 
 const statusColors = {
@@ -214,19 +229,40 @@ export function UserOrders() {
                       {order.items.map((item) => (
                         <div key={item.id} className="flex items-center gap-4">
                           <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-accent/5">
-                            {item.image_url && (
-                              <Image
-                                src={item.image_url}
-                                alt={item.product_name}
-                                width={64}
-                                height={64}
-                                className="object-cover w-full h-full"
-                              />
-                            )}
+                            {(() => {
+                              // Essayer différents chemins pour l'image
+                              const imageUrl = item.image_url || 
+                                               item.image || 
+                                               `/optimized/products/${item.product_id}/image.jpg` ||
+                                               '/placeholder.png';
+                              
+                              if (imageUrl && imageUrl !== '/placeholder.png') {
+                                return (
+                                  <Image
+                                    src={imageUrl}
+                                    alt={item.product_name || 'Produit'}
+                                    width={64}
+                                    height={64}
+                                    className="object-cover w-full h-full"
+                                    onError={(e) => {
+                                      // En cas d'erreur, essayer avec le placeholder
+                                      e.currentTarget.src = '/placeholder.png';
+                                    }}
+                                  />
+                                );
+                              }
+                              
+                              // Afficher un placeholder si pas d'image
+                              return (
+                                <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">
+                                  📦
+                                </div>
+                              );
+                            })()}
                           </div>
                           <div className="flex-1 min-w-0">
                             <h5 className="font-medium truncate">
-                              {item.product_name}
+                              {item.product_name || 'Produit sans nom'}
                             </h5>
                             <p className="text-sm text-muted-foreground">
                               Quantité: {item.quantity}
@@ -246,37 +282,55 @@ export function UserOrders() {
                   <div>
                     <h4 className="font-medium mb-2">Adresse de livraison</h4>
                     <div className="space-y-1 text-sm">
-                      {order.shipping_address ? (
-                        <>
-                          <p>{order.shipping_address.street}</p>
-                          <p>
-                            {order.shipping_address.postal_code}{" "}
-                            {order.shipping_address.city}
-                          </p>
-                          <p>{order.shipping_address.country}</p>
-                          {getOrderEmail(order) && (
-                            <p className="mt-2">
-                              <span className="text-muted-foreground">
-                                Email :
-                              </span>{" "}
-                              {getOrderEmail(order)}
-                            </p>
-                          )}
-                        </>
-                      ) : (
-                        <>
+                      {(() => {
+                        // Vérifier d'abord shipping_info (format du backend)
+                        if (order.shipping_info && order.shipping_info.address) {
+                          return (
+                            <>
+                              <p>{order.shipping_info.address}</p>
+                              <p>
+                                {order.shipping_info.postalCode}{" "}
+                                {order.shipping_info.city}
+                              </p>
+                              <p>{order.shipping_info.country || "France"}</p>
+                              {order.shipping_info.phone && (
+                                <p className="mt-1">
+                                  <span className="text-muted-foreground">
+                                    Tél :
+                                  </span>{" "}
+                                  {order.shipping_info.phone}
+                                </p>
+                              )}
+                            </>
+                          );
+                        }
+                        // Sinon vérifier shipping_address (ancien format)
+                        if (order.shipping_address) {
+                          return (
+                            <>
+                              <p>{order.shipping_address.street}</p>
+                              <p>
+                                {order.shipping_address.postal_code}{" "}
+                                {order.shipping_address.city}
+                              </p>
+                              <p>{order.shipping_address.country}</p>
+                            </>
+                          );
+                        }
+                        // Aucune adresse trouvée
+                        return (
                           <p className="text-muted-foreground">
                             Adresse de livraison non disponible
                           </p>
-                          {getOrderEmail(order) && (
-                            <p className="mt-2">
-                              <span className="text-muted-foreground">
-                                Email :
-                              </span>{" "}
-                              {getOrderEmail(order)}
-                            </p>
-                          )}
-                        </>
+                        );
+                      })()}
+                      {getOrderEmail(order) && (
+                        <p className="mt-2">
+                          <span className="text-muted-foreground">
+                            Email :
+                          </span>{" "}
+                          {getOrderEmail(order)}
+                        </p>
                       )}
                     </div>
                   </div>
@@ -294,9 +348,16 @@ export function UserOrders() {
                       }).format(order.total_amount)}
                     </p>
                   </div>
-                  <Button variant="outline" className="gap-2">
+                  <Button 
+                    variant="outline" 
+                    className="gap-2"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      window.open(`/commande/${order.id}`, '_blank');
+                    }}
+                  >
                     Voir le détail
-                    <span>ExternalLink</span>
+                    <span>↗</span>
                   </Button>
                 </div>
               </div>
