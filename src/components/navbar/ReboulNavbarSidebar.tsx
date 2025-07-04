@@ -31,7 +31,6 @@ import { useTheme } from "next-themes";
 import { useAuth } from "@/app/contexts/AuthContext";
 import Image from "next/image";
 
-import { CartSheet } from "@/components/cart/CartSheet";
 import { useCart } from "@/app/contexts/CartContext";
 import { Tooltip } from "@/components/ui/tooltip-sidebar";
 import Link from "next/link";
@@ -227,7 +226,9 @@ function MobileMenu() {
                   </h3>
                   <div className="space-y-1">
                     {/* Panier */}
-                    <button
+                    <Link
+                      href="/panier"
+                      onClick={() => setIsMobileMenuOpen(false)}
                       className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-foreground/80 hover:text-foreground hover:bg-accent/50 border border-transparent hover:border-border/30"
                     >
                       <div className="relative">
@@ -239,7 +240,7 @@ function MobileMenu() {
                         )}
                       </div>
                       <span className="font-medium text-sm">Mon Panier{cartItemsCount > 0 ? ` (${cartItemsCount})` : ''}</span>
-                    </button>
+                    </Link>
                     
                     {/* Mode sombre/clair */}
                     <button
@@ -304,7 +305,6 @@ function MobileMenu() {
 export function ReboulNavbarSidebar({ children }: ReboulNavbarSidebarProps) {
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
-  const [isCartOpen, setIsCartOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const { items: cartItems } = useCart();
   const { user, logout } = useAuth();
@@ -331,7 +331,7 @@ export function ReboulNavbarSidebar({ children }: ReboulNavbarSidebarProps) {
   const actionLinks = [
     {
       label: `Mon Panier${cartItemsCount > 0 ? ` (${cartItemsCount})` : ''}`,
-      href: "#",
+      href: "/panier",
       icon: (
         <div className="relative">
           <IconShoppingCart className="h-5 w-5 shrink-0" />
@@ -346,7 +346,6 @@ export function ReboulNavbarSidebar({ children }: ReboulNavbarSidebarProps) {
           )}
         </div>
       ),
-      onClick: () => setIsCartOpen(true),
     },
     {
       label: theme === "dark" ? "Mode Clair" : "Mode Sombre",
@@ -531,6 +530,40 @@ export function ReboulNavbarSidebar({ children }: ReboulNavbarSidebarProps) {
                   <div key={idx}>
                     {!open ? (
                       <Tooltip content={link.label}>
+                        {link.href && link.href !== "#" ? (
+                          <Link href={link.href} className="cursor-pointer hover:bg-accent/50 transition-all duration-200 flex items-center justify-start gap-3 group/sidebar py-3 px-3 rounded-lg text-muted-foreground hover:text-accent-foreground border border-transparent hover:border-border/50">
+                            <div className="text-foreground/80 group-hover/sidebar:text-primary transition-colors duration-300">
+                              {link.icon}
+                            </div>
+                          </Link>
+                        ) : (
+                          <div 
+                            className="cursor-pointer hover:bg-accent/50 transition-all duration-200 flex items-center justify-start gap-3 group/sidebar py-3 px-3 rounded-lg text-muted-foreground hover:text-accent-foreground border border-transparent hover:border-border/50"
+                            onClick={link.onClick}
+                          >
+                            <div className="text-foreground/80 group-hover/sidebar:text-primary transition-colors duration-300">
+                              {link.icon}
+                            </div>
+                          </div>
+                        )}
+                      </Tooltip>
+                    ) : (
+                      link.href && link.href !== "#" ? (
+                        <Link href={link.href} className="cursor-pointer hover:bg-accent/50 transition-all duration-200 flex items-center justify-start gap-3 group/sidebar py-3 px-3 rounded-lg text-muted-foreground hover:text-accent-foreground border border-transparent hover:border-border/50">
+                          <div className="text-foreground/80 group-hover/sidebar:text-primary transition-colors duration-300">
+                            {link.icon}
+                          </div>
+                          <motion.span
+                            animate={{
+                              display: "inline-block",
+                              opacity: 1,
+                            }}
+                            className="text-sm font-medium whitespace-pre inline-block !p-0 !m-0 group-hover/sidebar:translate-x-1 transition-all duration-300 text-foreground/80 group-hover/sidebar:text-foreground"
+                          >
+                            {link.label}
+                          </motion.span>
+                        </Link>
+                      ) : (
                         <div 
                           className="cursor-pointer hover:bg-accent/50 transition-all duration-200 flex items-center justify-start gap-3 group/sidebar py-3 px-3 rounded-lg text-muted-foreground hover:text-accent-foreground border border-transparent hover:border-border/50"
                           onClick={link.onClick}
@@ -538,26 +571,17 @@ export function ReboulNavbarSidebar({ children }: ReboulNavbarSidebarProps) {
                           <div className="text-foreground/80 group-hover/sidebar:text-primary transition-colors duration-300">
                             {link.icon}
                           </div>
+                          <motion.span
+                            animate={{
+                              display: "inline-block",
+                              opacity: 1,
+                            }}
+                            className="text-sm font-medium whitespace-pre inline-block !p-0 !m-0 group-hover/sidebar:translate-x-1 transition-all duration-300 text-foreground/80 group-hover/sidebar:text-foreground"
+                          >
+                            {link.label}
+                          </motion.span>
                         </div>
-                      </Tooltip>
-                    ) : (
-                      <div 
-                        className="cursor-pointer hover:bg-accent/50 transition-all duration-200 flex items-center justify-start gap-3 group/sidebar py-3 px-3 rounded-lg text-muted-foreground hover:text-accent-foreground border border-transparent hover:border-border/50"
-                        onClick={link.onClick}
-                      >
-                        <div className="text-foreground/80 group-hover/sidebar:text-primary transition-colors duration-300">
-                          {link.icon}
-                        </div>
-                        <motion.span
-                          animate={{
-                            display: "inline-block",
-                            opacity: 1,
-                          }}
-                          className="text-sm font-medium whitespace-pre inline-block !p-0 !m-0 group-hover/sidebar:translate-x-1 transition-all duration-300 text-foreground/80 group-hover/sidebar:text-foreground"
-                        >
-                          {link.label}
-                        </motion.span>
-                      </div>
+                      )
                     )}
                   </div>
                 ))}
@@ -624,10 +648,7 @@ export function ReboulNavbarSidebar({ children }: ReboulNavbarSidebarProps) {
         </main>
       </div>
 
-      {/* Cart Sheet */}
-      <CartSheet isOpen={isCartOpen} onOpenChange={setIsCartOpen}>
-        <div className="sr-only">Cart trigger</div>
-      </CartSheet>
+
     </>
   );
 }
