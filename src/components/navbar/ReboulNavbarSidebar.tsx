@@ -587,45 +587,6 @@ export function ReboulNavbarSidebar({ children }: ReboulNavbarSidebarProps) {
                 ))}
               </div>
             </div>
-
-            {/* Avatar utilisateur en bas */}
-            {user && (
-              <div className="border-t border-border/50 pt-4">
-                <SidebarLink
-                  link={{
-                    label: user.username || "Mon Profil",
-                    href: "/profil",
-                    icon: (
-                      <div className="relative">
-                        <img
-                          src={user.avatar_url || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=32&h=32&fit=crop&crop=face"}
-                          className="h-7 w-7 shrink-0 rounded-full border-2 border-border/50"
-                          width={28}
-                          height={28}
-                          alt="Avatar"
-                        />
-                        <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-green-500 border-2 border-background" />
-                      </div>
-                    ),
-                  }}
-                  className="hover:bg-accent/50 transition-all duration-200"
-                />
-                
-                {/* Indicateur de statut */}
-                {open && (
-                  <motion.div 
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="mt-2 px-3"
-                  >
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <div className="h-2 w-2 rounded-full bg-green-500" />
-                      <span>En ligne</span>
-                    </div>
-                  </motion.div>
-                )}
-              </div>
-            )}
           </SidebarBody>
         </Sidebar>
 

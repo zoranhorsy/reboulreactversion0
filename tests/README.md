@@ -1,52 +1,79 @@
-# Tests Reboul
+# 🧪 Tests Reboul
 
-Ce dossier contient tous les tests de l'application Reboul.
+Ce dossier contient tous les tests unitaires et d'intégration de l'application Reboul, organisés par fonctionnalité.
 
-## Structure
+## 📁 Structure
 
-- `unit/` : Tests unitaires
-- `integration/` : Tests d'intégration
-- `e2e/` : Tests end-to-end
-- `__mocks__/` : Mocks et fixtures
-- `utils/` : Utilitaires de test
+```
+tests/
+├── contexts/           # Tests des contextes React
+│   └── AuthContext.test.tsx
+├── panier/            # Tests du panier et checkout
+│   ├── panier.test.tsx
+│   └── simple.test.tsx
+├── inscription/       # Tests d'inscription et authentification
+│   └── inscription.test.tsx
+└── workers/           # Tests des Web Workers
+    └── ...
+```
 
-## Configuration
-
-Les tests utilisent :
-- Jest comme framework de test
-- React Testing Library pour les tests de composants
-- Cypress pour les tests E2E
-
-## Exécution des tests
+## 🚀 Lancer les tests
 
 ```bash
 # Tous les tests
-npm run test
+npm test
 
-# Tests unitaires uniquement
-npm run test:unit
-
-# Tests d'intégration
-npm run test:integration
-
-# Tests E2E
-npm run test:e2e
+# Tests spécifiques
+npm test -- tests/panier/
+npm test -- tests/contexts/
+npm test -- tests/inscription/
 
 # Tests en mode watch
-npm run test:watch
+npm test:watch
+
+# Tests avec coverage
+npm test -- --coverage
 ```
 
-## Conventions
+## 📋 Types de tests
 
-1. Nommer les fichiers de test avec le suffixe `.test.ts` ou `.spec.ts`
-2. Organiser les tests par fonctionnalité
-3. Utiliser des descriptions claires et descriptives
-4. Suivre le pattern AAA (Arrange, Act, Assert)
+### **🔐 Tests d'authentification**
+- `contexts/AuthContext.test.tsx` : Contexte d'authentification
+- `inscription/inscription.test.tsx` : Inscription frontend ↔ Railway backend
 
-## Bonnes pratiques
+### **🛒 Tests du panier**
+- `panier/panier.test.tsx` : Composant LoginRequiredPopover
+- `panier/simple.test.tsx` : Logique métier du panier (calculs, validation)
 
-- Maintenir une couverture de tests élevée
-- Écrire des tests indépendants
-- Utiliser des mocks appropriés
-- Documenter les cas de test complexes
-- Suivre les principes FIRST (Fast, Independent, Repeatable, Self-validating, Timely) 
+### **⚡ Tests des Workers**
+- `workers/` : Tests des Web Workers pour les performances
+
+## ✅ Bonnes pratiques
+
+1. **Nommage** : `[Composant/Feature].test.tsx`
+2. **Organisation** : Un test par fonctionnalité principale
+3. **Mocks** : Utiliser `jest.mock()` pour les dépendances externes
+4. **Coverage** : Viser 80%+ de couverture de code
+
+## 🎯 Commandes utiles
+
+```bash
+# Tester l'inscription complète (frontend + backend)
+npm test -- tests/inscription/inscription.test.tsx
+
+# Tester la logique du panier
+npm test -- tests/panier/simple.test.tsx
+
+# Tester l'authentification
+npm test -- tests/contexts/AuthContext.test.tsx
+```
+
+## 🔧 Configuration
+
+Les tests utilisent :
+- **Jest** : Framework de test
+- **React Testing Library** : Tests de composants React
+- **@testing-library/jest-dom** : Matchers personnalisés
+- **axios** : Tests d'API (Railway backend)
+
+Voir `jest.config.js` pour la configuration complète. 

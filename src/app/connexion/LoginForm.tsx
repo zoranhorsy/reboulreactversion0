@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
@@ -11,6 +10,7 @@ import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
 import { createClientPage } from "@/components/ClientPageWrapper";
 import { useAuth } from "@/app/contexts/AuthContext";
+import { Logo } from "@/components/Logo";
 
 // Fonction pour logger avec timestamp
 const logWithTime = (message: string, data?: any) => {
@@ -107,14 +107,10 @@ function LoginFormContent() {
 
       <div className="w-full max-w-md space-y-8">
         <div className="flex flex-col items-center justify-center text-center">
-          <Link href="/" className="mb-4">
-            <Image
-              src="/images/logo.webp"
-              alt="Logo"
-              width={150}
-              height={150}
-              priority
-            />
+          <Link href="/" className="mb-8">
+            <div className="relative w-40 h-40 sm:w-48 sm:h-48">
+              <Logo className="w-full h-full" />
+            </div>
           </Link>
           <h2 className="mt-6 text-3xl font-bold tracking-tight">
             Connexion à votre compte

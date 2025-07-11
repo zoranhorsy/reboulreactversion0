@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Logo } from "@/components/Logo";
 
 export function ReboulNavbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -14,7 +15,7 @@ export function ReboulNavbar() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2">
-            <span className="font-bold text-2xl text-black">REBOUL STORE</span>
+            <Logo className="w-32 h-12" />
           </Link>
 
           {/* Navigation Desktop */}

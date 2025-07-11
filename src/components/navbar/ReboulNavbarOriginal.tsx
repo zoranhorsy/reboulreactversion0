@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 import { CartSheet } from "@/components/cart/CartSheet";
 import { Menu, MenuContent, MenuTrigger, MenuItem } from "@/components/ui/menu";
+import { Logo } from "@/components/Logo";
 
 export function ReboulNavbarOriginal() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -27,9 +28,7 @@ export function ReboulNavbarOriginal() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2">
-            <span className="font-bold text-2xl text-black dark:text-white hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors">
-              REBOUL
-            </span>
+            <Logo className="w-32 h-12" />
           </Link>
 
           {/* Navigation Desktop */}

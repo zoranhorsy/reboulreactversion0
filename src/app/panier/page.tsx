@@ -3,12 +3,14 @@
 import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/app/contexts/CartContext";
+import { useAuth } from "@/app/contexts/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
 import { useRouter } from "next/navigation";
 import { Separator } from "@/components/ui/separator";
 import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ShoppingCart, X, Minus, Plus, ArrowLeft, ShoppingBag, CreditCard, Shield, Truck } from "lucide-react";
+import { LoginRequiredPopover } from "@/components/LoginRequiredPopover";
 import axios from "axios";
 import Link from "next/link";
 
@@ -24,7 +26,9 @@ export default function PanierPage() {
   } = useCart();
   const { toast } = useToast();
   const router = useRouter();
+  const { isAuthenticated, isLoading, user } = useAuth();
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
+  const [showLoginPopover, setShowLoginPopover] = useState(false);
 
   // Fonction pour gérer le checkout
   const handleCheckout = useCallback(async () => {
@@ -111,6 +115,15 @@ export default function PanierPage() {
       setIsCheckoutLoading(false);
     }
   }, [cartItems, toast, isCheckoutLoading]);
+
+  // Fonction pour gérer le clic sur le bouton paiement
+  const handlePaymentClick = useCallback(() => {
+    if (!isAuthenticated) {
+      setShowLoginPopover(true);
+      return;
+    }
+    handleCheckout();
+  }, [isAuthenticated, handleCheckout]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -344,28 +357,49 @@ export default function PanierPage() {
                   </div>
 
                   <div className="mt-6 space-y-4">
-                    {/* Bouton Payer avec Stripe */}
-                    <Button
-                      onClick={handleCheckout}
-                      disabled={isCheckoutLoading || cartItems.length === 0}
-                      className="w-full py-4 bg-[#635BFF] hover:bg-[#5851DB] text-white font-semibold text-base shadow-lg hover:shadow-xl transition-all duration-200 border-0"
+                    {/* Bouton Payer avec Stripe avec condition d'authentification */}
+                    <LoginRequiredPopover
+                      isOpen={showLoginPopover}
+                      onOpenChange={setShowLoginPopover}
                     >
-                      {isCheckoutLoading ? (
-                        <div className="flex items-center gap-2">
-                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                          <span>Préparation...</span>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-3">
-                          <CreditCard className="w-5 h-5" />
-                          <span>Payer avec Stripe</span>
-                          <div className="flex items-center gap-1 text-xs bg-white/20 px-2 py-1 rounded">
-                            <Shield className="w-3 h-3" />
-                            <span>Sécurisé</span>
+                      <Button
+                        onClick={handlePaymentClick}
+                        disabled={isCheckoutLoading || cartItems.length === 0 || isLoading}
+                        className="w-full py-4 bg-[#635BFF] hover:bg-[#5851DB] text-white font-semibold text-base shadow-lg hover:shadow-xl transition-all duration-200 border-0"
+                      >
+                        {isCheckoutLoading ? (
+                          <div className="flex items-center gap-2">
+                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                            <span>Préparation...</span>
                           </div>
-                        </div>
-                      )}
-                    </Button>
+                        ) : (
+                          <div className="flex items-center gap-3">
+                            <CreditCard className="w-5 h-5" />
+                            <span>Payer avec Stripe</span>
+                            <div className="flex items-center gap-1 text-xs bg-white/20 px-2 py-1 rounded">
+                              <Shield className="w-3 h-3" />
+                              <span>Sécurisé</span>
+                            </div>
+                          </div>
+                        )}
+                      </Button>
+                    </LoginRequiredPopover>
+
+                    {/* Affichage du statut de connexion */}
+                    {!isLoading && (
+                      <div className="text-center">
+                        {isAuthenticated ? (
+                          <p className="text-sm text-green-600 flex items-center justify-center gap-2">
+                            <Shield className="w-4 h-4" />
+                            <span>Connecté en tant que {user?.email}</span>
+                          </p>
+                        ) : (
+                          <p className="text-sm text-muted-foreground">
+                            Vous devez être connecté pour finaliser votre commande
+                          </p>
+                        )}
+                      </div>
+                    )}
 
                     {/* Informations de sécurité */}
                     <div className="bg-accent/20 rounded-lg p-4 border border-accent/30">
