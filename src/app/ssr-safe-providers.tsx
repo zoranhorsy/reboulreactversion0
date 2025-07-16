@@ -9,6 +9,7 @@ import {
   SSRSafeFavoritesProvider,
   SSRSafeCartProvider,
 } from "@/app/contexts/SSRSafeProviders";
+import { PromoProvider } from "@/app/contexts/PromoContext";
 
 export function SSRSafeProviders({ children }: { children: React.ReactNode }) {
   return (
@@ -21,10 +22,12 @@ export function SSRSafeProviders({ children }: { children: React.ReactNode }) {
       >
         <SSRSafeAuthProvider>
           <SSRSafeFavoritesProvider>
-            <SSRSafeCartProvider>
-              {children}
-              <Toaster />
-            </SSRSafeCartProvider>
+            <PromoProvider>
+              <SSRSafeCartProvider>
+                {children}
+                <Toaster />
+              </SSRSafeCartProvider>
+            </PromoProvider>
           </SSRSafeFavoritesProvider>
         </SSRSafeAuthProvider>
       </ThemeProvider>

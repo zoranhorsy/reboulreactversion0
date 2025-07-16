@@ -13,13 +13,15 @@ import {
 } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { api, type Order, fetchUsers } from "@/lib/api";
-import { type User } from "next-auth";
+import { type User as NextAuthUser } from "next-auth";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   Table,
@@ -40,6 +42,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { 
+  User, 
+  Package, 
+  AlertTriangle, 
+  CheckCircle, 
+  XCircle,
+  Search,
+  Phone,
+  Mail,
+  Euro
+} from "lucide-react";
 
 type SortConfig = {
   key: keyof Order;
@@ -70,7 +84,7 @@ export function AdminOrders() {
   const [users, setUsers] = useState<
     Record<string, { name: string; email: string }>
   >({});
-  const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [allUsers, setAllUsers] = useState<NextAuthUser[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortConfig, setSortConfig] = useState<SortConfig>({
     key: "created_at",
@@ -80,6 +94,28 @@ export function AdminOrders() {
   const [isLoading, setIsLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [userFilter, setUserFilter] = useState<string>("all");
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    pending: 0,
+    processing: 0,
+    shipped: 0,
+    delivered: 0,
+    cancelled: 0,
+  });
+  
+  // Nouveaux states pour la gestion des numéros de suivi
+  const [showTrackingModal, setShowTrackingModal] = useState(false);
+  const [trackingOrder, setTrackingOrder] = useState<Order | null>(null);
+  const [trackingNumber, setTrackingNumber] = useState("");
+  const [carrier, setCarrier] = useState("");
+  const [newStatus, setNewStatus] = useState("");
+
+  // Nouveaux states pour la modale de validation
+  const [showValidationModal, setShowValidationModal] = useState(false);
+  const [validationOrder, setValidationOrder] = useState<Order | null>(null);
+  const [isValidating, setIsValidating] = useState(false);
+  const [stockNotes, setStockNotes] = useState("");
+
   const { toast } = useToast();
 
   // Fonction pour extraire l'email d'une commande depuis différents endroits
@@ -191,6 +227,340 @@ export function AdminOrders() {
     }
 
     return null;
+  };
+
+  // Fonction pour extraire le numéro de téléphone du client d'une commande
+  const getOrderCustomerPhone = (order: Order): string | null => {
+    // Vérifier dans shipping_info
+    if (order.shipping_info?.phone) {
+      return order.shipping_info.phone;
+    }
+
+    // Vérifier dans customer_info (objet)
+    if (order.customer_info && typeof order.customer_info === "object") {
+      const info = order.customer_info as any;
+      if (info.phone) return info.phone;
+      if (info.phoneNumber) return info.phoneNumber;
+      if (info.phone_number) return info.phone_number;
+    }
+
+    // Vérifier dans customer_info (string)
+    if (order.customer_info && typeof order.customer_info === "string") {
+      try {
+        const parsed = JSON.parse(order.customer_info);
+        if (parsed.phone) return parsed.phone;
+        if (parsed.phoneNumber) return parsed.phoneNumber;
+        if (parsed.phone_number) return parsed.phone_number;
+      } catch (e) {
+        console.warn("Erreur parsing customer_info pour le téléphone", e);
+      }
+    }
+
+    // Vérifier dans payment_data
+    if (order.payment_data?.customerPhone) {
+      return order.payment_data.customerPhone;
+    }
+
+    // Vérifier dans shipping_address
+    if (order.shipping_address?.phone) {
+      return order.shipping_address.phone;
+    }
+
+    // Vérifier dans metadata
+    if (order.metadata) {
+      try {
+        const metadata = typeof order.metadata === "string" 
+          ? JSON.parse(order.metadata) 
+          : order.metadata;
+        if (metadata.phone) return metadata.phone;
+        if (metadata.customer_phone) return metadata.customer_phone;
+      } catch (e) {
+        console.warn("Erreur parsing metadata pour le téléphone", e);
+      }
+    }
+
+    return null;
+  };
+
+  // Fonction pour extraire le payment_intent_id depuis une commande
+  const getOrderPaymentIntentId = async (order: Order): Promise<string | null> => {
+    // Vérifier dans payment_data
+    if (order.payment_data?.payment_intent_id) {
+      return order.payment_data.payment_intent_id;
+    }
+
+    // Vérifier dans metadata
+    if (order.metadata) {
+      try {
+        const metadata = typeof order.metadata === "string" 
+          ? JSON.parse(order.metadata) 
+          : order.metadata;
+        if (metadata.payment_intent_id) return metadata.payment_intent_id;
+        if (metadata.payment_intent) return metadata.payment_intent;
+      } catch (e) {
+        console.warn("Erreur parsing metadata pour payment_intent_id", e);
+      }
+    }
+
+    // Si on a une stripe_session_id, récupérer le PaymentIntent via l'API
+    const sessionId = order.stripe_session_id || order.payment_data?.stripe_session_id;
+    if (sessionId) {
+      try {
+        console.log(`🔍 Récupération du PaymentIntent depuis la session: ${sessionId}`);
+        
+        const response = await fetch('/api/stripe/get-payment-intent', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            session_id: sessionId,
+          }),
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+          console.log(`✅ PaymentIntent trouvé via session:`, result.payment_intent.id);
+          return result.payment_intent.id;
+        } else {
+          console.warn(`⚠️ Impossible de récupérer le PaymentIntent depuis la session:`, result.error);
+        }
+      } catch (error) {
+        console.error("❌ Erreur lors de la récupération du PaymentIntent:", error);
+      }
+    }
+
+    return null;
+  };
+
+  // Fonction pour capturer un paiement Stripe
+  const captureStripePayment = async (paymentIntentId: string): Promise<boolean> => {
+    try {
+      console.log(`🔄 Capture du paiement Stripe: ${paymentIntentId}`);
+      
+      const response = await fetch('/api/stripe/capture-payment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          payment_intent_id: paymentIntentId,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        // Si l'erreur indique que le paiement est déjà capturé, ce n'est pas une erreur
+        if (result.error && result.error.includes('succeeded')) {
+          console.log(`✅ Paiement déjà capturé (ancien workflow):`, paymentIntentId);
+          return true;
+        }
+        throw new Error(result.error || 'Erreur lors de la capture');
+      }
+
+      console.log(`✅ Paiement capturé avec succès:`, result);
+      return true;
+    } catch (error) {
+      console.error('❌ Erreur capture paiement:', error);
+      
+      // Si l'erreur indique que le paiement est déjà capturé, ce n'est pas une erreur
+      if (error instanceof Error && error.message.includes('succeeded')) {
+        console.log(`✅ Paiement déjà capturé (ancien workflow):`, paymentIntentId);
+        return true;
+      }
+      
+      throw error;
+    }
+  };
+
+  // Fonction pour annuler un paiement Stripe
+  const cancelStripePayment = async (paymentIntentId: string, reason: string = 'duplicate'): Promise<boolean> => {
+    try {
+      console.log(`🔄 Annulation du paiement Stripe: ${paymentIntentId}`);
+      
+      const response = await fetch('/api/stripe/cancel-payment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          payment_intent_id: paymentIntentId,
+          cancellation_reason: reason,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Erreur lors de l\'annulation');
+      }
+
+      console.log(`✅ Paiement annulé avec succès:`, result);
+      return true;
+    } catch (error) {
+      console.error('❌ Erreur annulation paiement:', error);
+      throw error;
+    }
+  };
+
+  // Fonction pour mettre à jour le stock des produits
+  const updateProductStock = async (order: Order): Promise<boolean> => {
+    try {
+      if (!order.items || order.items.length === 0) {
+        console.warn(`⚠️ Aucun article trouvé dans la commande #${order.id}`);
+        return true; // Ne pas échouer si pas d'articles
+      }
+
+      console.log(`📦 Mise à jour du stock pour la commande #${order.id}`);
+      
+      // Préparer les données pour l'API
+      const stockItems = order.items.map(item => ({
+        product_id: item.product_id?.toString() || item.id?.toString(),
+        variant_info: {
+          size: item.variant_info?.size,
+          color: item.variant_info?.color
+        },
+        quantity: item.quantity
+      }));
+
+      const response = await fetch('/api/products/update-stock', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          items: stockItems,
+          order_id: order.id,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Erreur lors de la mise à jour du stock');
+      }
+
+      console.log(`✅ Stock mis à jour avec succès:`, result.summary);
+      
+      // Afficher les erreurs partielles si il y en a
+      if (result.errors && result.errors.length > 0) {
+        console.warn(`⚠️ Certains articles n'ont pas pu être mis à jour:`, result.errors);
+        toast({
+          title: "Stock partiellement mis à jour",
+          description: `${result.summary.successful_updates}/${result.summary.total_items} articles mis à jour. Vérifiez les logs.`,
+        });
+      }
+
+      return true;
+    } catch (error) {
+      console.error('❌ Erreur mise à jour stock:', error);
+      throw error;
+    }
+  };
+
+  // Fonction pour envoyer les emails de notification
+  const sendOrderEmail = async (order: Order, type: 'pending' | 'confirmed' | 'cancelled'): Promise<boolean> => {
+    try {
+      const customerEmail = getOrderEmail(order);
+      const customerName = getOrderCustomerName(order);
+
+      if (!customerEmail) {
+        console.warn(`⚠️ Aucun email trouvé pour la commande #${order.id}`);
+        return false;
+      }
+
+      console.log(`📧 Envoi d'email ${type} pour la commande #${order.id} à ${customerEmail}`);
+
+      const emailData = {
+        order_id: order.id.toString(),
+        order_number: order.order_number || order.id.toString(),
+        customer_name: customerName || 'Client',
+        customer_email: customerEmail,
+        total_amount: order.total_amount,
+        items: order.items?.map(item => ({
+          product_name: item.product_name,
+          quantity: item.quantity,
+          price: item.price,
+          variant_info: item.variant_info
+        })) || [],
+        type
+      };
+
+      const response = await fetch('/api/orders/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(emailData),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Erreur lors de l\'envoi de l\'email');
+      }
+
+      console.log(`✅ Email ${type} envoyé avec succès:`, result);
+      return true;
+    } catch (error) {
+      console.error(`❌ Erreur envoi email ${type}:`, error);
+      throw error;
+    }
+  };
+
+  // Fonction pour confirmer les réservations de stock (transformer en stock réel)
+  const confirmStockReservations = async (order: Order): Promise<boolean> => {
+    try {
+      console.log(`🔒 Confirmation des réservations pour la commande #${order.id}`);
+
+      // Libérer les réservations (elles seront transformées en stock réel par updateProductStock)
+      const response = await fetch(`/api/products/reserve-stock?order_id=${order.id}`, {
+        method: 'DELETE',
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        console.warn(`⚠️ Impossible de libérer les réservations:`, result.error);
+        // Ne pas échouer si les réservations ne peuvent pas être libérées
+        return true;
+      }
+
+      console.log(`✅ ${result.released_reservations} réservations confirmées pour la commande #${order.id}`);
+      return true;
+    } catch (error) {
+      console.error('❌ Erreur confirmation réservations:', error);
+      // Ne pas échouer le processus de validation pour les réservations
+      return true;
+    }
+  };
+
+  // Fonction pour libérer les réservations de stock (annulation)
+  const releaseStockReservations = async (order: Order): Promise<boolean> => {
+    try {
+      console.log(`🔓 Libération des réservations pour la commande #${order.id}`);
+
+      const response = await fetch(`/api/products/reserve-stock?order_id=${order.id}`, {
+        method: 'DELETE',
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        console.warn(`⚠️ Impossible de libérer les réservations:`, result.error);
+        // Ne pas échouer si les réservations ne peuvent pas être libérées
+        return true;
+      }
+
+      console.log(`✅ ${result.released_reservations} réservations libérées pour la commande #${order.id}`);
+      return true;
+    } catch (error) {
+      console.error('❌ Erreur libération réservations:', error);
+      // Ne pas faire échouer le processus d'annulation pour les réservations
+      return true;
+    }
   };
 
   const loadUsers = useCallback(async () => {
@@ -422,12 +792,60 @@ export function AdminOrders() {
   });
 
   const handleUpdateStatus = async (orderId: number, newStatus: string) => {
+    // Si le nouveau statut est "processing", ouvrir la modal de validation
+    if (newStatus === "processing") {
+      const order = orders.find(o => o.id === orderId);
+      if (order) {
+        setValidationOrder(order);
+        setStockNotes("");
+        setShowValidationModal(true);
+        return;
+      }
+    }
+
+    // Si le nouveau statut est "shipped", ouvrir la modal pour le numéro de suivi
+    if (newStatus === "shipped") {
+      const order = orders.find(o => o.id === orderId);
+      if (order) {
+        setTrackingOrder(order);
+        setNewStatus(newStatus);
+        setTrackingNumber(order.tracking_number || "");
+        setCarrier(order.carrier || "Colissimo");
+        setShowTrackingModal(true);
+        return;
+      }
+    }
+
+    // Pour les autres statuts, mettre à jour directement
+    await updateOrderStatus(orderId, newStatus);
+  };
+
+  const updateOrderStatus = async (orderId: number, status: string, trackingData?: { tracking_number?: string; carrier?: string }) => {
     try {
-      await api.updateOrderStatus(orderId, newStatus);
+      // Utiliser le nouveau format avec support du tracking si disponible
+      if (trackingData && trackingData.tracking_number) {
+        await api.updateOrderStatus(orderId, {
+          status,
+          tracking_number: trackingData.tracking_number,
+          carrier: trackingData.carrier
+        });
+      } else {
+        await api.updateOrderStatus(orderId, status);
+      }
+      
+      const statusLabels: Record<string, string> = {
+        pending: "En attente",
+        processing: "En cours",
+        shipped: "Expédiée",
+        delivered: "Livrée",
+        cancelled: "Annulée"
+      };
+
       toast({
         title: "Succès",
-        description: "Le statut de la commande a été mis à jour.",
+        description: `Statut mis à jour vers "${statusLabels[status] || status}"${trackingData?.tracking_number ? ` avec le numéro de suivi ${trackingData.tracking_number}` : ''}`,
       });
+      
       loadOrders();
     } catch (error) {
       toast({
@@ -435,6 +853,171 @@ export function AdminOrders() {
         description: "Impossible de mettre à jour le statut de la commande.",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleTrackingSubmit = async () => {
+    if (!trackingOrder) return;
+
+    await updateOrderStatus(trackingOrder.id, newStatus, {
+      tracking_number: trackingNumber,
+      carrier: carrier
+    });
+
+    setShowTrackingModal(false);
+    setTrackingOrder(null);
+    setTrackingNumber("");
+    setCarrier("");
+    setNewStatus("");
+  };
+
+  const handleSendTrackingEmail = async (order: Order) => {
+    if (!order.tracking_number) {
+      toast({
+        title: "Erreur",
+        description: "Aucun numéro de suivi disponible pour cette commande.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await api.sendTrackingEmail(order.id, order.tracking_number, order.carrier);
+      toast({
+        title: "Succès",
+        description: "Email de suivi envoyé avec succès.",
+      });
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible d'envoyer l'email de suivi.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Fonction pour valider la commande (passage à "processing")
+  const handleValidateOrder = async () => {
+    if (!validationOrder) return;
+
+    setIsValidating(true);
+    try {
+      // 1. Vérifier si on peut capturer le paiement
+      const paymentIntentId = await getOrderPaymentIntentId(validationOrder);
+      
+      if (!paymentIntentId) {
+        console.warn("⚠️ Payment Intent ID non trouvé pour la commande", validationOrder.id);
+        toast({
+          title: "Attention",
+          description: "ID de paiement non trouvé. La commande sera validée sans capture automatique.",
+        });
+      } else {
+        // 2. Capturer le paiement Stripe
+        console.log(`💳 Capture du paiement pour la commande #${validationOrder.id}`);
+        await captureStripePayment(paymentIntentId);
+      }
+
+      // 3. Confirmer les réservations de stock (les libérer)
+      await confirmStockReservations(validationOrder);
+
+      // 4. Mettre à jour le stock des produits (décrémenter)
+      await updateProductStock(validationOrder);
+
+      // 5. Mettre à jour le statut de la commande
+      await updateOrderStatus(validationOrder.id, "processing");
+
+      // 6. Envoyer l'email de confirmation
+      await sendOrderEmail(validationOrder, 'confirmed');
+
+      toast({
+        title: "Commande validée ! 🎉",
+        description: `Commande #${validationOrder.id} confirmée${paymentIntentId ? ' et paiement capturé' : ''}.`,
+      });
+
+      setShowValidationModal(false);
+      setValidationOrder(null);
+      
+    } catch (error) {
+      console.error("Erreur lors de la validation:", error);
+      
+      // Gestion spécifique des erreurs de paiement
+      let errorMessage = "Impossible de valider la commande.";
+      if (error instanceof Error) {
+        if (error.message.includes("capture") || error.message.includes("payment")) {
+          errorMessage = "Erreur lors de la capture du paiement : " + error.message;
+        } else {
+          errorMessage = error.message;
+        }
+      }
+
+      toast({
+        title: "Erreur",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsValidating(false);
+    }
+  };
+
+  // Fonction pour annuler la commande
+  const handleCancelOrder = async () => {
+    if (!validationOrder) return;
+
+    setIsValidating(true);
+    try {
+      // 1. Vérifier si on peut annuler le paiement
+      const paymentIntentId = await getOrderPaymentIntentId(validationOrder);
+      
+      if (!paymentIntentId) {
+        console.warn("⚠️ Payment Intent ID non trouvé pour la commande", validationOrder.id);
+        toast({
+          title: "Attention",
+          description: "ID de paiement non trouvé. La commande sera annulée sans action sur le paiement.",
+        });
+      } else {
+        // 2. Annuler le PaymentIntent Stripe
+        console.log(`💳 Annulation du paiement pour la commande #${validationOrder.id}`);
+        await cancelStripePayment(paymentIntentId, 'requested_by_customer');
+      }
+
+      // 3. Libérer les réservations de stock
+      await releaseStockReservations(validationOrder);
+
+      // 4. Mettre à jour le statut de la commande
+      await updateOrderStatus(validationOrder.id, "cancelled");
+
+      // 5. Envoyer l'email d'annulation
+      await sendOrderEmail(validationOrder, 'cancelled');
+
+      toast({
+        title: "Commande annulée",
+        description: `Commande #${validationOrder.id} annulée${paymentIntentId ? '. Aucun prélèvement effectué' : ''}.`,
+      });
+
+      setShowValidationModal(false);
+      setValidationOrder(null);
+      
+    } catch (error) {
+      console.error("Erreur lors de l'annulation:", error);
+      
+      // Gestion spécifique des erreurs de paiement
+      let errorMessage = "Impossible d'annuler la commande.";
+      if (error instanceof Error) {
+        if (error.message.includes("cancel") || error.message.includes("payment")) {
+          errorMessage = "Erreur lors de l'annulation du paiement : " + error.message;
+        } else {
+          errorMessage = error.message;
+        }
+      }
+
+      toast({
+        title: "Erreur",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsValidating(false);
     }
   };
 
@@ -1153,6 +1736,237 @@ export function AdminOrders() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Modal pour la gestion des numéros de suivi */}
+      <Dialog open={showTrackingModal} onOpenChange={setShowTrackingModal}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Ajouter un numéro de suivi</DialogTitle>
+            <DialogDescription>
+              Commande #{trackingOrder?.order_number || trackingOrder?.id}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="tracking-number">Numéro de suivi</Label>
+              <Input
+                id="tracking-number"
+                value={trackingNumber}
+                onChange={(e) => setTrackingNumber(e.target.value)}
+                placeholder="Ex: 1234567890"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="carrier">Transporteur</Label>
+              <Select value={carrier} onValueChange={setCarrier}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choisir un transporteur" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Colissimo">Colissimo</SelectItem>
+                  <SelectItem value="Chronopost">Chronopost</SelectItem>
+                  <SelectItem value="DHL">DHL</SelectItem>
+                  <SelectItem value="UPS">UPS</SelectItem>
+                  <SelectItem value="FedEx">FedEx</SelectItem>
+                  <SelectItem value="Mondial Relay">Mondial Relay</SelectItem>
+                  <SelectItem value="Autre">Autre</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="text-sm text-muted-foreground">
+              <p>💡 Un email de notification sera automatiquement envoyé au client avec le numéro de suivi.</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowTrackingModal(false)}>
+              Annuler
+            </Button>
+            <Button onClick={handleTrackingSubmit} disabled={!trackingNumber.trim()}>
+              Marquer comme expédiée
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal pour la validation des commandes */}
+      <Dialog open={showValidationModal} onOpenChange={setShowValidationModal}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Search className="h-5 w-5" />
+              Validation de commande
+            </DialogTitle>
+            <DialogDescription>
+              Commande #{validationOrder?.order_number || validationOrder?.id} - Vérifiez la disponibilité avant de confirmer
+            </DialogDescription>
+          </DialogHeader>
+          
+          {validationOrder && (
+            <div className="space-y-6">
+              {/* Informations client */}
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <h4 className="font-medium mb-3 flex items-center gap-2">
+                  <User className="h-4 w-4" />
+                  Informations client
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <User className="h-4 w-4 text-muted-foreground" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">Nom complet</p>
+                        <p className="font-medium">{getOrderCustomerName(validationOrder) || "Non spécifié"}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-muted-foreground" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">Email</p>
+                        <p className="font-medium text-sm">{getOrderEmail(validationOrder) || "Non spécifié"}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Phone className="h-4 w-4 text-muted-foreground" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">Téléphone</p>
+                        <p className="font-medium">{getOrderCustomerPhone(validationOrder) || "Non spécifié"}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Euro className="h-4 w-4 text-muted-foreground" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">Montant total</p>
+                        <p className="font-medium text-lg text-green-600">{formatAmount(validationOrder.total_amount)}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Badge pour le numéro de commande */}
+                <div className="mt-3 pt-3 border-t">
+                  <div className="flex items-center justify-between">
+                    <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                      #{validationOrder.order_number || validationOrder.id}
+                    </Badge>
+                    <span className="text-xs text-muted-foreground">
+                      {format(new Date(validationOrder.created_at), "dd/MM/yyyy à HH:mm", { locale: fr })}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Produits commandés */}
+              <div>
+                <h4 className="font-medium mb-2 flex items-center gap-2">
+                  <Package className="h-4 w-4" />
+                  Produits à vérifier
+                </h4>
+                <div className="space-y-3">
+                  {validationOrder.items && validationOrder.items.length > 0 ? (
+                    validationOrder.items.map((item, index) => (
+                      <div key={item.id || index} className="bg-gray-50 p-3 rounded-lg">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <p className="font-medium">{item.product_name}</p>
+                            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground mt-1">
+                              <span>Qté: {item.quantity}</span>
+                              {item.variant_info && (
+                                <>
+                                  {item.variant_info.size && (
+                                    <span>Taille: {item.variant_info.size}</span>
+                                  )}
+                                  {item.variant_info.color && (
+                                    <span>Couleur: {item.variant_info.color}</span>
+                                  )}
+                                </>
+                              )}
+                              <span>Prix: {formatAmount(item.price)}</span>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-medium">{formatAmount(item.price * item.quantity)}</p>
+                          </div>
+                        </div>
+                        
+                        {/* Zone de vérification stock */}
+                        <div className="mt-2 pt-2 border-t">
+                          <div className="flex items-center gap-2 text-sm">
+                            <span className="text-muted-foreground">Stock magasin:</span>
+                            <Badge variant="outline" className="bg-yellow-50">
+                              À vérifier
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-sm text-yellow-600 bg-yellow-50 p-4 rounded">
+                      <p className="font-medium">Aucun produit dans cette commande</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Notes */}
+              <div className="space-y-2">
+                <Label htmlFor="stock-notes">Notes de vérification (optionnel)</Label>
+                <Input
+                  id="stock-notes"
+                  value={stockNotes}
+                  onChange={(e) => setStockNotes(e.target.value)}
+                  placeholder="Ex: Vérifiez la taille M en réserve..."
+                />
+              </div>
+
+              {/* Alerte importante */}
+              <div className="bg-orange-50 border border-orange-200 p-4 rounded-lg">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="h-4 w-4 text-orange-500 mt-0.5" />
+                  <div className="text-sm">
+                    <p className="font-medium text-orange-800">Important</p>
+                    <p className="text-orange-700 mt-1">
+                      • <strong>Valider</strong> = Le client sera débité et recevra un email de confirmation
+                    </p>
+                    <p className="text-orange-700">
+                      • <strong>Annuler</strong> = Aucun prélèvement, email d&apos;annulation envoyé
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowValidationModal(false)}
+              disabled={isValidating}
+            >
+              Fermer
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleCancelOrder}
+              disabled={isValidating}
+              className="flex items-center gap-2"
+            >
+              <XCircle className="h-4 w-4" />
+              {isValidating ? "Annulation..." : "Annuler la commande"}
+            </Button>
+            <Button 
+              onClick={handleValidateOrder}
+              disabled={isValidating}
+              className="bg-green-600 hover:bg-green-700 flex items-center gap-2"
+            >
+              <CheckCircle className="h-4 w-4" />
+              {isValidating ? "Validation..." : "Valider et débiter"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
+

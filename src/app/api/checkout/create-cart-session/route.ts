@@ -383,6 +383,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         payment_method_types: ["card"],
         line_items: lineItems,
         mode: "payment",
+        payment_intent_data: {
+          capture_method: 'manual', // 🚀 CAPTURE DIFFÉRÉE : Autoriser mais ne pas capturer immédiatement
+          setup_future_usage: 'off_session', // Optionnel : pour réutiliser le moyen de paiement
+        },
         success_url: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/checkout/cancel`,
         metadata: enrichedMetadata,

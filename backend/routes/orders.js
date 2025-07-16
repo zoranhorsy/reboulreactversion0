@@ -4,7 +4,7 @@ const pool = require('../db');
 const { body, param, query, validationResult } = require('express-validator');
 const { AppError } = require('../middleware/errorHandler');
 const authMiddleware = require('../middleware/auth');
-const { sendOrderConfirmation } = require('../config/mailer');
+const { sendOrderConfirmation, sendOrderStatusNotification } = require('../config/mailer');
 
 // Middleware de validation
 const validate = (validations) => {
@@ -255,23 +255,81 @@ router.put('/:id/status',
     authMiddleware,
     param('id').isInt({ min: 1 }).withMessage('L\'ID de la commande doit être un nombre entier positif'),
     body('status').isIn(['pending', 'processing', 'shipped', 'delivered', 'cancelled']).withMessage('Statut de commande invalide'),
-    validate([param('id'), body('status')]),
+    body('tracking_number').optional().isString().withMessage('Le numéro de suivi doit être une chaîne de caractères'),
+    body('carrier').optional().isString().withMessage('Le transporteur doit être une chaîne de caractères'),
+    validate([param('id'), body('status'), body('tracking_number'), body('carrier')]),
     async (req, res, next) => {
         if (!req.user.isAdmin) {
             return next(new AppError('Accès non autorisé', 403));
         }
         const { id } = req.params;
-        const { status } = req.body;
+        const { status, tracking_number, carrier } = req.body;
+        
         try {
-            const { rows } = await pool.query(
-                'UPDATE orders SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *',
-                [status, id]
+            // Récupérer la commande actuelle pour connaître l'ancien statut
+            const currentOrderQuery = await pool.query(
+                'SELECT * FROM orders WHERE id = $1',
+                [id]
             );
-            if (rows.length === 0) {
+            
+            if (currentOrderQuery.rows.length === 0) {
                 return next(new AppError('Commande non trouvée', 404));
             }
-            res.json(rows[0]);
+            
+            const currentOrder = currentOrderQuery.rows[0];
+            const previousStatus = currentOrder.status;
+            
+            // Mettre à jour le statut et optionnellement le numéro de suivi
+            const updateQuery = tracking_number 
+                ? 'UPDATE orders SET status = $1, tracking_number = $2, carrier = $3, updated_at = CURRENT_TIMESTAMP WHERE id = $4 RETURNING *'
+                : 'UPDATE orders SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *';
+            
+            const updateParams = tracking_number 
+                ? [status, tracking_number, carrier || null, id]
+                : [status, id];
+            
+            const { rows } = await pool.query(updateQuery, updateParams);
+            
+            const updatedOrder = rows[0];
+            
+            // Envoyer un email de notification si le statut a changé
+            if (previousStatus !== status) {
+                try {
+                    console.log(`📧 Changement de statut détecté: ${previousStatus} -> ${status} pour la commande ${updatedOrder.order_number}`);
+                    
+                    // Envoyer l'email de notification de changement de statut
+                    await sendOrderStatusNotification(updatedOrder, previousStatus, status);
+                    
+                    console.log(`✅ Email de notification envoyé avec succès pour la commande ${updatedOrder.order_number}`);
+                } catch (emailError) {
+                    console.error('❌ Erreur lors de l\'envoi de l\'email de notification:', emailError);
+                    // Ne pas faire échouer la requête si l'email échoue
+                }
+            }
+            
+            // Si un numéro de suivi est fourni et que le statut est "shipped", envoyer aussi un email de suivi
+            let trackingEmailSent = false;
+            if (tracking_number && status === 'shipped') {
+                try {
+                    const { sendTrackingNotification } = require('../config/mailer');
+                    await sendTrackingNotification(updatedOrder, tracking_number, carrier);
+                    console.log(`✅ Email de suivi envoyé avec succès pour la commande ${updatedOrder.order_number}`);
+                    trackingEmailSent = true;
+                } catch (trackingEmailError) {
+                    console.error('❌ Erreur lors de l\'envoi de l\'email de suivi:', trackingEmailError);
+                    // Ne pas faire échouer la requête si l'email échoue
+                }
+            }
+            
+            res.json({
+                ...updatedOrder,
+                message: 'Statut mis à jour avec succès',
+                emailSent: previousStatus !== status,
+                trackingEmailSent
+            });
+            
         } catch (err) {
+            console.error('Erreur lors de la mise à jour du statut:', err);
             next(new AppError('Erreur lors de la mise à jour du statut de la commande', 500));
         }
     });
@@ -655,6 +713,60 @@ router.get('/emergency-fix-addresses', authMiddleware, async (req, res) => {
     client.release();
   }
 });
+
+// POST pour renvoyer un email de suivi (route protégée, admin seulement)
+router.post('/:id/send-tracking-email',
+    authMiddleware,
+    param('id').isInt({ min: 1 }).withMessage('L\'ID de la commande doit être un nombre entier positif'),
+    body('tracking_number').optional().isString().withMessage('Le numéro de suivi doit être une chaîne de caractères'),
+    body('carrier').optional().isString().withMessage('Le transporteur doit être une chaîne de caractères'),
+    validate([param('id'), body('tracking_number'), body('carrier')]),
+    async (req, res, next) => {
+        if (!req.user.isAdmin) {
+            return next(new AppError('Accès non autorisé', 403));
+        }
+        
+        const { id } = req.params;
+        const { tracking_number, carrier } = req.body;
+        
+        try {
+            // Récupérer la commande
+            const { rows } = await pool.query(
+                'SELECT * FROM orders WHERE id = $1',
+                [id]
+            );
+            
+            if (rows.length === 0) {
+                return next(new AppError('Commande non trouvée', 404));
+            }
+            
+            const order = rows[0];
+            
+            // Utiliser le numéro de suivi fourni ou celui de la commande
+            const trackingNumberToUse = tracking_number || order.tracking_number;
+            
+            if (!trackingNumberToUse) {
+                return next(new AppError('Aucun numéro de suivi disponible', 400));
+            }
+            
+            // Envoyer l'email de suivi
+            const { sendTrackingNotification } = require('../config/mailer');
+            await sendTrackingNotification(order, trackingNumberToUse, carrier || order.carrier);
+            
+            console.log(`Email de suivi renvoyé avec succès pour la commande ${order.order_number}`);
+            
+            res.json({
+                success: true,
+                message: 'Email de suivi envoyé avec succès',
+                order_number: order.order_number,
+                tracking_number: trackingNumberToUse
+            });
+            
+        } catch (error) {
+            console.error('Erreur lors de l\'envoi de l\'email de suivi:', error);
+            next(new AppError('Erreur lors de l\'envoi de l\'email de suivi', 500));
+        }
+    });
 
 module.exports = router;
 

@@ -57,6 +57,8 @@ export interface Order {
   shipping_address?: Address;
   order_number: string;
   shipping_cost?: number;
+  tracking_number?: string;
+  carrier?: string;
   payment_data?: {
     payment_method_types?: string[];
     payment_status?: string;
@@ -65,6 +67,8 @@ export interface Order {
     customer?: string;
     customerEmail?: string;
     customerName?: string;
+    customerPhone?: string;
+    payment_intent_id?: string;
   };
   stripe_session_id?: string;
   shipping_info?: {
@@ -220,6 +224,27 @@ export interface CollectionStats {
   };
 }
 
+export const clearAuth = (): void => {
+  if (typeof window !== "undefined") {
+    console.log("🧹 Clearing all authentication data...");
+    localStorage.removeItem("token");
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("reboul_auth_token");
+    sessionStorage.clear();
+  }
+};
+
+export const debugAuth = (): void => {
+  if (typeof window !== "undefined") {
+    console.log("🔍 Auth Debug Info:");
+    console.log("- localStorage token:", localStorage.getItem("token"));
+    console.log("- localStorage authToken:", localStorage.getItem("authToken"));
+    console.log("- localStorage reboul_auth_token:", localStorage.getItem("reboul_auth_token"));
+    console.log("- sessionStorage length:", sessionStorage.length);
+    console.log("- Current URL:", window.location.href);
+  }
+};
+
 export const getToken = (): string | null => {
   try {
     // Vérifier si nous sommes côté client
@@ -227,16 +252,20 @@ export const getToken = (): string | null => {
       return null;
     }
 
-    const token = localStorage.getItem("token");
-    if (!token) {
-      console.log("No token found in localStorage");
+    let token = localStorage.getItem("token");
+    
+    // Gérer les cas où le token est une chaîne "null", "undefined", vide ou invalide
+    if (!token || token === "null" || token === "undefined" || token.trim() === "") {
+      console.log("No valid token found in localStorage, clearing...");
+      localStorage.removeItem("token");
       return null;
     }
 
     // Vérifier si le token est au format JWT (xxx.yyy.zzz)
     const parts = token.split(".");
     if (parts.length !== 3) {
-      console.log("Token is not in JWT format");
+      console.log("Token is not in JWT format, clearing...");
+      localStorage.removeItem("token");
       return null;
     }
 
@@ -249,18 +278,21 @@ export const getToken = (): string | null => {
       if (payload.exp) {
         const now = Math.floor(Date.now() / 1000);
         if (payload.exp < now) {
-          console.log("Token has expired");
+          console.log("Token has expired, clearing...");
+          localStorage.removeItem("token");
           return null;
         }
       }
 
       return token;
     } catch (e) {
-      console.error("Error decoding token payload:", e);
+      console.error("Error decoding token payload, clearing...", e);
+      localStorage.removeItem("token");
       return null;
     }
   } catch (error) {
-    console.error("Error in getToken:", error);
+    console.error("Error in getToken, clearing...", error);
+    localStorage.removeItem("token");
     return null;
   }
 };
@@ -352,11 +384,23 @@ export class Api {
     this.client.interceptors.request.use(
       (config: InternalAxiosRequestConfig) => {
         const token = getToken();
-        // Suppression des logs verbeux
+        
+        // Logs de débogage pour l'authentification
+        console.log("🔐 Auth Debug:", {
+          url: config.url,
+          hasToken: !!token,
+          tokenPreview: token ? `${token.substring(0, 20)}...` : 'null'
+        });
 
         if (token) {
           config.headers = config.headers || {};
           config.headers.Authorization = `Bearer ${token}`;
+        } else {
+          console.warn("⚠️ No valid token available for request to:", config.url);
+          // Supprimer tout header Authorization existant
+          if (config.headers) {
+            delete config.headers.Authorization;
+          }
         }
         return config;
       },
@@ -368,20 +412,25 @@ export class Api {
 
     this.client.interceptors.response.use(
       (response) => {
-        // Suppression des logs verbeux de réponse
         return response;
       },
       async (error) => {
-        console.error("Response error:", {
+        console.error("🚨 Response error:", {
           url: error.config?.url,
           status: error.response?.status,
+          message: error.response?.data?.message || error.message
         });
 
         if (error.response?.status === 401) {
-          console.log("Unauthorized, redirecting to login...");
+          console.log("🔒 Unauthorized - clearing token and redirecting...");
           if (typeof window !== "undefined") {
             localStorage.removeItem("token");
-            window.location.href = "/connexion";
+            // Pour l'admin, rediriger vers admin/login
+            if (window.location.pathname.includes('/admin')) {
+              window.location.href = "/admin/login";
+            } else {
+              window.location.href = "/connexion";
+            }
           }
         }
         return Promise.reject(error);
@@ -1168,19 +1217,22 @@ export class Api {
   }
 
   async updateOrderStatus(
-    orderId: number,
-    newStatus: string,
-  ): Promise<Order | null> {
-    try {
-      const response = await this.client.put(`/orders/${orderId}/status`, {
-        status: newStatus,
-      });
-      return response.data;
-    } catch (error) {
-      this.handleError(error, `Error updating status for order ${orderId}`);
-      return null;
-    }
+  orderId: number,
+  statusData: string | { status: string; tracking_number?: string; carrier?: string },
+): Promise<Order | null> {
+  try {
+    // Support des deux formats : string ou objet
+    const requestData = typeof statusData === 'string' 
+      ? { status: statusData }
+      : statusData;
+
+    const response = await this.client.put(`/orders/${orderId}/status`, requestData);
+    return response.data;
+  } catch (error) {
+    this.handleError(error, `Error updating status for order ${orderId}`);
+    return null;
   }
+}
 
   async fetchDashboardStats(): Promise<DashboardStats> {
     try {
@@ -3158,6 +3210,23 @@ export class Api {
       throw error;
     }
   }
+
+  async sendTrackingEmail(
+  orderId: number,
+  trackingNumber: string,
+  carrier?: string,
+): Promise<boolean> {
+  try {
+    await this.client.post(`/orders/${orderId}/send-tracking-email`, {
+      tracking_number: trackingNumber,
+      carrier: carrier,
+    });
+    return true;
+  } catch (error) {
+    this.handleError(error, `Error sending tracking email for order ${orderId}`);
+    return false;
+  }
+}
 }
 
 export const api = new Api();

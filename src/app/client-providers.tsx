@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { CartProvider } from "./contexts/CartContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { FavoritesProvider } from "./contexts/FavoritesContext";
+import { PromoProvider } from "./contexts/PromoContext";
 
 export function ClientProviders({ children }: { children: React.ReactNode }) {
   return (
@@ -20,9 +21,11 @@ export function ClientProviders({ children }: { children: React.ReactNode }) {
         <Toaster />
         <AuthProvider>
           <FavoritesProvider>
-            <CartProvider>
-              {children}
-            </CartProvider>
+            <PromoProvider>
+              <CartProvider>
+                {children}
+              </CartProvider>
+            </PromoProvider>
           </FavoritesProvider>
         </AuthProvider>
       </ThemeProvider>
