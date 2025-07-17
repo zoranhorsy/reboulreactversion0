@@ -74,6 +74,7 @@ interface CartContextType {
   updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
   total: number;
+  totalPrice: number;
   subtotal: number;
   shipping: number;
   discount: number;
@@ -630,15 +631,22 @@ export const SSRSafeCartProvider: React.FC<{ children: React.ReactNode }> = ({
     [],
   );
 
-  // Calculs
+  // Calculs avec protection contre les valeurs NaN
   const subtotal = items.reduce(
-    (sum, item) => sum + item.price * item.quantity,
+    (sum, item) => {
+      const price = typeof item.price === 'number' && !isNaN(item.price) ? item.price : 0;
+      const quantity = typeof item.quantity === 'number' && !isNaN(item.quantity) ? item.quantity : 0;
+      return sum + (price * quantity);
+    },
     0,
   );
   const shipping = subtotal > 100 ? 0 : 5.9;
   const discount = 0;
   const total = subtotal + shipping - discount;
-  const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
+  const itemCount = items.reduce((sum, item) => {
+    const quantity = typeof item.quantity === 'number' && !isNaN(item.quantity) ? item.quantity : 0;
+    return sum + quantity;
+  }, 0);
 
   const value: CartContextType = {
     items,
@@ -647,6 +655,7 @@ export const SSRSafeCartProvider: React.FC<{ children: React.ReactNode }> = ({
     updateQuantity,
     clearCart,
     total,
+    totalPrice: total,
     subtotal,
     shipping,
     discount,

@@ -9,10 +9,44 @@ import { useRouter } from "next/navigation";
 import { Separator } from "@/components/ui/separator";
 import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ShoppingCart, X, Minus, Plus, ArrowLeft, ShoppingBag, CreditCard, Shield, Truck } from "lucide-react";
+import { ShoppingCart, X, Minus, Plus, ArrowLeft, ShoppingBag, CreditCard, Shield, Truck, Store } from "lucide-react";
 import { LoginRequiredPopover } from "@/components/LoginRequiredPopover";
 import axios from "axios";
 import Link from "next/link";
+
+// Fonction utilitaire pour déterminer le magasin d'un produit
+function getProductStore(productId: string): 'reboul' | 'the_corner' {
+  // Extraire l'ID numérique de l'ID complet (ex: "4-Blanc-XL" -> "4")
+  const numericId = productId.split('-')[0];
+  const id = parseInt(numericId);
+  
+  // Logique de détection basée sur l'ID
+  // IDs 1-10 sont généralement The Corner, le reste Reboul
+  // (Cette logique peut être ajustée selon tes besoins)
+  if (id >= 1 && id <= 10) {
+    return 'the_corner';
+  }
+  
+  return 'reboul';
+}
+
+// Fonction pour obtenir les informations d'affichage du magasin
+function getStoreDisplayInfo(store: 'reboul' | 'the_corner') {
+  const storeInfo = {
+    reboul: {
+      name: 'Reboul',
+      color: 'bg-slate-100 text-slate-800 border-slate-200',
+      icon: '🏪',
+    },
+    the_corner: {
+      name: 'The Corner',
+      color: 'bg-blue-100 text-blue-800 border-blue-200',
+      icon: '🏬',
+    },
+  };
+  
+  return storeInfo[store];
+}
 
 export default function PanierPage() {
   const {
@@ -29,6 +63,16 @@ export default function PanierPage() {
   const { isAuthenticated, isLoading, user } = useAuth();
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
   const [showLoginPopover, setShowLoginPopover] = useState(false);
+
+  // Calculer les articles par magasin
+  const itemsByStore = cartItems.reduce((acc, item) => {
+    const store = getProductStore(item.id);
+    if (!acc[store]) {
+      acc[store] = [];
+    }
+    acc[store].push(item);
+    return acc;
+  }, {} as Record<string, typeof cartItems>);
 
   // Fonction pour gérer le checkout
   const handleCheckout = useCallback(async () => {
@@ -60,41 +104,65 @@ export default function PanierPage() {
         },
       }));
 
-      let userEmail = "zoran@reboul.com"; // Email par défaut
+      // Récupération de l'email de l'utilisateur connecté
+      let userEmail = user?.email || null; // Email de l'utilisateur connecté ou null
 
-      try {
-        const stripeEmails = localStorage.getItem("stripe_user_emails");
-        const userProfile = localStorage.getItem("user_profile");
+      // Fallback: essayer de récupérer depuis le localStorage si pas d'email dans la session
+      if (!userEmail) {
+        try {
+          const stripeEmails = localStorage.getItem("stripe_user_emails");
+          const userProfile = localStorage.getItem("user_profile");
 
-        if (stripeEmails) {
-          const emails = JSON.parse(stripeEmails);
-          if (Array.isArray(emails) && emails.length > 0) {
-            userEmail = emails[0];
+          if (stripeEmails) {
+            const emails = JSON.parse(stripeEmails);
+            if (Array.isArray(emails) && emails.length > 0) {
+              userEmail = emails[0];
+            }
+          } else if (userProfile) {
+            const profile = JSON.parse(userProfile);
+            if (profile?.email) {
+              userEmail = profile.email;
+            }
           }
-        } else if (userProfile) {
-          const profile = JSON.parse(userProfile);
-          if (profile?.email) {
-            userEmail = profile.email;
-          }
+        } catch (error) {
+          console.error("Erreur lors de la récupération de l'email:", error);
         }
-      } catch (error) {
-        console.error("Erreur lors de la récupération de l'email:", error);
       }
 
-      const response = await axios.post("/api/checkout/create-cart-session", {
+      const requestData = {
         items: cartItemsForApi,
         cart_id: `cart-${Date.now()}`,
         shipping_method: "standard",
-        force_user_email: userEmail,
-      });
+        ...(userEmail && { force_user_email: userEmail }),
+      };
 
-      if (response.data?.url) {
-        if (response.data.id) {
-          localStorage.setItem("lastStripeSession", response.data.id);
-          window.location.href = response.data.url;
-        }
+      const response = await axios.post("/api/checkout/create-cart-session", requestData);
+
+      // Gérer les deux structures de réponse : simple et multi-sessions
+      let sessionUrl = null;
+      let sessionId = null;
+
+      if (response.data?.url && response.data?.id) {
+        // Structure simple (une seule session)
+        sessionUrl = response.data.url;
+        sessionId = response.data.id;
+      } else if (response.data?.primary_session?.url && response.data?.primary_session?.id) {
+        // Structure multi-sessions (utiliser la session principale)
+        sessionUrl = response.data.primary_session.url;
+        sessionId = response.data.primary_session.id;
+        
+        // Log pour débugger
+        console.log(`[Checkout] Sessions multiples détectées: ${response.data.session_count}`);
+        console.log(`[Checkout] Magasins: ${response.data.metadata?.stores?.join(', ')}`);
       } else {
         throw new Error("URL de paiement non trouvée dans la réponse");
+      }
+
+      if (sessionUrl && sessionId) {
+        localStorage.setItem("lastStripeSession", sessionId);
+        window.location.href = sessionUrl;
+      } else {
+        throw new Error("Session de paiement invalide");
       }
     } catch (error) {
       console.error("Erreur lors de la création de la session de paiement:", error);
@@ -206,9 +274,23 @@ export default function PanierPage() {
 
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-start mb-2">
-                          <h3 className="font-medium text-foreground leading-tight flex-1 pr-2">
-                            {item.name}
-                          </h3>
+                          <div className="flex-1 pr-2">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h3 className="font-medium text-foreground leading-tight">
+                                {item.name}
+                              </h3>
+                              {(() => {
+                                const store = getProductStore(item.id);
+                                const storeInfo = getStoreDisplayInfo(store);
+                                return (
+                                  <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${storeInfo.color}`}>
+                                    <Store className="w-3 h-3" />
+                                    {storeInfo.name}
+                                  </span>
+                                );
+                              })()}
+                            </div>
+                          </div>
                           <button
                             onClick={() => removeItem(item.id)}
                             className="text-muted-foreground hover:text-destructive transition-colors p-1.5 rounded-md hover:bg-destructive/10 flex-shrink-0"
@@ -301,6 +383,36 @@ export default function PanierPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
+                    {/* Répartition par magasin */}
+                    {Object.keys(itemsByStore).length > 1 && (
+                      <div className="space-y-2 pb-4 border-b border-border/30">
+                        <h4 className="text-sm font-medium text-foreground">Répartition par magasin</h4>
+                        {Object.entries(itemsByStore).map(([store, items]) => {
+                          const storeInfo = getStoreDisplayInfo(store as 'reboul' | 'the_corner');
+                          const storeSubtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                          return (
+                            <div key={store} className="flex justify-between items-center text-sm">
+                              <div className="flex items-center gap-2">
+                                <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${storeInfo.color}`}>
+                                  <Store className="w-3 h-3" />
+                                  {storeInfo.name}
+                                </span>
+                                <span className="text-muted-foreground">
+                                  ({items.length} article{items.length > 1 ? 's' : ''})
+                                </span>
+                              </div>
+                              <span className="font-medium">
+                                {new Intl.NumberFormat("fr-FR", {
+                                  style: "currency",
+                                  currency: "EUR",
+                                }).format(storeSubtotal)}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
                     {/* Détail des articles */}
                     <div className="space-y-3">
                       <div className="flex justify-between text-sm">
@@ -338,7 +450,7 @@ export default function PanierPage() {
                           {new Intl.NumberFormat("fr-FR", {
                             style: "currency",
                             currency: "EUR",
-                          }).format(totalPrice * 0.2 / 1.2)}
+                          }).format(subtotal * 0.2)}
                         </span>
                       </div>
                     </div>

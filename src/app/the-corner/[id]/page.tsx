@@ -32,21 +32,30 @@ export default function TheCornerProductPage({
     const fetchData = async () => {
       try {
         setIsLoading(true);
+        setError(false);
+        
         // Récupérer le produit
         const productData = await api.getCornerProductById(params.id);
         if (!productData) {
+          console.error(`Produit The Corner avec ID ${params.id} non trouvé`);
           setError(true);
           return;
         }
 
+        console.log("Produit The Corner chargé:", productData);
         setProduct(productData);
 
         // Récupérer les produits similaires
-        const similarProductsData = await api.fetchCornerProducts({
-          category_id: productData.category_id,
-          limit: 8,
-        });
-        setSimilarProducts(similarProductsData.products);
+        try {
+          const similarProductsData = await api.fetchCornerProducts({
+            category_id: productData.category_id,
+            limit: 8,
+          });
+          setSimilarProducts(similarProductsData.products || []);
+        } catch (similarError) {
+          console.warn("Erreur lors du chargement des produits similaires:", similarError);
+          setSimilarProducts([]);
+        }
       } catch (err) {
         console.error("Erreur lors du chargement du produit:", err);
         setError(true);
@@ -58,17 +67,37 @@ export default function TheCornerProductPage({
     fetchData();
   }, [params.id]);
 
+  // 🚨 FIX: Gérer correctement l'état d'erreur
   if (error) {
+    console.log("Redirection vers 404 pour le produit:", params.id);
     notFound();
   }
 
+  // 🚨 FIX: Retourner un loader au lieu de undefined
   if (isLoading) {
-    return;
+    return (
+      <ClientPageWrapper>
+        <div className="flex items-center justify-center min-h-screen">
+          <LoaderComponent />
+        </div>
+      </ClientPageWrapper>
+    );
+  }
+
+  // 🚨 FIX: Vérifier que le produit existe avant de rendre
+  if (!product) {
+    console.log("Produit non trouvé après chargement:", params.id);
+    notFound();
   }
 
   return (
     <ClientPageWrapper>
-      <Suspense fallback={<LoaderComponent />}></Suspense>
+      <Suspense fallback={<LoaderComponent />}>
+        <TheCornerProductDetails 
+          product={product} 
+          similarProducts={similarProducts}
+        />
+      </Suspense>
     </ClientPageWrapper>
   );
 }
