@@ -20,6 +20,7 @@ import type { Product } from "@/lib/types/product";
 
 export interface CartItem {
   id: string;
+  productId: string;
   name: string;
   price: number;
   quantity: number;
@@ -30,6 +31,7 @@ export interface CartItem {
     colorLabel: string;
     stock: number;
   };
+  storeType: "adult" | "sneakers" | "kids" | "cpcompany";
 }
 
 export interface OrderDetails {

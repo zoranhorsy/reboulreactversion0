@@ -1,4 +1,4 @@
-// Importer la configuration globale pour forcer le rendu dynamique
+// Configuration dynamique pour forcer le rendu côté serveur
 import { dynamic, revalidate, fetchCache } from "@/app/config";
 import { defaultViewport } from "@/components/ClientPageWrapper";
 import type { Viewport } from "next";
@@ -6,37 +6,36 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { LoaderComponent } from "@/components/ui/Loader";
 import { api } from "@/lib/api";
-import { CatalogueClientContent } from "@/components/catalogue/CatalogueClientContent";
+import { CatalogueShared } from "@/components/catalogue/CatalogueShared";
 import type { Product } from "@/lib/types/product";
 import type { Category } from "@/lib/types/category";
 import type { Brand } from "@/lib/types/brand";
 
 type SearchParams = { [key: string]: string | string[] | undefined };
 
-interface CataloguePageProps {
+interface KidsPageProps {
   searchParams: SearchParams;
 }
 
 export async function generateMetadata({
   searchParams,
-}: CataloguePageProps): Promise<Metadata> {
+}: KidsPageProps): Promise<Metadata> {
   const category = searchParams.categories as string | undefined;
   const brand = searchParams.brand as string | undefined;
   const search = searchParams.search as string | undefined;
 
-  let title = "Catalogue Global - Reboul Store";
-  let description =
-    "Découvrez toute notre sélection : Adult, Sneakers, Kids et The Corner chez Reboul Store.";
+  let title = "Kids - Collection Enfants";
+  let description = "Découvrez notre collection mode pour enfants chez Reboul.";
 
   if (category) {
-    title = `${category} - Catalogue Reboul Store`;
-    description = `Explorez notre collection de ${category} chez Reboul Store.`;
+    title = `${category} - Kids Reboul`;
+    description = `Explorez notre collection de ${category} pour enfants chez Reboul.`;
   } else if (brand) {
-    title = `${brand} - Catalogue Reboul Store`;
-    description = `Découvrez les produits ${brand} disponibles chez Reboul Store.`;
+    title = `${brand} - Kids Reboul`;
+    description = `Découvrez les produits ${brand} pour enfants chez Reboul.`;
   } else if (search) {
-    title = `Résultats pour "${search}" - Catalogue Reboul Store`;
-    description = `Explorez les résultats de recherche pour "${search}" dans notre catalogue Reboul Store.`;
+    title = `Résultats pour "${search}" - Kids Reboul`;
+    description = `Explorez les résultats de recherche pour "${search}" dans notre collection enfants.`;
   }
 
   return {
@@ -46,33 +45,22 @@ export async function generateMetadata({
       title,
       description,
       type: "website",
-      url: "https://reboul-store.com/catalogue",
+      url: "https://reboul-store.com/kids",
       images: [
         {
           url: "https://reboul-store.com/og-image.jpg",
           width: 1200,
           height: 630,
-          alt: "Reboul Store Catalogue",
+          alt: "Reboul Kids Collection",
         },
       ],
     },
   };
 }
 
-interface CatalogueWrapperProps {
-  initialProducts: Product[];
-  initialCategories: Category[];
-  initialBrands: Brand[];
-  total: number;
-}
-
-function CatalogueClientWrapper(props: CatalogueWrapperProps) {
-  return <CatalogueClientContent {...props} />;
-}
-
 export const viewport: Viewport = defaultViewport;
 
-export default async function CataloguePage({
+export default async function KidsPage({
   searchParams,
 }: {
   searchParams: SearchParams;
@@ -94,7 +82,7 @@ export default async function CataloguePage({
     size: ensureString(searchParams.size),
     minPrice: ensureString(searchParams.minPrice) || "0",
     maxPrice: ensureString(searchParams.maxPrice) || "10000",
-    // store_type: Pas de filtre pour afficher tous les produits de tous les stores
+    store_type: "kids", // Forcer le type de magasin
     featured: ensureString(searchParams.featured) || "false",
   };
 
@@ -103,6 +91,7 @@ export default async function CataloguePage({
     queryParams.brand_id = Number(brandId);
   }
 
+  // Nettoyer les paramètres vides
   Object.keys(queryParams).forEach((key) => {
     if (!queryParams[key]) {
       delete queryParams[key];
@@ -117,12 +106,21 @@ export default async function CataloguePage({
 
   return (
     <Suspense fallback={<LoaderComponent />}>
-      <CatalogueClientWrapper
+      <CatalogueShared
         initialProducts={productsData.products || []}
         initialCategories={categories || []}
         initialBrands={brands || []}
         total={productsData.total || 0}
+        storeType="kids"
+        title="Kids"
+        subtitle="Collection mode pour enfants"
+        backLink="/"
+        backText="Accueil"
+        breadcrumbs={[
+          { label: "Accueil", href: "/" },
+          { label: "Kids", href: "/kids" },
+        ]}
       />
     </Suspense>
   );
-}
+} 

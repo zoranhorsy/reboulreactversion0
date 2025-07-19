@@ -97,10 +97,12 @@ export function TheCornerProductDetail({
     const cartItemId = `${product.id}-${selectedSize}-${selectedColor}`;
     addItem({
       id: cartItemId,
+      productId: product.id.toString(),
       name: `${product.name} - ${selectedColor} - ${selectedSize}`,
       price: product.price,
       quantity: 1,
       image: getImageUrl(product),
+      storeType: 'the_corner', // Ce composant est spécifiquement pour The Corner
       variant: {
         size: selectedSize,
         color: selectedColor,

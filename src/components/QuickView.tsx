@@ -6,6 +6,7 @@ import { DynamicProductVariantModal } from "@/components/dynamic-imports";
 import { LazyLoadWrapper } from "@/components/LazyLoadWrapper";
 import { useCart } from "@/app/contexts/CartContext";
 import { toast } from "@/components/ui/use-toast";
+import { usePathname } from "next/navigation";
 
 type Product = {
   id: number;
@@ -34,6 +35,15 @@ interface QuickViewProps {
 export function QuickView({ product }: QuickViewProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { addItem } = useCart();
+  const pathname = usePathname();
+
+  // Détecter le store basé sur l'URL courante
+  const getStoreType = (): "adult" | "sneakers" | "kids" | "the_corner" => {
+    if (pathname.includes('/the-corner')) return 'the_corner';
+    if (pathname.includes('/sneakers')) return 'sneakers';
+    if (pathname.includes('/kids')) return 'kids';
+    return 'adult'; // default pour Reboul
+  };
 
   const handleAddToCart = (size: string, color: string, quantity: number) => {
     try {
@@ -56,6 +66,7 @@ export function QuickView({ product }: QuickViewProps) {
       const cartItemId = `${product.id}-${size}-${color}`;
       addItem({
         id: cartItemId,
+        productId: product.id.toString(),
         name: `${product.name} (${size}, ${color})`,
         price: product.price,
         quantity: quantity,
@@ -65,6 +76,7 @@ export function QuickView({ product }: QuickViewProps) {
           typeof product.images[0] === "string"
             ? product.images[0]
             : "/placeholder.svg",
+        storeType: getStoreType(),
         variant: {
           size: size,
           color: color,

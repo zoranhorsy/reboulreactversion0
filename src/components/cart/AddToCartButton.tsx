@@ -3,6 +3,7 @@ import anime from "animejs/lib/anime.es.js";
 import { Button } from "@/components/ui/button";
 import { useCart, CartItem } from "@/app/contexts/CartContext";
 import { toast } from "@/components/ui/use-toast";
+import { usePathname } from "next/navigation";
 
 interface AddToCartButtonProps {
   productId: string;
@@ -30,6 +31,15 @@ export function AddToCartButton({
   const buttonRef = useRef<HTMLButtonElement>(null);
   const particlesRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLSpanElement>(null);
+  const pathname = usePathname();
+
+  // Détecter le store basé sur l'URL courante
+  const getStoreType = (): "adult" | "sneakers" | "kids" | "the_corner" => {
+    if (pathname.includes('/the-corner')) return 'the_corner';
+    if (pathname.includes('/sneakers')) return 'sneakers';
+    if (pathname.includes('/kids')) return 'kids';
+    return 'adult'; // default pour Reboul
+  };
 
   const handleAddToCart = useCallback(async () => {
     if (disabled || isAdding) return;
@@ -37,10 +47,12 @@ export function AddToCartButton({
 
     const newItem: CartItem = {
       id: productId,
+      productId: productId, // Nouvelle propriété requise
       name,
       price,
       quantity: 1,
       image,
+      storeType: getStoreType(), // Détection automatique du store
       variant: {
         size: size || "",
         color: color || "",

@@ -9,11 +9,18 @@ export interface CartItemVariant {
 
 export interface CartItem {
   id: string;
+  productId: string;
   name: string;
   price: number;
   quantity: number;
   image: string;
-  variant: CartItemVariant;
+  variant: {
+    size: string;
+    color: string;
+    colorLabel: string;
+    stock: number;
+  };
+  storeType: "adult" | "sneakers" | "kids" | "the_corner";
 }
 
 export interface Cart {

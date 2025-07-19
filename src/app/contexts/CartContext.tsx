@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useCallback, useEffect } fr
 
 export interface CartItem {
   id: string;
+  productId: string;
   name: string;
   price: number;
   quantity: number;
@@ -14,6 +15,7 @@ export interface CartItem {
     colorLabel: string;
     stock: number;
   };
+  storeType: "adult" | "sneakers" | "kids" | "the_corner";
 }
 
 export interface OrderDetails {

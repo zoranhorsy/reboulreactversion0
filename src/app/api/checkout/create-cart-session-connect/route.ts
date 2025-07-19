@@ -8,6 +8,7 @@ import {
   generateOrderNumber,
   getStoreDisplayInfo,
   STRIPE_ACCOUNTS,
+  ProductsByStore,
   type StoreType
 } from "@/lib/stripe-connect-helpers";
 
@@ -55,12 +56,15 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const productsByStore = await groupProductsByStore(items);
     
     console.log("[Checkout Connect] Produits groupés:", {
-      reboul: productsByStore.reboul.length,
+      adult: productsByStore.adult.length,
+      sneakers: productsByStore.sneakers.length,
+      kids: productsByStore.kids.length,
       the_corner: productsByStore.the_corner.length,
     });
 
     // Vérifier qu'il y a des produits
-    if (productsByStore.reboul.length === 0 && productsByStore.the_corner.length === 0) {
+    if (productsByStore.adult.length === 0 && productsByStore.sneakers.length === 0 && 
+        productsByStore.kids.length === 0 && productsByStore.the_corner.length === 0) {
       return NextResponse.json(
         { error: "Aucun produit valide trouvé" },
         { status: 400 }
@@ -89,79 +93,47 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       },
     };
 
-    // **ÉTAPE 3 : Créer session pour Reboul (si produits présents)**
-    if (productsByStore.reboul.length > 0) {
-      console.log("[Checkout Connect] Création session Reboul...");
+    // **ÉTAPE 3 : Créer sessions pour chaque store (architecture complète)**
+    const storeKeys: (keyof ProductsByStore)[] = ['adult', 'sneakers', 'kids', 'the_corner'];
+    
+    for (const storeKey of storeKeys) {
+      const storeProducts = productsByStore[storeKey];
       
-      const reboulOrderNumber = generateOrderNumber('reboul');
-      const reboulParams = createStripeSessionParams(
-        productsByStore.reboul,
-        'reboul',
-        {
-          ...baseParams,
-          metadata: {
-            ...baseParams.metadata,
-            order_number: reboulOrderNumber,
-          },
+      if (storeProducts.length > 0) {
+        console.log(`[Checkout Connect] Création session ${storeKey}...`);
+        
+        const orderNumber = generateOrderNumber(storeKey);
+        const storeParams = createStripeSessionParams(
+          storeProducts,
+          storeKey,
+          {
+            ...baseParams,
+            metadata: {
+              ...baseParams.metadata,
+              order_number: orderNumber,
+            },
+          }
+        );
+
+        // Ajouter customer si disponible
+        if (userEmail) {
+          storeParams.customer_email = userEmail;
         }
-      );
 
-      // Ajouter customer si disponible
-      if (userEmail) {
-        reboulParams.customer_email = userEmail;
-      }
-
-      try {
-        const reboulSession = await stripe.checkout.sessions.create(reboulParams);
-        sessions.push({
-          store: 'reboul' as StoreType,
-          session: reboulSession,
-          order_number: reboulOrderNumber,
-          items: productsByStore.reboul,
-        });
-        orderNumbers.push(reboulOrderNumber);
-        console.log("[Checkout Connect] ✅ Session Reboul créée:", reboulSession.id);
-      } catch (error) {
-        console.error("[Checkout Connect] ❌ Erreur session Reboul:", error);
-        throw error;
-      }
-    }
-
-    // **ÉTAPE 4 : Créer session pour The Corner (si produits présents)**
-    if (productsByStore.the_corner.length > 0) {
-      console.log("[Checkout Connect] Création session The Corner...");
-      
-      const cornerOrderNumber = generateOrderNumber('the_corner');
-      const cornerParams = createStripeSessionParams(
-        productsByStore.the_corner,
-        'the_corner',
-        {
-          ...baseParams,
-          metadata: {
-            ...baseParams.metadata,
-            order_number: cornerOrderNumber,
-          },
+        try {
+          const storeSession = await stripe.checkout.sessions.create(storeParams);
+          sessions.push({
+            store: storeKey as StoreType,
+            session: storeSession,
+            order_number: orderNumber,
+            items: storeProducts,
+          });
+          orderNumbers.push(orderNumber);
+          console.log(`[Checkout Connect] ✅ Session ${storeKey} créée:`, storeSession.id);
+        } catch (error) {
+          console.error(`[Checkout Connect] ❌ Erreur session ${storeKey}:`, error);
+          throw error;
         }
-      );
-
-      // Ajouter customer si disponible
-      if (userEmail) {
-        cornerParams.customer_email = userEmail;
-      }
-
-      try {
-        const cornerSession = await stripe.checkout.sessions.create(cornerParams);
-        sessions.push({
-          store: 'the_corner' as StoreType,
-          session: cornerSession,
-          order_number: cornerOrderNumber,
-          items: productsByStore.the_corner,
-        });
-        orderNumbers.push(cornerOrderNumber);
-        console.log("[Checkout Connect] ✅ Session The Corner créée:", cornerSession.id);
-      } catch (error) {
-        console.error("[Checkout Connect] ❌ Erreur session The Corner:", error);
-        throw error;
       }
     }
 

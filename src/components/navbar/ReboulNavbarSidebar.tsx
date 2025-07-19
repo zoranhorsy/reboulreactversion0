@@ -90,7 +90,10 @@ function MobileMenu() {
 
   const mainLinks = [
     { label: "Accueil", href: "/", icon: <IconHome className="h-5 w-5" /> },
-    { label: "Catalogue", href: "/catalogue", icon: <IconShoppingBag className="h-5 w-5" /> },
+    { label: "Catalogue Global", href: "/catalogue", icon: <IconShoppingBag className="h-5 w-5" /> },
+    { label: "Reboul Adult", href: "/reboul", icon: <IconUser className="h-5 w-5" /> },
+    { label: "Sneakers", href: "/sneakers", icon: <IconTruck className="h-5 w-5" /> },
+    { label: "Kids", href: "/kids", icon: <IconHeart className="h-5 w-5" /> },
     { label: "The Corner", href: "/the-corner", icon: <IconStar className="h-5 w-5" /> },
     { label: "À propos", href: "/about", icon: <IconInfoCircle className="h-5 w-5" /> },
     { label: "Contact", href: "/contact", icon: <IconMail className="h-5 w-5" /> },
@@ -313,7 +316,10 @@ export function ReboulNavbarSidebar({ children }: ReboulNavbarSidebarProps) {
   
   const mainLinks = [
     { label: "Accueil", href: "/", icon: <IconHome className="h-5 w-5 shrink-0" /> },
-    { label: "Catalogue", href: "/catalogue", icon: <IconShoppingBag className="h-5 w-5 shrink-0" /> },
+    { label: "Catalogue Global", href: "/catalogue", icon: <IconShoppingBag className="h-5 w-5 shrink-0" /> },
+    { label: "Reboul Adult", href: "/reboul", icon: <IconUser className="h-5 w-5 shrink-0" /> },
+    { label: "Sneakers", href: "/sneakers", icon: <IconTruck className="h-5 w-5 shrink-0" /> },
+    { label: "Kids", href: "/kids", icon: <IconHeart className="h-5 w-5 shrink-0" /> },
     { label: "The Corner", href: "/the-corner", icon: <IconStar className="h-5 w-5 shrink-0" /> },
     { label: "À propos", href: "/about", icon: <IconInfoCircle className="h-5 w-5 shrink-0" /> },
     { label: "Contact", href: "/contact", icon: <IconMail className="h-5 w-5 shrink-0" /> },

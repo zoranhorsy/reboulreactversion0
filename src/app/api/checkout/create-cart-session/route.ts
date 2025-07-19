@@ -115,12 +115,15 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const productsByStore = await groupProductsByStore(items);
     
     console.log("[Checkout] Produits groupés:", {
-      reboul: productsByStore.reboul.length,
+      adult: productsByStore.adult.length,
+      sneakers: productsByStore.sneakers.length,
+      kids: productsByStore.kids.length,
       the_corner: productsByStore.the_corner.length,
     });
 
     // Vérifier qu'il y a des produits
-    if (productsByStore.reboul.length === 0 && productsByStore.the_corner.length === 0) {
+    if (productsByStore.adult.length === 0 && productsByStore.sneakers.length === 0 && 
+        productsByStore.kids.length === 0 && productsByStore.the_corner.length === 0) {
       return NextResponse.json(
         { error: "Aucun produit valide trouvé" },
         { status: 400 }
@@ -178,7 +181,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     console.log("[Checkout] Création d'une session unique pour tous les produits...");
     
     // Combiner tous les produits en une seule liste
-    const allProducts = [...productsByStore.reboul, ...productsByStore.the_corner];
+    const allProducts = [
+      ...productsByStore.adult,
+      ...productsByStore.sneakers, 
+      ...productsByStore.kids,
+      ...productsByStore.the_corner
+    ];
     
     // Calcul du total du panier en centimes pour tous les produits
     const totalAmount = allProducts.reduce(
@@ -296,8 +304,24 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       }
 
       // Déterminer le magasin du produit
-      const store = productsByStore.reboul.some(p => p.id === item.id) ? 'reboul' : 'the_corner';
-      const storePrefix = store === 'reboul' ? '🏪 Reboul' : '🏬 The Corner';
+      let store: string = 'adult'; // default
+      if (productsByStore.adult.some(p => p.id === item.id)) {
+        store = 'adult';
+      } else if (productsByStore.sneakers.some(p => p.id === item.id)) {
+        store = 'sneakers';
+      } else if (productsByStore.kids.some(p => p.id === item.id)) {
+        store = 'kids';
+      } else if (productsByStore.the_corner.some(p => p.id === item.id)) {
+        store = 'the_corner';
+      }
+      
+      const storeDisplayNames = {
+        adult: '👔 Reboul Adult',
+        sneakers: '👟 Reboul Sneakers',
+        kids: '🧸 Reboul Kids',
+        the_corner: '🏬 The Corner'
+      };
+      const storePrefix = storeDisplayNames[store as keyof typeof storeDisplayNames] || '🏪 Store';
       
       return {
         price_data: {
@@ -356,7 +380,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     // Générer un numéro de commande unique
-    const orderNumber = generateOrderNumber('reboul'); // Utiliser le format reboul par défaut
+    const orderNumber = generateOrderNumber('adult'); // Utiliser le format adult par défaut pour les commandes groupées
     
     // Créer les métadonnées pour la session
     const sessionMetadata = {
@@ -367,7 +391,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           quantity: item.quantity,
           variant: item.variant ? JSON.stringify(item.variant) : null,
           // Ajouter l'information du magasin dans les métadonnées
-          store: productsByStore.reboul.some(p => p.id === item.id) ? 'reboul' : 'the_corner',
+          store: productsByStore.adult.some(p => p.id === item.id) ? 'adult' :
+                 productsByStore.sneakers.some(p => p.id === item.id) ? 'sneakers' :
+                 productsByStore.kids.some(p => p.id === item.id) ? 'kids' :
+                 productsByStore.the_corner.some(p => p.id === item.id) ? 'the_corner' : 'adult',
         })),
       ),
       shipping_method: shippingMethod,
@@ -382,7 +409,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       account_email: userEmail || "",
       // Informations sur les magasins concernés
       stores_involved: JSON.stringify({
-        reboul: productsByStore.reboul.length,
+        adult: productsByStore.adult.length,
+        sneakers: productsByStore.sneakers.length,
+        kids: productsByStore.kids.length,
         the_corner: productsByStore.the_corner.length,
       }),
       total_items: allProducts.length,
@@ -441,7 +470,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         orderNumber: orderNumber,
         userEmail: userEmail || null,
         stores_involved: {
-          reboul: productsByStore.reboul.length,
+          adult: productsByStore.adult.length,
+          sneakers: productsByStore.sneakers.length,
+          kids: productsByStore.kids.length,
           the_corner: productsByStore.the_corner.length,
         },
         total_items: allProducts.length,

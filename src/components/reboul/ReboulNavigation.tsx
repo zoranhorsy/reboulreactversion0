@@ -46,10 +46,28 @@ export function ReboulNavigation({
       isActive: pathname === "/",
     },
     {
-      label: "Catalogue",
+      label: "Catalogue Global",
       href: "/catalogue",
       icon: <span>🛍️</span>,
       isActive: pathname?.startsWith("/catalogue"),
+    },
+    {
+      label: "Reboul Adult",
+      href: "/reboul",
+      icon: <span>👔</span>,
+      isActive: pathname?.startsWith("/reboul"),
+    },
+    {
+      label: "Sneakers",
+      href: "/sneakers",
+      icon: <span>👟</span>,
+      isActive: pathname?.startsWith("/sneakers"),
+    },
+    {
+      label: "Kids",
+      href: "/kids",
+      icon: <span>👶</span>,
+      isActive: pathname?.startsWith("/kids"),
     },
     {
       label: "The Corner",
@@ -245,10 +263,28 @@ export function ReboulSidebarOnly({
       isActive: pathname === "/",
     },
     {
-      label: "Catalogue",
+      label: "Catalogue Global",
       href: "/catalogue",
       icon: <span>🛍️</span>,
       isActive: pathname?.startsWith("/catalogue"),
+    },
+    {
+      label: "Reboul Adult",
+      href: "/reboul",
+      icon: <span>👔</span>,
+      isActive: pathname?.startsWith("/reboul"),
+    },
+    {
+      label: "Sneakers",
+      href: "/sneakers",
+      icon: <span>👟</span>,
+      isActive: pathname?.startsWith("/sneakers"),
+    },
+    {
+      label: "Kids",
+      href: "/kids",
+      icon: <span>👶</span>,
+      isActive: pathname?.startsWith("/kids"),
     },
     {
       label: "The Corner",
