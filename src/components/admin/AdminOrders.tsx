@@ -13,6 +13,10 @@ import {
 } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { api, type Order, fetchUsers } from "@/lib/api";
+import { useAuth } from "@/app/contexts/AuthContext";
+
+// Configuration API pour les endpoints spécialisés
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://reboul-store-api-production.up.railway.app";
 import { type User as NextAuthUser } from "next-auth";
 import {
   Dialog,
@@ -79,6 +83,7 @@ interface ShippingAddress {
 }
 
 export function AdminOrders() {
+  const { user } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [users, setUsers] = useState<
@@ -117,6 +122,43 @@ export function AdminOrders() {
   const [stockNotes, setStockNotes] = useState("");
 
   const { toast } = useToast();
+
+  // 🔧 Fonction helper pour les appels API authentifiés
+  const getAuthHeaders = (): HeadersInit => {
+    let token = localStorage.getItem("token");
+    const nextAuthToken = (user as any)?.token;
+    
+    console.log("🔍 Token Debug:", {
+      localStorageToken: token ? `${token.substring(0, 20)}...` : 'null',
+      nextAuthToken: nextAuthToken ? `${nextAuthToken.substring(0, 20)}...` : 'null',
+      userObject: user
+    });
+    
+    // Synchronisation token comme dans AdminDashboard
+    if (!token && nextAuthToken) {
+      console.log("🔄 Synchronisation token NextAuth -> localStorage");
+      localStorage.setItem("token", nextAuthToken);
+      token = nextAuthToken;
+    }
+    
+    if (token !== nextAuthToken && nextAuthToken) {
+      console.log("🔄 Mise à jour token depuis NextAuth");
+      localStorage.setItem("token", nextAuthToken);
+      token = nextAuthToken;
+    }
+    
+    if (!token) {
+      console.error("❌ Aucun token disponible");
+      throw new Error("Token non fourni");
+    }
+    
+    console.log("✅ Token utilisé:", `${token.substring(0, 30)}...`);
+    
+    return {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    };
+  };
 
   // Fonction pour extraire l'email d'une commande depuis différents endroits
   const getOrderEmail = (order: Order): string | null => {
@@ -282,128 +324,7 @@ export function AdminOrders() {
     return null;
   };
 
-  // Fonction pour extraire le payment_intent_id depuis une commande
-  const getOrderPaymentIntentId = async (order: Order): Promise<string | null> => {
-    // Vérifier dans payment_data
-    if (order.payment_data?.payment_intent_id) {
-      return order.payment_data.payment_intent_id;
-    }
 
-    // Vérifier dans metadata
-    if (order.metadata) {
-      try {
-        const metadata = typeof order.metadata === "string" 
-          ? JSON.parse(order.metadata) 
-          : order.metadata;
-        if (metadata.payment_intent_id) return metadata.payment_intent_id;
-        if (metadata.payment_intent) return metadata.payment_intent;
-      } catch (e) {
-        console.warn("Erreur parsing metadata pour payment_intent_id", e);
-      }
-    }
-
-    // Si on a une stripe_session_id, récupérer le PaymentIntent via l'API
-    const sessionId = order.stripe_session_id || order.payment_data?.stripe_session_id;
-    if (sessionId) {
-      try {
-        console.log(`🔍 Récupération du PaymentIntent depuis la session: ${sessionId}`);
-        
-        const response = await fetch('/api/stripe/get-payment-intent', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            session_id: sessionId,
-          }),
-        });
-
-        const result = await response.json();
-
-        if (response.ok && result.success) {
-          console.log(`✅ PaymentIntent trouvé via session:`, result.payment_intent.id);
-          return result.payment_intent.id;
-        } else {
-          console.warn(`⚠️ Impossible de récupérer le PaymentIntent depuis la session:`, result.error);
-        }
-      } catch (error) {
-        console.error("❌ Erreur lors de la récupération du PaymentIntent:", error);
-      }
-    }
-
-    return null;
-  };
-
-  // Fonction pour capturer un paiement Stripe
-  const captureStripePayment = async (paymentIntentId: string): Promise<boolean> => {
-    try {
-      console.log(`🔄 Capture du paiement Stripe: ${paymentIntentId}`);
-      
-      const response = await fetch('/api/stripe/capture-payment', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          payment_intent_id: paymentIntentId,
-        }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        // Si l'erreur indique que le paiement est déjà capturé, ce n'est pas une erreur
-        if (result.error && result.error.includes('succeeded')) {
-          console.log(`✅ Paiement déjà capturé (ancien workflow):`, paymentIntentId);
-          return true;
-        }
-        throw new Error(result.error || 'Erreur lors de la capture');
-      }
-
-      console.log(`✅ Paiement capturé avec succès:`, result);
-      return true;
-    } catch (error) {
-      console.error('❌ Erreur capture paiement:', error);
-      
-      // Si l'erreur indique que le paiement est déjà capturé, ce n'est pas une erreur
-      if (error instanceof Error && error.message.includes('succeeded')) {
-        console.log(`✅ Paiement déjà capturé (ancien workflow):`, paymentIntentId);
-        return true;
-      }
-      
-      throw error;
-    }
-  };
-
-  // Fonction pour annuler un paiement Stripe
-  const cancelStripePayment = async (paymentIntentId: string, reason: string = 'duplicate'): Promise<boolean> => {
-    try {
-      console.log(`🔄 Annulation du paiement Stripe: ${paymentIntentId}`);
-      
-      const response = await fetch('/api/stripe/cancel-payment', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          payment_intent_id: paymentIntentId,
-          cancellation_reason: reason,
-        }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Erreur lors de l\'annulation');
-      }
-
-      console.log(`✅ Paiement annulé avec succès:`, result);
-      return true;
-    } catch (error) {
-      console.error('❌ Erreur annulation paiement:', error);
-      throw error;
-    }
-  };
 
   // Fonction pour mettre à jour le stock des produits
   const updateProductStock = async (order: Order): Promise<boolean> => {
@@ -416,20 +337,32 @@ export function AdminOrders() {
       console.log(`📦 Mise à jour du stock pour la commande #${order.id}`);
       
       // Préparer les données pour l'API
-      const stockItems = order.items.map(item => ({
+      const stockItems = order.items.map(item => {
+        console.log(`🔍 Item original:`, {
+          id: item.id,
+          product_id: item.product_id,
+          name: item.product_name,
+          variant_info: item.variant_info,
+          quantity: item.quantity,
+          store_table: item.store_table
+        });
+        
+        return {
         product_id: item.product_id?.toString() || item.id?.toString(),
+          store_table: item.store_table, // 🎯 Table cible pour éviter les ID en doublon
         variant_info: {
           size: item.variant_info?.size,
           color: item.variant_info?.color
         },
         quantity: item.quantity
-      }));
+        };
+      });
 
-      const response = await fetch('/api/products/update-stock', {
+      console.log(`📤 Données envoyées au backend:`, stockItems);
+
+      const response = await fetch(`${API_URL}/api/products/update-stock`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           items: stockItems,
           order_id: order.id,
@@ -488,11 +421,9 @@ export function AdminOrders() {
         type
       };
 
-      const response = await fetch('/api/orders/send-email', {
+      const response = await fetch(`${API_URL}/api/orders/send-email`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify(emailData),
       });
 
@@ -902,36 +833,60 @@ export function AdminOrders() {
 
     setIsValidating(true);
     try {
-      // 1. Vérifier si on peut capturer le paiement
-      const paymentIntentId = await getOrderPaymentIntentId(validationOrder);
+      // 1. CAPTURER LE PAIEMENT STRIPE (avec transferts automatiques)
+      let paymentCaptured = false;
       
-      if (!paymentIntentId) {
-        console.warn("⚠️ Payment Intent ID non trouvé pour la commande", validationOrder.id);
-        toast({
-          title: "Attention",
-          description: "ID de paiement non trouvé. La commande sera validée sans capture automatique.",
-        });
+      // Essayer de récupérer le payment_intent_id depuis les données de la commande
+      const payment_intent_id = validationOrder.payment_data?.payment_intent_id ||
+                               validationOrder.stripe_session_id;
+      
+      if (payment_intent_id) {
+        try {
+          console.log(`💳 Capture du paiement Stripe pour la commande #${validationOrder.id}`);
+          
+          const response = await fetch('/api/stripe/capture-payment', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              payment_intent_id: payment_intent_id,
+            }),
+          });
+          
+          const result = await response.json();
+          
+          if (response.ok && result.success) {
+            console.log(`✅ Paiement capturé avec succès:`, result);
+            if (result.transfer) {
+              console.log(`💸 Transfert The Corner effectué:`, result.transfer);
+            }
+            paymentCaptured = true;
       } else {
-        // 2. Capturer le paiement Stripe
-        console.log(`💳 Capture du paiement pour la commande #${validationOrder.id}`);
-        await captureStripePayment(paymentIntentId);
+            console.warn(`⚠️ Erreur capture paiement:`, result.error);
+          }
+        } catch (error) {
+          console.error(`❌ Erreur lors de la capture:`, error);
+        }
+      } else {
+        console.warn(`⚠️ Aucun payment_intent_id trouvé pour la commande #${validationOrder.id}`);
       }
 
-      // 3. Confirmer les réservations de stock (les libérer)
+      // 2. Confirmer les réservations de stock (les libérer)
       await confirmStockReservations(validationOrder);
 
-      // 4. Mettre à jour le stock des produits (décrémenter)
+      // 3. Mettre à jour le stock des produits (décrémenter)
       await updateProductStock(validationOrder);
 
-      // 5. Mettre à jour le statut de la commande
+      // 4. Mettre à jour le statut de la commande
       await updateOrderStatus(validationOrder.id, "processing");
 
-      // 6. Envoyer l'email de confirmation
+      // 5. Envoyer l'email de confirmation
       await sendOrderEmail(validationOrder, 'confirmed');
 
       toast({
         title: "Commande validée ! 🎉",
-        description: `Commande #${validationOrder.id} confirmée${paymentIntentId ? ' et paiement capturé' : ''}.`,
+        description: `Commande #${validationOrder.id} confirmée${paymentCaptured ? ' et paiement capturé' : ''}.`,
       });
 
       setShowValidationModal(false);
@@ -966,33 +921,21 @@ export function AdminOrders() {
 
     setIsValidating(true);
     try {
-      // 1. Vérifier si on peut annuler le paiement
-      const paymentIntentId = await getOrderPaymentIntentId(validationOrder);
-      
-      if (!paymentIntentId) {
-        console.warn("⚠️ Payment Intent ID non trouvé pour la commande", validationOrder.id);
-        toast({
-          title: "Attention",
-          description: "ID de paiement non trouvé. La commande sera annulée sans action sur le paiement.",
-        });
-      } else {
-        // 2. Annuler le PaymentIntent Stripe
-        console.log(`💳 Annulation du paiement pour la commande #${validationOrder.id}`);
-        await cancelStripePayment(paymentIntentId, 'requested_by_customer');
-      }
-
-      // 3. Libérer les réservations de stock
+      // 1. Libérer les réservations de stock
       await releaseStockReservations(validationOrder);
 
-      // 4. Mettre à jour le statut de la commande
+      // 2. Mettre à jour le statut de la commande
       await updateOrderStatus(validationOrder.id, "cancelled");
 
       // 5. Envoyer l'email d'annulation
       await sendOrderEmail(validationOrder, 'cancelled');
 
+      // Définir payment_intent_id pour l'affichage
+      const payment_intent_id = validationOrder.payment_data?.payment_intent_id || validationOrder.stripe_session_id;
+
       toast({
         title: "Commande annulée",
-        description: `Commande #${validationOrder.id} annulée${paymentIntentId ? '. Aucun prélèvement effectué' : ''}.`,
+        description: `Commande #${validationOrder.id} annulée${payment_intent_id ? '. Aucun prélèvement effectué' : ''}.`,
       });
 
       setShowValidationModal(false);

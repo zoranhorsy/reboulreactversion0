@@ -37,6 +37,7 @@ export interface OrderItem {
   product_id: number;
   product_name: string;
   quantity: number;
+  store_table?: string;
   price: number;
   image_url?: string;
   variant_info?: {

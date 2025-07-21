@@ -63,7 +63,7 @@ export default function ForgotPassword() {
 
     try {
       // Appel à l'API réelle de réinitialisation de mot de passe
-      const response = await fetch(`${API_URL}/auth/forgot-password`, {
+      const response = await fetch(`${API_URL}/api/auth/forgot-password`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

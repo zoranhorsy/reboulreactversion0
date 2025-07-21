@@ -3,7 +3,7 @@ import anime from "animejs/lib/anime.es.js";
 import { Button } from "@/components/ui/button";
 import { useCart, CartItem } from "@/app/contexts/CartContext";
 import { toast } from "@/components/ui/use-toast";
-import { usePathname } from "next/navigation";
+import { getProductStore } from "@/lib/stripe-connect-helpers";
 
 interface AddToCartButtonProps {
   productId: string;
@@ -31,19 +31,14 @@ export function AddToCartButton({
   const buttonRef = useRef<HTMLButtonElement>(null);
   const particlesRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLSpanElement>(null);
-  const pathname = usePathname();
-
-  // Détecter le store basé sur l'URL courante
-  const getStoreType = (): "adult" | "sneakers" | "kids" | "the_corner" => {
-    if (pathname.includes('/the-corner')) return 'the_corner';
-    if (pathname.includes('/sneakers')) return 'sneakers';
-    if (pathname.includes('/kids')) return 'kids';
-    return 'adult'; // default pour Reboul
-  };
 
   const handleAddToCart = useCallback(async () => {
     if (disabled || isAdding) return;
     setIsAdding(true);
+
+    // Détecter le vrai store type via l'API
+    const detectedStoreType = await getProductStore({ productId, id: productId });
+    console.log(`[AddToCartButton] Store détecté pour ${productId}:`, detectedStoreType);
 
     const newItem: CartItem = {
       id: productId,
@@ -52,7 +47,7 @@ export function AddToCartButton({
       price,
       quantity: 1,
       image,
-      storeType: getStoreType(), // Détection automatique du store
+      storeType: detectedStoreType, // Vraie détection par API
       variant: {
         size: size || "",
         color: color || "",

@@ -101,39 +101,39 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       
       if (storeProducts.length > 0) {
         console.log(`[Checkout Connect] Création session ${storeKey}...`);
-        
+      
         const orderNumber = generateOrderNumber(storeKey);
         const storeParams = createStripeSessionParams(
           storeProducts,
           storeKey,
-          {
-            ...baseParams,
-            metadata: {
-              ...baseParams.metadata,
+        {
+          ...baseParams,
+          metadata: {
+            ...baseParams.metadata,
               order_number: orderNumber,
-            },
-          }
-        );
-
-        // Ajouter customer si disponible
-        if (userEmail) {
-          storeParams.customer_email = userEmail;
+          },
         }
+      );
 
-        try {
+      // Ajouter customer si disponible
+      if (userEmail) {
+          storeParams.customer_email = userEmail;
+      }
+
+      try {
           const storeSession = await stripe.checkout.sessions.create(storeParams);
-          sessions.push({
+        sessions.push({
             store: storeKey as StoreType,
             session: storeSession,
             order_number: orderNumber,
             items: storeProducts,
-          });
+        });
           orderNumbers.push(orderNumber);
           console.log(`[Checkout Connect] ✅ Session ${storeKey} créée:`, storeSession.id);
-        } catch (error) {
+      } catch (error) {
           console.error(`[Checkout Connect] ❌ Erreur session ${storeKey}:`, error);
-          throw error;
-        }
+        throw error;
+      }
       }
     }
 

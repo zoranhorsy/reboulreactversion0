@@ -79,7 +79,43 @@ export async function getProductStore(item: any): Promise<StoreType> {
       console.warn('Erreur lors de la vérification Corner:', cornerError);
     }
 
-    // Vérifier ensuite les produits Reboul normaux
+    // Vérifier si c'est un produit Sneakers
+    try {
+      const sneakersResponse = await fetch(`${API_URL}/sneakers-products/${numericId}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (sneakersResponse.ok) {
+        console.log(`[Store Detection] Produit ${productId} détecté comme sneakers`);
+        return 'sneakers';
+      }
+    } catch (sneakersError) {
+      console.warn('Erreur lors de la vérification Sneakers:', sneakersError);
+    }
+
+    // Vérifier si c'est un produit Minots (Kids)
+    try {
+      const minotsResponse = await fetch(`${API_URL}/minots-products/${numericId}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (minotsResponse.ok) {
+        console.log(`[Store Detection] Produit ${productId} détecté comme kids`);
+        return 'kids';
+      }
+    } catch (minotsError) {
+      console.warn('Erreur lors de la vérification Minots:', minotsError);
+    }
+
+    // Vérifier enfin les produits Reboul Adult (table products normale)
     try {
       const productResponse = await fetch(`${API_URL}/products/${numericId}`, {
         method: 'GET',
@@ -90,14 +126,11 @@ export async function getProductStore(item: any): Promise<StoreType> {
       });
 
       if (productResponse.ok) {
-        const productData = await productResponse.json();
-        if (productData && productData.store_type) {
-          console.log(`[Store Detection] Store type trouvé: ${productData.store_type}`);
-          return productData.store_type;
-        }
+        console.log(`[Store Detection] Produit ${productId} détecté comme adult`);
+        return 'adult';
       }
     } catch (productError) {
-      console.warn('Erreur lors de la vérification produit:', productError);
+      console.warn('Erreur lors de la vérification Products Adult:', productError);
     }
 
     // Par défaut, retourner adult

@@ -79,7 +79,7 @@ export default function ResetPasswordPage() {
         logWithTime("Vérification de la validité du token", { token });
 
         // Vérification via l'API que le token est valide
-        const response = await fetch(`${API_URL}/auth/verify-token`, {
+        const response = await fetch(`${API_URL}/api/auth/verify-token`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -167,7 +167,7 @@ export default function ResetPasswordPage() {
 
     try {
       // Appel à l'API de réinitialisation de mot de passe
-      const response = await fetch(`${API_URL}/auth/reset-password`, {
+              const response = await fetch(`${API_URL}/api/auth/reset-password`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

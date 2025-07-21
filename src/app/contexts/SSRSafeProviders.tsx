@@ -170,7 +170,7 @@ export const SSRSafeAuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       try {
         const apiResponse = await axios.post<ApiLoginResponse>(
-          `${API_URL}/auth/login`,
+          `${API_URL}/api/auth/login`,
           {
             email,
             password,
@@ -221,7 +221,7 @@ export const SSRSafeAuthProvider: React.FC<{ children: React.ReactNode }> = ({
       if (!isClient) return;
 
       try {
-        const response = await axios.post(`${API_URL}/auth/inscription`, {
+        const response = await axios.post(`${API_URL}/api/auth/inscription`, {
           username,
           email,
           password,

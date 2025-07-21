@@ -4,7 +4,7 @@ import axios from "axios";
 
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL ||
-  "https://reboul-store-api-production.up.railway.app/api";
+  "https://reboul-store-api-production.up.railway.app";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -25,7 +25,7 @@ export const authOptions: NextAuthOptions = {
           if (credentials.token) {
             try {
               // Vérifier le token avec l'API
-              const response = await axios.get(`${API_URL}/auth/me`, {
+              const response = await axios.get(`${API_URL}/api/auth/me`, {
                 headers: {
                   Authorization: `Bearer ${credentials.token}`,
                 },
@@ -47,7 +47,7 @@ export const authOptions: NextAuthOptions = {
           }
 
           // Sinon, on fait une nouvelle connexion
-          const response = await axios.post(`${API_URL}/auth/login`, {
+          const response = await axios.post(`${API_URL}/api/auth/login`, {
             email: credentials.email,
             password: credentials.password,
           });
