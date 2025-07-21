@@ -14,6 +14,7 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { api, type Order, fetchUsers } from "@/lib/api";
 import { useAuth } from "@/app/contexts/AuthContext";
+import { useRouter } from "next/navigation";
 
 // Configuration API pour les endpoints spécialisés
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://reboul-store-api-production.up.railway.app";
@@ -122,6 +123,15 @@ export function AdminOrders() {
   const [stockNotes, setStockNotes] = useState("");
 
   const { toast } = useToast();
+  const router = useRouter();
+
+  // Calcul du nombre de nouveaux retours (return_status = requested)
+  const nbNouveauxRetours = orders.reduce((acc, order) => {
+    if (!order.items) return acc;
+    return (
+      acc + order.items.filter(item => item.return_status === 'requested').length
+    );
+  }, 0);
 
   // 🔧 Fonction helper pour les appels API authentifiés
   const getAuthHeaders = (): HeadersInit => {
@@ -837,8 +847,11 @@ export function AdminOrders() {
       let paymentCaptured = false;
       
       // Essayer de récupérer le payment_intent_id depuis les données de la commande
-      const payment_intent_id = validationOrder.payment_data?.payment_intent_id ||
-                               validationOrder.stripe_session_id;
+      const payment_intent_id = validationOrder.payment_data?.payment_intent_id
+        || validationOrder.payment_data?.paymentIntentId
+        || validationOrder.stripe_session_id;
+      
+      console.log('payment_intent_id envoyé:', payment_intent_id);
       
       if (payment_intent_id) {
         try {
@@ -1191,7 +1204,22 @@ export function AdminOrders() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
+      {/* Bouton Voir les retours */}
+      <div className="absolute top-4 right-4 z-10">
+        <Button
+          variant="secondary"
+          onClick={() => router.push('/admin/retours')}
+          className="flex items-center gap-2"
+        >
+          Voir les retours
+          {nbNouveauxRetours > 0 && (
+            <Badge className="ml-2 bg-red-600 text-white">
+              {nbNouveauxRetours}
+            </Badge>
+          )}
+        </Button>
+      </div>
       <Card>
         <CardHeader>
           <CardTitle>Gestion des commandes</CardTitle>

@@ -44,6 +44,7 @@ export interface OrderItem {
     size?: string;
     color?: string;
   };
+  return_status?: string; // Ajouté pour compatibilité avec la gestion des retours
 }
 
 export interface Order {
@@ -70,6 +71,7 @@ export interface Order {
     customerName?: string;
     customerPhone?: string;
     payment_intent_id?: string;
+    paymentIntentId?: string;        // ancien format (compatibilité)
   };
   stripe_session_id?: string;
   shipping_info?: {
