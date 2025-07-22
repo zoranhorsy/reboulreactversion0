@@ -236,7 +236,7 @@ export function MobileFilterModal({
                   {isLoading ? (
                     <div className="h-4 w-4 border-2 border-white/20 border-t-white rounded-full animate-spin mr-2"></div>
                   ) : (
-                    <span>✓</span>
+                    ""
                   )}
                   Appliquer
                   {activeFilterCount > 0 && ` (${activeFilterCount})`}

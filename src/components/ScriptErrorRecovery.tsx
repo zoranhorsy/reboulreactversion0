@@ -90,7 +90,8 @@ export function ScriptErrorRecovery({
   return (
     <div className="fixed bottom-20 left-4 right-4 md:left-auto md:right-4 md:bottom-4 md:w-96 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 p-4 rounded-lg shadow-lg z-50 backdrop-blur-sm">
       <div className="flex items-start">
-        <span>⚠️</span>
+        {/* Remplacer : <span>⚠️</span> */}
+        {/* Par : rien (ou une icône SVG si tu veux, sinon juste le texte) */}
         <div className="flex-1">
           <h3 className="font-medium text-yellow-800 dark:text-yellow-200">
             Problème de chargement détecté

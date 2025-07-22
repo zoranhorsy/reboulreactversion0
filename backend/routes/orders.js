@@ -107,18 +107,49 @@ router.get('/',
             const offset = (page - 1) * limit;
 
             const countQuery = 'SELECT COUNT(*) FROM orders';
-            const dataQuery = 'SELECT * FROM orders ORDER BY created_at DESC LIMIT $1 OFFSET $2';
+            const dataQuery = `
+      SELECT o.*, 
+        COALESCE(json_agg(
+          CASE WHEN oi.id IS NOT NULL THEN json_build_object(
+            'id', oi.id,
+            'product_id', oi.product_id,
+            'product_name', oi.product_name,
+            'quantity', oi.quantity,
+            'price', oi.price,
+            'variant_info', oi.variant_info,
+            'return_status', oi.return_status,
+            'return_quantity', oi.return_quantity,
+            'return_reason', oi.return_reason,
+            'admin_comment', oi.admin_comment,
+            'is_refunded', oi.is_refunded
+          ) END
+        ) FILTER (WHERE oi.id IS NOT NULL), '[]') as items
+      FROM orders o
+      LEFT JOIN order_items oi ON o.id = oi.order_id
+      GROUP BY o.id
+      ORDER BY o.created_at DESC
+      LIMIT $1 OFFSET $2
+    `;
 
             const [countResult, dataResult] = await Promise.all([
                 pool.query(countQuery),
                 pool.query(dataQuery, [limit, offset])
             ]);
 
+            // Correction : transformer items [null] en [] si besoin
+            const ordersWithItems = dataResult.rows.map(order => {
+                let items = order.items;
+                if (!Array.isArray(items) || (items.length === 1 && items[0] === null)) {
+                    items = [];
+                }
+                return { ...order, items };
+            });
+
             const totalItems = parseInt(countResult.rows[0].count);
             const totalPages = Math.ceil(totalItems / limit);
 
             res.json({
-                data: dataResult.rows,
+                data: ordersWithItems,
                 pagination: {
                     currentPage: page,
                     itemsPerPage: limit,
@@ -960,7 +991,7 @@ router.patch('/:orderId/return',
 
             await client.query('COMMIT');
 
-            // 4. Envoyer un email de notification (optionnel)
+            // 4. Envoyer un email de notification (confirmation demande de retour)
             try {
                 await sendOrderStatusNotification(order, order.status, 'return_requested');
             } catch (emailErr) {
@@ -1113,11 +1144,16 @@ router.patch('/:orderId/mark-refunded',
                 [refund_id || null, 'refunded', orderId]
             );
 
-            // 3. (Optionnel) Ajouter un commentaire admin sur tous les items retournés
+            // 3. (Optionnel) Ajouter un commentaire admin sur tous les items retournés et marquer comme remboursé
             if (admin_comment) {
                 await client.query(
-                    "UPDATE order_items SET admin_comment = $1 WHERE order_id = $2 AND return_status = 'approved'",
+                    "UPDATE order_items SET admin_comment = $1, is_refunded = true WHERE order_id = $2 AND return_status = 'approved'",
                     [admin_comment, orderId]
+                );
+            } else {
+                await client.query(
+                    "UPDATE order_items SET is_refunded = true WHERE order_id = $1 AND return_status = 'approved'",
+                    [orderId]
                 );
             }
 

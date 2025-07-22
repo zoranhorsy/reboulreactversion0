@@ -6,7 +6,6 @@ import { Product } from "@/lib/types/product";
 import { Category } from "@/lib/types/category";
 import { TheCornerProductGrid } from "@/components/the-corner/TheCornerProductGrid";
 import { TheCornerPagination } from "@/components/the-corner/TheCornerPagination";
-import { TheCornerFilterSidebar } from "@/components/the-corner/TheCornerFilterSidebar";
 import { api } from "@/lib/api";
 import { TheCornerProductSort } from "@/components/the-corner/TheCornerProductSort";
 import Image from "next/image";
@@ -21,6 +20,8 @@ import { TheCornerPageHeader } from "./components/TheCornerPageHeader";
 import { TheCornerActiveTags } from "./TheCornerActiveTags";
 import { useFilterWorker } from "@/hooks/useFilterWorker";
 import { rafThrottle } from "@/lib/utils";
+import { default as TheCornerProductCard } from "@/components/optimized/TheCornerProductCard";
+import { MinimalFiltersBar } from "@/components/catalogue/Filters";
 
 interface TheCornerClientContentProps {
   initialProducts: Product[];
@@ -352,6 +353,33 @@ export function TheCornerClientContent({
         ]}
       />
 
+      {/* Espacement entre header et filtres */}
+      <div className="mt-4" />
+
+      {/* Barre de filtres minimaliste */}
+      <MinimalFiltersBar
+        categories={categories}
+        brands={[]}
+        colors={availableColors}
+        sizes={availableSizes}
+        filters={{
+          page: "1",
+          limit: "12",
+          category_id: selectedCategory,
+          color: selectedColor,
+          size: selectedSize,
+          brand: "",
+          brand_id: "",
+          search: searchQuery,
+          sort: "",
+          minPrice: "",
+          maxPrice: "",
+          store_type: "cpcompany",
+          featured: "false",
+        }}
+        onFilterChange={(newFilters) => handleFilterChange(newFilters as Record<string, string | number | null>)}
+      />
+
       {/* Section des produits */}
       <motion.div
         id="products-section"
@@ -361,121 +389,9 @@ export function TheCornerClientContent({
         transition={{ duration: 0.5 }}
       >
         <div className="lg:flex min-h-[calc(100vh-8rem)]">
-          {/* Overlay sombre quand la sidebar est ouverte */}
-          <AnimatePresence>
-            {showFilters && (
-              <motion.div
-                className="fixed inset-0 bg-background/60 backdrop-blur-sm z-40 lg:hidden"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={() => setShowFilters(false)}
-              />
-            )}
-          </AnimatePresence>
-
-          {/* Panneau de filtres en mobile */}
-          <motion.div
-            className={`fixed inset-y-0 left-0 w-[85%] max-w-[320px] z-50 bg-background border-r border-border lg:hidden`}
-            initial={{ x: "-100%" }}
-            animate={{ x: showFilters ? 0 : "-100%" }}
-            transition={{ type: "spring", damping: 30, stiffness: 300 }}
-          >
-            <div className="flex flex-col h-full">
-              {/* Header des filtres */}
-              <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-                <h2 className="text-lg font-medium text-foreground">Filtres</h2>
-                <button
-                  onClick={() => setShowFilters(false)}
-                  className="p-2 hover:bg-secondary/50 rounded-full text-foreground"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="m18 6-12 12" />
-                    <path d="m6 6 12 12" />
-                  </svg>
-                </button>
-              </div>
-
-              {/* Contenu des filtres */}
-              <div className="flex-1 overflow-y-auto">
-                <div className="p-4 space-y-6">
-                  <TheCornerFilterSidebar
-                    categories={categories}
-                    selectedCategory={selectedCategory}
-                    selectedColor={selectedColor}
-                    selectedSize={selectedSize}
-                    minPrice={minPrice}
-                    maxPrice={maxPrice}
-                    availableColors={availableColors}
-                    availableSizes={availableSizes}
-                    onFilterChange={(key: string, value: string) => {
-                      handleFilterChange({ [key]: value });
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* Footer des filtres */}
-              {hasActiveFilters && (
-                <div className="p-4 border-t border-border">
-                  <button
-                    onClick={() => {
-                      clearFilters();
-                      setShowFilters(false);
-                    }}
-                    className="w-full px-4 py-3 text-sm bg-secondary/50 text-secondary-foreground rounded-full hover:bg-secondary transition-colors"
-                  >
-                    Réinitialiser les filtres
-                  </button>
-                </div>
-              )}
-            </div>
-          </motion.div>
-
-          {/* Panneau de filtres en desktop */}
-          <aside className="hidden lg:block lg:w-[280px] lg:shrink-0 lg:border-r lg:border-border/50">
-            <div className="p-8 lg:sticky lg:top-6 lg:max-h-[calc(100vh-4rem)] lg:overflow-y-auto scrollbar-thin scrollbar-thumb-secondary scrollbar-track-transparent">
-              <div className="space-y-6">
-                <TheCornerFilterSidebar
-                  categories={categories}
-                  selectedCategory={selectedCategory}
-                  selectedColor={selectedColor}
-                  selectedSize={selectedSize}
-                  minPrice={minPrice}
-                  maxPrice={maxPrice}
-                  availableColors={availableColors}
-                  availableSizes={availableSizes}
-                  onFilterChange={(key: string, value: string) => {
-                    handleFilterChange({ [key]: value });
-                  }}
-                />
-
-                {hasActiveFilters && (
-                  <motion.button
-                    onClick={clearFilters}
-                    className="w-full px-4 py-2.5 text-sm bg-secondary/50 text-secondary-foreground rounded-full hover:bg-secondary transition-colors"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    Réinitialiser les filtres
-                  </motion.button>
-                )}
-              </div>
-            </div>
-          </aside>
 
           {/* Liste des produits */}
-          <main className="flex-1 min-w-0">
+          <main className="w-full">
             {/* Header fixe */}
             <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b border-border">
               <div className="px-4 py-3 space-y-3">
@@ -621,8 +537,13 @@ export function TheCornerClientContent({
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
                     >
-                      <TheCornerProductGrid products={products} />
-
+                      {/* Grille de produits avec ProductCard optimisé */}
+                      <div className="grid gap-4 sm:gap-6 grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                        {products.map((product, index) => (
+                          <TheCornerProductCard key={product.id} product={product} index={index} />
+                        ))}
+                      </div>
+                      {/* Pagination */}
                       <div className="flex justify-center">
                         <TheCornerPagination
                           currentPage={currentPage}

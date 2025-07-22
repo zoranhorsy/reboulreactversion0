@@ -419,7 +419,7 @@ export function WebVitalsMonitor() {
         color: "bg-green-500",
         textColor: "text-green-500",
         bgColor: "bg-green-100",
-        icon: <span>✅</span>,
+        icon: <span>Excellent</span>,
         text: "Excellent",
       };
     } else if (score >= 60) {
@@ -427,7 +427,7 @@ export function WebVitalsMonitor() {
         color: "bg-yellow-500",
         textColor: "text-yellow-500",
         bgColor: "bg-yellow-100",
-        icon: <span>⚠️</span>,
+        icon: <span>Moyen</span>,
         text: "Moyen",
       };
     } else {
@@ -435,7 +435,7 @@ export function WebVitalsMonitor() {
         color: "bg-red-500",
         textColor: "text-red-500",
         bgColor: "bg-red-100",
-        icon: <span>⚠️</span>,
+        icon: <span>Faible</span>,
         text: "Faible",
       };
     }
@@ -534,9 +534,9 @@ export function WebVitalsMonitor() {
                     className="flex justify-between items-center"
                   >
                     <div className="flex items-center gap-1.5">
-                      {metric.rating === "good" && <span>✅</span>}
-                      {metric.rating === "needs-improvement" && <span>⚠️</span>}
-                      {metric.rating === "poor" && <span>⚠️</span>}
+                      {metric.rating === "good" && <span>Excellent</span>}
+                      {metric.rating === "needs-improvement" && <span>Moyen</span>}
+                      {metric.rating === "poor" && <span>Faible</span>}
                       <span className="text-sm">{metric.name}</span>
                     </div>
                     <span

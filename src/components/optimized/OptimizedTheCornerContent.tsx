@@ -110,27 +110,6 @@ const LazyPagination = createViewportLoadedComponent<any>(
   },
 );
 
-const LazyFilterSidebar = createViewportLoadedComponent<any>(
-  () =>
-    import("../the-corner/TheCornerFilterSidebar").then((mod) => ({
-      default: mod.TheCornerFilterSidebar,
-    })),
-  {
-    loadingComponent: (
-      <div className="space-y-4">
-        {[...Array(4)].map((_, i) => (
-          <div
-            key={i}
-            className="h-20 w-full bg-gray-200 dark:bg-zinc-800 rounded-md animate-pulse"
-          ></div>
-        ))}
-      </div>
-    ),
-    threshold: 0.1,
-    rootMargin: "200px",
-  },
-);
-
 const LazyProductSort = createViewportLoadedComponent<any>(
   () =>
     import("../the-corner/TheCornerProductSort").then((mod) => ({
@@ -216,10 +195,6 @@ export default function OptimizedTheCornerContent({
     {
       fn: () => import("../the-corner/TheCornerProductGrid"),
       priority: "high",
-    },
-    {
-      fn: () => import("../the-corner/TheCornerFilterSidebar"),
-      priority: "medium",
     },
     {
       fn: () => import("../the-corner/TheCornerPagination"),
@@ -372,8 +347,8 @@ export default function OptimizedTheCornerContent({
       <TheCornerPageHeader />
 
       <div className="relative">
-        <div className="px-4 lg:container mx-auto pt-4 lg:pt-8">
-          <div className="flex flex-wrap gap-4 lg:flex-nowrap">
+        <div className="w-full">
+          <div className="flex flex-wrap gap-4">
             {/* Filtres - affiché sur lg, dans une modale sur mobile */}
             <div
               className={`fixed inset-0 z-50 bg-background lg:static lg:z-auto lg:bg-transparent transition-all duration-300 transform ${showFilters ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
@@ -405,151 +380,235 @@ export default function OptimizedTheCornerContent({
                 </div>
 
                 <div className="mt-4 lg:mt-0">
-                  <LazyFilterSidebar
-                    categories={categories}
-                    selectedCategory={
-                      searchParamsObj.get("category_id") || undefined
-                    }
-                    selectedColor={searchParamsObj.get("color") || undefined}
-                    selectedSize={searchParamsObj.get("size") || undefined}
-                    minPrice={searchParamsObj.get("minPrice") || undefined}
-                    maxPrice={searchParamsObj.get("maxPrice") || undefined}
-                    onFilterChange={handleFilterChange}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Contenu principal */}
-            <div className="flex-1 min-w-0">
-              <div className="mb-6">
-                <div className="flex items-center justify-between gap-3">
-                  <button
-                    onClick={() => setShowFilters(!showFilters)}
-                    className="flex items-center gap-2 px-4 py-2 bg-secondary/50 text-secondary-foreground rounded-full hover:bg-secondary transition-colors lg:hidden"
+                  <div
+                    className="lg:w-64 lg:block"
+                    style={{
+                      position: "sticky",
+                      top: "100px", // Adjust as needed to position it correctly
+                    }}
                   >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="lucide lucide-filter"
-                    >
-                      <polygon points="22,3 2,3 10,12.46 10,19 14,21 14,12.46" />
-                    </svg>
-                    <span className="text-sm">Filtres</span>
-                    {activeFiltersCount > 0 && (
-                      <span className="flex items-center justify-center h-5 w-5 text-xs bg-primary text-primary-foreground rounded-full">
-                        {activeFiltersCount}
-                      </span>
-                    )}
-                  </button>
+                    <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-lg p-4">
+                      <h3 className="font-semibold text-lg mb-4">Filtres</h3>
+                      <div className="space-y-4">
+                        <div>
+                          <h4 className="text-sm font-medium mb-2">
+                            Catégories
+                          </h4>
+                          <div className="flex flex-wrap gap-2">
+                            {categories.map((category) => (
+                              <button
+                                key={category.id}
+                                onClick={() =>
+                                  handleFilterChange(
+                                    "category_id",
+                                    String(category.id),
+                                  )
+                                }
+                                className={`px-3 py-1.5 text-sm rounded-full border ${
+                                  Number(activeFilters.category_id) === category.id
+                                    ? "bg-primary text-primary-foreground border-primary"
+                                    : "bg-gray-100 dark:bg-zinc-800 border-gray-200 dark:border-zinc-700"
+                                }`}
+                              >
+                                {category.name}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
 
-                  <LazyProductSort
-                    onSortChange={handleSortChange}
-                    initialSort={searchParamsObj.get("sort") || "name"}
-                    initialOrder={searchParamsObj.get("order") || "asc"}
-                  />
-                </div>
-              </div>
+                        <div>
+                          <h4 className="text-sm font-medium mb-2">
+                            Prix
+                          </h4>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="number"
+                              placeholder="Min"
+                              value={activeFilters.minPrice || ""}
+                              onChange={(e) =>
+                                handleFilterChange(
+                                  "minPrice",
+                                  e.target.value,
+                                )
+                              }
+                              className="w-24 px-2 py-1.5 text-sm rounded-md border border-gray-300 dark:border-zinc-700"
+                            />
+                            <span className="text-gray-500 dark:text-gray-400">
+                              à
+                            </span>
+                            <input
+                              type="number"
+                              placeholder="Max"
+                              value={activeFilters.maxPrice || ""}
+                              onChange={(e) =>
+                                handleFilterChange(
+                                  "maxPrice",
+                                  e.target.value,
+                                )
+                              }
+                              className="w-24 px-2 py-1.5 text-sm rounded-md border border-gray-300 dark:border-zinc-700"
+                            />
+                          </div>
+                        </div>
 
-              {/* Contenu principal */}
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm text-muted-foreground">
-                    {totalItems} produit{totalItems !== 1 ? "s" : ""} trouvé
-                    {totalItems !== 1 ? "s" : ""}
-                  </p>
-                </div>
+                        <div>
+                          <h4 className="text-sm font-medium mb-2">
+                            Recherche
+                          </h4>
+                          <input
+                            type="text"
+                            placeholder="Rechercher..."
+                            value={searchQuery}
+                            onChange={(e) =>
+                              handleFilterChange("search", e.target.value)
+                            }
+                            className="w-full px-2 py-1.5 text-sm rounded-md border border-gray-300 dark:border-zinc-700"
+                          />
+                        </div>
 
-                {/* Tags des filtres actifs */}
-                <LazyActiveTags
-                  categories={categories}
-                  activeFilters={activeFilters}
-                  onRemoveFilter={handleRemoveFilter}
-                />
-
-                {/* Affichage des erreurs */}
-                {error && (
-                  <div className="flex items-center gap-2 p-4 bg-destructive/10 text-destructive rounded-lg">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="lucide lucide-alert-triangle"
-                    >
-                      <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
-                      <path d="M12 9v4" />
-                      <path d="m12 17 .01 0" />
-                    </svg>
-                    {error}
+                        <button
+                          onClick={() => handleRemoveFilter("all")}
+                          className="w-full px-3 py-2 text-sm text-center rounded-md bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 hover:bg-red-200 dark:hover:bg-red-800 transition-colors"
+                        >
+                          Réinitialiser tous les filtres
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                )}
+                </div>
 
-                {isLoading || isWorkerLoading ? (
-                  <div className="flex justify-center items-center min-h-[300px]">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                  </div>
-                ) : products.length > 0 ? (
-                  <div className="space-y-8">
-                    <LazyProductGrid products={products} />
+                {/* Contenu principal */}
+                <div className="flex-1 min-w-0">
+                  <div className="mb-6">
+                    <div className="flex items-center justify-between gap-3">
+                      <button
+                        onClick={() => setShowFilters(!showFilters)}
+                        className="flex items-center gap-2 px-4 py-2 bg-secondary/50 text-secondary-foreground rounded-full hover:bg-secondary transition-colors lg:hidden"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="lucide lucide-filter"
+                        >
+                          <polygon points="22,3 2,3 10,12.46 10,19 14,21 14,12.46" />
+                        </svg>
+                        <span className="text-sm">Filtres</span>
+                        {activeFiltersCount > 0 && (
+                          <span className="flex items-center justify-center h-5 w-5 text-xs bg-primary text-primary-foreground rounded-full">
+                            {activeFiltersCount}
+                          </span>
+                        )}
+                      </button>
 
-                    <div className="flex justify-center">
-                      <LazyPagination
-                        currentPage={currentPage}
-                        totalItems={totalItems}
-                        pageSize={limit}
-                        onPageChange={handlePageChange}
+                      <LazyProductSort
+                        onSortChange={handleSortChange}
+                        initialSort={searchParamsObj.get("sort") || "name"}
+                        initialOrder={searchParamsObj.get("order") || "asc"}
                       />
                     </div>
                   </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center py-12">
-                    <div className="mb-4">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="64"
-                        height="64"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="opacity-20"
-                      >
-                        <path d="M6.4 19 3 16m3.4 3 17-17m-5 10v6h-6l6-6Z" />
-                        <path d="m7.383 11.844 3.242-3.242a1 1 0 0 1 1.414 0l5.186 5.186m-6.6 1.596 1.992-1.992a1 1 0 0 1 1.414 0l1.992 1.992" />
-                      </svg>
+
+                  {/* Contenu principal */}
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm text-muted-foreground">
+                        {totalItems} produit{totalItems !== 1 ? "s" : ""} trouvé
+                        {totalItems !== 1 ? "s" : ""}
+                      </p>
                     </div>
-                    <h3 className="text-xl font-semibold mb-2">
-                      Aucun produit trouvé
-                    </h3>
-                    <p className="text-muted-foreground text-center max-w-md mb-6">
-                      Essayez de modifier vos filtres ou d&apos;effectuer une
-                      nouvelle recherche pour trouver ce que vous cherchez.
-                    </p>
-                    <button
-                      onClick={() => {
-                        router.push("/the-corner");
-                      }}
-                      className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
-                    >
-                      Réinitialiser les filtres
-                    </button>
+
+                    {/* Tags des filtres actifs */}
+                    <LazyActiveTags
+                      categories={categories}
+                      activeFilters={activeFilters}
+                      onRemoveFilter={handleRemoveFilter}
+                    />
+
+                    {/* Affichage des erreurs */}
+                    {error && (
+                      <div className="flex items-center gap-2 p-4 bg-destructive/10 text-destructive rounded-lg">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="lucide lucide-alert-triangle"
+                        >
+                          <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+                          <path d="M12 9v4" />
+                          <path d="m12 17 .01 0" />
+                        </svg>
+                        {error}
+                      </div>
+                    )}
+
+                    {isLoading || isWorkerLoading ? (
+                      <div className="flex justify-center items-center min-h-[300px]">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                      </div>
+                    ) : products.length > 0 ? (
+                      <div className="space-y-8">
+                        <LazyProductGrid products={products} />
+
+                        <div className="flex justify-center">
+                          <LazyPagination
+                            currentPage={currentPage}
+                            totalItems={totalItems}
+                            pageSize={limit}
+                            onPageChange={handlePageChange}
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center py-12">
+                        <div className="mb-4">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="64"
+                            height="64"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="opacity-20"
+                          >
+                            <path d="M6.4 19 3 16m3.4 3 17-17m-5 10v6h-6l6-6Z" />
+                            <path d="m7.383 11.844 3.242-3.242a1 1 0 0 1 1.414 0l5.186 5.186m-6.6 1.596 1.992-1.992a1 1 0 0 1 1.414 0l1.992 1.992" />
+                          </svg>
+                        </div>
+                        <h3 className="text-xl font-semibold mb-2">
+                          Aucun produit trouvé
+                        </h3>
+                        <p className="text-muted-foreground text-center max-w-md mb-6">
+                          Essayez de modifier vos filtres ou d&apos;effectuer une
+                          nouvelle recherche pour trouver ce que vous cherchez.
+                        </p>
+                        <button
+                          onClick={() => {
+                            router.push("/the-corner");
+                          }}
+                          className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+                        >
+                          Réinitialiser les filtres
+                        </button>
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
               </div>
             </div>
           </div>

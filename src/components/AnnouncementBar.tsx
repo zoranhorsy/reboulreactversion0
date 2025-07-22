@@ -7,7 +7,7 @@ import Link from "next/link";
 // Tableau des annonces à afficher
 const announcements = [
   {
-    text: "✨ NOUVEAUX PRODUITS DISPONIBLES CHAQUE SEMAINE 🎉",
+    text: "NOUVEAUX PRODUITS DISPONIBLES CHAQUE SEMAINE",
     link: "/nouveautes",
   },
   {
@@ -15,7 +15,7 @@ const announcements = [
     link: "/livraison",
   },
   {
-    text: "🔥 OFFRE EXCLUSIVE: -10% AVEC LE CODE BIENVENUE10",
+    text: "OFFRE EXCLUSIVE: -10% AVEC LE CODE BIENVENUE10",
     link: "/offres",
   },
 ];

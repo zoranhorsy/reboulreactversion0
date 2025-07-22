@@ -49,7 +49,11 @@ export function StockIndicator({
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2">
-        {stockLevel === "none" ? <span>⚠️</span> : <span>✅</span>}
+        {stockLevel === "none" ? (
+          <span className="inline-block w-2 h-2 rounded-full bg-red-500 mr-2" />
+        ) : (
+          <span className="inline-block w-2 h-2 rounded-full bg-green-500 mr-2" />
+        )}
 
         {showLabel && (
           <span

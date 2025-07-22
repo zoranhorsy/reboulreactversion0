@@ -41,15 +41,6 @@ export const DynamicAdminDashboard = dynamic(
   },
 );
 
-// Composant de liste des favoris - Client only
-export const DynamicFavoritesList = dynamic(
-  () => import("./favorites/FavoritesList"),
-  {
-    loading: LoadingFallback,
-    ssr: false,
-  },
-);
-
 // Composant de sélection de magasin - SSR enabled
 export const DynamicStoreSelection = dynamic(() => import("./StoreSelection"), {
   loading: LoadingFallback,

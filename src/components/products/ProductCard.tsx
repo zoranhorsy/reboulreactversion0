@@ -5,7 +5,6 @@ import type { Product, Variant } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { useFavorites } from "@/app/contexts/FavoritesContext";
 import { toast } from "@/components/ui/use-toast";
 import { useAuth } from "@/app/contexts/AuthContext";
 import { ProductImage } from "@/lib/types/product-image";
@@ -96,7 +95,6 @@ export interface ProductCardProps {
 export function ProductCard({ product }: ProductCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [imageError, setImageError] = useState(false);
-  const { addToFavorites, removeFromFavorites, isFavorite } = useFavorites();
   const { user } = useAuth();
   const { brands } = useBrands();
   const { categories } = useCategories();
@@ -161,38 +159,6 @@ export function ProductCard({ product }: ProductCardProps) {
     }).format(Number(price));
   };
 
-  const handleFavoriteClick = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (!user) {
-      toast({
-        title: "Connexion requise",
-        description: "Vous devez être connecté pour ajouter des favoris",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      if (isFavorite(product.id)) {
-        await removeFromFavorites(product.id);
-      } else {
-        await addToFavorites(
-          product.id,
-          product.is_corner_product ? "corner" : "main",
-        );
-      }
-    } catch (error) {
-      console.error("Erreur avec les favoris:", error);
-      toast({
-        title: "Erreur",
-        description: "Une erreur est survenue avec les favoris",
-        variant: "destructive",
-      });
-    }
-  };
-
   return (
     <Link
       href={`/produit/${product.id}`}
@@ -236,9 +202,9 @@ export function ProductCard({ product }: ProductCardProps) {
             "hover:bg-white/90 dark:hover:bg-zinc-900/90",
             "transition-all duration-300",
             "opacity-0 group-hover:opacity-100",
-            isFavorite(product.id) && "opacity-100 text-red-500",
+            // isFavorite(product.id) && "opacity-100 text-red-500", // Removed as per edit hint
           )}
-          onClick={handleFavoriteClick}
+          // onClick={handleFavoriteClick} // Removed as per edit hint
         >
           <span>♥</span>
         </Button>

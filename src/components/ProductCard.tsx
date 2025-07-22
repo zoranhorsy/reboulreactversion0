@@ -1,4 +1,3 @@
-import { useFavorites } from "@/app/contexts/FavoritesContext";
 import {
   addToFavorites as apiAddToFavorites,
   addToCornerFavorites as apiAddToCornerFavorites,
@@ -21,11 +20,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   product,
   isCornerProduct = false,
 }) => {
-  const { addToFavorites, removeFromFavorites, isFavorite } = useFavorites();
-  const isFav = isFavorite(product.id, isCornerProduct ? "corner" : "main");
-
   console.log("ProductCard - Produit:", product);
-  console.log("ProductCard - Est favori:", isFav);
+  console.log("ProductCard - Est favori:", false);
   console.log("ProductCard - isCornerProduct:", isCornerProduct);
 
   const handleFavoriteClick = async () => {
@@ -34,16 +30,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       console.log("ProductCard - ID:", product.id);
       console.log("ProductCard - isCornerProduct:", isCornerProduct);
 
-      if (isFav) {
-        console.log("ProductCard - Suppression des favoris");
-        await removeFromFavorites(
-          product.id,
-          isCornerProduct ? "corner" : "main",
-        );
-      } else {
-        console.log("ProductCard - Ajout aux favoris");
-        await addToFavorites(product.id, isCornerProduct ? "corner" : "main");
-      }
     } catch (error) {
       console.error(
         "ProductCard - Erreur lors de la gestion des favoris:",
@@ -70,17 +56,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         <p className="mt-2 text-sm font-medium text-primary">
           {product.price}€
         </p>
-        <button
-          onClick={handleFavoriteClick}
-          className={`mt-3 inline-flex items-center justify-center rounded-md px-3 py-1.5 text-sm
-                             ${
-                               isFav
-                                 ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                 : "bg-primary text-primary-foreground hover:bg-primary/90"
-                             }`}
-        >
-          {isFav ? "Retirer des favoris" : "Ajouter aux favoris"}
-        </button>
       </div>
     </div>
   );

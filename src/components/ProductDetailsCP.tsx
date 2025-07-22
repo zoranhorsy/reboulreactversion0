@@ -104,8 +104,9 @@ interface ProductDetailsProps {
   onColorChange: (color: string) => void;
   onQuantityChange: (quantity: number) => void;
   onAddToCart: () => void;
+  onToggleWishlist: () => void;
   onShare: () => void;
-  // onToggleWishlist et isWishlist supprimés
+  isWishlist: boolean;
 }
 
 // Fonction utilitaire pour vérifier le stock
@@ -160,8 +161,9 @@ export function ProductDetails({
   onColorChange,
   onQuantityChange,
   onAddToCart,
+  onToggleWishlist,
   onShare,
-  // onToggleWishlist et isWishlist supprimés
+  isWishlist,
 }: ProductDetailsProps) {
   const [showSizeGuide, setShowSizeGuide] = useState(false);
   const [showTechSpecs, setShowTechSpecs] = useState(false);
@@ -449,24 +451,6 @@ export function ProductDetails({
                 {/* Bouton Acheter Maintenant avec Stripe */}
 
                 <div className="flex gap-2 sm:gap-3">
-                  {/* Bouton Favoris */}
-                  <Button
-                    variant="outline"
-                    className="flex-1 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800 h-9 sm:h-10 text-xs sm:text-sm"
-                    onClick={() => {
-                      // onToggleWishlist(); // This function is removed from props
-                    }}
-                  >
-                    <Heart className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                    <span className="hidden sm:inline">
-                      {/* isWishlist ? "Retirer des favoris" : "Ajouter aux favoris" */}
-                      Favoris
-                    </span>
-                    <span className="sm:hidden">
-                      Favoris
-                    </span>
-                  </Button>
-
                   {onShare && (
                     <Button
                       variant="outline"

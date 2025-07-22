@@ -12,11 +12,10 @@ interface ProductCardProps {
   onHover?: (isHovered: boolean) => void;
 }
 
-const ProductCard = React.memo(
+const TheCornerProductCard = React.memo(
   ({ product, index, onHover }: ProductCardProps) => {
     const [isHovered, setIsHovered] = useState(false);
 
-    // Mémoisation des fonctions de formatage
     const formatPrice = useMemo(() => {
       return new Intl.NumberFormat("fr-FR", {
         style: "currency",
@@ -24,18 +23,14 @@ const ProductCard = React.memo(
       }).format(product.price);
     }, [product.price]);
 
-    // Mémoisation des tailles uniques
     const uniqueSizes = useMemo(() => {
       return Array.from(new Set(product.variants?.map((v) => v.size) || []));
     }, [product.variants]);
 
-    // Détermination du nombre de tailles à afficher selon la taille d'écran
     const getTruncatedSizes = () => {
       if (typeof window !== "undefined" && window.innerWidth < 640) {
-        // Mobile : max 3 tailles
         return { max: 3 };
       }
-      // Desktop/tablette : max 5 tailles
       return { max: 5 };
     };
 
@@ -53,7 +48,6 @@ const ProductCard = React.memo(
       onHover?.(false);
     }, [onHover]);
 
-    // Mémoisation de l'URL de l'image
     const imageUrl = useMemo(() => {
       if (typeof product.image_url === "string") return product.image_url;
       if (typeof product.image === "string") return product.image;
@@ -78,7 +72,7 @@ const ProductCard = React.memo(
           transitionDelay: `${index * 50}ms`,
         }}
       >
-        <Link href={`/produit/${product.id}`} className="block">
+        <Link href={`/the-corner/${product.id}`} className="block">
           <div className="relative aspect-square overflow-hidden bg-zinc-100 dark:bg-zinc-800">
             <Image
               src={imageUrl}
@@ -109,9 +103,7 @@ const ProductCard = React.memo(
               {uniqueSizes.length > 0 && (
                 <p className="text-xs text-zinc-400 dark:text-zinc-500 truncate max-w-full overflow-hidden whitespace-nowrap">
                   {displayedSizes.join(", ")}
-                  {remaining > 0 && (
-                    <span> +{remaining}</span>
-                  )}
+                  {remaining > 0 && <span> +{remaining}</span>}
                 </p>
               )}
             </div>
@@ -122,6 +114,6 @@ const ProductCard = React.memo(
   },
 );
 
-ProductCard.displayName = "ProductCard";
+TheCornerProductCard.displayName = "TheCornerProductCard";
 
-export default ProductCard;
+export default TheCornerProductCard; 

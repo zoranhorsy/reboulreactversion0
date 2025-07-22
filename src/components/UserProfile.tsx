@@ -41,7 +41,6 @@ import {
 import AdminDashboard from "@/components/admin/AdminDashboard";
 import { UserOrders } from "@/components/UserOrders";
 import { ShippingAddresses } from "@/components/ShippingAddresses";
-import { FavoritesSection } from "@/components/profile/FavoritesSection";
 import OrderHistory from "@/components/OrderHistory";
 import {
   Dialog,
@@ -658,7 +657,7 @@ export default function UserProfile() {
         </TabsContent>
 
         <TabsContent value="favorites">
-          <FavoritesSection />
+          <OrderHistory />
         </TabsContent>
 
         <TabsContent value="settings">

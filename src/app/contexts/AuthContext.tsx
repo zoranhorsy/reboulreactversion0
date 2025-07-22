@@ -58,6 +58,13 @@ const AuthProviderInternal: React.FC<{ children: React.ReactNode }> = ({
       }
     : null;
 
+  // Synchronise le token dans le localStorage dès que user change
+  React.useEffect(() => {
+    if (user && (user as any).token) {
+      localStorage.setItem("token", (user as any).token);
+    }
+  }, [user]);
+
   // Fonction pour se connecter
   const login = useCallback(async (email: string, password: string) => {
     try {
@@ -122,7 +129,7 @@ const AuthProviderInternal: React.FC<{ children: React.ReactNode }> = ({
 
         toast({
           title: "Inscription réussie",
-          description: "Votre compte a été créé avec succès",
+          description: "Votre compte a été créé avec succès.\nPour retrouver vos anciennes commandes, utilisez le même email que lors de vos achats.",
         });
       } catch (error) {
         console.error("Erreur lors de l'inscription:", error);

@@ -35,7 +35,7 @@ export function ReboulPageHeader({
   logoImage = "/images/logotype_w.png",
 }: ReboulPageHeaderProps) {
   return (
-    <div className="relative w-full h-[220px] overflow-hidden bg-zinc-900 transition-all duration-500 ease-out">
+    <div className="relative w-full h-[220px] overflow-hidden bg-zinc-900 transition-all duration-500 ease-out rounded-xl">
       {/* Image de fond avec overlay amélioré */}
       {backgroundImage && (
         <div className="absolute inset-0 z-0">

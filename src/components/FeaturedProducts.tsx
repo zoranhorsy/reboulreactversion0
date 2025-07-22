@@ -20,24 +20,35 @@ export function FeaturedProducts() {
 
   const { toast } = useToast();
 
-  // Récupération des produits
+  // Récupération des produits de tous les stores en parallèle
   const fetchProducts = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
-      console.log("🔍 Récupération des produits featured...");
-      const response = await api.fetchProducts({
-        featured: "true",
-        limit: "8",
-      });
+      console.log("🔍 Récupération des produits featured pour tous les stores...");
 
-      if (response.products && response.products.length > 0) {
-        setProducts(response.products);
-        console.log("✅ Produits chargés:", response.products.length);
+      // Appels parallèles pour chaque store
+      const [adultRes, kidsRes, sneakersRes] = await Promise.all([
+        api.fetchProducts({ featured: "true", store_type: "adult", limit: "8" }),
+        api.fetchProducts({ featured: "true", store_type: "kids", limit: "8" }),
+        api.fetchProducts({ featured: "true", store_type: "sneakers", limit: "8" }),
+      ]);
+
+      // Fusionner les produits (en supprimant les doublons éventuels par id)
+      const allProducts = [
+        ...(adultRes.products || []),
+        ...(kidsRes.products || []),
+        ...(sneakersRes.products || []),
+      ];
+      const uniqueProducts = Array.from(
+        new Map(allProducts.map((p) => [p.id, p])).values()
+      );
+
+      if (uniqueProducts.length > 0) {
+        setProducts(uniqueProducts.slice(0, 8));
+        console.log("✅ Produits featured chargés:", uniqueProducts.length);
       } else {
-        console.log("⚠️ Fallback sans filtre featured...");
-        const fallbackResponse = await api.fetchProducts({ limit: "8" });
-        setProducts(fallbackResponse.products || []);
+        setProducts([]);
       }
     } catch (err) {
       console.error("❌ Erreur:", err);

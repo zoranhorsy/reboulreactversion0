@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { FilterComponent } from "@/components/catalogue/Filters";
+import { MinimalFiltersBar, FilterComponent } from "@/components/catalogue/Filters";
 import { ProductGrid } from "@/components/catalogue/ProductGrid";
 import { api } from "@/lib/api";
 import type { Product } from "@/lib/types/product";
@@ -63,7 +63,9 @@ export function CatalogueShared({
   const [totalPages, setTotalPages] = useState(
     Math.ceil(total / Number(limitParam)),
   );
+  const [isScrolled, setIsScrolled] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [availableColors, setAvailableColors] = useState<string[]>([]);
   const [availableSizes, setAvailableSizes] = useState<string[]>([]);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
@@ -87,7 +89,6 @@ export function CatalogueShared({
           return filterOptions.categories.includes(categoryId);
         });
       }
-
       // Filtre par marque
       if (filterOptions.brands?.length) {
         productsList = productsList.filter((product) => {
@@ -95,7 +96,6 @@ export function CatalogueShared({
           return filterOptions.brands.includes(brandId);
         });
       }
-
       // Filtre par prix
       if (filterOptions.priceRange) {
         productsList = productsList.filter((product) => {
@@ -105,7 +105,6 @@ export function CatalogueShared({
           );
         });
       }
-
       // Filtre par taille
       if (filterOptions.sizes?.length) {
         productsList = productsList.filter((product) => {
@@ -118,7 +117,6 @@ export function CatalogueShared({
           );
         });
       }
-
       // Filtre par couleur
       if (filterOptions.colors?.length) {
         productsList = productsList.filter((product) => {
@@ -131,7 +129,6 @@ export function CatalogueShared({
           );
         });
       }
-
       // Filtre par disponibilité
       if (filterOptions.inStock !== undefined) {
         productsList = productsList.filter((product) => {
@@ -142,7 +139,6 @@ export function CatalogueShared({
           return filterOptions.inStock === hasStock;
         });
       }
-
       // Filtre par terme de recherche
       if (filterOptions.searchTerm) {
         const searchLower = filterOptions.searchTerm.toLowerCase();
@@ -155,7 +151,6 @@ export function CatalogueShared({
               product.description.toLowerCase().includes(searchLower)),
         );
       }
-
       return productsList;
     },
     [],
@@ -182,24 +177,20 @@ export function CatalogueShared({
       store_type: storeType, // Forcer le store_type selon le composant
       featured: searchParams.get("featured") || "",
     };
-
     // Vérifier si les paramètres d'URL contiennent des filtres actifs
     const hasActiveUrlFilters = Object.entries(urlFilters).some(
       ([key, value]) =>
         value && value !== "" && key !== "page" && key !== "limit" && key !== "store_type",
     );
-
     // Si les paramètres d'URL sont vides, essayer de récupérer les filtres du localStorage
     if (!hasActiveUrlFilters) {
       try {
         const savedFilters = localStorage.getItem(FILTERS_STORAGE_KEY);
         if (savedFilters) {
           const parsedFilters = JSON.parse(savedFilters) as FilterState;
-
           setTimeout(() => {
             setFiltersRestored(true);
           }, 1000);
-
           return {
             ...parsedFilters,
             page: urlFilters.page,
@@ -211,7 +202,6 @@ export function CatalogueShared({
         console.error("Erreur lors de la récupération des filtres sauvegardés:", error);
       }
     }
-
     return urlFilters;
   };
 
@@ -221,12 +211,11 @@ export function CatalogueShared({
   // Sauvegarder les filtres dans localStorage à chaque changement
   useEffect(() => {
     try {
+      // Ne pas sauvegarder page et limit pour éviter de restaurer à une page spécifique
       const { page, limit, store_type, ...filtersToSave } = filters;
-
       const hasActiveFilters = Object.entries(filtersToSave).some(
         ([key, value]) => value && value !== "",
       );
-
       if (hasActiveFilters) {
         localStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify(filtersToSave));
       } else {
@@ -241,19 +230,13 @@ export function CatalogueShared({
   const handleFilterChange: FilterChangeHandler = useCallback(
     (newFilters) => {
       setFilters((prev) => {
-        const updated = { 
-          ...prev, 
-          ...newFilters,
-          store_type: storeType // Toujours maintenir le store_type
-        };
-        
+        const updated = { ...prev, ...newFilters, store_type: storeType };
         if (
           "page" in newFilters === false &&
           Object.keys(newFilters).length > 0
         ) {
           updated.page = "1";
         }
-
         const queryString = new URLSearchParams();
         Object.entries(updated).forEach(([key, value]) => {
           // Ne pas inclure store_type dans l'URL car il est implicite dans le chemin
@@ -265,11 +248,9 @@ export function CatalogueShared({
             }
           }
         });
-
         if (updated.brand_id) {
           queryString.set("brand_id", updated.brand_id.toString());
         }
-
         const url = `${pathname}?${queryString.toString()}`;
         router.push(url);
         return updated;
@@ -282,7 +263,6 @@ export function CatalogueShared({
   const extractVariants = useCallback((productList: Product[]) => {
     const uniqueColors = new Set<string>();
     const uniqueSizes = new Set<string>();
-
     productList.forEach((product) => {
       if (Array.isArray(product.variants)) {
         product.variants.forEach((variant) => {
@@ -291,7 +271,6 @@ export function CatalogueShared({
         });
       }
     });
-
     return {
       colors: Array.from(uniqueColors).sort(),
       sizes: Array.from(uniqueSizes).sort(),
@@ -304,24 +283,18 @@ export function CatalogueShared({
       try {
         setLoading(true);
         setError(null);
-
         const queryParams: Record<string, string> = {};
         const filtersToUse = newFilters || filters;
-        
         Object.entries(filtersToUse).forEach(([key, value]) => {
           if (value && value.toString().trim() !== "") {
             queryParams[key] = value.toString();
           }
         });
-
         // Toujours s'assurer que le store_type est défini
         queryParams.store_type = storeType;
-
         if (!queryParams.page) queryParams.page = "1";
         if (!queryParams.limit) queryParams.limit = "12";
-
         const result = await api.fetchProducts(queryParams);
-
         // Appliquer le filtrage côté client avec le worker
         const filterOptions = {
           categories:
@@ -360,22 +333,18 @@ export function CatalogueShared({
               : undefined,
           inStock: filtersToUse?.featured === "true" ? true : undefined,
         };
-
         let filteredProducts = [];
-
         try {
           filteredProducts = await filterProducts(result.products, filterOptions);
         } catch (workerError) {
           console.error("Erreur avec le worker de filtrage:", workerError);
           filteredProducts = handleFilterFallback(result.products, filterOptions);
-
           toast({
             title: "Mode de filtrage simplifié",
             description: "Le filtrage avancé a rencontré un problème et a basculé en mode simplifié.",
             variant: "default",
           });
         }
-
         // Appliquer le tri si nécessaire
         let sortedProducts = filteredProducts;
         if (filtersToUse?.sort) {
@@ -390,7 +359,6 @@ export function CatalogueShared({
             console.error("Erreur avec le worker de tri:", sortError);
             const [sortBy, sortOrder] = filtersToUse.sort.split("_");
             const sortFactor = sortOrder === "asc" ? 1 : -1;
-
             sortedProducts = [...filteredProducts].sort((a, b) => {
               if (sortBy === "price") {
                 return (a.price - b.price) * sortFactor;
@@ -405,14 +373,12 @@ export function CatalogueShared({
             });
           }
         }
-
         setProducts(sortedProducts);
         setLocalProducts(result.products);
         setTotalItems(result.total);
         setTotalPages(
           Math.ceil(result.total / Number(filtersToUse?.limit || filters.limit)),
         );
-
         const { colors: newColors, sizes: newSizes } = extractVariants(result.products);
         setColors(newColors);
         setSizes(newSizes);
@@ -444,14 +410,17 @@ export function CatalogueShared({
   }, [filters]);
 
   useEffect(() => {
+    // Version optimisée avec rafThrottle
     const handleScroll = rafThrottle(() => {
-      setShowScrollTop(window.scrollY > 500);
+      const scrollTop = window.scrollY;
+      setIsScrolled(scrollTop > 100);
+      setShowScrollTop(scrollTop > 500);
     });
-
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Optimisé avec rafThrottle pour assurer une animation fluide
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -478,7 +447,6 @@ export function CatalogueShared({
   useEffect(() => {
     const uniqueColors = new Set<string>();
     const uniqueSizes = new Set<string>();
-
     products.forEach((product) => {
       if (Array.isArray(product.variants)) {
         product.variants.forEach((variant) => {
@@ -487,7 +455,6 @@ export function CatalogueShared({
         });
       }
     });
-
     setAvailableColors(Array.from(uniqueColors).sort());
     setAvailableSizes(Array.from(uniqueSizes).sort());
   }, [products]);
@@ -499,7 +466,6 @@ export function CatalogueShared({
         ([key, value]) =>
           value && value !== "" && key !== "page" && key !== "limit" && key !== "store_type",
       ).length;
-
       if (activeFiltersCount > 0) {
         toast({
           title: "Filtres restaurés",
@@ -568,40 +534,36 @@ export function CatalogueShared({
         breadcrumbs={breadcrumbs}
       />
 
-      <div className="px-4 py-8 sm:px-6 lg:px-8">
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* Filtres - Sidebar */}
-          <aside className="w-full lg:w-80 lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-100px)] lg:overflow-y-auto space-y-6">
-            <FilterComponent
-              categories={categories}
-              brands={brands}
-              colors={colors}
-              sizes={sizes}
-              filters={filters}
-              onFilterChange={handleFilterChange}
-              storeTypes={[]}
-              availableColors={colors}
-              availableSizes={sizes}
-            />
-          </aside>
+      {/* Espacement entre header et filtres */}
+      <div className="mt-4" />
 
-          {/* Grille de produits */}
-          <main className="flex-1 min-w-0">
-            <ProductGrid
-              products={products}
-              isLoading={loading}
-              error={error}
-              page={Number(filters.page)}
-              limit={Number(filters.limit)}
-              totalProducts={totalItems}
-              totalPages={totalPages}
-              onPageChange={(page) =>
-                handleFilterChange({ page: page.toString() })
-              }
-              _onFilterChange={handleFilterChange}
-            />
-          </main>
-        </div>
+      {/* Filtres horizontaux */}
+      <MinimalFiltersBar
+        categories={categories}
+        brands={brands}
+        colors={colors}
+        sizes={sizes}
+        filters={filters}
+        onFilterChange={handleFilterChange}
+      />
+
+      <div className="px-4 py-8 sm:px-6 lg:px-8">
+        {/* Suppression de la sidebar/aside, on ne garde que la grille */}
+        <main className="flex-1 min-w-0">
+          <ProductGrid
+            products={products}
+            isLoading={loading}
+            error={error}
+            page={Number(filters.page)}
+            limit={Number(filters.limit)}
+            totalProducts={totalItems}
+            totalPages={totalPages}
+            onPageChange={(page) =>
+              handleFilterChange({ page: page.toString() })
+            }
+            _onFilterChange={handleFilterChange}
+          />
+        </main>
       </div>
 
       {/* Modal des filtres mobile */}

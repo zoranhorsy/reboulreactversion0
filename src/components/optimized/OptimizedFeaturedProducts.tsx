@@ -8,6 +8,7 @@ import ProductCard from "./ProductCard";
 import { getFeaturedProducts } from "@/lib/api/products";
 import { useInView } from "react-intersection-observer";
 import { Button } from "@/components/ui/button";
+import * as api from "@/lib/api";
 
 // Composant de chargement optimisé avec skeletons
 const LoadingComponent = React.memo(() => (
@@ -47,68 +48,65 @@ const useStaggeredAnimation = (delay: number = 100) => {
   return { isVisible, trigger };
 };
 
+// Fonction utilitaire pour récupérer les produits featured de chaque store via /api/products
+async function fetchAllStoresFeaturedProducts() {
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://reboul-store-api-production.up.railway.app/api";
+  const endpoints = [
+    `${API_URL}/products?store_type=adult&featured=true&limit=8`,
+    `${API_URL}/products?store_type=sneakers&featured=true&limit=8`,
+    `${API_URL}/products?store_type=kids&featured=true&limit=8`,
+  ];
+  const results = await Promise.all(
+    endpoints.map(async (url) => {
+      const response = await fetch(url, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+        cache: "no-store",
+      });
+      if (!response.ok) return [];
+      const data = await response.json();
+      // Compatibilité avec le backend : data.products ou data.data
+      return data.products || data.data || [];
+    })
+  );
+  // Fusionner et dédupliquer par id
+  const allProducts = results.flat();
+  const uniqueProducts = Array.from(new Map(allProducts.map((p: any) => [p.id, p])).values());
+  return uniqueProducts;
+}
+
 // Hook personnalisé pour la gestion des produits avec pagination
 const useProducts = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const [totalPages, setTotalPages] = useState(1);
 
-  const fetchProducts = useCallback(async (pageNum: number) => {
+  const fetchFeatured = useCallback(async () => {
     try {
-      console.log("🔍 Début du chargement des produits, page:", pageNum);
       setIsLoading(true);
       setError(null);
-
-      const data = await getFeaturedProducts(pageNum);
-      console.log("📦 Données reçues:", data);
-
-      if (pageNum === 1) {
-        console.log("🔄 Mise à jour initiale des produits");
-        setProducts(data.items);
-      } else {
-        console.log("➕ Ajout de nouveaux produits");
-        setProducts((prev) => [...prev, ...data.items]);
-      }
-
-      setHasMore(data.hasMore);
-      setTotalPages(data.totalPages);
-      console.log("✅ Chargement terminé avec succès");
+      // Un seul appel comme sur /catalogue
+      const result = await api.fetchProducts({ featured: "true", limit: "8" });
+      setProducts(result.products || []);
     } catch (err) {
-      console.error("❌ Erreur lors du chargement des produits:", err);
       setError("Impossible de charger les produits pour le moment.");
+      setProducts([]);
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  const loadMore = useCallback(() => {
-    if (!isLoading && hasMore) {
-      console.log("📥 Chargement de plus de produits");
-      const nextPage = page + 1;
-      setPage(nextPage);
-      fetchProducts(nextPage);
-    }
-  }, [isLoading, hasMore, page, fetchProducts]);
-
   useEffect(() => {
-    console.log("🚀 Chargement initial des produits");
-    fetchProducts(1);
-  }, [fetchProducts]);
+    fetchFeatured();
+  }, [fetchFeatured]);
 
   return {
     products,
     isLoading,
     error,
-    hasMore,
-    loadMore,
-    refetch: () => {
-      console.log("🔄 Rechargement des produits");
-      setPage(1);
-      fetchProducts(1);
-    },
+    hasMore: false,
+    loadMore: () => {},
+    refetch: fetchFeatured,
   };
 };
 

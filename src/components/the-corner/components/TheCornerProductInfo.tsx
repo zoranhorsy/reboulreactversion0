@@ -38,13 +38,8 @@ export function TheCornerProductInfo({
       {typeof rating !== "undefined" && (
         <div className="flex items-center gap-3">
           <div className="flex items-center">
-            {[1, 2, 3, 4, 5].map((star) => (
-              <span key={star}>⭐</span>
-            ))}
-          </div>
-          <span className="text-sm font-medium text-muted-foreground">
             {rating?.toFixed(1)} ({reviewsCount} avis)
-          </span>
+          </div>
         </div>
       )}
 

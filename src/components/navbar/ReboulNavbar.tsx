@@ -73,12 +73,6 @@ export function ReboulNavbar() {
           {/* Actions utilisateur */}
           <div className="flex items-center space-x-4">
             <Link
-              href="/favorites"
-              className="hidden md:flex px-3 py-2 text-sm font-medium hover:bg-gray-100 rounded-lg"
-            >
-              ❤ Favoris
-            </Link>
-            <Link
               href="/cart"
               className="hidden md:flex px-3 py-2 text-sm font-medium hover:bg-gray-100 rounded-lg"
             >
@@ -141,13 +135,6 @@ export function ReboulNavbar() {
                 Contact
               </Link>
               <div className="border-t border-gray-200 pt-2 mt-2">
-                <Link
-                  href="/favorites"
-                  className="px-4 py-2 text-sm font-medium hover:bg-gray-100 rounded-lg block"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  ❤ Favoris
-                </Link>
                 <Link
                   href="/cart"
                   className="px-4 py-2 text-sm font-medium hover:bg-gray-100 rounded-lg block"

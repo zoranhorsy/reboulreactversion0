@@ -5,7 +5,6 @@ import { CatalogueContent } from "@/components/catalogue/CatalogueContent";
 import { LocalStorageChecker } from "@/components/LocalStorageChecker";
 import { CartProvider } from "@/app/contexts/CartContext";
 import { AuthProvider } from "@/app/contexts/AuthContext";
-import { FavoritesProvider } from "@/app/contexts/FavoritesContext";
 import { Toaster } from "@/components/ui/toaster";
 import type { Product } from "@/lib/types/product";
 import type { Category } from "@/lib/types/category";
@@ -32,8 +31,7 @@ export function CatalogueClientContent({
   return (
     <div suppressHydrationWarning>
       <AuthProvider>
-        <FavoritesProvider>
-          <CartProvider>
+        <CartProvider>
             <CatalogueContent
               initialProducts={initialProducts}
               initialCategories={initialCategories}
@@ -42,7 +40,6 @@ export function CatalogueClientContent({
             />
             <Toaster />
           </CartProvider>
-        </FavoritesProvider>
       </AuthProvider>
     </div>
   );

@@ -4,26 +4,29 @@ import { useState } from "react";
 import type { ReactNode } from "react";
 import { Sidebar, SidebarBody, SidebarLink } from "../ui/reboul-sidebar";
 import {
-  IconHome,
-  IconShoppingBag,
-  IconStar,
-  IconInfoCircle,
-  IconUser,
-  IconHeart,
-  IconShoppingCart,
-  IconSettings,
-  IconLogout,
-  IconLogin,
-  IconSun,
-  IconMoon,
-  IconMail,
-  IconPackage,
-  IconTruck,
-  IconBell,
-  IconSearch,
-  IconMenu2,
-  IconX,
-} from "@tabler/icons-react";
+  RiHome4Line,
+  RiApps2Line,
+  RiStore2Line,
+  RiUser3Line,
+  RiFootprintLine,
+  RiRunLine,
+  RiEmotionHappyLine,
+  RiBearSmileLine,
+  RiStarLine,
+  RiInformationLine,
+  RiMailLine,
+  RiShoppingCart2Line,
+  RiUserSettingsLine,
+  RiBox3Line,
+  RiSettings3Line,
+  RiLoginBoxLine,
+  RiLogoutBoxLine,
+  RiSunLine,
+  RiMoonLine,
+  RiSearchLine,
+  RiMenu2Line,
+  RiCloseLine
+} from '@remixicon/react';
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
@@ -89,23 +92,22 @@ function MobileMenu() {
   const cartItemsCount = cartItems?.reduce((total, item) => total + item.quantity, 0) || 0;
 
   const mainLinks = [
-    { label: "Accueil", href: "/", icon: <IconHome className="h-5 w-5" /> },
-    { label: "Catalogue Global", href: "/catalogue", icon: <IconShoppingBag className="h-5 w-5" /> },
-    { label: "Reboul Adult", href: "/reboul", icon: <IconUser className="h-5 w-5" /> },
-    { label: "Sneakers", href: "/sneakers", icon: <IconTruck className="h-5 w-5" /> },
-    { label: "Kids", href: "/kids", icon: <IconHeart className="h-5 w-5" /> },
-    { label: "The Corner", href: "/the-corner", icon: <IconStar className="h-5 w-5" /> },
-    { label: "À propos", href: "/about", icon: <IconInfoCircle className="h-5 w-5" /> },
-    { label: "Contact", href: "/contact", icon: <IconMail className="h-5 w-5" /> },
+    { label: "Accueil", href: "/", icon: <RiHome4Line className="h-5 w-5" /> },
+    { label: "Catalogue Global", href: "/catalogue", icon: <RiStore2Line className="h-5 w-5" /> },
+    { label: "Reboul Adult", href: "/reboul", icon: <RiUser3Line className="h-5 w-5" /> },
+    { label: "Sneakers", href: "/sneakers", icon: <RiFootprintLine className="h-5 w-5" /> },
+    { label: "Kids", href: "/kids", icon: <RiEmotionHappyLine className="h-5 w-5" /> },
+    { label: "The Corner", href: "/the-corner", icon: <RiStarLine className="h-5 w-5" /> },
+    { label: "À propos", href: "/about", icon: <RiInformationLine className="h-5 w-5" /> },
+    { label: "Contact", href: "/contact", icon: <RiMailLine className="h-5 w-5" /> },
   ];
 
   const userLinks = user ? [
-    { label: "Mon Profil", href: "/profil", icon: <IconUser className="h-5 w-5" /> },
-    { label: "Mes Favoris", href: "/favorites", icon: <IconHeart className="h-5 w-5" /> },
-    { label: "Mes Commandes", href: "/suivi-commande", icon: <IconPackage className="h-5 w-5" /> },
-    ...(user?.is_admin ? [{ label: "Administration", href: "/admin", icon: <IconSettings className="h-5 w-5" /> }] : []),
+    { label: "Mon Profil", href: "/profil", icon: <RiUser3Line className="h-5 w-5" /> },
+    { label: "Mes Commandes", href: "/suivi-commande", icon: <RiBox3Line className="h-5 w-5" /> },
+    ...(user?.is_admin ? [{ label: "Administration", href: "/admin", icon: <RiSettings3Line className="h-5 w-5" /> }] : []),
   ] : [
-    { label: "Connexion", href: "/connexion", icon: <IconLogin className="h-5 w-5" /> },
+    { label: "Connexion", href: "/connexion", icon: <RiLoginBoxLine className="h-5 w-5" /> },
   ];
 
   return (
@@ -124,7 +126,7 @@ function MobileMenu() {
           className="text-foreground hover:text-primary transition-colors p-2"
           aria-label="Ouvrir le menu"
         >
-          <IconMenu2 className="h-5 w-5" />
+          <RiMenu2Line className="h-5 w-5" />
         </button>
       </div>
 
@@ -150,10 +152,10 @@ function MobileMenu() {
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: "-100%", opacity: 0 }}
               transition={{ duration: 0.3, ease: "easeInOut" }}
-              className="fixed top-0 left-0 z-50 w-80 max-w-[85vw] h-full bg-gradient-to-b from-background via-background/98 to-background/95 backdrop-blur-md shadow-2xl border-r border-border/50 md:hidden"
+              className="fixed top-0 left-0 z-50 w-64 max-w-[95vw] max-h-screen h-full bg-gradient-to-b from-background via-background/98 to-background/95 backdrop-blur-md shadow-2xl border-r border-border/50 md:hidden overflow-y-auto"
             >
               {/* Header du menu */}
-              <div className="flex items-center justify-between p-6 border-b border-border/50">
+              <div className="flex items-center justify-between p-3 border-b border-border/50">
                 <div className="flex items-center gap-3 group">
                   <ReboulLogoImage size="md" />
                   <div>
@@ -166,12 +168,12 @@ function MobileMenu() {
                   className="text-foreground hover:text-primary transition-colors p-1"
                   aria-label="Fermer le menu"
                 >
-                  <IconX className="h-6 w-6" />
+                  <RiCloseLine className="h-6 w-6" />
                 </button>
               </div>
 
               {/* Contenu du menu */}
-              <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              <div className="flex-1 p-3 space-y-4">
                 {/* Navigation principale */}
                 <div>
                   <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
@@ -235,7 +237,7 @@ function MobileMenu() {
                       className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-foreground/80 hover:text-foreground hover:bg-accent/50 border border-transparent hover:border-border/30"
                     >
                       <div className="relative">
-                        <IconShoppingCart className="h-5 w-5" />
+                        <RiShoppingCart2Line className="h-5 w-5" />
                         {cartItemsCount > 0 && (
                           <div className="absolute -top-2 -right-2 h-4 w-4 bg-primary text-primary-foreground text-xs font-bold rounded-full flex items-center justify-center">
                             {cartItemsCount > 9 ? '9+' : cartItemsCount}
@@ -250,7 +252,7 @@ function MobileMenu() {
                       onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
                       className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-foreground/80 hover:text-foreground hover:bg-accent/50 border border-transparent hover:border-border/30"
                     >
-                      {theme === "dark" ? <IconSun className="h-5 w-5" /> : <IconMoon className="h-5 w-5" />}
+                      {theme === "dark" ? <RiSunLine className="h-5 w-5" /> : <RiMoonLine className="h-5 w-5" />}
                       <span className="font-medium text-sm">{theme === "dark" ? "Mode Clair" : "Mode Sombre"}</span>
                     </button>
 
@@ -263,7 +265,7 @@ function MobileMenu() {
                         }}
                         className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-foreground/80 hover:text-foreground hover:bg-accent/50 border border-transparent hover:border-border/30"
                       >
-                        <IconLogout className="h-5 w-5" />
+                        <RiLogoutBoxLine className="h-5 w-5" />
                         <span className="font-medium text-sm">Déconnexion</span>
                       </button>
                     )}
@@ -271,31 +273,6 @@ function MobileMenu() {
                 </div>
 
                 {/* Profil utilisateur */}
-                {user && (
-                  <div className="border-t border-border/50 pt-4">
-                    <div className="flex items-center gap-3 p-4 bg-accent/30 rounded-lg border border-border/50">
-                      <div className="relative">
-                        <img
-                          src={user.avatar_url || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face"}
-                          className="h-10 w-10 rounded-full border-2 border-border/50"
-                          width={40}
-                          height={40}
-                          alt="Avatar"
-                        />
-                        <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-green-500 border-2 border-background" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-medium text-sm text-foreground">
-                          {user.username || "Utilisateur"}
-                        </p>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <div className="h-2 w-2 rounded-full bg-green-500" />
-                          <span>En ligne</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
             </motion.div>
           </>
@@ -315,23 +292,22 @@ export function ReboulNavbarSidebar({ children }: ReboulNavbarSidebarProps) {
   const cartItemsCount = cartItems?.reduce((total, item) => total + item.quantity, 0) || 0;
   
   const mainLinks = [
-    { label: "Accueil", href: "/", icon: <IconHome className="h-5 w-5 shrink-0" /> },
-    { label: "Catalogue Global", href: "/catalogue", icon: <IconShoppingBag className="h-5 w-5 shrink-0" /> },
-    { label: "Reboul Adult", href: "/reboul", icon: <IconUser className="h-5 w-5 shrink-0" /> },
-    { label: "Sneakers", href: "/sneakers", icon: <IconTruck className="h-5 w-5 shrink-0" /> },
-    { label: "Kids", href: "/kids", icon: <IconHeart className="h-5 w-5 shrink-0" /> },
-    { label: "The Corner", href: "/the-corner", icon: <IconStar className="h-5 w-5 shrink-0" /> },
-    { label: "À propos", href: "/about", icon: <IconInfoCircle className="h-5 w-5 shrink-0" /> },
-    { label: "Contact", href: "/contact", icon: <IconMail className="h-5 w-5 shrink-0" /> },
+    { label: "Accueil", href: "/", icon: <RiHome4Line className="h-5 w-5 shrink-0" /> },
+    { label: "Tout les produits", href: "/catalogue", icon: <RiStore2Line className="h-5 w-5 shrink-0" /> },
+    { label: "Reboul Store 2.0", href: "/reboul", icon: <RiUser3Line className="h-5 w-5 shrink-0" /> },
+    { label: "Reboul Sneakers", href: "/sneakers", icon: <RiFootprintLine className="h-5 w-5 shrink-0" /> },
+    { label: "Les Minots de Reboul", href: "/kids", icon: <RiEmotionHappyLine className="h-5 w-5 shrink-0" /> },
+    { label: "The Corner - C.P.COMPANY", href: "/the-corner", icon: <RiStarLine className="h-5 w-5 shrink-0" /> }, 
+    { label: "À propos", href: "/about", icon: <RiInformationLine className="h-5 w-5 shrink-0" /> },
+    { label: "Contact", href: "/contact", icon: <RiMailLine className="h-5 w-5 shrink-0" /> },
   ];
 
   const userLinks = user ? [
-    { label: "Mon Profil", href: "/profil", icon: <IconUser className="h-5 w-5 shrink-0" /> },
-    { label: "Mes Favoris", href: "/favorites", icon: <IconHeart className="h-5 w-5 shrink-0" /> },
-    { label: "Mes Commandes", href: "/suivi-commande", icon: <IconPackage className="h-5 w-5 shrink-0" /> },
-    ...(user?.is_admin ? [{ label: "Administration", href: "/admin", icon: <IconSettings className="h-5 w-5 shrink-0" /> }] : []),
+    { label: "Mon Profil", href: "/profil", icon: <RiUser3Line className="h-5 w-5 shrink-0" /> },
+    { label: "Mes Commandes", href: "/suivi-commande", icon: <RiBox3Line className="h-5 w-5 shrink-0" /> },
+    ...(user?.is_admin ? [{ label: "Administration", href: "/admin", icon: <RiSettings3Line className="h-5 w-5 shrink-0" /> }] : []),
   ] : [
-    { label: "Connexion", href: "/connexion", icon: <IconLogin className="h-5 w-5 shrink-0" /> },
+    { label: "Connexion", href: "/connexion", icon: <RiLoginBoxLine className="h-5 w-5 shrink-0" /> },
   ];
 
   const actionLinks = [
@@ -340,7 +316,7 @@ export function ReboulNavbarSidebar({ children }: ReboulNavbarSidebarProps) {
       href: "/panier",
       icon: (
         <div className="relative">
-          <IconShoppingCart className="h-5 w-5 shrink-0" />
+          <RiShoppingCart2Line className="h-5 w-5 shrink-0" />
           {cartItemsCount > 0 && (
             <motion.div
               initial={{ scale: 0 }}
@@ -356,7 +332,7 @@ export function ReboulNavbarSidebar({ children }: ReboulNavbarSidebarProps) {
     {
       label: theme === "dark" ? "Mode Clair" : "Mode Sombre",
       href: "#",
-      icon: theme === "dark" ? <IconSun className="h-5 w-5 shrink-0" /> : <IconMoon className="h-5 w-5 shrink-0" />,
+      icon: theme === "dark" ? <RiSunLine className="h-5 w-5 shrink-0" /> : <RiMoonLine className="h-5 w-5 shrink-0" />,
       onClick: () => setTheme(theme === "dark" ? "light" : "dark"),
     },
   ];
@@ -365,7 +341,7 @@ export function ReboulNavbarSidebar({ children }: ReboulNavbarSidebarProps) {
     actionLinks.push({
       label: "Déconnexion",
       href: "#",
-      icon: <IconLogout className="h-5 w-5 shrink-0" />,
+      icon: <RiLogoutBoxLine className="h-5 w-5 shrink-0" />,
       onClick: () => logout(),
     });
   }
@@ -403,7 +379,7 @@ export function ReboulNavbarSidebar({ children }: ReboulNavbarSidebarProps) {
                     className="relative"
                   >
                     <div className="relative">
-                      <IconSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <RiSearchLine className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <input
                         type="text"
                         placeholder="Recherche rapide..."
@@ -420,7 +396,7 @@ export function ReboulNavbarSidebar({ children }: ReboulNavbarSidebarProps) {
                     onClick={() => setOpen(true)}
                     title="Rechercher"
                   >
-                    <IconSearch className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                    <RiSearchLine className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
                   </div>
                 )}
               </div>

@@ -1,250 +1,225 @@
 "use client";
 
-import { motion } from "framer-motion";
-// TODO: Envisager de remplacer framer-motion par des animations CSS pour réduire la taille du bundle
-// TODO: Envisager de remplacer framer-motion par des animations CSS pour réduire la taille du bundle
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import Link from "next/link";
 
-const fadeIn = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0 },
-};
-
-const staggerContainer = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.2,
-    },
+// Placeholder pour la future carte interactive
+const boutiques = [
+  {
+    key: "reboul",
+    label: "Reboul Marseille",
+    adresse: "523 rue Paradis, 13008 Marseille",
+    specialite: "Prêt-à-porter homme, femme, enfant. Boutique principale.",
+    coords: { lat: 43.2781, lng: 5.3936 },
   },
-};
+  {
+    key: "minots",
+    label: "Les Minots de Reboul",
+    adresse: "523 rue Paradis, 13008 Marseille",
+    specialite: "Mode enfant haut de gamme. Grandes marques junior.",
+    coords: { lat: 43.2781, lng: 5.3936 },
+  },
+  {
+    key: "cpcompany",
+    label: "C.P. Company Marseille",
+    adresse: "376 avenue du Prado, 13008 Marseille",
+    specialite: "Boutique officielle C.P. Company. Vêtements techniques.",
+    coords: { lat: 43.2762, lng: 5.3907 },
+  },
+  {
+    key: "cassis",
+    label: "Reboul Concept Store Cassis",
+    adresse: "7 avenue Victor Hugo, 13260 Cassis",
+    specialite: "Sélection premium à Cassis.",
+    coords: { lat: 43.2151, lng: 5.5392 },
+  },
+  {
+    key: "hotel",
+    label: "L’Hôtel By Reboul",
+    adresse: "7 avenue Victor Hugo, 13260 Cassis",
+    specialite: "Hôtel boutique, expérience Reboul.",
+    coords: { lat: 43.2151, lng: 5.5392 },
+  },
+  {
+    key: "utility",
+    label: "Utility by Reboul",
+    adresse: "5 rue Gaillard, 83110 Sanary-sur-mer",
+    specialite: "Sélection utilitaire et lifestyle.",
+    coords: { lat: 43.1182, lng: 5.8002 },
+  },
+];
+
+// Carte OpenStreetMap en iframe
+function BoutiqueMap({ selected }: { selected: string }) {
+  const boutique = boutiques.find((b) => b.key === selected);
+  if (!boutique) return null;
+  const { lat, lng, label } = boutique.coords ? { ...boutique.coords, label: boutique.label } : { lat: 43.3, lng: 5.4, label: "" };
+  // URL OpenStreetMap avec marqueur
+  const url = `https://www.openstreetmap.org/export/embed.html?bbox=${lng-0.005}%2C${lat-0.003}%2C${lng+0.005}%2C${lat+0.003}&layer=mapnik&marker=${lat}%2C${lng}`;
+  return (
+    <div className="w-full h-64 md:h-80 rounded-xl overflow-hidden border">
+      <iframe
+        title={`Carte ${label}`}
+        src={url}
+        className="w-full h-full border-0"
+        loading="lazy"
+        referrerPolicy="no-referrer"
+        allowFullScreen
+      />
+    </div>
+  );
+}
 
 export function AboutContent() {
+  const [selectedBoutique, setSelectedBoutique] = useState(boutiques[0].key);
+
   return (
     <div className="container mx-auto py-16 space-y-24">
-      {/* En-tête */}
-      <motion.div
-        className="text-center space-y-6"
-        initial="hidden"
-        animate="visible"
-        variants={fadeIn}
-      >
+      {/* En-tête / Introduction */}
+      <div className="text-center space-y-6">
         <h1 className="text-4xl font-light uppercase tracking-[0.4em]">
-          Notre Histoire
+          À propos de Reboul
         </h1>
         <div className="w-24 h-px bg-primary mx-auto" />
-        <p className="font-geist text-lg text-zinc-600 dark:text-zinc-400 leading-relaxed">
-          Chez REBOUL, nous croyons en l&apos;alliance parfaite entre style
-          intemporel et tendances actuelles. Notre boutique est un lieu où la
-          mode rencontre l&apos;authenticité, offrant une expérience shopping
-          unique à Marseille depuis plus de 30 ans.
+        <h2 className="text-xl font-medium mt-2 mb-2">Concept store haut de gamme à Marseille</h2>
+        <p className="font-geist text-lg text-zinc-600 dark:text-zinc-400 leading-relaxed max-w-2xl mx-auto">
+          Reboul est un concept store marseillais spécialisé dans la mode premium et les marques de créateurs. Situé en plein cœur de Marseille, Reboul sélectionne les meilleures marques de prêt-à-porter homme, femme et enfant, avec une attention particulière portée à la qualité, l’innovation textile et le style contemporain. Marques emblématiques, pièces iconiques, collections exclusives : Reboul est devenu une référence pour les passionnés de mode à Marseille, mais aussi au-delà grâce à son site e-commerce.
         </p>
-      </motion.div>
+      </div>
 
-      {/* Histoire et Valeurs */}
-      <motion.div
-        className="grid md:grid-cols-2 gap-12 items-center"
-        variants={staggerContainer}
-        initial="hidden"
-        animate="visible"
-      >
-        <motion.div
-          variants={fadeIn}
-          className="relative aspect-[4/5] rounded-xl overflow-hidden"
-        >
-          <Image
-            src="/about/store-front.jpg"
-            alt="Devanture de Reboul Store"
-            fill
-            className="object-cover"
-          />
-        </motion.div>
-        <motion.div variants={fadeIn} className="space-y-6">
-          <h2 className="text-2xl font-medium">L&apos;Esprit Streetwear</h2>
-          <p className="text-muted-foreground">
-            Établi au cœur de Marseille, Reboul Store est devenu un lieu
-            emblématique pour les passionnés de streetwear et de sneakers. Notre
-            sélection pointue de marques premium et notre expertise dans la
-            culture urbaine nous permettent d&apos;offrir à notre clientèle les
-            dernières tendances et les pièces les plus recherchées.
-          </p>
-          <div className="grid gap-4">
-            <div className="flex items-center gap-4">
-              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <span>📍</span>
-              </div>
-              <div>
-                <h3 className="font-medium">Emplacement</h3>
-                <p className="text-sm text-muted-foreground">
-                  Au cœur de Marseille
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <span>Clock</span>
-              </div>
-              <div>
-                <h3 className="font-medium">Horaires d&apos;Ouverture</h3>
-                <p className="text-sm text-muted-foreground">
-                  Du Lundi au Samedi, 10h-19h
-                </p>
-              </div>
-            </div>
+      {/* Section Reboul Marseille */}
+      <div className="grid md:grid-cols-2 gap-12 items-center">
+        <div className="relative aspect-[3/2] rounded-xl overflow-hidden">
+          {/* Image boutique principale */}
+          <div className="w-full h-full bg-zinc-100 flex items-center justify-center">
+            <span className="text-zinc-400">Image Reboul Marseille</span>
           </div>
-        </motion.div>
-      </motion.div>
+        </div>
+        <div className="space-y-6">
+          <h2 className="text-2xl font-medium">Reboul Marseille</h2>
+          <p className="text-muted-foreground">
+            Boutique emblématique située au cœur de Marseille, Reboul propose une sélection pointue de prêt-à-porter homme, femme et enfant. Chaque pièce est choisie pour sa qualité, son innovation textile et son style contemporain. Notre équipe met un point d’honneur à offrir un conseil personnalisé et une expérience d’achat unique, en boutique comme en ligne sur notre site e-commerce.
+          </p>
+        </div>
+      </div>
 
-      {/* Nos Valeurs */}
-      <motion.div
-        className="space-y-12"
-        variants={staggerContainer}
-        initial="hidden"
-        animate="visible"
-      >
-        <motion.div variants={fadeIn} className="text-center space-y-6">
+      {/* Section Les Minots de Reboul */}
+      <div className="grid md:grid-cols-2 gap-12 items-center">
+        <div className="relative aspect-[3/2] rounded-xl overflow-hidden">
+          {/* Image Minots */}
+          <div className="w-full h-full bg-zinc-100 flex items-center justify-center">
+            <span className="text-zinc-400">Image Les Minots</span>
+          </div>
+        </div>
+        <div className="space-y-6">
+          <h2 className="text-2xl font-medium">Les Minots de Reboul</h2>
+          <p className="text-muted-foreground">
+            À quelques mètres de la boutique principale, Les Minots de Reboul est un espace entièrement dédié à la mode enfant haut de gamme. Vous y retrouverez les plus grandes marques junior : Stone Island, Off-White, Givenchy, Golden Goose, Autry, Chloé, C.P. Company, Herno, Marni et bien d’autres. Chaque pièce est sélectionnée avec soin pour offrir aux plus jeunes un vestiaire à la fois tendance, confortable et durable.
+          </p>
+        </div>
+      </div>
+
+      {/* Section C.P. Company Marseille */}
+      <div className="grid md:grid-cols-2 gap-12 items-center">
+        <div className="relative aspect-[3/2] rounded-xl overflow-hidden">
+          {/* Image CP Company */}
+          <div className="w-full h-full bg-zinc-100 flex items-center justify-center">
+            <span className="text-zinc-400">Image C.P. Company</span>
+          </div>
+        </div>
+        <div className="space-y-6">
+          <h2 className="text-2xl font-medium">C.P. Company Marseille</h2>
+          <p className="text-muted-foreground">
+            Reboul est fier d’accueillir à Marseille une boutique officielle dédiée à C.P. Company, marque italienne culte de vêtements techniques. Dans cet espace exclusif, les passionnés retrouvent les dernières collections, les pièces iconiques – goggles, vestes, cargos – et toute l’esthétique urbaine de la marque fondée par Massimo Osti.
+          </p>
+        </div>
+      </div>
+
+      {/* Section Nos Boutiques avec carte interactive */}
+      <div className="space-y-8">
+        <div className="text-center space-y-2">
           <h2 className="text-3xl font-light uppercase tracking-[0.3em]">
-            Notre ADN
+            Nos Boutiques
           </h2>
           <div className="w-24 h-px bg-primary mx-auto" />
-        </motion.div>
-        <motion.div
-          className="grid md:grid-cols-3 gap-8"
-          variants={staggerContainer}
-        >
-          <motion.div variants={fadeIn}>
-            <Card>
-              <CardContent className="p-6 text-center space-y-4">
-                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
-                  <svg
-                    className="h-6 w-6 text-primary"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <path d="M20 7L10 17L5 12" />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-medium text-center">
-                  Authenticité
-                </h3>
-                <p className="text-muted-foreground text-center">
-                  Nous garantissons l&apos;authenticité de tous nos produits,
-                  sélectionnés auprès des meilleures marques streetwear.
-                </p>
-              </CardContent>
-            </Card>
-          </motion.div>
-          <motion.div variants={fadeIn}>
-            <Card>
-              <CardContent className="p-6 text-center space-y-4">
-                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
-                  <svg
-                    className="h-6 w-6 text-primary"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-medium text-center">Style</h3>
-                <p className="text-muted-foreground text-center">
-                  Une sélection pointue des dernières tendances streetwear et
-                  des sneakers les plus recherchées.
-                </p>
-              </CardContent>
-            </Card>
-          </motion.div>
-          <motion.div variants={fadeIn}>
-            <Card>
-              <CardContent className="p-6 text-center space-y-4">
-                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
-                  <svg
-                    className="h-6 w-6 text-primary"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <path d="M12 21.35L10.55 20.03C5.4 15.36 2 12.27 2 8.5C2 5.41 4.42 3 7.5 3C9.24 3 10.91 3.81 12 5.08C13.09 3.81 14.76 3 16.5 3C19.58 3 22 5.41 22 8.5C22 12.27 18.6 15.36 13.45 20.03L12 21.35Z" />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-medium text-center">Culture</h3>
-                <p className="text-muted-foreground text-center">
-                  Plus qu&apos;une boutique, un lieu de rencontre pour les
-                  passionnés de la culture streetwear et sneakers.
-                </p>
-                <p className="text-muted-foreground text-center">
-                  L&apos;authenticité de tous nos produits est garantie.
-                </p>
-              </CardContent>
-            </Card>
-          </motion.div>
-        </motion.div>
-      </motion.div>
-
-      {/* Contact */}
-      <motion.div
-        className="bg-muted rounded-xl p-8 md:p-12"
-        variants={staggerContainer}
-        initial="hidden"
-        animate="visible"
-      >
-        <div className="grid md:grid-cols-2 gap-12">
-          <motion.div variants={fadeIn} className="space-y-6">
-            <h2 className="text-2xl font-medium">Contactez-nous</h2>
-            <p className="text-muted-foreground">
-              Notre équipe de passionnés est à votre disposition pour vous
-              conseiller et vous aider à trouver les pièces qui vous
-              correspondent.
-            </p>
-            <div className="space-y-4">
-              <div className="flex items-center gap-4">
-                <span>📞</span>
-                <span>04 91 XX XX XX</span>
-              </div>
-              <div className="flex items-center gap-4">
-                <span>📧</span>
-                <span>contact@reboulstore.com</span>
-              </div>
-              <div className="flex items-center gap-4">
-                <span>📍</span>
-                <span>XX Rue XXXXX, 13001 Marseille</span>
-              </div>
-            </div>
-            <div className="flex gap-4">
-              <Link href="https://instagram.com/reboulstore" target="_blank">
-                <Button variant="outline" size="icon">
-                  <span>📷</span>
-                </Button>
-              </Link>
-              <Link href="https://facebook.com/reboulstore" target="_blank">
-                <Button variant="outline" size="icon">
-                  <span>📘</span>
-                </Button>
-              </Link>
-            </div>
-          </motion.div>
-          <motion.div
-            variants={fadeIn}
-            className="relative aspect-video rounded-xl overflow-hidden"
-          >
-            <Image
-              src="/about/map.jpg"
-              alt="Carte de localisation"
-              fill
-              className="object-cover"
-            />
-          </motion.div>
         </div>
-      </motion.div>
+        <div className="flex flex-col md:flex-row gap-8 items-start">
+          <div className="flex md:flex-col gap-2 w-full md:w-56">
+            {boutiques.map((b) => (
+              <Button
+                key={b.key}
+                variant={selectedBoutique === b.key ? "default" : "outline"}
+                onClick={() => setSelectedBoutique(b.key)}
+                className="w-full"
+              >
+                {b.label}
+              </Button>
+            ))}
+          </div>
+          <div className="flex-1 w-full space-y-4">
+            <BoutiqueMap selected={boutiques.find((b) => b.key === selectedBoutique)?.key || ""} />
+            <Card>
+              <CardContent className="p-6 space-y-2">
+                <h3 className="text-xl font-medium">
+                  {boutiques.find((b) => b.key === selectedBoutique)?.label}
+                </h3>
+                <div className="text-muted-foreground">
+                  {boutiques.find((b) => b.key === selectedBoutique)?.adresse}
+                </div>
+                <div className="text-muted-foreground text-sm">
+                  {boutiques.find((b) => b.key === selectedBoutique)?.specialite}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+
+      {/* Section Pourquoi choisir Reboul ? */}
+      <div className="space-y-8">
+        <div className="text-center space-y-2">
+          <h2 className="text-3xl font-light uppercase tracking-[0.3em]">
+            Pourquoi choisir Reboul ?
+          </h2>
+          <div className="w-24 h-px bg-primary mx-auto" />
+        </div>
+        <div className="grid md:grid-cols-2 gap-8">
+          <Card>
+            <CardContent className="p-6">
+              <h3 className="text-xl font-medium mb-2">Sélection pointue de marques de luxe et streetwear</h3>
+              <p className="text-muted-foreground">Un choix exigeant des plus grandes marques et des collections les plus recherchées, pour une offre toujours à la pointe.</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6">
+              <h3 className="text-xl font-medium mb-2">Conseil personnalisé en boutique</h3>
+              <p className="text-muted-foreground">Une équipe passionnée à votre écoute pour vous accompagner et vous conseiller selon vos envies et votre style.</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6">
+              <h3 className="text-xl font-medium mb-2">Expérience d’achat unique</h3>
+              <p className="text-muted-foreground">Un univers où héritage, modernité et culture urbaine se rencontrent pour une expérience shopping inoubliable.</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6">
+              <h3 className="text-xl font-medium mb-2">Pièces exclusives et collections limitées</h3>
+              <p className="text-muted-foreground">Accès à des exclusivités, des éditions limitées et des pièces rares, disponibles en boutique et en ligne.</p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Section Conclusion / Lifestyle */}
+      <div className="text-center space-y-6">
+        <h2 className="text-2xl font-medium">Reboul, bien plus qu’un magasin de vêtements</h2>
+        <p className="text-muted-foreground">
+          Reboul, c’est un lifestyle store marseillais qui incarne une vision contemporaine de la mode : entre techwear, luxe discret, culture urbaine et héritage européen. Notre communauté fidèle et nos clients passionnés partagent un même mot d’ordre : l’élégance sans compromis.
+        </p>
+      </div>
     </div>
   );
 }

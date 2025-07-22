@@ -161,17 +161,17 @@ export function SimpleWebVitalsMonitor() {
     if (score >= 90) {
       return {
         color: "bg-green-500",
-        icon: <span>✅</span>,
+        icon: "Excellent",
       };
     } else if (score >= 60) {
       return {
         color: "bg-yellow-500",
-        icon: <span>⚠️</span>,
+        icon: "Moyen",
       };
     } else {
       return {
         color: "bg-red-500",
-        icon: <span>⚠️</span>,
+        icon: "Faible",
       };
     }
   };

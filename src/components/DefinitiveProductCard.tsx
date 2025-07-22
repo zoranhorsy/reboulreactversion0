@@ -118,7 +118,6 @@ export const DefinitiveProductCard = React.memo(
             {/* Note (optionnelle) */}
             {showRating && product.rating && (
               <div className="flex items-center">
-                <span className="text-yellow-500">★</span>
                 <span className="ml-1 text-sm text-zinc-700 dark:text-zinc-300">
                   {product.rating.toFixed(1)}
                 </span>

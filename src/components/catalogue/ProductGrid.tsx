@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { Pagination } from "@/components/ui/pagination";
 import { DefinitiveProductCard } from "@/components/DefinitiveProductCard";
+import { default as ProductCard } from "@/components/optimized/ProductCard";
 import { type FilterChangeHandler } from "@/lib/types/filters";
 
 export interface ProductGridProps {
@@ -138,11 +139,10 @@ const ProductGrid = memo(function ProductGrid({
         aria-live="polite"
       >
         {products.map((product, index) => (
-          <DefinitiveProductCard 
-            key={product.id} 
-            product={product} 
+          <ProductCard
+            key={product.id}
+            product={product}
             index={index}
-            size="medium"
           />
         ))}
       </div>

@@ -5,7 +5,6 @@ import type { Product, Variant } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { useFavorites } from "@/app/contexts/FavoritesContext";
 import { toast } from "@/components/ui/use-toast";
 import { useAuth } from "@/app/contexts/AuthContext";
 import { ProductImage } from "@/lib/types/product-image";
@@ -82,7 +81,6 @@ export function CornerProductCard({
   viewMode = "grid",
 }: CornerProductCardProps) {
   const [isHovered, setIsHovered] = useState(false);
-  const { addToFavorites, removeFromFavorites, isFavorite } = useFavorites();
   const { user } = useAuth();
   const { brands } = useBrands();
   const { categories } = useCategories();
@@ -96,38 +94,6 @@ export function CornerProductCard({
       maximumFractionDigits: 2,
     }).format(Number(price));
   }, []);
-
-  const handleFavoriteClick = useCallback(
-    async (e: React.MouseEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-
-      if (!user) {
-        toast({
-          title: "Connexion requise",
-          description: "Vous devez être connecté pour ajouter des favoris",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      try {
-        if (isFavorite(product.id, "corner")) {
-          await removeFromFavorites(product.id, "corner");
-        } else {
-          await addToFavorites(product.id, "corner");
-        }
-      } catch (error) {
-        console.error("Erreur avec les favoris:", error);
-        toast({
-          title: "Erreur",
-          description: "Une erreur est survenue avec les favoris",
-          variant: "destructive",
-        });
-      }
-    },
-    [user, product.id, isFavorite, addToFavorites, removeFromFavorites],
-  );
 
   if (!product) return null;
 
@@ -221,34 +187,34 @@ export function CornerProductCard({
         />
 
         {/* Bouton favoris */}
-        <Button
-          size="icon"
-          variant="ghost"
-          className={cn(
-            "absolute top-2 right-2 z-10",
-            "w-9 h-9 rounded-full",
-            "bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm",
-            "hover:bg-white/90 dark:hover:bg-zinc-900/90",
-            "transition-all duration-300",
-            "opacity-0 group-hover:opacity-100",
-            isFavorite(product.id, "corner") && "opacity-100 text-red-500",
-          )}
-          onClick={handleFavoriteClick}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill={isFavorite(product.id, "corner") ? "currentColor" : "none"}
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+        {user && (
+          <Button
+            size="icon"
+            variant="ghost"
+            className={cn(
+              "absolute top-2 right-2 z-10",
+              "w-9 h-9 rounded-full",
+              "bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm",
+              "hover:bg-white/90 dark:hover:bg-zinc-900/90",
+              "transition-all duration-300",
+              "opacity-0 group-hover:opacity-100",
+            )}
           >
-            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-          </svg>
-        </Button>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+            </svg>
+          </Button>
+        )}
 
         {/* Badges pour les promotions et nouveautés */}
         {product.old_price && product.old_price > product.price && (

@@ -162,30 +162,6 @@ export function useUserOrders() {
 }
 
 /**
- * Hook pour récupérer les favoris d'un utilisateur
- */
-export function useUserFavorites() {
-  const { data, error, isLoading, mutate } = useSWR(
-    "user-favorites",
-    async () => {
-      try {
-        return await api.getFavorites();
-      } catch (error) {
-        console.error("Erreur lors de la récupération des favoris:", error);
-        throw error;
-      }
-    },
-  );
-
-  return {
-    favorites: data || [],
-    error,
-    isLoading,
-    mutate,
-  };
-}
-
-/**
  * Hook générique pour toute requête API
  */
 export function useApiRequest<T>(

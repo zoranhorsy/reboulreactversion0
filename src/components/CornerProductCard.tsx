@@ -5,7 +5,6 @@ import type { Product, Variant } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { useFavorites } from "@/app/contexts/FavoritesContext";
 import { toast } from "@/components/ui/use-toast";
 import { useAuth } from "@/app/contexts/AuthContext";
 import { ProductImage } from "@/lib/types/product-image";
@@ -101,11 +100,10 @@ export function CornerProductCard({
 }: CornerProductCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [imageError, setImageError] = useState(false);
-  const { addToFavorites, removeFromFavorites, isFavorite } = useFavorites();
   const { user } = useAuth();
   const { brands } = useBrands();
   const { categories } = useCategories();
-  const isFav = isFavorite(product.id, "corner");
+  const isFav = false; // Removed isFavorite logic
 
   if (!product) return null;
 
@@ -170,20 +168,7 @@ export function CornerProductCard({
       return;
     }
 
-    try {
-      if (isFav) {
-        await removeFromFavorites(product.id, "corner");
-      } else {
-        await addToFavorites(product.id, "corner");
-      }
-    } catch (error) {
-      console.error("Erreur avec les favoris:", error);
-      toast({
-        title: "Erreur",
-        description: "Une erreur est survenue avec les favoris",
-        variant: "destructive",
-      });
-    }
+    // Removed favorite logic
   };
 
   return (

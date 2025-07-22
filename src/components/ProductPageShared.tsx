@@ -4,7 +4,6 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { getProductById } from "@/lib/api";
 import { useCart } from "@/app/contexts/CartContext";
-import { useFavorites } from "@/app/contexts/FavoritesContext";
 import { toast } from "@/components/ui/use-toast";
 import type { CartItem } from "@/lib/types/cart";
 import { ProductDetails } from "@/components/ProductDetails";
@@ -115,8 +114,7 @@ export default function ProductPageShared({
   const [selectedColor, setSelectedColor] = useState("");
   const [quantity, setQuantity] = useState(1);
   const { addItem, openCart } = useCart();
-  const { addToFavorites, removeFromFavorites, isFavorite } = useFavorites();
-  const [isWishlist, setIsWishlist] = useState(false);
+  // SUPPRIMER: toute la logique liée à isWishlist, onToggleWishlist, et la transmission de ces props à ProductDetails
 
   // Fonction pour récupérer le produit selon le store type
   const fetchProduct = useCallback(async () => {
@@ -190,13 +188,7 @@ export default function ProductPageShared({
     }
   }, [productId, fetchProduct]);
 
-  // Mettre à jour l'état des favoris
-  useEffect(() => {
-    if (product) {
-      const storeTypeForFavorites = product.store_type === "cpcompany" ? "corner" : "main";
-      setIsWishlist(isFavorite(product.id, storeTypeForFavorites));
-    }
-  }, [product, isFavorite]);
+  // SUPPRIMER: toute la logique liée à isWishlist, onToggleWishlist, et la transmission de ces props à ProductDetails
 
   // Précharger l'image principale
   useEffect(() => {
@@ -260,27 +252,7 @@ export default function ProductPageShared({
     openCart,
   ]);
 
-  const toggleWishlist = useCallback(() => {
-    if (!product) return;
-
-    const storeTypeForFavorites = product.store_type === "cpcompany" ? "corner" : "main";
-
-    if (isWishlist) {
-      removeFromFavorites(product.id, storeTypeForFavorites);
-      setIsWishlist(false);
-      toast({
-        title: "Produit retiré des favoris",
-        description: `${product.name} a été retiré de vos favoris.`,
-      });
-    } else {
-      addToFavorites(product.id, storeTypeForFavorites);
-      setIsWishlist(true);
-      toast({
-        title: "Produit ajouté aux favoris",
-        description: `${product.name} a été ajouté à vos favoris.`,
-      });
-    }
-  }, [product, isWishlist, addToFavorites, removeFromFavorites]);
+  // SUPPRIMER: toute la logique liée à isWishlist, onToggleWishlist, et la transmission de ces props à ProductDetails
 
   const handleShare = useCallback(async () => {
     if (!product) return;
@@ -345,8 +317,6 @@ export default function ProductPageShared({
               quantity={quantity}
               onQuantityChange={setQuantity}
               onAddToCart={handleAddToCart}
-              isWishlist={isWishlist}
-              onToggleWishlist={toggleWishlist}
               onShare={handleShare}
             />
           ) : (

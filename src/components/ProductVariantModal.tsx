@@ -27,7 +27,6 @@ import { useCart } from "@/app/contexts/CartContext";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { CartItemVariant } from "@/lib/types/cart";
 import { api } from "@/lib/api";
-import { WishlistButton } from "@/components/optimized/MemoizedComponents";
 import Image from "next/image";
 import { useProductMetadata } from "@/hooks/useProductMetadata";
 

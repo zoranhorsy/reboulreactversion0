@@ -57,9 +57,7 @@ export function ColorSelector({
 
   return (
     <div className="mb-4 sm:mb-6 relative">
-      <h3 className="text-sm font-medium mb-3">
-        Couleur: {selectedColor ? getColorInfo(selectedColor).label : ""}
-      </h3>
+      
 
       {/* Preview de l'image au survol - Desktop uniquement */}
       {hoveredColor && productImages[hoveredColor] && (

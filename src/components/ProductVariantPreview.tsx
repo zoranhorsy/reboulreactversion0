@@ -118,7 +118,7 @@ export function ProductVariantPreview({
                 {selectedColor === color && (
                   <div className="absolute bottom-0 left-0 right-0 bg-primary text-white text-[10px] sm:text-xs py-0.5 text-center font-medium">
                     <span className="hidden sm:inline">Sélectionnée</span>
-                    <span className="sm:hidden">✓</span>
+                    <span className="sm:hidden"></span>
                   </div>
                 )}
 

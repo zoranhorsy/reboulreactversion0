@@ -6,7 +6,6 @@ import { SessionProvider } from "next-auth/react";
 import { Toaster } from "@/components/ui/toaster";
 import { CartProvider } from "./contexts/CartContext";
 import { AuthProvider } from "./contexts/AuthContext";
-import { FavoritesProvider } from "./contexts/FavoritesContext";
 import { PromoProvider } from "./contexts/PromoContext";
 
 export function ClientProviders({ children }: { children: React.ReactNode }) {
@@ -20,13 +19,11 @@ export function ClientProviders({ children }: { children: React.ReactNode }) {
       >
         <Toaster />
         <AuthProvider>
-          <FavoritesProvider>
             <PromoProvider>
               <CartProvider>
                 {children}
               </CartProvider>
             </PromoProvider>
-          </FavoritesProvider>
         </AuthProvider>
       </ThemeProvider>
     </SessionProvider>

@@ -69,9 +69,9 @@ export function LoadingFallback({
         className,
       )}
     >
-      <span>⏳</span>
+      <div className="animate-spin rounded-full h-8 w-8 border-4 border-primary border-t-transparent mb-4"></div>
       {message && (
-        <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
+        <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
           {message}
         </p>
       )}

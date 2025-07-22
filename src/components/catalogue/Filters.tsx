@@ -397,7 +397,6 @@ export const FilterComponent = ({
                         )}
                       >
                         {category.name}
-                        {isSelected && <span>✓</span>}
                       </button>
                     );
                   })}
@@ -428,7 +427,6 @@ export const FilterComponent = ({
                         )}
                       >
                         <span className="flex-1 truncate">{brand.name}</span>
-                        {isSelected && <span>✓</span>}
                       </button>
                     );
                   })}
@@ -475,7 +473,6 @@ export const FilterComponent = ({
                           background: colorInfo.hex,
                         }}
                       >
-                        {isActive && <span>✓</span>}
                       </div>
                       <span className="text-[10px] text-muted-foreground group-hover:text-foreground transition-colors line-clamp-1">
                         {colorInfo.label}
@@ -530,3 +527,95 @@ export const FilterComponent = ({
 
 // Export aussi sous le nom Filters pour la compatibilité
 export const Filters = FilterComponent;
+
+// BARRE DE FILTRES MINIMALISTE
+import { useMemo } from "react";
+
+export const MinimalFiltersBar = ({
+  filters,
+  categories,
+  brands,
+  colors,
+  sizes,
+  onFilterChange,
+}: FiltersProps) => {
+  // Options formatées pour Select
+  const categoryOptions = useMemo(() => categories.map(c => ({ value: c.id.toString(), label: c.name })), [categories]);
+  const brandOptions = useMemo(() => brands.map(b => ({ value: b.id.toString(), label: b.name })), [brands]);
+  const sizeOptions = useMemo(() => (sizes || []).map(s => ({ value: s, label: s })), [sizes]);
+  const colorOptions = useMemo(() => (colors || []).map(c => ({ value: c, label: c })), [colors]);
+
+  return (
+    <div className="w-full flex flex-row flex-wrap gap-2 items-center bg-background/95 border-b px-2 py-2 overflow-x-auto">
+      {/* Catégorie */}
+      <Select
+        value={filters.category_id || "all"}
+        onValueChange={v => onFilterChange({ category_id: v === "all" ? "" : v })}
+      >
+        <SelectTrigger className="min-w-[120px] max-w-[180px]">
+          <SelectValue placeholder="Catégorie" />
+        </SelectTrigger>
+        <SelectContent className="max-h-56 overflow-y-auto">
+          <SelectItem value="all">Toutes catégories</SelectItem>
+          {categoryOptions.map(opt => (
+            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      {/* Marque */}
+      <Select
+        value={filters.brand_id || "all"}
+        onValueChange={v => onFilterChange({ brand_id: v === "all" ? "" : v })}
+      >
+        <SelectTrigger className="min-w-[120px] max-w-[180px]">
+          <SelectValue placeholder="Marque" />
+        </SelectTrigger>
+        <SelectContent className="max-h-56 overflow-y-auto">
+          <SelectItem value="all">Toutes marques</SelectItem>
+          {brandOptions.map(opt => (
+            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      {/* Taille */}
+      <Select
+        value={filters.size || "all"}
+        onValueChange={v => onFilterChange({ size: v === "all" ? "" : v })}
+      >
+        <SelectTrigger className="min-w-[80px] max-w-[120px]">
+          <SelectValue placeholder="Taille" />
+        </SelectTrigger>
+        <SelectContent className="max-h-56 overflow-y-auto">
+          <SelectItem value="all">Toutes tailles</SelectItem>
+          {sizeOptions.map(opt => (
+            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      {/* Couleur */}
+      <Select
+        value={filters.color || "all"}
+        onValueChange={v => onFilterChange({ color: v === "all" ? "" : v })}
+      >
+        <SelectTrigger className="min-w-[80px] max-w-[120px]">
+          <SelectValue placeholder="Couleur" />
+        </SelectTrigger>
+        <SelectContent className="max-h-56 overflow-y-auto">
+          <SelectItem value="all">Toutes couleurs</SelectItem>
+          {colorOptions.map(opt => (
+            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      {/* Réinitialiser */}
+      <Button
+        variant="outline"
+        size="sm"
+        className="ml-auto"
+        onClick={() => onFilterChange({ category_id: "", brand_id: "", size: "", color: "" })}
+      >
+        Réinitialiser
+      </Button>
+    </div>
+  );
+};

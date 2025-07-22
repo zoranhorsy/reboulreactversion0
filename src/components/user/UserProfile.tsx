@@ -69,9 +69,6 @@ export default function UserProfile() {
           </div>
 
           <div className="pt-4 flex flex-col gap-2">
-            <Button variant="outline" onClick={() => router.push("/favorites")}>
-              Voir mes favoris
-            </Button>
             <Button
               variant="outline"
               onClick={() => router.push("/suivi-commande")}

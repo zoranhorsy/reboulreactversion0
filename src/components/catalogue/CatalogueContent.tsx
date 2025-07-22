@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { FilterComponent } from "@/components/catalogue/Filters";
+import { MinimalFiltersBar } from "@/components/catalogue/Filters";
 import { ProductGrid } from "@/components/catalogue/ProductGrid";
 import { api } from "@/lib/api";
 import type { Product } from "@/lib/types/product";
@@ -629,40 +629,36 @@ export function CatalogueContent({
         ]}
       />
 
-      <div className="px-4 py-8 sm:px-6 lg:px-8">
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* Filtres - Sidebar sticky simple */}
-          <aside className="w-full lg:w-80 lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-100px)] lg:overflow-y-auto space-y-6">
-            <FilterComponent
-              categories={categories}
-              brands={brands}
-              colors={colors}
-              sizes={sizes}
-              filters={filters}
-              onFilterChange={handleFilterChange}
-              storeTypes={[]}
-              availableColors={colors}
-              availableSizes={sizes}
-            />
-          </aside>
+      {/* Espacement entre header et filtres */}
+      <div className="mt-4" />
 
-          {/* Grille de produits - Plus d'espace */}
-          <main className="flex-1 min-w-0">
-            <ProductGrid
-              products={products}
-              isLoading={loading}
-              error={error}
-              page={Number(filters.page)}
-              limit={Number(filters.limit)}
-              totalProducts={totalItems}
-              totalPages={totalPages}
-              onPageChange={(page) =>
-                handleFilterChange({ page: page.toString() })
-              }
-              _onFilterChange={handleFilterChange}
-            />
-          </main>
-        </div>
+      {/* Filtres horizontaux */}
+      <MinimalFiltersBar
+        categories={categories}
+        brands={brands}
+        colors={colors}
+        sizes={sizes}
+        filters={filters}
+        onFilterChange={handleFilterChange}
+      />
+
+      <div className="px-4 py-8 sm:px-6 lg:px-8">
+        {/* Suppression de la sidebar/aside, on ne garde que la grille */}
+        <main className="flex-1 min-w-0">
+          <ProductGrid
+            products={products}
+            isLoading={loading}
+            error={error}
+            page={Number(filters.page)}
+            limit={Number(filters.limit)}
+            totalProducts={totalItems}
+            totalPages={totalPages}
+            onPageChange={(page) =>
+              handleFilterChange({ page: page.toString() })
+            }
+            _onFilterChange={handleFilterChange}
+          />
+        </main>
       </div>
 
       {/* Modal des filtres mobile */}

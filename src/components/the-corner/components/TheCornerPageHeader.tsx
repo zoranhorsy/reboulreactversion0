@@ -36,7 +36,7 @@ export function TheCornerPageHeader({
   logoImage = "/images/the-corner-logo-white.png",
 }: TheCornerPageHeaderProps) {
   return (
-    <div className="relative w-full h-[280px] overflow-hidden bg-zinc-900 transition-all duration-500 ease-in-out">
+    <div className="relative w-full h-[280px] overflow-hidden bg-zinc-900 transition-all duration-500 ease-in-out rounded-xl">
       {/* Image de fond */}
       {backgroundImage && (
         <div className="absolute inset-0 z-0">

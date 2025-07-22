@@ -1,3 +1,5 @@
+"use client";
+
 import { AboutContent } from "@/components/about/AboutContent";
 import {
   ClientPageWrapper,
