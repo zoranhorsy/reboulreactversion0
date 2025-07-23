@@ -289,11 +289,6 @@ export function ProductForm({
 
   useEffect(() => {
     if (product) {
-      console.log("Mise à jour du formulaire avec les données du produit:", {
-        weight: product.weight,
-        dimensions: product.dimensions,
-        material: product.material,
-      });
       setFormData(defaultFormData());
       // Assurons-nous que la section techniques est ouverte si le produit a des données techniques
       if (product.weight || product.dimensions || product.material) {
@@ -560,7 +555,6 @@ export function ProductForm({
 
     try {
       setIsSubmitting(true);
-      console.log("Form submission started with data:", formData);
 
       // Nettoyer et formater les images pour n'avoir que des URLs simples
       const cleanedImages = (formData.images || [])
@@ -572,8 +566,6 @@ export function ProductForm({
         .filter(
           (url): url is string => typeof url === "string" && url.trim() !== "",
         );
-
-      console.log("Cleaned images:", cleanedImages);
 
       // Créer une copie de formData sans la propriété showTechnicalDetails
       const { showTechnicalDetails, ...productData } = formData;
@@ -589,8 +581,6 @@ export function ProductForm({
               v.stock >= 0,
           )
         : [];
-
-      console.log("Cleaned variants:", cleanedVariants);
 
       // Préparer les données du produit avec seulement les champs nécessaires
       const tempProductData = {
@@ -635,11 +625,6 @@ export function ProductForm({
       const cleanedProductData: Partial<Product> = formData.id
         ? { ...tempProductData, id: formData.id }
         : tempProductData;
-
-      console.log(
-        "Final product data to submit:",
-        JSON.stringify(cleanedProductData, null, 2),
-      );
 
       // Appeler la fonction onSubmit avec les données préparées
       try {
@@ -1777,15 +1762,6 @@ export function ProductForm({
           )}
         </Button>
       </div>
-
-      {config.debug && (
-        <div className="mt-4 p-4 bg-muted/20 rounded-md">
-          <h3 className="text-sm font-semibold mb-2">Mode Debug</h3>
-          <pre className="text-xs overflow-auto">
-            {JSON.stringify(formData, null, 2)}
-          </pre>
-        </div>
-      )}
     </div>
   );
 }

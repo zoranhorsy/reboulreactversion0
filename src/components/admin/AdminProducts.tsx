@@ -4,6 +4,13 @@ import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Card,
   CardContent,
   CardHeader,
@@ -27,7 +34,14 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import ProductForm from "@/components/admin/ProductForm";
-import ProductTable from "@/components/admin/ProductTable";
+import { Table, Button as GeistButton, Input as GeistInput, Select as GeistSelect, useToasts } from "@geist-ui/react";
+import AddCircleLineIcon from "remixicon-react/AddCircleLineIcon";
+import DeleteBinLineIcon from "remixicon-react/DeleteBinLineIcon";
+import SearchLineIcon from "remixicon-react/SearchLineIcon";
+import RefreshLineIcon from "remixicon-react/RefreshLineIcon";
+import Edit2LineIcon from "remixicon-react/Edit2LineIcon";
+import EyeLineIcon from "remixicon-react/EyeLineIcon";
+import EyeCloseLineIcon from "remixicon-react/EyeCloseLineIcon";
 import { handleSort } from "@/utils/productUtils";
 import { BrandManager } from "@/components/admin/BrandManager";
 import { CategoryManager } from "@/components/admin/CategoryManager";
@@ -45,6 +59,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { useFilterWorker } from "@/hooks/useFilterWorker";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 
 // Simple login component for admin area
 function AdminLoginForm() {
@@ -118,6 +133,11 @@ function AdminLoginForm() {
   );
 }
 
+// Hook utilitaire responsive
+function useIsMobile() {
+  return useMediaQuery("(max-width: 640px)");
+}
+
 export function AdminProducts() {
   const [products, setProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
@@ -150,6 +170,10 @@ export function AdminProducts() {
     isLoading: isWorkerLoading,
     error: workerError,
   } = useFilterWorker();
+  const isMobile = useIsMobile();
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const ITEMS_PER_PAGE = 50;
 
   // Check authentication status
   useEffect(() => {
@@ -205,12 +229,14 @@ export function AdminProducts() {
     [products, sortConfig],
   );
 
-  const loadProducts = useCallback(async () => {
+  const loadProducts = useCallback(async (page = 1) => {
     setIsLoading(true);
     try {
-      const response = await api.fetchProducts();
+      const response = await api.fetchProducts({ page, limit: ITEMS_PER_PAGE });
       setProducts(response.products);
       setFilteredProducts(response.products);
+      setTotalPages(response.totalPages || 1);
+      setCurrentPage(response.currentPage || page);
     } catch (error) {
       toast({
         title: "Erreur",
@@ -249,10 +275,10 @@ export function AdminProducts() {
   }, [toast]);
 
   useEffect(() => {
-    loadProducts();
+    loadProducts(currentPage);
     loadCategories();
     loadBrands();
-  }, [loadProducts, loadCategories, loadBrands]);
+  }, [loadProducts, loadCategories, loadBrands, currentPage]);
 
   // Fonction de filtrage de base
   async function filterAndSort(search: string, filters: typeof activeFilters) {
@@ -334,14 +360,9 @@ export function AdminProducts() {
   }, [workerError, activeFilters, applyFiltersFallback, searchTerm, toast]);
 
   const handleProductSubmit = async (productData: Product) => {
-    console.log(
-      "handleProductSubmit called with data:",
-      JSON.stringify(productData, null, 2),
-    );
     try {
       // Nettoyage et formatage des images
       let formattedImages: string[] = [];
-
       if (productData.images && Array.isArray(productData.images)) {
         formattedImages = productData.images
           .map((img) => {
@@ -355,10 +376,8 @@ export function AdminProducts() {
           })
           .filter((url): url is string => url !== null);
       }
-      console.log("Formatted images:", formattedImages);
-
       // Nettoyage des données avant l'envoi
-      const cleanedProductData = {
+      const cleanedProductData: any = {
         ...productData,
         name: productData.name || "",
         description: productData.description || "",
@@ -381,90 +400,90 @@ export function AdminProducts() {
         material: productData.material || null,
         images: formattedImages,
       };
-      console.log(
-        "Cleaned product data:",
-        JSON.stringify(cleanedProductData, null, 2),
-      );
-
       // Suppression des champs non nécessaires ou problématiques
-      delete (cleanedProductData as any).created_at;
-      delete (cleanedProductData as any).updated_at;
-      delete (cleanedProductData as any)._actiontype;
-      delete (cleanedProductData as any).imagesText;
-      delete (cleanedProductData as any).reviews_count;
-      delete (cleanedProductData as any).rating;
-      delete (cleanedProductData as any).id; // Supprime l'ID pour la création
-      delete (cleanedProductData as any).reviews;
-      delete (cleanedProductData as any).questions;
-      delete (cleanedProductData as any).faqs;
-      delete (cleanedProductData as any).size_chart;
-      delete (cleanedProductData as any).image;
-      delete (cleanedProductData as any).image_url;
-      delete (cleanedProductData as any).brand;
-      delete (cleanedProductData as any).category;
-
-      console.log(
-        "Final data to be sent to API:",
-        JSON.stringify(cleanedProductData, null, 2),
-      );
-
+      delete cleanedProductData.created_at;
+      delete cleanedProductData.updated_at;
+      delete cleanedProductData._actiontype;
+      delete cleanedProductData.imagesText;
+      delete cleanedProductData.reviews_count;
+      delete cleanedProductData.rating;
+      delete cleanedProductData.reviews;
+      delete cleanedProductData.questions;
+      delete cleanedProductData.faqs;
+      delete cleanedProductData.size_chart;
+      delete cleanedProductData.image;
+      delete cleanedProductData.image_url;
+      delete cleanedProductData.brand;
+      delete cleanedProductData.category;
+      // Déterminer l'endpoint selon store_type
+      let endpoint = "/api/products";
+      if (cleanedProductData.store_type === "sneakers") {
+        endpoint = "/api/sneakers-products";
+      } else if (cleanedProductData.store_type === "kids") {
+        endpoint = "/api/minots-products";
+      } else if (
+        cleanedProductData.store_type === "cpcompany" ||
+        cleanedProductData.store_type === "corner"
+      ) {
+        endpoint = "/api/corner-products";
+      }
+      // Auth token
+      const token = getToken();
       let updatedProduct;
       try {
         if (editingProduct) {
-          console.log("Updating product with ID:", editingProduct.id);
-          updatedProduct = await api.updateProduct(
-            editingProduct.id,
-            cleanedProductData,
-          );
+          // UPDATE (PUT)
+          updatedProduct = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL || "https://reboul-store-api-production.up.railway.app"}${endpoint}/${editingProduct.id}`,
+            {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: token ? `Bearer ${token}` : "",
+              },
+              body: JSON.stringify(cleanedProductData),
+            },
+          ).then((res) => res.json());
           toast({
             title: "Succès",
             description: "Le produit a été mis à jour avec succès.",
           });
         } else {
-          console.log("Creating new product");
-          const token = getToken();
-          console.log("Auth token exists:", !!token);
-
-          updatedProduct = await api.createProduct(cleanedProductData);
+          // CREATE (POST)
+          updatedProduct = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL || "https://reboul-store-api-production.up.railway.app"}${endpoint}`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: token ? `Bearer ${token}` : "",
+              },
+              body: JSON.stringify(cleanedProductData),
+            },
+          ).then((res) => res.json());
           toast({
             title: "Succès",
             description: "Le produit a été créé avec succès.",
           });
         }
-
         // Recharger les produits après la mise à jour
         await loadProducts();
-
         // Fermer le dialogue et réinitialiser l'état
         setIsDialogOpen(false);
         setEditingProduct(null);
       } catch (error) {
         console.error("API error details:", error);
-        if (error instanceof AxiosError) {
-          toast({
-            title: "Erreur API",
-            description: `${error.response?.data?.message || "Erreur de serveur"} (${error.response?.status})`,
-            variant: "destructive",
-          });
-        } else {
-          toast({
-            title: "Erreur",
-            description:
-              error instanceof Error
-                ? error.message
-                : "Une erreur est survenue lors de l'enregistrement du produit.",
-            variant: "destructive",
-          });
-        }
+        toast({
+          title: "Erreur",
+          description: error instanceof Error ? error.message : "Erreur API",
+          variant: "destructive",
+        });
       }
     } catch (error) {
-      console.error("Outer error in handleProductSubmit:", error);
+      console.error("handleProductSubmit global error:", error);
       toast({
         title: "Erreur",
-        description:
-          error instanceof Error
-            ? error.message
-            : "Une erreur est survenue lors de l'enregistrement du produit.",
+        description: error instanceof Error ? error.message : "Erreur API",
         variant: "destructive",
       });
     }
@@ -765,19 +784,9 @@ export function AdminProducts() {
                         }}
                       >
                         <DialogTrigger asChild>
-                          <Button
-                            onClick={handleAddProduct}
-                            size="sm"
-                            className="h-8 sm:h-9 text-xs sm:text-sm px-2 sm:px-3 w-full sm:w-auto"
-                          >
-                            <span>+</span>
-                            <span className="whitespace-nowrap">
-                              Ajouter
-                              <span className="hidden sm:inline">
-                                {" "}
-                                un produit
-                              </span>
-                            </span>
+                          <Button onClick={handleAddProduct} className="gap-2 h-8 sm:h-9 text-xs sm:text-sm px-2 sm:px-3 w-full sm:w-auto">
+                            <AddCircleLineIcon size={18} />
+                            Ajouter
                           </Button>
                         </DialogTrigger>
                         <DialogContent>
@@ -796,13 +805,8 @@ export function AdminProducts() {
                           />
                         </DialogContent>
                       </Dialog>
-                      <Button
-                        variant="outline"
-                        onClick={purgeDeletedProducts}
-                        className="text-xs sm:text-sm h-8 sm:h-9"
-                        disabled={isLoading}
-                      >
-                        <span>🗑️</span>
+                      <Button onClick={purgeDeletedProducts} className="gap-2 text-xs sm:text-sm h-8 sm:h-9" disabled={isLoading}>
+                        <RefreshLineIcon size={18} />
                         Vider la corbeille
                       </Button>
                     </div>
@@ -815,65 +819,53 @@ export function AdminProducts() {
                       <Input
                         placeholder="Rechercher un produit..."
                         value={searchTerm}
-                        onChange={(e) => handleSearch(e.target.value)}
+                        onChange={e => handleSearch(e.target.value)}
                         className="pl-7 sm:pl-8 w-full h-8 sm:h-9 text-xs sm:text-sm"
                       />
                     </div>
                     <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
-                      <select
-                        className="h-8 sm:h-9 rounded-md border border-input bg-background px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                        value={activeFilters.category}
-                        onChange={(e) =>
-                          handleFilterChange("category", e.target.value)
-                        }
-                      >
-                        <option value="">Toutes les catégories</option>
-                        {categories.map((category) => (
-                          <option
-                            key={category.id}
-                            value={category.id.toString()}
-                          >
-                            {category.name}
-                          </option>
-                        ))}
-                      </select>
+                      <Select value={activeFilters.category || "all"} onValueChange={val => handleFilterChange("category", val === "all" ? "" : val)}>
+                        <SelectTrigger className="h-8 sm:h-9 text-xs sm:text-sm">
+                          <SelectValue placeholder="Toutes les catégories" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Toutes les catégories</SelectItem>
+                          {categories.map(category => (
+                            <SelectItem key={category.id} value={category.id.toString()}>{category.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
 
-                      <select
-                        className="h-8 sm:h-9 rounded-md border border-input bg-background px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                        value={activeFilters.brand}
-                        onChange={(e) =>
-                          handleFilterChange("brand", e.target.value)
-                        }
-                      >
-                        <option value="">Toutes les marques</option>
-                        {brands.map((brand) => (
-                          <option key={brand.id} value={brand.id.toString()}>
-                            {brand.name}
-                          </option>
-                        ))}
-                      </select>
+                      <Select value={activeFilters.brand || "all"} onValueChange={val => handleFilterChange("brand", val === "all" ? "" : val)}>
+                        <SelectTrigger className="h-8 sm:h-9 text-xs sm:text-sm">
+                          <SelectValue placeholder="Toutes les marques" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Toutes les marques</SelectItem>
+                          {brands.map(brand => (
+                            <SelectItem key={brand.id} value={brand.id.toString()}>{brand.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
 
-                      <select
-                        className="h-8 sm:h-9 rounded-md border border-input bg-background px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                        value={activeFilters.store_type}
-                        onChange={(e) =>
-                          handleFilterChange("store_type", e.target.value)
-                        }
-                      >
-                        <option value="">Tous les magasins</option>
-                        <option value="adult">Adulte</option>
-                        <option value="kids">Enfant</option>
-                        <option value="sneakers">Sneakers</option>
-                        <option value="cpcompany">THE CORNER</option>
-                      </select>
+                      <Select value={activeFilters.store_type || "all"} onValueChange={val => handleFilterChange("store_type", val === "all" ? "" : val)}>
+                        <SelectTrigger className="h-8 sm:h-9 text-xs sm:text-sm">
+                          <SelectValue placeholder="Tous les magasins" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Tous les magasins</SelectItem>
+                          <SelectItem value="adult">Adulte</SelectItem>
+                          <SelectItem value="kids">Enfant</SelectItem>
+                          <SelectItem value="sneakers">Sneakers</SelectItem>
+                          <SelectItem value="cpcompany">THE CORNER</SelectItem>
+                        </SelectContent>
+                      </Select>
 
                       <Input
                         className="h-8 sm:h-9 text-xs sm:text-sm"
                         placeholder="Filtrer par réf. magasin"
                         value={activeFilters.store_reference}
-                        onChange={(e) =>
-                          handleFilterChange("store_reference", e.target.value)
-                        }
+                        onChange={e => handleFilterChange("store_reference", e.target.value)}
                       />
 
                       {(activeFilters.category ||
@@ -905,25 +897,126 @@ export function AdminProducts() {
                     </div>
                   </div>
                   <div className="rounded-md border">
-                    <ProductTable
-                      filteredProducts={filteredProducts}
-                      categories={categories}
-                      brands={brands}
-                      sortConfig={sortConfig}
-                      handleSort={(key) =>
-                        handleSort(
-                          key,
-                          sortConfig,
-                          setSortConfig,
-                          products,
-                          "all",
-                          setFilteredProducts,
-                        )
-                      }
-                      handleEditProduct={handleEdit}
-                      handleDeleteProduct={handleDelete}
-                      handleToggleActive={handleToggleActive}
-                    />
+                    {isMobile ? (
+                      <div className="flex flex-col gap-3">
+                        {filteredProducts.map((row) => (
+                          <div key={row.id} className="rounded-lg border p-3 bg-background shadow-sm flex flex-col gap-2">
+                            <div className="flex items-center justify-between">
+                              <div className="font-semibold text-base truncate max-w-[60%]">{row.name}</div>
+                              <div className="text-xs text-muted-foreground">{brands.find(b => b.id === row.brand_id)?.name || "-"}</div>
+                            </div>
+                            <div className="flex flex-wrap gap-2 text-xs">
+                              <span className="font-medium">Catégorie :</span> {categories.find(c => c.id === row.category_id)?.name || "-"}
+                            </div>
+                            <div className="flex flex-wrap gap-2 text-xs">
+                              <span className="font-medium">Prix :</span> {row.price} €
+                            </div>
+                            <div className="flex flex-col gap-1 text-xs">
+                              <span className="font-medium">Variants :</span>
+                              {Array.isArray(row.variants) && row.variants.length > 0 ? (
+                                Object.entries(row.variants.reduce((acc, v) => {
+                                  if (!acc[v.color]) acc[v.color] = { sizes: [], stock: 0 };
+                                  acc[v.color].sizes.push(v.size);
+                                  acc[v.color].stock += v.stock || 0;
+                                  return acc;
+                                }, {} as Record<string, { sizes: string[]; stock: number }>)).map(([color, { sizes, stock }]) => {
+                                  const displaySizes = sizes.slice(0, 4).join(", ");
+                                  const more = sizes.length > 4 ? ", …" : "";
+                                  return (
+                                    <div key={color} className="truncate">
+                                      <span className="font-semibold">{color}</span>
+                                      <span> : {displaySizes}{more} </span>
+                                      <span className="text-muted-foreground">(stock: {stock})</span>
+                                    </div>
+                                  );
+                                })
+                              ) : (
+                                <span className="text-muted-foreground">-</span>
+                              )}
+                            </div>
+                            <div className="flex gap-2 pt-2">
+                              <Button size="icon" variant="ghost" onClick={() => handleEdit(row)}><Edit2LineIcon size={18} /></Button>
+                              <Button size="icon" variant="destructive" onClick={() => handleDelete(Number(row.id))}><DeleteBinLineIcon size={18} /></Button>
+                              <Button size="icon" variant="outline" onClick={() => handleToggleActive(row)}>{row.active ? <EyeCloseLineIcon size={18} /> : <EyeLineIcon size={18} />}</Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <Table data={filteredProducts} className="w-full">
+                        <Table.Column prop="name" label="Nom" />
+                        <Table.Column prop="brand" label="Marque" render={(value, row) => {
+                          const product = row as unknown as Product;
+                          return <>{brands.find(b => b.id === product.brand_id)?.name || "-"}</>;
+                        }} />
+                        <Table.Column prop="category" label="Catégorie" render={(value, row) => {
+                          const product = row as unknown as Product;
+                          return <>{categories.find(c => c.id === product.category_id)?.name || "-"}</>;
+                        }} />
+                        <Table.Column
+                          prop="variants"
+                          label="Variants"
+                          render={(_, row) => {
+                            if (!Array.isArray(row.variants) || row.variants.length === 0) return <span className="text-muted-foreground">-</span>;
+                            const byColor = row.variants.reduce((acc: Record<string, { sizes: string[]; stock: number }>, v: any) => {
+                              if (!acc[v.color]) acc[v.color] = { sizes: [], stock: 0 };
+                              acc[v.color].sizes.push(v.size);
+                              acc[v.color].stock += v.stock || 0;
+                              return acc;
+                            }, {});
+                            return (
+                              <div className="space-y-1">
+                                {Object.entries(byColor).map(([color, { sizes, stock }]) => {
+                                  const displaySizes = sizes.slice(0, 4).join(", ");
+                                  const more = sizes.length > 4 ? ", …" : "";
+                                  return (
+                                    <div key={color} className="truncate text-xs">
+                                      <span className="font-semibold">{color}</span>
+                                      <span> : {displaySizes}{more} </span>
+                                      <span className="text-muted-foreground">(stock: {stock})</span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            );
+                          }}
+                        />
+                        <Table.Column prop="price" label="Prix" render={(value) => <>{value} €</>} />
+                        <Table.Column prop="active" label="Actif" render={(value) => value ? <EyeLineIcon size={18} /> : <EyeCloseLineIcon size={18} />} />
+                        <Table.Column prop="actions" label="Actions" render={(_, row) => {
+                          const product = row as unknown as Product;
+                          return (
+                            <div style={{ display: "flex", gap: 8 }}>
+                              <Button size="icon" variant="ghost" onClick={() => handleEdit(product)}><Edit2LineIcon size={16} /></Button>
+                              <Button size="icon" variant="destructive" onClick={() => handleDelete(Number(product.id))}><DeleteBinLineIcon size={16} /></Button>
+                              <Button size="icon" variant="outline" onClick={() => handleToggleActive(product)}>{product.active ? <EyeCloseLineIcon size={16} /> : <EyeLineIcon size={16} />}</Button>
+                            </div>
+                          );
+                        }} />
+                      </Table>
+                    )}
+                  </div>
+                  {/* Pagination UI (à placer sous la table/liste) */}
+                  <div className="flex justify-center items-center gap-4 mt-6">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      disabled={currentPage === 1 || isLoading}
+                    >
+                      Précédent
+                    </Button>
+                    <span className="text-sm font-medium">
+                      Page {currentPage} / {totalPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages || isLoading}
+                    >
+                      Suivant
+                    </Button>
                   </div>
                 </CardContent>
               </Card>

@@ -51,25 +51,25 @@ export default function Footer() {
       : "/logo_black.png";
 
   return (
-    <footer className="relative overflow-hidden bg-gradient-to-br from-zinc-100 to-zinc-50 dark:from-zinc-900 dark:to-zinc-950 border-t border-zinc-200/50 dark:border-zinc-800/50">
+    <footer className="relative overflow-hidden border-t border-zinc-200/50 dark:border-zinc-800/50 bg-transparent">
       {/* Parallax effect background */}
       <div className="absolute inset-0 opacity-5 pointer-events-none">
         <div className="absolute right-[-10%] bottom-[-10%] w-[40%] h-[40%] rounded-full border border-zinc-400 dark:border-zinc-600"></div>
         <div className="absolute left-[-5%] top-[-10%] w-[30%] h-[30%] rounded-full border border-zinc-400 dark:border-zinc-600"></div>
       </div>
 
-      <div className="container mx-auto px-5 sm:px-6 py-12 md:py-16 lg:py-20">
+      <div className="container mx-auto px-4 sm:px-6 py-8 md:py-14 lg:py-16">
         {/* Main Footer Grid */}
-        <div className="grid grid-cols-1 gap-y-10 sm:gap-y-12 md:grid-cols-2 md:gap-8 lg:grid-cols-12 lg:gap-x-8 xl:gap-x-12">
+        <div className="grid grid-cols-1 gap-y-8 sm:gap-y-10 md:grid-cols-2 md:gap-8 lg:grid-cols-12 lg:gap-x-8 xl:gap-x-12">
           {/* Logo Column */}
           <div className="footer-animate flex flex-col items-center md:items-start lg:col-span-3 xl:col-span-3 opacity-0 translate-y-5 transition-all duration-700 ease-out">
-            <div className="mb-6 md:mb-8 w-full max-w-[180px] md:max-w-[220px] card-glass p-4">
+            <div className="mb-6 md:mb-8 w-full max-w-[160px] md:max-w-[200px] card-glass p-4">
               {mounted && (
                 <Image
                   src={logoSrc}
                   alt="Reboul"
-                  width={240}
-                  height={240}
+                  width={200}
+                  height={200}
                   className="w-full h-auto opacity-90 hover:opacity-100 transition-all duration-300"
                   priority
                 />
@@ -80,26 +80,26 @@ export default function Footer() {
               <Link
                 href="https://instagram.com"
                 target="_blank"
-                className="text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors duration-300"
+                aria-label="Instagram"
+                className="text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors duration-300 font-semibold text-sm"
               >
-                <span>📷</span>
-                <span className="sr-only">Instagram</span>
+                Instagram
               </Link>
               <Link
                 href="https://facebook.com"
                 target="_blank"
-                className="text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors duration-300"
+                aria-label="Facebook"
+                className="text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors duration-300 font-semibold text-sm"
               >
-                <span>📘</span>
-                <span className="sr-only">Facebook</span>
+                Facebook
               </Link>
               <Link
                 href="https://twitter.com"
                 target="_blank"
-                className="text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors duration-300"
+                aria-label="Twitter"
+                className="text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors duration-300 font-semibold text-sm"
               >
-                <span>🐦</span>
-                <span className="sr-only">Twitter</span>
+                Twitter
               </Link>
             </div>
 
@@ -147,12 +147,12 @@ export default function Footer() {
             {/* Contact rapide - visible uniquement sur tablette/médium */}
             <div className="hidden md:flex lg:hidden flex-col items-start mt-8 space-y-2">
               <div className="flex items-center text-xs text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">
-                <span>📞</span>
-                <span>04 91 XX XX XX</span>
+                <span className="font-semibold">Tél&nbsp;:</span>
+                <span className="ml-1">04 91 XX XX XX</span>
               </div>
               <div className="flex items-center text-xs text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">
-                <span>📧</span>
-                <span>contact@reboul.fr</span>
+                <span className="font-semibold">Mail&nbsp;:</span>
+                <span className="ml-1">contact@reboul.fr</span>
               </div>
             </div>
           </div>
@@ -170,7 +170,6 @@ export default function Footer() {
                   REBOUL
                 </p>
                 <p className="transition-opacity duration-300 flex items-center justify-center md:justify-start">
-                  <span>📍</span>
                   MARSEILLE - 523 RUE PARADIS
                 </p>
               </div>
@@ -179,7 +178,6 @@ export default function Footer() {
                   REBOUL STORE
                 </p>
                 <p className="transition-opacity duration-300 flex items-center justify-center md:justify-start">
-                  <span>📍</span>
                   CASSIS - 7 AVENUE VICTOR HUGO
                 </p>
               </div>
@@ -188,7 +186,6 @@ export default function Footer() {
                   REBOUL UTILITY
                 </p>
                 <p className="transition-opacity duration-300 flex items-center justify-center md:justify-start">
-                  <span>📍</span>
                   SANARY - 16 RUE GAILLARD
                 </p>
               </div>
@@ -200,7 +197,6 @@ export default function Footer() {
                   THE CORNER C.P.COMPANY
                 </p>
                 <p className="transition-opacity duration-300 flex items-center justify-center md:justify-start">
-                  <span>📍</span>
                   MARSEILLE - 376 AVENUE DU PRADO
                 </p>
               </div>
@@ -209,20 +205,20 @@ export default function Footer() {
             {/* Contact rapide - visible uniquement sur desktop/large */}
             <div className="hidden lg:flex flex-col items-start mt-8 space-y-2">
               <div className="flex items-center text-xs text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">
-                <span>📞</span>
-                <span>04 91 XX XX XX</span>
+                <span className="font-semibold">Tél&nbsp;:</span>
+                <span className="ml-1">04 91 XX XX XX</span>
               </div>
               <div className="flex items-center text-xs text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">
-                <span>📧</span>
-                <span>contact@reboul.fr</span>
+                <span className="font-semibold">Mail&nbsp;:</span>
+                <span className="ml-1">contact@reboul.fr</span>
               </div>
             </div>
           </div>
         </div>
 
         {/* Mobile Nav Links */}
-        <div className="mt-10 pt-6 border-t border-zinc-200/30 dark:border-zinc-800/30 md:hidden">
-          <div className="grid grid-cols-2 gap-3 text-xs text-center">
+        <div className="mt-8 pt-4 border-t border-zinc-200/30 dark:border-zinc-800/30 md:hidden">
+          <div className="flex flex-col gap-2 text-xs text-center">
             <Link
               href="/mentions-legales"
               className="py-2 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"

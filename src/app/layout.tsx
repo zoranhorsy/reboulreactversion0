@@ -5,6 +5,7 @@ import { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { ClientProviders } from "./client-providers";
 import { ClientSideLayout } from "@/components/layout/ClientSideLayout";
+import Footer from "@/components/Footer";
 
 // Utilisation de preload pour les polices
 const inter = Inter({
@@ -85,6 +86,7 @@ export default function RootLayout({
         <ClientProviders>
           <ClientSideLayout>
             {children}
+            <Footer />
           </ClientSideLayout>
         </ClientProviders>
       </body>

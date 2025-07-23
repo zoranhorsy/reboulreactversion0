@@ -78,13 +78,13 @@ export function AboutContent() {
   return (
     <div className="container mx-auto py-16 space-y-24">
       {/* En-tête / Introduction */}
-      <div className="text-center space-y-6">
-        <h1 className="text-4xl font-light uppercase tracking-[0.4em]">
+      <div className="text-center space-y-6 px-4 sm:px-6 md:px-0">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-light uppercase tracking-[0.2em] sm:tracking-[0.3em] md:tracking-[0.4em]">
           À propos de Reboul
         </h1>
-        <div className="w-24 h-px bg-primary mx-auto" />
-        <h2 className="text-xl font-medium mt-2 mb-2">Concept store haut de gamme à Marseille</h2>
-        <p className="font-geist text-lg text-zinc-600 dark:text-zinc-400 leading-relaxed max-w-2xl mx-auto">
+        <div className="w-16 sm:w-20 md:w-24 h-px bg-primary mx-auto" />
+        <h2 className="text-lg sm:text-xl font-medium mt-2 mb-2">Concept store haut de gamme à Marseille</h2>
+        <p className="font-geist text-base sm:text-lg text-zinc-600 dark:text-zinc-400 leading-relaxed max-w-full sm:max-w-xl md:max-w-2xl mx-auto px-0 sm:px-2">
           Reboul est un concept store marseillais spécialisé dans la mode premium et les marques de créateurs. Situé en plein cœur de Marseille, Reboul sélectionne les meilleures marques de prêt-à-porter homme, femme et enfant, avec une attention particulière portée à la qualité, l’innovation textile et le style contemporain. Marques emblématiques, pièces iconiques, collections exclusives : Reboul est devenu une référence pour les passionnés de mode à Marseille, mais aussi au-delà grâce à son site e-commerce.
         </p>
       </div>
@@ -146,29 +146,33 @@ export function AboutContent() {
           <div className="w-24 h-px bg-primary mx-auto" />
         </div>
         <div className="flex flex-col md:flex-row gap-8 items-start">
-          <div className="flex md:flex-col gap-2 w-full md:w-56">
+          {/* Boutons boutiques : scroll horizontal sur mobile */}
+          <div className="flex md:flex-col gap-2 w-full md:w-56 overflow-x-auto md:overflow-visible flex-nowrap md:flex-wrap pb-2 md:pb-0 -mx-2 md:mx-0">
             {boutiques.map((b) => (
               <Button
                 key={b.key}
                 variant={selectedBoutique === b.key ? "default" : "outline"}
                 onClick={() => setSelectedBoutique(b.key)}
-                className="w-full"
+                className="w-auto min-w-[160px] flex-shrink-0 md:w-full md:min-w-0 px-3 py-2 text-xs sm:text-sm md:text-base whitespace-normal text-center mx-2 md:mx-0"
               >
                 {b.label}
               </Button>
             ))}
           </div>
-          <div className="flex-1 w-full space-y-4">
-            <BoutiqueMap selected={boutiques.find((b) => b.key === selectedBoutique)?.key || ""} />
-            <Card>
-              <CardContent className="p-6 space-y-2">
-                <h3 className="text-xl font-medium">
+          {/* Carte + fiche */}
+          <div className="flex-1 w-full space-y-4 min-w-0">
+            <div className="w-full h-48 sm:h-64 md:h-80 rounded-xl overflow-hidden border bg-white dark:bg-zinc-900">
+              <BoutiqueMap selected={boutiques.find((b) => b.key === selectedBoutique)?.key || ""} />
+            </div>
+            <Card className="w-full max-w-full">
+              <CardContent className="p-4 sm:p-6 space-y-2">
+                <h3 className="text-lg sm:text-xl font-medium">
                   {boutiques.find((b) => b.key === selectedBoutique)?.label}
                 </h3>
-                <div className="text-muted-foreground">
+                <div className="text-muted-foreground text-sm sm:text-base">
                   {boutiques.find((b) => b.key === selectedBoutique)?.adresse}
                 </div>
-                <div className="text-muted-foreground text-sm">
+                <div className="text-muted-foreground text-xs sm:text-sm">
                   {boutiques.find((b) => b.key === selectedBoutique)?.specialite}
                 </div>
               </CardContent>

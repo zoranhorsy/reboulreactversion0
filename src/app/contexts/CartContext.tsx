@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
-
+import { useRouter } from "next/navigation";
 export interface CartItem {
   id: string;
   productId: string;
@@ -57,6 +57,7 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [lastOrder, setLastOrderState] = useState<OrderDetails | null>(null);
+  const router = useRouter();
 
   // Charger les données du panier depuis localStorage au montage
   useEffect(() => {
@@ -152,7 +153,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   };
 
   const openCart = () => {
-    // Simple implementation
+    router.push("/panier");
   };
 
   const applyDiscountCode = (code: string) => {

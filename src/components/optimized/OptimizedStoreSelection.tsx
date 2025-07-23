@@ -7,16 +7,16 @@ import { gsap } from "gsap";
 const STORE_COLLECTIONS = [
   {
     id: "adult",
-    title: "REBOUL ADULTE",
+    title: "REBOUL STORE 2.0",
     href: "/catalogue?store_type=adult",
-    description: "COLLECTION ADULTE",
+    description: "COLLECTION ADULTE 2.0",
     tagline: "Style et élégance pour tous",
     image: "/images/collections/adult-collection.jpg",
   },
   {
     id: "kids",
     title: "LES MINOTS DE REBOUL",
-    href: "/catalogue?store_type=kids",
+    href: "/kids",
     description: "COLLECTION ENFANT",
     tagline: "Mode tendance pour les petits",
     image: "/images/collections/kids-collection.jpg",
@@ -24,7 +24,7 @@ const STORE_COLLECTIONS = [
   {
     id: "sneakers",
     title: "SNEAKERS",
-    href: "/catalogue?store_type=sneakers",
+    href: "/sneakers",
     description: "ÉDITION LIMITÉE",
     tagline: "Pour les passionnés de streetwear",
     image: "/images/collections/sneakers-collection.jpg",

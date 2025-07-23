@@ -470,7 +470,7 @@ export const VariantManager = React.memo(function VariantManagerComponent({
   const standardSizesOptions = useMemo(
     () =>
       SIZES.standard.map((size) => (
-        <SelectItem key={size} value={size}>
+        <SelectItem key={size} value={size} className="text-xs text-black">
           {size}
         </SelectItem>
       )),
@@ -480,7 +480,7 @@ export const VariantManager = React.memo(function VariantManagerComponent({
   const italianSizesOptions = useMemo(
     () =>
       SIZES.italian.map((size) => (
-        <SelectItem key={size} value={size}>
+        <SelectItem key={size} value={size} className="text-xs text-black">
           {size}
         </SelectItem>
       )),
@@ -490,7 +490,7 @@ export const VariantManager = React.memo(function VariantManagerComponent({
   const kidsShoeSizesOptions = useMemo(
     () =>
       SIZES.shoes_kids.map((size) => (
-        <SelectItem key={size} value={size}>
+        <SelectItem key={size} value={size} className="text-xs text-black">
           {size}
         </SelectItem>
       )),
@@ -500,7 +500,7 @@ export const VariantManager = React.memo(function VariantManagerComponent({
   const adultShoeSizesOptions = useMemo(
     () =>
       SIZES.shoes.map((size) => (
-        <SelectItem key={size} value={size}>
+        <SelectItem key={size} value={size} className="text-xs text-black">
           {size}
         </SelectItem>
       )),
@@ -510,14 +510,8 @@ export const VariantManager = React.memo(function VariantManagerComponent({
   const standardColorsOptions = useMemo(
     () =>
       productColors.map((color) => (
-        <SelectItem key={color.name} value={color.name}>
-          <div className="flex items-center">
-            <div
-              className="w-3 h-3 rounded-full mr-2 border border-border/40"
-              style={{ backgroundColor: color.value }}
-            />
-            {color.name}
-          </div>
+        <SelectItem key={color.name} value={color.name} className="text-xs text-black">
+          <span className="truncate max-w-[80px] text-foreground text-sm font-medium inline-block align-middle">{color.name}</span>
         </SelectItem>
       )),
     [],
@@ -530,17 +524,17 @@ export const VariantManager = React.memo(function VariantManagerComponent({
           {variants.map((variant, index) => (
             <div
               key={index}
-              className="flex items-center space-x-2 p-2 bg-zinc-800/50 border border-zinc-700/40 rounded-lg"
+              className="flex items-center space-x-2 p-2 bg-white/20 border border-zinc-700/40 rounded-lg"
             >
               <div className="w-1/3 sm:w-1/4">
                 <Select
                   value={variant.size}
                   onValueChange={(value) => updateVariant(index, "size", value)}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="text-black">
                     <SelectValue placeholder="Taille" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="max-h-56 overflow-y-auto">
                     <SelectGroup>
                       <SelectLabel className="text-zinc-400">
                         Tailles standards
@@ -578,7 +572,7 @@ export const VariantManager = React.memo(function VariantManagerComponent({
                           <SelectLabel className="text-zinc-400">
                             Valeur personnalisée
                           </SelectLabel>
-                          <SelectItem value={variant.size}>
+                          <SelectItem value={variant.size} className="text-xs text-black">
                             {variant.size}
                           </SelectItem>
                         </SelectGroup>
@@ -586,202 +580,31 @@ export const VariantManager = React.memo(function VariantManagerComponent({
                   </SelectContent>
                 </Select>
               </div>
-              <div className="w-1/3 sm:w-1/4">
-                {isEditingVariantColor === index ? (
-                  <div className="space-y-1.5">
-                    <div className="flex space-x-1 items-center">
-                      <div className="relative flex-1">
-                        <Input
-                          value={editingCustomColor}
-                          onChange={(e) =>
-                            setEditingCustomColor(e.target.value)
-                          }
-                          placeholder="Couleur personnalisée"
-                          className="border-zinc-700/40 h-8 sm:h-9 text-sm bg-zinc-800/50 w-full pl-7 text-white"
-                        />
-                        <div
-                          className="absolute left-2 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5 rounded-full border border-zinc-700/40"
-                          style={{ backgroundColor: editingCustomColorHex }}
-                        ></div>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => saveEditingVariantColor(index)}
-                        className="h-8 w-8 rounded-full bg-white/10 hover:bg-white/20 flex-shrink-0"
-                      >
-                        <span>✓</span>
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() =>
-                          saveCustomColor(
-                            editingCustomColor,
-                            editingCustomColorHex,
-                          )
-                        }
-                        className="h-8 w-8 rounded-full bg-white/10 hover:bg-white/20 flex-shrink-0"
-                        title="Sauvegarder cette couleur"
-                      >
-                        <span>📝</span>
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={cancelEditingVariantColor}
-                        className="h-8 w-8 rounded-full bg-red-500/10 hover:bg-red-500/20 flex-shrink-0"
-                      >
-                        <span>×</span>
-                      </Button>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <Label
-                        htmlFor={`color-hex-${index}`}
-                        className="text-[10px] text-zinc-400"
-                      >
-                        Couleur:
-                      </Label>
-                      <div className="flex-1 flex items-center gap-1">
-                        <input
-                          type="color"
-                          id={`color-hex-${index}`}
-                          value={editingCustomColorHex}
-                          onChange={(e) =>
-                            setEditingCustomColorHex(e.target.value)
-                          }
-                          className="h-4 w-4 cursor-pointer bg-transparent"
-                        />
-                        <span className="text-[10px] text-zinc-400">
-                          {editingCustomColorHex}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center space-x-1 relative">
-                    <Select
-                      value={variant.color}
-                      onValueChange={(value) =>
-                        updateVariant(index, "color", value)
-                      }
-                    >
-                      <SelectTrigger>
-                        {variant.color && (
-                          <div className="flex items-center">
-                            {productColors.some(
-                              (c) => c.name === variant.color,
-                            ) ? (
-                              <div
-                                className="w-3 h-3 rounded-full mr-2 border border-zinc-700/40"
-                                style={{
-                                  backgroundColor:
-                                    productColors.find(
-                                      (c) => c.name === variant.color,
-                                    )?.value || "#CCCCCC",
-                                }}
-                              />
-                            ) : savedCustomColors.some(
-                                (c) => c.name === variant.color,
-                              ) ? (
-                              <div
-                                className="w-3 h-3 rounded-full mr-2 border border-zinc-700/40"
-                                style={{
-                                  backgroundColor:
-                                    savedCustomColors.find(
-                                      (c) => c.name === variant.color,
-                                    )?.value || "#CCCCCC",
-                                }}
-                              />
-                            ) : (
-                              <div className="w-3 h-3 rounded-full mr-2 border border-zinc-700/40 bg-gray-600 overflow-hidden relative">
-                                <span>🔄</span>
-                              </div>
-                            )}
-                            <SelectValue placeholder="Couleur" />
-                          </div>
-                        )}
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          <SelectLabel className="text-zinc-400">
-                            Couleurs standard
-                          </SelectLabel>
-                          {standardColorsOptions}
-                        </SelectGroup>
-
-                        {savedCustomColors.length > 0 && (
-                          <SelectGroup>
-                            <SelectLabel className="flex items-center justify-between text-zinc-400">
-                              <span>Couleurs personnalisées</span>
-                            </SelectLabel>
-                            {savedCustomColors.map((color) => (
-                              <SelectItem key={color.name} value={color.name}>
-                                <div className="flex items-center justify-between w-full">
-                                  <div className="flex items-center">
-                                    <div
-                                      className="w-3 h-3 rounded-full mr-2 border border-zinc-700/40"
-                                      style={{ backgroundColor: color.value }}
-                                    />
-                                    {color.name}
-                                  </div>
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-5 w-5 ml-2 rounded-full hover:bg-red-500/10"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      removeCustomColor(color.name);
-                                    }}
-                                  >
-                                    <span>×</span>
-                                  </Button>
-                                </div>
-                              </SelectItem>
-                            ))}
-                          </SelectGroup>
-                        )}
-
-                        {!productColors.some((c) => c.name === variant.color) &&
-                          !savedCustomColors.some(
-                            (c) => c.name === variant.color,
-                          ) &&
-                          variant.color && (
-                            <SelectGroup>
-                              <SelectLabel className="text-zinc-400">
-                                Valeur personnalisée
-                              </SelectLabel>
-                              <SelectItem value={variant.color}>
-                                {variant.color}
-                              </SelectItem>
-                            </SelectGroup>
-                          )}
-
-                        <SelectGroup>
-                          <SelectItem value="custom">
-                            Couleur personnalisée...
+              <div className="w-1/3 sm:w-1/4 flex items-center">
+                <Select value={variant.color} onValueChange={(value) => updateVariant(index, "color", value)}>
+                  <SelectTrigger>
+                    <span className="truncate max-w-[80px] text-foreground text-sm font-medium">{variant.color}</span>
+                  </SelectTrigger>
+                  <SelectContent className="max-h-56 overflow-y-auto">
+                    <SelectGroup>
+                      <SelectLabel className="text-zinc-400">Couleurs standard</SelectLabel>
+                      {standardColorsOptions}
+                    </SelectGroup>
+                    {savedCustomColors.length > 0 && (
+                      <SelectGroup>
+                        <SelectLabel className="text-zinc-400">Couleurs personnalisées</SelectLabel>
+                        {savedCustomColors.map((color) => (
+                          <SelectItem key={color.name} value={color.name} className="text-xs text-black">
+                            <span className="truncate max-w-[80px] text-foreground text-sm font-medium inline-block align-middle">{color.name}</span>
                           </SelectItem>
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() =>
-                        startEditingVariantColor(index, variant.color)
-                      }
-                      className="h-7 w-7 rounded-full hover:bg-white/10 flex-shrink-0"
-                      title="Modifier la couleur"
-                    >
-                      <span>✏️</span>
-                    </Button>
-                  </div>
-                )}
+                        ))}
+                      </SelectGroup>
+                    )}
+                    <SelectGroup>
+                      <SelectItem value="custom" className="text-xs text-black">Couleur personnalisée...</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="w-1/4 sm:w-1/6">
                 <Input
@@ -791,7 +614,7 @@ export const VariantManager = React.memo(function VariantManagerComponent({
                     updateVariant(index, "stock", parseInt(e.target.value) || 0)
                   }
                   placeholder="Stock"
-                  className="border-zinc-700/40 h-8 sm:h-9 text-sm bg-zinc-800/50 text-white text-right"
+                  className="border-zinc-700/40 h-8 sm:h-9 text-sm bg-white/20 text-black"
                 />
               </div>
               <Button
@@ -807,7 +630,7 @@ export const VariantManager = React.memo(function VariantManagerComponent({
         </div>
       )}
 
-      <div className="bg-zinc-800/40 rounded-lg border border-zinc-700/40 p-2 sm:p-3">
+      <div className="bg-white/20 rounded-lg border border-zinc-700/40 p-2 sm:p-3">
         <h4 className="text-xs font-medium mb-2 text-zinc-400">
           Ajouter un nouveau variant
         </h4>
@@ -826,7 +649,7 @@ export const VariantManager = React.memo(function VariantManagerComponent({
                   value={customSize}
                   onChange={(e) => setCustomSize(e.target.value)}
                   placeholder="Taille personnalisée"
-                  className="border-zinc-700/40 h-8 sm:h-9 text-sm bg-zinc-800/50 w-3/4 text-white"
+                  className="border-zinc-700/40 h-8 sm:h-9 text-sm bg-white/20 w-3/4 text-black"
                 />
                 <Button
                   type="button"
@@ -840,10 +663,10 @@ export const VariantManager = React.memo(function VariantManagerComponent({
               </div>
             ) : (
               <Select value={newVariant.size} onValueChange={handleSizeChange}>
-                <SelectTrigger>
+                <SelectTrigger className="text-black">
                   <SelectValue placeholder="Sélectionner une taille" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="max-h-56 overflow-y-auto">
                   <SelectGroup>
                     <SelectLabel className="text-zinc-400">
                       Tailles standards
@@ -873,7 +696,7 @@ export const VariantManager = React.memo(function VariantManagerComponent({
                   </SelectGroup>
 
                   <SelectGroup>
-                    <SelectItem value="custom">
+                    <SelectItem value="custom" className="text-xs text-black">
                       Taille personnalisée...
                     </SelectItem>
                   </SelectGroup>
@@ -898,7 +721,7 @@ export const VariantManager = React.memo(function VariantManagerComponent({
                       value={customColor}
                       onChange={(e) => setCustomColor(e.target.value)}
                       placeholder="Nom de la couleur"
-                      className="border-zinc-700/40 h-8 sm:h-9 text-sm bg-zinc-800/50 w-full pl-7 text-white"
+                      className="border-zinc-700/40 h-8 sm:h-9 text-sm bg-white/20 w-full pl-7 text-black"
                     />
                     <div
                       className="absolute left-2 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5 rounded-full border border-zinc-700/40"
@@ -955,7 +778,7 @@ export const VariantManager = React.memo(function VariantManagerComponent({
                 <SelectTrigger>
                   <SelectValue placeholder="Sélectionner une couleur" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="max-h-56 overflow-y-auto">
                   <SelectGroup>
                     <SelectLabel className="text-zinc-400">
                       Couleurs standard
@@ -969,15 +792,9 @@ export const VariantManager = React.memo(function VariantManagerComponent({
                         <span>Couleurs personnalisées</span>
                       </SelectLabel>
                       {savedCustomColors.map((color) => (
-                        <SelectItem key={color.name} value={color.name}>
+                        <SelectItem key={color.name} value={color.name} className="text-xs text-black">
                           <div className="flex items-center justify-between w-full">
-                            <div className="flex items-center">
-                              <div
-                                className="w-3 h-3 rounded-full mr-2 border border-zinc-700/40"
-                                style={{ backgroundColor: color.value }}
-                              />
-                              {color.name}
-                            </div>
+                            <span className="truncate max-w-[80px] text-foreground text-sm font-medium inline-block align-middle">{color.name}</span>
                             <Button
                               type="button"
                               variant="ghost"
@@ -997,7 +814,7 @@ export const VariantManager = React.memo(function VariantManagerComponent({
                   )}
 
                   <SelectGroup>
-                    <SelectItem value="custom">
+                    <SelectItem value="custom" className="text-xs text-black">
                       Couleur personnalisée...
                     </SelectItem>
                   </SelectGroup>
@@ -1024,7 +841,7 @@ export const VariantManager = React.memo(function VariantManagerComponent({
                 })
               }
               placeholder="Quantité"
-              className="border-zinc-700/40 h-8 sm:h-9 text-sm bg-zinc-800/50 text-white text-right"
+              className="border-zinc-700/40 h-8 sm:h-9 text-sm bg-white/20 text-black text-right"
             />
           </div>
 
