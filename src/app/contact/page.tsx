@@ -20,17 +20,34 @@ export default function Contact() {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Ici, vous ajouteriez la logique pour envoyer le message
-    console.log("Formulaire soumis:", { name, email, message });
-    toast({
-      title: "Message envoyé",
-      description: "Nous vous répondrons dans les plus brefs délais.",
-    });
-    setName("");
-    setEmail("");
-    setMessage("");
+    try {
+      const res = await fetch("https://reboul-store-api-production.up.railway.app/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, message }),
+      });
+      if (res.ok) {
+        toast({
+          title: "Message envoyé",
+          description: "Nous vous répondrons dans les plus brefs délais.",
+        });
+        setName("");
+        setEmail("");
+        setMessage("");
+      } else {
+        toast({
+          title: "Erreur",
+          description: "Une erreur est survenue lors de l'envoi. Veuillez réessayer.",
+        });
+      }
+    } catch (err) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de contacter le serveur. Veuillez réessayer.",
+      });
+    }
   };
 
   return (

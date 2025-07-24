@@ -316,10 +316,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       }
       
       const storeDisplayNames = {
-        adult: '👔 Reboul Adult',
-        sneakers: '👟 Reboul Sneakers',
-        kids: '🧸 Reboul Kids',
-        the_corner: '🏬 The Corner'
+        adult: 'Reboul Store 2.0',
+        sneakers: 'Reboul Store 2.0',
+        kids: 'Les Minots de Reboul',
+        the_corner: 'The Corner C.P.COMPANY - Marseille'
       };
       const storePrefix = storeDisplayNames[store as keyof typeof storeDisplayNames] || '🏪 Store';
       
@@ -444,10 +444,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       checkoutParams.discounts = [discount];
     }
 
-    // Utiliser le customer si disponible
-    if (stripeCustomer) {
+    // Utiliser le customer si disponible UNIQUEMENT si l'utilisateur est authentifié
+    if (isAuthenticated && stripeCustomer) {
       checkoutParams.customer = stripeCustomer.id;
-    } else if (userEmail) {
+    } else if (isAuthenticated && userEmail) {
       checkoutParams.customer_email = userEmail;
     }
 

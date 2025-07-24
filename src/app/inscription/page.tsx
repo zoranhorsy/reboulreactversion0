@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/app/contexts/AuthContext";
 import { useTheme } from "next-themes";
+import { RiMoonLine, RiSunLine, RiEyeLine, RiEyeOffLine, RiCheckLine, RiCloseLine } from '@remixicon/react';
 
 export const viewport: Viewport = defaultViewport;
 
@@ -135,24 +136,6 @@ function RegisterPage() {
     <div
       className={`min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 ${theme === "light" ? "bg-gray-50" : "bg-black"}`}
     >
-      {/* Bouton de changement de thème */}
-      <button
-        onClick={toggleTheme}
-        className={`absolute top-4 right-4 p-2 rounded-full ${
-          theme === "light"
-            ? "bg-gray-200 text-gray-800 hover:bg-gray-300"
-            : "bg-zinc-800 text-gray-200 hover:bg-zinc-700"
-        }`}
-        aria-label={
-          theme === "light" ? "Passer au mode sombre" : "Passer au mode clair"
-        }
-        title={
-          theme === "light" ? "Passer au mode sombre" : "Passer au mode clair"
-        }
-      >
-        {theme === "light" ? <span>🌙</span> : <span>☀️</span>}
-      </button>
-
       {/* Logo en header */}
       <div className="w-full max-w-md mb-8 flex flex-col items-center animate-fadeIn">
         <div className="relative w-40 h-40 sm:w-48 sm:h-48">
@@ -253,7 +236,7 @@ function RegisterPage() {
                     : "Afficher le mot de passe"
                 }
               >
-                {showPassword ? <span>👁️</span> : <span>👁️</span>}
+                {showPassword ? <RiEyeOffLine className="w-5 h-5" /> : <RiEyeLine className="w-5 h-5" />}
               </button>
             </div>
 
@@ -273,7 +256,7 @@ function RegisterPage() {
 
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div className="flex items-center gap-1">
-                    {passwordCriteria.length ? <span>✓</span> : <span>×</span>}
+                    {passwordCriteria.length ? <RiCheckLine className="w-4 h-4 text-green-500" /> : <RiCloseLine className="w-4 h-4 text-red-500" />}
                     <span
                       className={
                         theme === "light" ? "text-gray-600" : "text-gray-400"
@@ -284,9 +267,9 @@ function RegisterPage() {
                   </div>
                   <div className="flex items-center gap-1">
                     {passwordCriteria.uppercase ? (
-                      <span>✓</span>
+                      <RiCheckLine className="w-4 h-4 text-green-500" />
                     ) : (
-                      <span>×</span>
+                      <RiCloseLine className="w-4 h-4 text-red-500" />
                     )}
                     <span
                       className={
@@ -298,9 +281,9 @@ function RegisterPage() {
                   </div>
                   <div className="flex items-center gap-1">
                     {passwordCriteria.lowercase ? (
-                      <span>✓</span>
+                      <RiCheckLine className="w-4 h-4 text-green-500" />
                     ) : (
-                      <span>×</span>
+                      <RiCloseLine className="w-4 h-4 text-red-500" />
                     )}
                     <span
                       className={
@@ -311,7 +294,7 @@ function RegisterPage() {
                     </span>
                   </div>
                   <div className="flex items-center gap-1">
-                    {passwordCriteria.number ? <span>✓</span> : <span>×</span>}
+                    {passwordCriteria.number ? <RiCheckLine className="w-4 h-4 text-green-500" /> : <RiCloseLine className="w-4 h-4 text-red-500" />}
                     <span
                       className={
                         theme === "light" ? "text-gray-600" : "text-gray-400"
@@ -345,6 +328,22 @@ function RegisterPage() {
               }`}
               placeholder="••••••••"
             />
+          </div>
+
+          {/* Cards informatives subtiles dans le formulaire */}
+          <div className="w-full flex flex-col md:flex-row gap-3 md:gap-4 mb-2 animate-fadeIn">
+            <div className={`flex-1 rounded-md p-2 shadow-sm border border-accent/30 ${theme === "light" ? "bg-accent/10" : "bg-zinc-900"}`}>
+              <h3 className="font-semibold mb-1 text-blue-700 dark:text-blue-300 text-xs">Sécurité & confidentialité</h3>
+              <p className="text-xs text-gray-600 dark:text-gray-300">Vos informations personnelles sont protégées et ne seront jamais partagées avec des tiers. L’inscription est 100% sécurisée.</p>
+            </div>
+            <div className={`flex-1 rounded-md p-2 shadow-sm border border-accent/30 ${theme === "light" ? "bg-accent/10" : "bg-zinc-900"}`}>
+              <h3 className="font-semibold mb-1 text-blue-700 dark:text-blue-300 text-xs">Pourquoi créer un compte&nbsp;?</h3>
+              <ul className="text-xs text-gray-600 dark:text-gray-300 list-disc list-inside space-y-1">
+                <li>Suivi de vos commandes et accès à l&apos;historique d&apos;achats</li>
+                <li>Accès rapide à vos informations de livraison</li>
+                <li>Offres et avantages exclusifs réservés aux membres</li>
+              </ul>
+            </div>
           </div>
 
           <Button

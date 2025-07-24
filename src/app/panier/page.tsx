@@ -208,9 +208,6 @@ export default function PanierPage() {
               Retour
             </Button>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                <ShoppingCart className="w-5 h-5 text-primary" />
-              </div>
               <h1 className="text-2xl font-bold text-foreground">Mon Panier</h1>
             </div>
           </div>
@@ -241,7 +238,7 @@ export default function PanierPage() {
             <p className="text-muted-foreground mb-8 text-center max-w-md">
               Découvrez nos produits et ajoutez-les à votre panier pour commencer vos achats.
             </p>
-            <Button asChild className="px-8 py-3">
+            <Button asChild className="px-8 py-3 dark:bg-white dark:text-black dark:hover:bg-neutral-200">
               <Link href="/catalogue">Découvrir nos produits</Link>
             </Button>
           </div>
@@ -377,7 +374,7 @@ export default function PanierPage() {
               <Card className="sticky top-8">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <ShoppingCart className="w-5 h-5" />
+                   
                     Récapitulatif de la commande
                   </CardTitle>
                 </CardHeader>
@@ -429,7 +426,6 @@ export default function PanierPage() {
                       
                       <div className="flex justify-between text-sm">
                         <div className="flex items-center gap-2">
-                          <Truck className="w-4 h-4 text-muted-foreground" />
                           <span className="text-muted-foreground">Livraison standard</span>
                         </div>
                         <span className="font-medium">
@@ -469,35 +465,30 @@ export default function PanierPage() {
                   </div>
 
                   <div className="mt-6 space-y-4">
-                    {/* Bouton Payer avec Stripe avec condition d'authentification */}
-                    <LoginRequiredPopover
-                      isOpen={showLoginPopover}
-                      onOpenChange={setShowLoginPopover}
+                    {/* Bouton Payer avec Stripe classique (premier design) */}
+                    <Button
+                      onClick={handleCheckout}
+                      disabled={isCheckoutLoading || cartItems.length === 0 || isLoading}
+                      className="w-full py-4 bg-[#635BFF] hover:bg-[#5851DB] text-white font-semibold text-base shadow-lg hover:shadow-2xl transition-all duration-200 border-0 rounded-md flex items-center justify-center group focus:outline-none"
                     >
-                      <Button
-                        onClick={handlePaymentClick}
-                        disabled={isCheckoutLoading || cartItems.length === 0 || isLoading}
-                        className="w-full py-4 bg-[#635BFF] hover:bg-[#5851DB] text-white font-semibold text-base shadow-lg hover:shadow-xl transition-all duration-200 border-0"
-                      >
-                        {isCheckoutLoading ? (
-                          <div className="flex items-center gap-2">
-                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                            <span>Préparation...</span>
+                      {isCheckoutLoading ? (
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                          <span>Préparation...</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-3">
+                          <CreditCard className="w-5 h-5" />
+                          <span>Payer avec Stripe</span>
+                          <div className="flex items-center gap-1 text-xs bg-white/20 px-2 py-1 rounded">
+                            <Shield className="w-3 h-3" />
+                            <span>Sécurisé</span>
                           </div>
-                        ) : (
-                          <div className="flex items-center gap-3">
-                            <CreditCard className="w-5 h-5" />
-                            <span>Payer avec Stripe</span>
-                            <div className="flex items-center gap-1 text-xs bg-white/20 px-2 py-1 rounded">
-                              <Shield className="w-3 h-3" />
-                              <span>Sécurisé</span>
-                            </div>
-                          </div>
-                        )}
-                      </Button>
-                    </LoginRequiredPopover>
+                        </div>
+                      )}
+                    </Button>
 
-                    {/* Affichage du statut de connexion */}
+                    {/* 1. Affichage du statut de connexion */}
                     {!isLoading && (
                       <div className="text-center">
                         {isAuthenticated ? (
@@ -513,15 +504,26 @@ export default function PanierPage() {
                       </div>
                     )}
 
-                    {/* Informations de sécurité */}
+                    {/* 2. Paiement 100% sécurisé */}
                     <div className="bg-accent/20 rounded-lg p-4 border border-accent/30">
                       <div className="flex items-center gap-2 mb-2">
                         <Shield className="w-4 h-4 text-green-600" />
                         <span className="text-sm font-medium text-foreground">Paiement 100% sécurisé</span>
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        Vos données sont protégées par le chiffrement SSL et Stripe.
-                        Nous ne stockons jamais vos informations de paiement.
+                        Vos données sont protégées par le chiffrement SSL et Stripe. Nous ne stockons jamais vos informations de paiement.
+                      </p>
+                    </div>
+
+                    {/* 3. Card informative pour l'association des commandes */}
+                    <div className="bg-accent/20 rounded-lg p-4 border border-accent/30">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Shield className="w-4 h-4 text-blue-600" />
+                        <span className="text-sm font-medium text-foreground">Information importante</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Pour garantir l&apos;accès à l&apos;historique de vos commandes dans votre espace client Reboul, veuillez utiliser <strong>la même adresse e-mail</strong> lors du paiement Stripe et lors de la création de votre compte Reboul.<br />
+                        Toute différence d&apos;adresse e-mail <strong>empêchera l&apos;association automatique de vos commandes à votre compte client</strong>.
                       </p>
                     </div>
 
@@ -548,10 +550,6 @@ export default function PanierPage() {
                       <div className="flex items-center gap-2">
                         <Shield className="w-3 h-3" />
                         <span>Garantie satisfaction ou remboursé</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <CreditCard className="w-3 h-3" />
-                        <span>Paiement en 3x sans frais disponible</span>
                       </div>
                     </div>
                   </div>

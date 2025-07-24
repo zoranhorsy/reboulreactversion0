@@ -201,6 +201,7 @@ const statsRouter = require('./routes/stats');
 const reboulStatsRouter = require('./routes/reboulStats');
 const archivesRouter = require('./routes/archives');
 const checkoutRouter = require('./routes/checkout');
+const contactRouter = require('./routes/contact');
 
 // Enregistrement des routes avec le préfixe /api
 app.use('/api/categories', categoriesRouter);
@@ -219,6 +220,7 @@ app.use('/api/stats', statsRouter);
 app.use('/api/reboul', reboulStatsRouter);
 app.use('/api/archives', archivesRouter);
 app.use('/api/checkout', checkoutRouter);
+app.use('/api/contact', contactRouter);
 
 // Endpoint spécial pour les statistiques des collections par store_type
 app.get('/collections/stats', async (req, res) => {

@@ -300,6 +300,15 @@
   animation: grain 8s steps(10) infinite;
 }
 
+.stripe-liquid {
+  background: linear-gradient(90deg, #635BFF, #00C3FF, #635BFF 70%);
+  background-size: 200% 100%;
+  transition: background-position 0.4s cubic-bezier(.4,0,.2,1);
+}
+.stripe-liquid:hover {
+  background-position: 100% 0;
+}
+
 @layer utilities {
   .bg-noise {
     background-image: url('/noise.png');

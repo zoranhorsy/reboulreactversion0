@@ -117,6 +117,20 @@ export default function Footer() {
               >
                 CGV
               </Link>
+              <span className="text-zinc-400 dark:text-zinc-600">•</span>
+              <Link
+                href="/confidentialite"
+                className="text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
+              >
+                Confidentialité
+              </Link>
+              <span className="text-zinc-400 dark:text-zinc-600">•</span>
+              <Link
+                href="/condition"
+                className="text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
+              >
+                Conditions d’utilisation
+              </Link>
             </div>
 
             <p className="text-xs tracking-wider mt-6 md:mt-auto text-zinc-500 dark:text-zinc-500 text-center md:text-left">
@@ -230,6 +244,18 @@ export default function Footer() {
               className="py-2 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
             >
               CGV
+            </Link>
+            <Link
+              href="/confidentialite"
+              className="py-2 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
+            >
+              Confidentialité
+            </Link>
+            <Link
+              href="/condition"
+              className="py-2 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
+            >
+              Conditions d’utilisation
             </Link>
           </div>
         </div>

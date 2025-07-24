@@ -22,6 +22,7 @@ import { Separator } from "@/components/ui/separator";
 import confetti from "canvas-confetti";
 import config from "@/config";
 import { useToast } from "@/components/ui/use-toast";
+import { useCart } from "@/app/contexts/CartContext";
 
 export const viewport: Viewport = defaultViewport;
 
@@ -230,6 +231,12 @@ function SuccessPageContent() {
 }
 
 export default function SuccessPage() {
+  const { clearCart } = useCart();
+
+  useEffect(() => {
+    clearCart();
+  }, [clearCart]);
+
   return (
     <Suspense
       fallback={

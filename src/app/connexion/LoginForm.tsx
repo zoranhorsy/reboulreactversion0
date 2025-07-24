@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 import { createClientPage } from "@/components/ClientPageWrapper";
 import { useAuth } from "@/app/contexts/AuthContext";
 import { Logo } from "@/components/Logo";
+import { RiMoonLine, RiSunLine, RiEyeLine, RiEyeOffLine } from '@remixicon/react';
 
 // Fonction pour logger avec timestamp
 const logWithTime = (message: string, data?: any) => {
@@ -59,9 +60,9 @@ function LoginFormContent() {
   useEffect(() => {
     if (mounted && isAuthenticated && user) {
       if (user.is_admin) {
-        router.push("/admin");
+        router.push("/");
       } else {
-        router.push("/profil");
+        router.push("/");
       }
     }
   }, [mounted, isAuthenticated, user, router]);
@@ -75,9 +76,9 @@ function LoginFormContent() {
       // Attendre un petit délai pour que la session soit mise à jour
       setTimeout(() => {
         if (user?.is_admin) {
-          router.push("/admin");
+          router.push("/");
         } else {
-          router.push("/profil");
+          router.push("/");
         }
       }, 1000);
       
@@ -95,15 +96,6 @@ function LoginFormContent() {
     <div
       className={`min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 ${theme === "light" ? "bg-gray-50" : "bg-black"}`}
     >
-      <div className="absolute top-4 right-4 flex gap-2">
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-        >
-          {theme === "dark" ? <span>🌙</span> : <span>☀️</span>}
-        </Button>
-      </div>
 
       <div className="w-full max-w-md space-y-8">
         <div className="flex flex-col items-center justify-center text-center">
@@ -161,7 +153,7 @@ function LoginFormContent() {
                   className="absolute inset-y-0 right-0 flex items-center pr-3"
                   onClick={() => setShowPassword(!showPassword)}
                 >
-                  {showPassword ? <span>👁️</span> : <span>👁️</span>}
+                  {showPassword ? <RiEyeOffLine className="w-5 h-5" /> : <RiEyeLine className="w-5 h-5" />}
                 </button>
               </div>
             </div>

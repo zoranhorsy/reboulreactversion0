@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { useTheme } from "next-themes";
+import { RiCheckLine, RiArrowLeftLine } from '@remixicon/react';
 
 // Forcer l'utilisation de l'URL Railway
 const API_URL = "https://reboul-store-api-production.up.railway.app/api";
@@ -132,24 +133,6 @@ export default function ForgotPassword() {
       <div
         className={`min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 ${theme === "light" ? "bg-gray-50" : "bg-black"}`}
       >
-        {/* Bouton de changement de thème */}
-        <button
-          onClick={toggleTheme}
-          className={`absolute top-4 right-4 p-2 rounded-full ${
-            theme === "light"
-              ? "bg-gray-200 text-gray-800 hover:bg-gray-300"
-              : "bg-zinc-800 text-gray-200 hover:bg-zinc-700"
-          }`}
-          aria-label={
-            theme === "light" ? "Passer au mode sombre" : "Passer au mode clair"
-          }
-          title={
-            theme === "light" ? "Passer au mode sombre" : "Passer au mode clair"
-          }
-        >
-          {theme === "light" ? <span>🌙</span> : <span>☀️</span>}
-        </button>
-
         {/* Logo en header */}
         <div className="w-full max-w-md mb-8 flex flex-col items-center animate-fadeIn">
           <div className="relative w-40 h-40 sm:w-48 sm:h-48">
@@ -293,7 +276,7 @@ export default function ForgotPassword() {
                       theme === "light" ? "bg-green-100" : "bg-green-900"
                     }`}
                   >
-                    <span>✓</span>
+                    <RiCheckLine className="w-7 h-7 text-green-600 dark:text-green-400" />
                   </div>
 
                   <h2
@@ -333,7 +316,7 @@ export default function ForgotPassword() {
                       : "text-gray-300 hover:text-white"
                   } transition-colors`}
                 >
-                  <span>←</span>
+                  <RiArrowLeftLine className="w-4 h-4 mr-1" />
                   Retour à la connexion
                 </Link>
               </div>

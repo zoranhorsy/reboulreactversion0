@@ -145,20 +145,68 @@ const AuthProviderInternal: React.FC<{ children: React.ReactNode }> = ({
   );
 
   // Fonction pour se déconnecter
-  const logout = useCallback(async () => {
+  const logout = useCallback(async (redirect: boolean = false) => {
     try {
       delete axios.defaults.headers.common["Authorization"];
       await signOut({ redirect: false });
-      
       toast({
         title: "Déconnexion réussie",
         description: "À bientôt sur Reboul",
       });
+      if (redirect) {
+        window.location.href = '/connexion';
+      }
     } catch (error) {
       console.error("Erreur lors de la déconnexion:", error);
       throw error;
     }
   }, [axios, signOut, toast]);
+
+  // Gestion du timer d'inactivité et déconnexion automatique
+  React.useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const EXPIRATION_MINUTES = 30;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+
+    const resetTimer = () => {
+      if (timer) clearTimeout(timer);
+      const expiryTimestamp = Date.now() + EXPIRATION_MINUTES * 60 * 1000;
+      localStorage.setItem("token_expiry", expiryTimestamp.toString());
+      timer = setTimeout(() => {
+        logout(true).catch(() => {});
+      }, EXPIRATION_MINUTES * 60 * 1000);
+    };
+
+    // Initialisation du timer à la connexion
+    resetTimer();
+
+    // Réinitialise le timer à chaque action utilisateur
+    const events: (keyof WindowEventMap)[] = [
+      "click",
+      "keydown",
+      "scroll",
+      "mousemove",
+      "touchstart",
+    ];
+    events.forEach(event =>
+      window.addEventListener(event, resetTimer)
+    );
+
+    // Vérifie l'expiration au chargement
+    const expiry = localStorage.getItem("token_expiry");
+    if (expiry && Date.now() > Number(expiry)) {
+      logout(true).catch(() => {});
+    }
+
+    // Nettoyage à la déconnexion ou démontage du composant
+    return () => {
+      if (timer) clearTimeout(timer);
+      events.forEach(event =>
+        window.removeEventListener(event, resetTimer)
+      );
+    };
+  }, [isAuthenticated, logout]);
 
   const value = {
     user,

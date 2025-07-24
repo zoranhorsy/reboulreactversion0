@@ -1,0 +1,234 @@
+# Page snapshot
+
+```yaml
+- region "Notifications (F8)":
+  - list
+- alert: Reboul Store - Boutique de mode premium
+- link "Reboul Logo":
+  - /url: /
+  - img "Reboul Logo"
+- img
+- link:
+  - /url: /
+  - img
+- link:
+  - /url: /catalogue
+  - img
+- link:
+  - /url: /reboul
+  - img
+- link:
+  - /url: /sneakers
+  - img
+- link:
+  - /url: /kids
+  - img
+- link:
+  - /url: /the-corner
+  - img
+- link:
+  - /url: /about
+  - img
+- link:
+  - /url: /contact
+  - img
+- link:
+  - /url: /profil
+  - img
+- link:
+  - /url: /suivi-commande
+  - img
+- link:
+  - /url: /admin
+  - img
+- link:
+  - /url: /panier
+  - img
+- img
+- img
+- main:
+  - img "Reboul Store"
+  - text: univers de la mode premium avec Reboul Store, où chaque pièce raconte une histoire de qualité exceptionnelle et de design avant-gardiste.
+  - link "Explorer la collection →":
+    - /url: /catalogue
+  - link "Notre histoire":
+    - /url: /about
+  - navigation:
+    - link "REBOUL STORE 2.0 COLLECTION ADULTE 2.0":
+      - /url: /catalogue?store_type=adult
+    - text: REBOUL STORE 2.0 COLLECTION ADULTE 2.0 Style et élégance pour tous REBOUL STORE 2.0 COLLECTION ADULTE 2.0 Style et élégance pour tous REBOUL STORE 2.0 COLLECTION ADULTE 2.0 Style et élégance pour tous REBOUL STORE 2.0 COLLECTION ADULTE 2.0 Style et élégance pour tous
+    - link "LES MINOTS DE REBOUL COLLECTION ENFANT":
+      - /url: /kids
+    - text: LES MINOTS DE REBOUL COLLECTION ENFANT Mode tendance pour les petits LES MINOTS DE REBOUL COLLECTION ENFANT Mode tendance pour les petits LES MINOTS DE REBOUL COLLECTION ENFANT Mode tendance pour les petits LES MINOTS DE REBOUL COLLECTION ENFANT Mode tendance pour les petits
+    - link "SNEAKERS ÉDITION LIMITÉE":
+      - /url: /sneakers
+    - text: SNEAKERS ÉDITION LIMITÉE Pour les passionnés de streetwear SNEAKERS ÉDITION LIMITÉE Pour les passionnés de streetwear SNEAKERS ÉDITION LIMITÉE Pour les passionnés de streetwear SNEAKERS ÉDITION LIMITÉE Pour les passionnés de streetwear
+    - link "THE CORNER MARSEILLE C.P.COMPANY":
+      - /url: /the-corner
+    - text: THE CORNER MARSEILLE C.P.COMPANY L'exclusivité à l'italienne THE CORNER MARSEILLE C.P.COMPANY L'exclusivité à l'italienne THE CORNER MARSEILLE C.P.COMPANY L'exclusivité à l'italienne THE CORNER MARSEILLE C.P.COMPANY L'exclusivité à l'italienne
+  - heading "Produits en vedette" [level=2]
+  - link "Voir tout":
+    - /url: /catalogue
+  - link "Mercer P22 Nouveau Mercer P22 175,00 € 40, 41, 42, 43, 44 +2":
+    - /url: /produit/64
+    - img "Mercer P22"
+    - text: Nouveau
+    - heading "Mercer P22" [level=3]
+    - paragraph: 175,00 €
+    - paragraph: 40, 41, 42, 43, 44 +2
+  - link "MERCER RE-RUN SPEED GOLD Nouveau MERCER RE-RUN SPEED GOLD 165,00 € 41, 42, 43, 44, 45 +1":
+    - /url: /produit/55
+    - img "MERCER RE-RUN SPEED GOLD"
+    - text: Nouveau
+    - heading "MERCER RE-RUN SPEED GOLD" [level=3]
+    - paragraph: 165,00 €
+    - paragraph: 41, 42, 43, 44, 45 +1
+  - link "Mercer The Re-Run Dot Nouveau Mercer The Re-Run Dot 180,00 € EU 41, EU 42, EU 43, EU 44, EU 45":
+    - /url: /produit/72
+    - img "Mercer The Re-Run Dot"
+    - text: Nouveau
+    - heading "Mercer The Re-Run Dot" [level=3]
+    - paragraph: 180,00 €
+    - paragraph: EU 41, EU 42, EU 43, EU 44, EU 45
+  - link "Mercer The Re-Run Metallic Nouveau Mercer The Re-Run Metallic 170,00 € EU 41, EU 42, EU 43, EU 44, EU 45 +1":
+    - /url: /produit/59
+    - img "Mercer The Re-Run Metallic"
+    - text: Nouveau
+    - heading "Mercer The Re-Run Metallic" [level=3]
+    - paragraph: 170,00 €
+    - paragraph: EU 41, EU 42, EU 43, EU 44, EU 45 +1
+  - link "Mercer The Re-Run Metallic Nouveau Mercer The Re-Run Metallic 170,00 € EU 41, EU 42, EU 43, EU 44, EU 45 +1":
+    - /url: /produit/69
+    - img "Mercer The Re-Run Metallic"
+    - text: Nouveau
+    - heading "Mercer The Re-Run Metallic" [level=3]
+    - paragraph: 170,00 €
+    - paragraph: EU 41, EU 42, EU 43, EU 44, EU 45 +1
+  - link "Mercer The Re-Run Vibram Nubuck Nouveau Mercer The Re-Run Vibram Nubuck 180,00 € EU 40, EU 41, EU 42, EU 43, EU 44 +2":
+    - /url: /produit/62
+    - img "Mercer The Re-Run Vibram Nubuck"
+    - text: Nouveau
+    - heading "Mercer The Re-Run Vibram Nubuck" [level=3]
+    - paragraph: 180,00 €
+    - paragraph: EU 40, EU 41, EU 42, EU 43, EU 44 +2
+  - link "Mercer The Re-Run Vintage Nouveau Mercer The Re-Run Vintage 175,00 € 40, 41, 42, 43, 44 +2":
+    - /url: /produit/57
+    - img "Mercer The Re-Run Vintage"
+    - text: Nouveau
+    - heading "Mercer The Re-Run Vintage" [level=3]
+    - paragraph: 175,00 €
+    - paragraph: 40, 41, 42, 43, 44 +2
+  - link "Mercer The Re-Run Vintage Nouveau Mercer The Re-Run Vintage 175,00 € 42, 43, 44, 45":
+    - /url: /produit/67
+    - img "Mercer The Re-Run Vintage"
+    - text: Nouveau
+    - heading "Mercer The Re-Run Vintage" [level=3]
+    - paragraph: 175,00 €
+    - paragraph: 42, 43, 44, 45
+  - link "Découvrir la collection":
+    - /url: /catalogue
+  - heading "Nos Dernières Collections" [level=2]
+  - paragraph: Découvrez les marques les plus prestigieuses de la mode contemporaine. Une sélection exclusive de créateurs qui définissent les tendances d'aujourd'hui.
+  - paragraph: Chargement des marques...
+  - heading "L'Univers REBOUL" [level=2]
+  - paragraph: Découvrez notre concept store révolutionnaire. Une expérience shopping redéfinie, alliant excellence, innovation et passion pour la mode contemporaine.
+  - heading "Nos Services Premium" [level=3]
+  - paragraph: L'excellence REBOUL à travers nos services dédiés
+  - img
+  - heading "Authenticité garantie" [level=4]
+  - paragraph: Tous nos produits sont authentiques et proviennent directement des marques
+  - img
+  - heading "Expertise" [level=4]
+  - paragraph: Une équipe de passionnés à votre service pour vous conseiller
+  - img
+  - heading "Sélection exclusive" [level=4]
+  - paragraph: Les meilleures pièces des plus grandes marques
+  - img
+  - heading "Dernières tendances" [level=4]
+  - paragraph: Une sélection constamment mise à jour selon les tendances
+  - img
+  - heading "Livraison rapide" [level=4]
+  - paragraph: Livraison express disponible sur toute la France
+  - img
+  - heading "Service client" [level=4]
+  - paragraph: Une équipe disponible pour répondre à vos questions
+  - heading "Galerie Boutique" [level=3]
+  - paragraph: L'univers REBOUL en images - Découvrez notre concept store
+  - img "Reboul Sanary"
+  - heading "Reboul Sanary" [level=4]
+  - img "Reboul Cassis - Le Patio"
+  - heading "Reboul Cassis - Le Patio" [level=4]
+  - img "Reboul Cassis - Rayon Kids"
+  - heading "Reboul Cassis - Rayon Kids" [level=4]
+  - img "reboul Cassis - Entrance"
+  - heading "reboul Cassis - Entrance" [level=4]
+  - img "hotel"
+  - heading "hotel" [level=4]
+  - heading "Nos Shootings" [level=3]
+  - paragraph: Les coulisses de nos collections
+  - text: 📷
+  - paragraph: Shootings bientôt disponibles
+  - heading "Événements REBOUL" [level=3]
+  - paragraph: Revivez nos moments forts
+  - text: 🎉
+  - paragraph: Événements bientôt disponibles
+  - heading "Témoignages Clients" [level=3]
+  - paragraph: Ce que disent nos clients
+  - text: ⭐ ⭐ ⭐ ⭐ ⭐
+  - paragraph: "\"Une expérience shopping exceptionnelle ! L'équipe REBOUL a su me conseiller parfaitement.\""
+  - text: Sophie M. Paris ⭐ ⭐ ⭐ ⭐ ⭐
+  - paragraph: "\"La sélection est incroyable, je trouve toujours des pièces uniques chez REBOUL.\""
+  - text: Marie L. Lyon ⭐ ⭐ ⭐ ⭐ ⭐
+  - paragraph: "\"Le service client est irréprochable, livraison ultra rapide et emballage soigné.\""
+  - text: Camille D. Marseille
+  - heading "Statistiques" [level=3]
+  - paragraph: REBOUL en chiffres
+  - text: 30+ Marques partenaires 10K+ Clients satisfaits 50+ Nouvelles pièces/semaine 24h+ Livraison express
+  - heading "Nous Contacter" [level=3]
+  - paragraph: Restez connectés avec REBOUL
+  - img
+  - paragraph: 523 Bis Rue Paradis
+  - paragraph: 13006 Marseille, France
+  - img
+  - paragraph: +33 1 23 45 67 89
+  - img
+  - paragraph: contact@reboul.fr
+  - button:
+    - img
+  - button:
+    - img
+  - button:
+    - img
+  - img "Reboul"
+  - link "Instagram":
+    - /url: https://instagram.com
+  - link "Facebook":
+    - /url: https://facebook.com
+  - link "Twitter":
+    - /url: https://twitter.com
+  - link "Mentions légales":
+    - /url: /mentions-legales
+  - text: •
+  - link "CGV":
+    - /url: /cgv
+  - text: •
+  - link "Confidentialité":
+    - /url: /confidentialite
+  - text: •
+  - link "Conditions d’utilisation":
+    - /url: /condition
+  - paragraph: © 2025 Reboul. Tous droits réservés
+  - heading "CONCEPT STORE" [level=2]
+  - paragraph: REBOUL REDÉFINIT LE SHOPPING EN OFFRANT UNE EXPÉRIENCE UNIQUE ET UNE SÉLECTION DIVERSIFIÉE DE PRODUITS, MÊLANT LES PRINCIPAUX STYLES DE LA MODE CONTEMPORAINE.
+  - paragraph: UN HÔTEL DANS LE THÈME DE NOS MARQUES, UN CAFÉ, UNE TERRASSE INTÉRIEURE ET UN SERVICE DE RETOUCHE SUR MESURE POUR UN ACCOMPAGNEMENT EXCLUSIF.
+  - heading "ADRESSES" [level=2]
+  - paragraph: REBOUL
+  - paragraph: MARSEILLE - 523 RUE PARADIS
+  - paragraph: REBOUL STORE
+  - paragraph: CASSIS - 7 AVENUE VICTOR HUGO
+  - paragraph: REBOUL UTILITY
+  - paragraph: SANARY - 16 RUE GAILLARD
+  - paragraph: THE CORNER C.P.COMPANY
+  - paragraph: MARSEILLE - 376 AVENUE DU PRADO
+  - text: "Tél : 04 91 XX XX XX Mail : contact@reboul.fr"
+```

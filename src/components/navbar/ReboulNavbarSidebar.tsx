@@ -108,6 +108,7 @@ function MobileMenu() {
     ...(user?.is_admin ? [{ label: "Administration", href: "/admin", icon: <RiSettings3Line className="h-5 w-5" /> }] : []),
   ] : [
     { label: "Connexion", href: "/connexion", icon: <RiLoginBoxLine className="h-5 w-5" /> },
+    { label: "Inscription", href: "/inscription", icon: <RiUserSettingsLine className="h-5 w-5" /> },
   ];
 
   return (
@@ -308,6 +309,7 @@ export function ReboulNavbarSidebar({ children }: ReboulNavbarSidebarProps) {
     ...(user?.is_admin ? [{ label: "Administration", href: "/admin", icon: <RiSettings3Line className="h-5 w-5 shrink-0" /> }] : []),
   ] : [
     { label: "Connexion", href: "/connexion", icon: <RiLoginBoxLine className="h-5 w-5 shrink-0" /> },
+    { label: "Inscription", href: "/inscription", icon: <RiUserSettingsLine className="h-5 w-5 shrink-0" /> },
   ];
 
   const actionLinks = [
