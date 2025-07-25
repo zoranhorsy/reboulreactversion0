@@ -2,6 +2,8 @@
 
 import React from "react";
 import { gsap } from "gsap";
+import { BentoGrid, BentoGridItem } from "../ui/bento-grid";
+import { motion } from "framer-motion";
 
 // Données statiques des collections avec images
 const STORE_COLLECTIONS = [
@@ -175,14 +177,39 @@ export default function OptimizedStoreSelection() {
   return (
     <section className="w-full bg-white dark:bg-zinc-950">
       <div className="w-full">
-        <nav className="flex flex-col h-full">
+        <BentoGrid>
           {STORE_COLLECTIONS.map((collection) => (
-            <StoreCollectionItem 
-              key={collection.id} 
-              collection={collection} 
-            />
+            <a
+              key={collection.id}
+              href={collection.href}
+              className="block h-full w-full"
+              style={{ textDecoration: "none" }}
+            >
+              <motion.div
+                whileHover={{ scale: 1.04, boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                className="h-full"
+                style={{ willChange: "transform, box-shadow" }}
+              >
+                <BentoGridItem
+                  title={collection.title}
+                  description={
+                    <>
+                      <div>{collection.description}</div>
+                      <div className="italic text-xs text-neutral-400 mt-1">{collection.tagline}</div>
+                    </>
+                  }
+                  icon={
+                    <div
+                      className="w-full h-32 rounded-lg bg-cover bg-center mb-2 border border-neutral-200"
+                      style={{ backgroundImage: `url(${collection.image})` }}
+                    />
+                  }
+                />
+              </motion.div>
+            </a>
           ))}
-        </nav>
+        </BentoGrid>
       </div>
     </section>
   );

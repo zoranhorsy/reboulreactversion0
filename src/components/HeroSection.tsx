@@ -19,7 +19,11 @@ export function HeroSection() {
     <div className="relative min-h-[600px] pt-0 pb-16 w-full bg-white dark:bg-black overflow-hidden">
       {/* CircularText en haut à droite */}
       <div className="absolute top-4 right-4 z-30">
-        <CircularText text="REBOUL STORE 2.0 • FW25 •  " spinDuration={18} className="hidden sm:block w-[80px] h-[80px] md:w-[170px] md:h-[170px]" />
+        <CircularText 
+          text="REBOUL STORE 2.0 • FW25 •  " 
+          spinDuration={18} 
+          className={`hidden sm:block w-[80px] h-[80px] md:w-[170px] md:h-[170px] ${resolvedTheme === "dark" ? "text-white" : "text-black"}`} 
+        />
       </div>
       <LightRays
         key={resolvedTheme}
@@ -46,9 +50,9 @@ export function HeroSection() {
             transition={{ duration: 1, delay: 0.2 }}
             className="w-full mx-auto mb-8 relative flex justify-center"
           >
-            <div className="relative w-[280px] h-[84px] xs:w-[400px] xs:h-[120px] sm:w-[500px] sm:h-[150px] md:w-[600px] md:h-[180px] lg:w-[700px] lg:h-[210px] drop-shadow-[0_6px_32px_rgba(0,0,0,0.25)] filter">
+            <div className="relative w-[280px] h-[84px] xs:w-[400px] xs:h-[120px] sm:w-[500px] sm:h-[150px] md:w-[600px] md:h-[180px] lg:w-[700px] lg:h-[210px]">
               <Image
-                src="/images/logotype_w.png"
+                src={resolvedTheme === "dark" ? "/images/logotype_w.png" : "/images/logotype_b.png"}
                 alt="Reboul Store"
                 fill
                 priority
@@ -67,7 +71,7 @@ export function HeroSection() {
               text={
                 "Reboul, maison de style où se rencontrent héritage, élégance et avant-garde."
               }
-              className="font-geist text-lg xs:text-xl sm:text-2xl md:text-3xl font-semibold leading-tight text-white drop-shadow-lg"
+              className={`font-geist text-base xs:text-lg sm:text-xl md:text-2xl font-medium leading-tight ${resolvedTheme === "dark" ? "text-white" : "text-black"}`}
               delay={300}
               duration={900}
               fontFamily="Geist, sans-serif"
