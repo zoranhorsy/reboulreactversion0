@@ -6,18 +6,39 @@ import { useTheme } from "next-themes";
 import { Button } from "./ui/button";
 import Link from "next/link";
 import Image from "next/image";
-import { Highlight } from "./ui/hero-highlight";
-import { GridBackground } from "./ui/grid-background";
-import DecryptedText from "@/blocks/TextAnimations/DecryptedText/DecryptedText";
+import LightRays from "@/blocks/Backgrounds/LightRays/LightRays";
+import TextType from "@/blocks/TextAnimations/TextType/TextType";
+import AnimatedTextEntry from "@/blocks/TextAnimations/AnimatedTextEntry/AnimatedTextEntry";
+import CircularText from "@/blocks/TextAnimations/CircularText/CircularText";
 
 export function HeroSection() {
   const { resolvedTheme } = useTheme();
+  const descContainerRef = React.useRef<HTMLDivElement>(null);
 
   return (
     <div className="relative min-h-[600px] pt-0 pb-16 w-full bg-white dark:bg-black overflow-hidden">
-      <GridBackground className="absolute inset-0 w-full h-full">
+      {/* CircularText en haut à droite */}
+      <div className="absolute top-4 right-4 z-30">
+        <CircularText text="REBOUL STORE 2.0 • FW25 •  " spinDuration={18} className="hidden sm:block w-[80px] h-[80px] md:w-[170px] md:h-[170px]" />
+      </div>
+      <LightRays
+        key={resolvedTheme}
+        className="w-full h-full md:rounded-2xl"
+        raysOrigin="top-center"
+        raysColor={resolvedTheme === "dark" ? "#ffffff" : "#bfc3c9"}
+        raysSpeed={1}
+        lightSpread={1}
+        rayLength={2}
+        pulsating={false}
+        fadeDistance={1.0}
+        saturation={resolvedTheme === "dark" ? 1.0 : 0.85}
+        followMouse={true}
+        mouseInfluence={0.1}
+        noiseAmount={0.0}
+        distortion={0.0}
+      >
         {/* Contenu du hero au premier plan */}
-        <div className="relative z-10 flex flex-col items-center justify-center w-full max-w-7xl mx-auto px-4 pt-12 pb-12 sm:px-6 lg:px-8">
+        <div className="flex flex-col items-center justify-center w-full max-w-7xl mx-auto px-4 pt-12 pb-12 sm:px-6 lg:px-8">
           {/* Logo */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -25,13 +46,9 @@ export function HeroSection() {
             transition={{ duration: 1, delay: 0.2 }}
             className="w-full mx-auto mb-8 relative flex justify-center"
           >
-            <div className="relative w-[280px] h-[84px] xs:w-[400px] xs:h-[120px] sm:w-[500px] sm:h-[150px] md:w-[600px] md:h-[180px] lg:w-[700px] lg:h-[210px] drop-shadow-2xl filter">
+            <div className="relative w-[280px] h-[84px] xs:w-[400px] xs:h-[120px] sm:w-[500px] sm:h-[150px] md:w-[600px] md:h-[180px] lg:w-[700px] lg:h-[210px] drop-shadow-[0_6px_32px_rgba(0,0,0,0.25)] filter">
               <Image
-                src={
-                  resolvedTheme === "dark"
-                    ? "/images/logotype_w.png"
-                    : "/images/logotype_b.png"
-                }
+                src="/images/logotype_w.png"
                 alt="Reboul Store"
                 fill
                 priority
@@ -41,54 +58,21 @@ export function HeroSection() {
             </div>
           </motion.div>
 
-          {/* Description */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 0.4 }}
-            className="text-center max-w-[280px] xs:max-w-[340px] sm:max-w-xl md:max-w-2xl mx-auto mb-12 text-base xs:text-lg sm:text-xl text-zinc-700 dark:text-zinc-300 px-3 xs:px-4 sm:px-6 leading-relaxed drop-shadow-lg text-shadow-sm"
-            style={{
-              textShadow:
-                resolvedTheme === "dark"
-                  ? "0 2px 4px rgba(0, 0, 0, 0.8), 0 1px 2px rgba(0, 0, 0, 0.6)"
-                  : "0 2px 4px rgba(255, 255, 255, 0.8), 0 1px 2px rgba(255, 255, 255, 0.6)",
-            }}
+          {/* Description animée avec VariableProximity et TextType */}
+          <div
+            ref={descContainerRef}
+            className="text-center max-w-6xl mx-auto mb-12 px-3 xs:px-4 sm:px-6 break-keep whitespace-pre-line text-white drop-shadow-[0_2px_16px_rgba(0,0,0,0.7)]"
           >
-            <DecryptedText
-              text="univers de la mode premium avec Reboul Store, où chaque pièce raconte "
-              className="text-center"
-              animateOn="view"
-              sequential={true}
-              speed={50}
+            <AnimatedTextEntry
+              text={
+                "Reboul, maison de style où se rencontrent héritage, élégance et avant-garde."
+              }
+              className="font-geist text-lg xs:text-xl sm:text-2xl md:text-3xl font-semibold leading-tight text-white drop-shadow-lg"
+              delay={300}
+              duration={900}
+              fontFamily="Geist, sans-serif"
             />
-            <motion.span
-              initial={{
-                backgroundSize: "0% 100%",
-              }}
-              animate={{
-                backgroundSize: "100% 100%",
-              }}
-              transition={{
-                duration: 2,
-                ease: "linear",
-                delay: 4, // Délai de 4s pour attendre que DecryptedText finisse
-              }}
-              style={{
-                backgroundRepeat: "no-repeat",
-                backgroundPosition: "left center",
-                display: "inline",
-              }}
-              className="relative inline-block rounded-lg bg-gradient-to-r from-blue-300 to-sky-100 dark:from-blue-900/90 dark:to-sky-900/90 px-1 pb-1 shadow-lg backdrop-blur-sm text-blue-950 dark:text-blue-100"
-            >
-              <DecryptedText
-                text="une histoire de qualité exceptionnelle et de design avant-gardiste."
-                className="text-center"
-                animateOn="view"
-                sequential={true}
-                speed={50}
-              />
-            </motion.span>
-          </motion.div>
+          </div>
 
           {/* Buttons */}
           <motion.div
@@ -123,7 +107,7 @@ export function HeroSection() {
             </Button>
           </motion.div>
         </div>
-      </GridBackground>
+      </LightRays>
     </div>
   );
 }
