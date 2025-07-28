@@ -10,7 +10,9 @@ import { LoaderComponent } from "@/components/ui/Loader";
 import { api } from "@/lib/api";
 import { ProductDetails } from "@/components/ProductDetailsCP";
 import { notFound } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { useCart } from "@/app/contexts/CartContext";
+import { toast } from "@/components/ui/use-toast";
 
 interface TheCornerProductPageProps {
   params: {
@@ -30,6 +32,55 @@ export default function TheCornerProductPage({
   const [selectedColor, setSelectedColor] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [isWishlist, setIsWishlist] = useState(false);
+  const { addItem } = useCart();
+
+  const handleAddToCart = useCallback(() => {
+    if (!product) return;
+
+    if (!selectedSize || !selectedColor) {
+      toast({
+        title: "Sélection incomplète",
+        description: "Veuillez sélectionner une taille et une couleur.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const selectedVariant = product.variants?.find(
+      (v: any) => v.size === selectedSize && v.color === selectedColor,
+    );
+
+    if (!selectedVariant) {
+      toast({
+        title: "Erreur",
+        description: "Cette variante n'est pas disponible",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const cartItemId = `${product.id}-${selectedSize}-${selectedColor}`;
+    addItem({
+      id: cartItemId,
+      productId: product.id.toString(),
+      name: `${product.name} - ${selectedColor} - ${selectedSize}`,
+      price: product.price,
+      quantity: quantity,
+      image: product.image_url || product.images?.[0] || "/placeholder.svg",
+      storeType: 'the_corner',
+      variant: {
+        size: selectedSize,
+        color: selectedColor,
+        colorLabel: selectedColor,
+        stock: selectedVariant.stock,
+      },
+    });
+
+    toast({
+      title: "Produit ajouté au panier",
+      description: `${product.name} - ${selectedColor} - ${selectedSize}`,
+    });
+  }, [product, selectedSize, selectedColor, quantity, addItem]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -84,7 +135,7 @@ export default function TheCornerProductPage({
         onSizeChange={setSelectedSize}
         onColorChange={setSelectedColor}
         onQuantityChange={setQuantity}
-        onAddToCart={() => {}}
+        onAddToCart={handleAddToCart}
         onToggleWishlist={() => setIsWishlist((v) => !v)}
         onShare={() => {}}
         isWishlist={isWishlist}
