@@ -33,6 +33,12 @@
 @import '@/styles/animation-utils.css';
 
 @layer base {
+  /* Styles pour l'effet 3D transform */
+  .transform-3d {
+    transform-style: preserve-3d;
+    perspective: 1000px;
+  }
+
   :root {
     /* Couleurs de base */
     --background: 0 0% 100%;

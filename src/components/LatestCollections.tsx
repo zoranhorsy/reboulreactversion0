@@ -9,8 +9,8 @@ import { toast } from "./ui/use-toast";
 import { useInView } from "react-intersection-observer";
 import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
-// SimpleSlider supprimé - on utilise une grille simple à la place
 import { ReboulButton } from "@/components/ui/reboul-button";
+import { ThreeDMarqueeLogos } from "@/components/ui/3d-marquee";
 
 // Interface simplifiée pour les marques
 interface SimpleBrand extends Brand {}
@@ -79,6 +79,9 @@ export default function LatestCollections() {
     }
   }, [inView]);
 
+  // Préparer les URLs des logos pour le 3D Marquee
+  const brandLogos = brands.map(brand => getBrandLogo(brand));
+
   return (
     <section 
       ref={ref}
@@ -110,32 +113,12 @@ export default function LatestCollections() {
         
         {brands.length > 0 && (
           <div className="space-y-8">
-            {/* Grille de logos responsive optimisée et centrée */}
+            {/* 3D Marquee avec les logos des marques */}
             <div className="flex justify-center">
-              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-8 gap-4 sm:gap-6 md:gap-8 lg:gap-10 max-w-7xl">
-                {brands.map((brand) => {
-                   const logoUrl = getBrandLogo(brand);
-                   
-                   return (
-                     <div 
-                       key={brand.id} 
-                       className="group w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 lg:w-32 lg:h-32 xl:w-36 xl:h-36 bg-card rounded-xl p-3 sm:p-4 md:p-5 lg:p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105 border border-border flex items-center justify-center"
-                     >
-                       <Image
-                         src={logoUrl}
-                         alt={brand.name}
-                         width={80}
-                         height={80}
-                         className="max-w-full max-h-full object-contain group-hover:scale-110 transition-transform duration-300"
-                       onError={(e) => {
-                         console.error(`❌ Erreur image pour ${brand.name}:`, e.currentTarget.src);
-                         e.currentTarget.src = "/placeholder.png";
-                       }}
-                     />
-                   </div>
-                 );
-               })}
-              </div>
+              <ThreeDMarqueeLogos 
+                images={brandLogos}
+                className="w-full max-w-6xl"
+              />
             </div>
             
             {/* Bouton d'action */}

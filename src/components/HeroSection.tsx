@@ -16,7 +16,7 @@ export function HeroSection() {
   const descContainerRef = React.useRef<HTMLDivElement>(null);
 
   return (
-    <div className="relative min-h-[600px] pt-0 pb-16 w-full bg-white dark:bg-black overflow-hidden">
+    <div className="relative min-h-[500px] pt-0 pb-8 w-full bg-white dark:bg-black overflow-hidden md:rounded-2xl">
       {/* CircularText en haut à droite */}
       <div className="absolute top-4 right-4 z-30">
         <CircularText 

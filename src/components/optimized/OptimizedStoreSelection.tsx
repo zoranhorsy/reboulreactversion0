@@ -114,7 +114,7 @@ const StoreCollectionItem: React.FC<StoreCollectionItemProps> = ({ collection })
           </span>
         </div>
         <div
-          className="w-[200px] h-[7vh] my-[2em] mx-[2vw] rounded-[12px] bg-cover bg-center border border-zinc-200"
+          className="w-[200px] h-[12vh] my-[2em] mx-[2vw] rounded-[12px] bg-cover bg-center border border-zinc-200"
           style={{ 
             backgroundImage: `url(${collection.image})`,
             backgroundSize: 'cover',
@@ -201,7 +201,7 @@ export default function OptimizedStoreSelection() {
                   }
                   icon={
                     <div
-                      className="w-full h-32 rounded-lg bg-cover bg-center mb-2 border border-neutral-200"
+                      className="w-full h-48 rounded-lg bg-cover bg-center mb-2 border border-neutral-200"
                       style={{ backgroundImage: `url(${collection.image})` }}
                     />
                   }

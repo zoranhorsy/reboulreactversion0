@@ -166,7 +166,7 @@ const MenuItem: React.FC<MenuItemProps> = ({
                          hover:text-black dark:hover:text-black
                          focus:text-zinc-800 focus-visible:text-black 
                          dark:focus:text-zinc-200 dark:focus-visible:text-white
-                         transition-all duration-300 py-16 group
+                         transition-all duration-300 py-8 sm:py-12 group
                          hover:bg-zinc-50 dark:hover:bg-white"
         href={href}
         onMouseEnter={handleMouseEnter}
@@ -313,11 +313,11 @@ export default function StoreSelection() {
     return (
       <section
         ref={sectionRef}
-        className={`w-full min-h-[80vh] animate-fade-in-up
+        className={`w-full min-h-[20vh] sm:min-h-[30vh] animate-fade-in-up
                          ${resolvedTheme === "dark" ? "bg-zinc-950" : "bg-white"}`}
       >
         <div className="w-full">
-          <div className="animate-pulse space-y-8 py-12">
+          <div className="animate-pulse space-y-4 py-4 sm:py-6">
             {[...Array(4)].map((_, i) => (
               <div
                 key={i}
