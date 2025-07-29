@@ -87,6 +87,11 @@ export default function RootLayout({
           href="https://fonts.gstatic.com"
           crossOrigin="anonymous"
         />
+        {/* Favicon explicite pour forcer l'utilisation */}
+        <link rel="icon" type="image/x-icon" href="/icons/logo_w.ico" />
+        <link rel="shortcut icon" type="image/x-icon" href="/icons/logo_w.ico" />
+        <link rel="icon" type="image/x-icon" href="/icons/logo_black.ico" media="(prefers-color-scheme: light)" />
+        <link rel="icon" type="image/x-icon" href="/icons/logo_w.ico" media="(prefers-color-scheme: dark)" />
       </head>
       <body
         className={`min-h-screen bg-background font-sans antialiased ${inter.className}`}
