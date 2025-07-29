@@ -69,7 +69,7 @@ export function HeroSection() {
           >
             <AnimatedTextEntry
               text={
-                "Reboul, maison de style où se rencontrent héritage, élégance et avant-garde."
+                "Reboul, référence de l'élégance contemporaine...." as string
               }
               className={`font-geist text-base xs:text-lg sm:text-xl md:text-2xl font-light leading-tight ${resolvedTheme === "dark" ? "text-white" : "text-black"}`}
               delay={300}
@@ -93,7 +93,7 @@ export function HeroSection() {
                 href="/catalogue"
                 className="flex items-center justify-center gap-2 text-sm font-medium"
               >
-                Explorer la collection
+                Explorer les collections
                 <span>→</span>
               </Link>
             </Button>
