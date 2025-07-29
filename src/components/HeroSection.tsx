@@ -71,7 +71,7 @@ export function HeroSection() {
               text={
                 "Reboul, maison de style où se rencontrent héritage, élégance et avant-garde."
               }
-              className={`font-geist text-base xs:text-lg sm:text-xl md:text-2xl font-medium leading-tight ${resolvedTheme === "dark" ? "text-white" : "text-black"}`}
+              className={`font-geist text-base xs:text-lg sm:text-xl md:text-2xl font-light leading-tight ${resolvedTheme === "dark" ? "text-white" : "text-black"}`}
               delay={300}
               duration={900}
               fontFamily="Geist, sans-serif"
@@ -106,7 +106,7 @@ export function HeroSection() {
                 href="/about"
                 className="flex items-center justify-center gap-2 text-sm font-medium"
               >
-                Notre histoire
+                A propos
               </Link>
             </Button>
           </motion.div>

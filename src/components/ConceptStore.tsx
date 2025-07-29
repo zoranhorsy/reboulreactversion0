@@ -109,26 +109,7 @@ const BRANDS_FEATURED = [
   { name: "Staud", category: "Contemporary" },
 ];
 
-const TESTIMONIALS = [
-  {
-    name: "Sophie M.",
-    text: "Une expérience shopping exceptionnelle ! L'équipe REBOUL a su me conseiller parfaitement.",
-    rating: 5,
-    location: "Paris",
-  },
-  {
-    name: "Marie L.",
-    text: "La sélection est incroyable, je trouve toujours des pièces uniques chez REBOUL.",
-    rating: 5,
-    location: "Lyon",
-  },
-  {
-    name: "Camille D.",
-    text: "Le service client est irréprochable, livraison ultra rapide et emballage soigné.",
-    rating: 5,
-    location: "Marseille",
-  },
-];
+
 
 const STORE_STATS = [
   { number: "30+", label: "Marques partenaires" },
@@ -185,67 +166,39 @@ export function ConceptStore() {
 
   const features = [
     {
-      title: "Nos Services Premium",
-      description: "L'excellence REBOUL à travers nos services dédiés",
-      skeleton: <ServicesGrid />,
+      title: "Nos Boutiques",
+      description: "Découvrez nos concept stores",
+      skeleton: <BoutiquesGallery />,
       className:
         "col-span-1 lg:col-span-6 border-b dark:border-neutral-800 flex flex-col",
     },
     {
-      title: "Galerie Boutique",
-      description: "L'univers REBOUL en images - Découvrez notre concept store",
-      skeleton: (
-        <GalleryPreview
-          archives={archives.filter((a) => a.category === "store").slice(0, 6)}
-          onImageClick={setSelectedImage}
-        />
-      ),
-      className: "border-b col-span-1 lg:col-span-6 dark:border-neutral-800",
+      title: "Nos Services Premium",
+      description: "L'excellence REBOUL à travers nos services dédiés",
+      skeleton: <ServicesGrid />,
+      className:
+        "col-span-1 lg:col-span-3 border-b lg:border-r dark:border-neutral-800 flex flex-col",
     },
     {
-      title: "Nos Shootings",
-      description: "Les coulisses de nos collections",
-      skeleton: (
-        <ShootingGallery
-          archives={archives
-            .filter((a) => a.category === "shooting")
-            .slice(0, 3)}
-        />
-      ),
+      title: "Découvrir l'Hôtel by Reboul",
+      description: "Une expérience unique à Cassis",
+      skeleton: <HotelSection />,
       className:
-        "col-span-1 lg:col-span-2 border-b lg:border-r dark:border-neutral-800",
-    },
-    {
-      title: "Événements REBOUL",
-      description: "Revivez nos moments forts",
-      skeleton: (
-        <EventsGallery
-          archives={archives.filter((a) => a.category === "event").slice(0, 3)}
-        />
-      ),
-      className:
-        "col-span-1 lg:col-span-2 border-b lg:border-r dark:border-neutral-800",
-    },
-    {
-      title: "Témoignages Clients",
-      description: "Ce que disent nos clients",
-      skeleton: <TestimonialsSection />,
-      className:
-        "col-span-1 lg:col-span-2 border-b lg:border-r dark:border-neutral-800",
+        "col-span-1 lg:col-span-3 border-b dark:border-neutral-800 flex flex-col",
     },
     {
       title: "Statistiques",
       description: "REBOUL en chiffres",
       skeleton: <StatsSection />,
       className:
-        "col-span-1 lg:col-span-2 border-b lg:border-r dark:border-neutral-800",
+        "col-span-1 lg:col-span-3 border-b lg:border-r dark:border-neutral-800",
     },
     {
       title: "Nous Contacter",
       description: "Restez connectés avec REBOUL",
       skeleton: <ContactSection />,
       className:
-        "col-span-1 lg:col-span-2 border-b lg:border-none dark:border-neutral-800",
+        "col-span-1 lg:col-span-3 border-b lg:border-none dark:border-neutral-800",
     },
   ];
 
@@ -362,7 +315,6 @@ export function ConceptStore() {
                       {selectedImage.title}
                     </h2>
                     <div className="flex items-center gap-1.5 text-white/90 bg-black/50 px-3 py-1.5 rounded-full self-start">
-                      <span>📅</span>
                       <span className="text-xs sm:text-sm">
                         {format(new Date(selectedImage.date), "d MMM yyyy", {
                           locale: fr,
@@ -465,38 +417,7 @@ const BrandsShowcase = () => {
   );
 };
 
-const TestimonialsSection = () => {
-  return (
-    <div className="space-y-3 h-full">
-      {TESTIMONIALS.map((testimonial, index) => (
-        <motion.div
-          key={testimonial.name}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: index * 0.1 }}
-          className="p-3 rounded-lg bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 hover:shadow-sm transition-all duration-300"
-        >
-          <div className="flex items-center gap-1 mb-2">
-            {[...Array(testimonial.rating)].map((_, i) => (
-              <span key={i}>⭐</span>
-            ))}
-          </div>
-          <p className="text-xs text-neutral-700 dark:text-neutral-300 mb-2 italic">
-            &quot;{testimonial.text}&quot;
-          </p>
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-neutral-800 dark:text-neutral-100">
-              {testimonial.name}
-            </span>
-            <span className="text-xs text-neutral-500 dark:text-neutral-400">
-              {testimonial.location}
-            </span>
-          </div>
-        </motion.div>
-      ))}
-    </div>
-  );
-};
+
 
 const StatsSection = () => {
   return (
@@ -523,55 +444,257 @@ const StatsSection = () => {
 
 const ContactSection = () => {
   return (
-    <div className="space-y-4 h-full">
-      <div className="space-y-3">
-        <div className="flex items-center gap-3">
-          <IconMapPin className="w-4 h-4 text-neutral-600 dark:text-neutral-400" />
-          <div>
-            <p className="text-sm text-neutral-800 dark:text-neutral-100">
-              523 Bis Rue Paradis
-            </p>
-            <p className="text-xs text-neutral-600 dark:text-neutral-400">
-              13006 Marseille, France
+    <div className="h-full flex flex-col">
+      {/* Contact principal */}
+      <div className="space-y-2 mb-3">
+        <div className="flex items-center gap-2">
+          <IconMapPin className="w-3 h-3 text-neutral-600 dark:text-neutral-400 flex-shrink-0" />
+          <div className="min-w-0">
+            <p className="text-xs text-neutral-800 dark:text-neutral-100 truncate">
+              523 rue Paradis, 13008 Marseille
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <IconPhone className="w-4 h-4 text-neutral-600 dark:text-neutral-400" />
-          <p className="text-sm text-neutral-800 dark:text-neutral-100">
-            +33 1 23 45 67 89
+        <div className="flex items-center gap-2">
+          <IconPhone className="w-3 h-3 text-neutral-600 dark:text-neutral-400 flex-shrink-0" />
+          <p className="text-xs text-neutral-800 dark:text-neutral-100">
+            +33 4 91 00 00 00
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <IconMail className="w-4 h-4 text-neutral-600 dark:text-neutral-400" />
-          <p className="text-sm text-neutral-800 dark:text-neutral-100">
-            contact@reboul.fr
+        <div className="flex items-center gap-2">
+          <IconMail className="w-3 h-3 text-neutral-600 dark:text-neutral-400 flex-shrink-0" />
+          <p className="text-xs text-neutral-800 dark:text-neutral-100 truncate">
+            horsydevservices@gmail.com
           </p>
         </div>
       </div>
 
-      <div className="flex gap-2">
+      {/* Description */}
+      <div className="mb-3">
+        <p className="text-xs text-neutral-600 dark:text-neutral-400 leading-tight">
+          Concept store haut de gamme spécialisé dans la mode premium et les marques de créateurs
+        </p>
+      </div>
+
+      {/* Réseaux sociaux */}
+      <div className="flex gap-1 mt-auto">
         <motion.button
-          whileHover={{ scale: 1.1 }}
+          whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="p-2 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 text-white hover:shadow-lg transition-all duration-300"
+          className="p-1.5 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 text-white hover:shadow-md transition-all duration-300"
         >
-          <IconBrandInstagram className="w-4 h-4" />
+          <IconBrandInstagram className="w-3 h-3" />
         </motion.button>
         <motion.button
-          whileHover={{ scale: 1.1 }}
+          whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="p-2 rounded-full bg-blue-600 text-white hover:shadow-lg transition-all duration-300"
+          className="p-1.5 rounded-full bg-blue-600 text-white hover:shadow-md transition-all duration-300"
         >
-          <IconBrandFacebook className="w-4 h-4" />
+          <IconBrandFacebook className="w-3 h-3" />
         </motion.button>
         <motion.button
-          whileHover={{ scale: 1.1 }}
+          whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="p-2 rounded-full bg-sky-500 text-white hover:shadow-lg transition-all duration-300"
+          className="p-1.5 rounded-full bg-sky-500 text-white hover:shadow-md transition-all duration-300"
         >
-          <IconBrandTwitter className="w-4 h-4" />
+          <IconBrandTwitter className="w-3 h-3" />
         </motion.button>
+      </div>
+    </div>
+  );
+};
+
+const BoutiquesSection = () => {
+  return (
+    <div className="h-full flex flex-col">
+      <div className="grid grid-cols-4 gap-1.5 text-xs text-neutral-600 dark:text-neutral-400 leading-tight h-full">
+        <div className="p-1.5 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 flex flex-col justify-center items-center text-center">
+          <p className="font-medium text-neutral-800 dark:text-neutral-100 mb-0.5 text-xs">Reboul Marseille</p>
+          <p className="text-xs">523 rue Paradis</p>
+        </div>
+        <div className="p-1.5 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 flex flex-col justify-center items-center text-center">
+          <p className="font-medium text-neutral-800 dark:text-neutral-100 mb-0.5 text-xs">Les Minots</p>
+          <p className="text-xs">523 rue Paradis</p>
+        </div>
+        <div className="p-1.5 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 flex flex-col justify-center items-center text-center">
+          <p className="font-medium text-neutral-800 dark:text-neutral-100 mb-0.5 text-xs">C.P. Company</p>
+          <p className="text-xs">376 avenue du Prado</p>
+        </div>
+        <div className="p-1.5 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 flex flex-col justify-center items-center text-center">
+          <p className="font-medium text-neutral-800 dark:text-neutral-100 mb-0.5 text-xs">Reboul Cassis</p>
+          <p className="text-xs">7 avenue Victor Hugo</p>
+        </div>
+        <div className="p-1.5 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 flex flex-col justify-center items-center text-center">
+          <p className="font-medium text-neutral-800 dark:text-neutral-100 mb-0.5 text-xs">L&apos;Hôtel By Reboul</p>
+          <p className="text-xs">7 avenue Victor Hugo</p>
+        </div>
+        <div className="p-1.5 rounded-lg bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 flex flex-col justify-center items-center text-center">
+          <p className="font-medium text-neutral-800 dark:text-neutral-100 mb-0.5 text-xs">Utility by Reboul</p>
+          <p className="text-xs">5 rue Gaillard</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const BoutiquesGallery = () => {
+  const boutiques = [
+    {
+      id: 1,
+      ville: "MARSEILLE",
+      nom: "REBOUL:",
+      adresse: "523 rue Paradis, 13008 Marseille",
+      image: "/images/boutiques/marseille.jpg"
+    },
+    {
+      id: 2,
+      ville: "MARSEILLE", 
+      nom: "LES MINOTS DE REBOUL:",
+      adresse: "523 rue Paradis, 13008 Marseille",
+      image: "/images/boutiques/les-minots.jpg"
+    },
+    {
+      id: 3,
+      ville: "CASSIS",
+      nom: "REBOUL:",
+      adresse: "7 AVENUE Victor Hugo, 13260 Cassis",
+      image: "/images/boutiques/cassis.jpg"
+    },
+    {
+      id: 4,
+      ville: "SANARY",
+      nom: "CHEZ UTILITY BY REBOUL",
+      adresse: "5 Rue Gaillard, 83110 Sanary-sur-Mer",
+      image: "/images/boutiques/snary.jpg"
+    },
+    {
+      id: 5,
+      ville: "SANARY",
+      nom: "POP-UP STORE PYRENEX",
+      adresse: "16 rue Gaillard, 83110 Sanary-sur-Mer",
+      image: "/images/boutiques/sanary-popup.jpg"
+    }
+  ];
+
+  return (
+    <div className="h-full flex flex-col">
+      {/* Titre et introduction */}
+      <div className="mb-6 text-center">
+        <h3 className="text-xl font-medium text-neutral-800 dark:text-neutral-100 mb-2 underline decoration-2 underline-offset-4">
+          NOS BOUTIQUES
+        </h3>
+        <p className="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed max-w-3xl mx-auto">
+          Depuis 1872, nous réinventons l&apos;élégance en alliant luxe et mode dans des espaces d&apos;exception. 
+          Poussez les portes de l&apos;un de nos concept stores et laissez-vous séduire par une sélection raffinée 
+          de produits haut de gamme, soigneusement choisis parmi nos marques partenaires.
+        </p>
+      </div>
+
+      {/* Cartes des boutiques */}
+      <div className="flex-1 relative">
+        <div className="overflow-x-auto scrollbar-hide">
+          <div className="flex gap-4 pb-4 min-w-max" id="boutiques-scroll">
+            {boutiques.map((boutique) => (
+              <motion.div
+                key={boutique.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                whileHover={{ scale: 1.02 }}
+                className="w-64 h-auto flex-shrink-0 rounded-lg overflow-hidden bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 shadow-sm hover:shadow-md transition-all duration-300"
+              >
+                {/* Image */}
+                <div className="h-80 bg-neutral-100 dark:bg-neutral-800 overflow-hidden">
+                  <Image
+                    src={boutique.image}
+                    alt={boutique.nom}
+                    width={256}
+                    height={192}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                
+                {/* Contenu */}
+                <div className="p-4">
+                  <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1 underline">
+                    {boutique.ville}
+                  </p>
+                  <h4 className="text-sm font-medium text-neutral-800 dark:text-neutral-100 mb-2">
+                    {boutique.nom}
+                  </h4>
+                  <p className="text-xs text-neutral-600 dark:text-neutral-400">
+                    {boutique.adresse}
+                  </p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+        
+        {/* Boutons de navigation */}
+        <button
+          onClick={() => {
+            const container = document.getElementById('boutiques-scroll');
+            if (container) {
+              container.scrollBy({ left: -300, behavior: 'smooth' });
+            }
+          }}
+          className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center text-neutral-600 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200"
+        >
+          ←
+        </button>
+        <button
+          onClick={() => {
+            const container = document.getElementById('boutiques-scroll');
+            if (container) {
+              container.scrollBy({ left: 300, behavior: 'smooth' });
+            }
+          }}
+          className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center text-neutral-600 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200"
+        >
+          →
+        </button>
+      </div>
+    </div>
+  );
+};
+
+const HotelSection = () => {
+  return (
+    <div className="h-full flex flex-col">
+      <div className="flex-1 flex flex-col justify-center items-center text-center p-2">
+        {/* Image de l'hôtel */}
+        <div className="mb-3 w-full">
+          <div className="aspect-[2/1] rounded-lg overflow-hidden bg-neutral-100 dark:bg-neutral-800 mb-3">
+            <Image
+              src="/images/boutiques/rebouhotel.jpg"
+              alt="L'Hôtel by Reboul"
+              width={400}
+              height={200}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        </div>
+        
+        <div className="mb-2">
+          <h3 className="text-sm font-medium text-neutral-800 dark:text-neutral-100 mb-1">
+            L&apos;HÔTEL by REBOUL
+          </h3>
+          <p className="text-xs text-neutral-600 dark:text-neutral-400 leading-tight">
+            Une expérience hôtelière unique au cœur de Cassis, 
+            alliant luxe contemporain et service d&apos;exception.
+          </p>
+        </div>
+        
+        <motion.a
+          href="https://hotel-byreboul-cassis.com/"
+          target="_blank"
+          rel="noopener noreferrer"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="px-2 py-1 bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-800 rounded-lg font-medium text-xs hover:bg-neutral-700 dark:hover:bg-neutral-300 transition-all duration-300"
+        >
+          Découvrir l&apos;hôtel
+        </motion.a>
       </div>
     </div>
   );
@@ -619,7 +742,6 @@ const GalleryPreview = ({
       ) : (
         <div className="flex items-center justify-center h-full">
           <div className="text-center">
-            <span>🏪</span>
             <p className="text-sm text-neutral-500">
               Galerie boutique bientôt disponible
             </p>
@@ -659,7 +781,6 @@ const ShootingGallery = ({ archives }: { archives: Archive[] }) => {
       ) : (
         <div className="flex items-center justify-center h-full">
           <div className="text-center">
-            <span>📷</span>
             <p className="text-sm text-neutral-500">
               Shootings bientôt disponibles
             </p>
@@ -705,7 +826,6 @@ const EventsGallery = ({ archives }: { archives: Archive[] }) => {
       ) : (
         <div className="flex items-center justify-center h-full">
           <div className="text-center">
-            <span className="text-2xl mb-2 block">🎉</span>
             <p className="text-sm text-neutral-500">
               Événements bientôt disponibles
             </p>

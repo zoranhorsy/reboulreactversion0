@@ -13,7 +13,7 @@ const STORE_COLLECTIONS = [
     href: "/catalogue?store_type=adult",
     description: "COLLECTION ADULTE 2.0",
     tagline: "Style et élégance pour tous",
-    image: "/images/collections/adult-collection.jpg",
+    image: "/images/boutiques/cassis.jpg",
   },
   {
     id: "kids",
@@ -21,7 +21,7 @@ const STORE_COLLECTIONS = [
     href: "/kids",
     description: "COLLECTION ENFANT",
     tagline: "Mode tendance pour les petits",
-    image: "/images/collections/kids-collection.jpg",
+    image: "/images/boutiques/les-minotscopy.png",
   },
   {
     id: "sneakers",

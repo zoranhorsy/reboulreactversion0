@@ -1,10 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
   <style>
-    path { fill: #ffffff; }
-    @media (prefers-color-scheme: light) {
-      path { fill: #000000; }
+    .reboul-icon { fill: #000000; }
+    @media (prefers-color-scheme: dark) {
+      .reboul-icon { fill: #ffffff; }
     }
   </style>
-  <path d="M20 20h60v60h-60z" />
-  <path d="M30 40h40v5h-40zM30 55h40v5h-40z" fill="#000" />
+  <!-- Logo Reboul simplifié -->
+  <!-- R stylisé avec étoile -->
+  <path d="M25 20 L25 80 L42 80 Q58 80 58 65 Q58 50 42 50 L32 50 L32 20 Z" fill="none" stroke="#000000" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="reboul-icon"/>
+  <path d="M32 50 L52 80" fill="none" stroke="#000000" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="reboul-icon"/>
+  
+  <!-- Étoile dans le R -->
+  <path d="M35 30 L37 35 L42 35 L38 38 L40 43 L35 40 L30 43 L32 38 L28 35 L33 35 Z" fill="#000000" class="reboul-icon"/>
 </svg> 

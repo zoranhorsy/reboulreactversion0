@@ -17,8 +17,8 @@ const inter = Inter({
 // Metadata optimisée
 export const metadata: Metadata = {
   title: {
-    default: "Reboul Store - Boutique de mode premium",
-    template: "%s | Reboul Store",
+    default: "Reboul Store 2.0 - Boutique de mode premium",
+    template: "%s | Reboul Store 2.0",
   },
   description:
     "Découvrez la collection exclusive de vêtements et accessoires de mode premium chez Reboul Store. Qualité exceptionnelle et design avant-gardiste.",
@@ -26,6 +26,14 @@ export const metadata: Metadata = {
   authors: [{ name: "Reboul Store" }],
   creator: "Reboul Store",
   metadataBase: new URL("https://reboul-store.com"),
+  icons: {
+    icon: [
+      { url: "/icons/logo_black.ico", media: "(prefers-color-scheme: light)" },
+      { url: "/icons/logo_w.ico", media: "(prefers-color-scheme: dark)" },
+    ],
+    shortcut: "/icons/logo_w.ico",
+  },
+  manifest: "/site.webmanifest",
   openGraph: {
     type: "website",
     locale: "fr_FR",
