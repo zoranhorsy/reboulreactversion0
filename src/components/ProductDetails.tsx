@@ -202,39 +202,53 @@ export function ProductDetails({
 
   // Récupération des images par couleur pour la prévisualisation
   const getVariantImages = () => {
-    const colorImages: Record<string, string> = {};
+    const allImages: string[] = [];
 
-    // Utiliser l'image principale si pas de couleur spécifique
+    console.log("🔍 ProductDetails - Images du produit:", {
+      image_url: product.image_url,
+      images: product.images,
+      imagesType: typeof product.images,
+      isArray: Array.isArray(product.images)
+    });
+
+    // Log complet du produit pour debug
+    console.log("🔍 ProductDetails - Données complètes du produit:", {
+      id: product.id,
+      name: product.name,
+      image_url: product.image_url,
+      images: product.images,
+      imagesLength: product.images?.length,
+      store_type: product.store_type
+    });
+
+    // Ajouter l'image principale si elle existe
     if (product.image_url) {
-      colorImages["default"] = product.image_url;
+      allImages.push(product.image_url);
+      console.log("✅ Image principale ajoutée:", product.image_url);
     }
 
-    // Essayer de récupérer les images spécifiques par couleur
+    // Ajouter toutes les images du tableau images
     if (product.images && Array.isArray(product.images)) {
       product.images.forEach((img: any, index: number) => {
         const imgUrl = typeof img === "string" ? img : img?.url;
         if (imgUrl) {
-          if (colors[index]) {
-            colorImages[colors[index]] = imgUrl;
-          } else if (colors.length > 0 && !colorImages[colors[0]]) {
-            // Si pas d'index correspondant mais qu'on a des couleurs, associer à la première couleur sans image
-            colorImages[colors[0]] = imgUrl;
-          }
+          allImages.push(imgUrl);
+          console.log(`✅ Image ${index + 1} ajoutée:`, imgUrl);
         }
       });
     }
 
-    // S'assurer que chaque couleur a au moins une image par défaut
-    colors.forEach((color) => {
-      if (!colorImages[color] && product.image_url) {
-        colorImages[color] = product.image_url;
-      }
-    });
+    // Si aucune image n'a été trouvée, retourner un tableau vide
+    if (allImages.length === 0) {
+      console.log("❌ Aucune image trouvée");
+      return [];
+    }
 
-    return colorImages;
+    console.log("🎯 Total d'images récupérées:", allImages.length, allImages);
+    return allImages;
   };
 
-  const variantImages = getVariantImages();
+  const allProductImages = getVariantImages();
 
   // Fonction pour déterminer le niveau de stock d'une variante
   const getStockLevel = (color: string, size: string) => {
@@ -270,7 +284,7 @@ export function ProductDetails({
               )}
               <ProductVariantPreview
                 productId={product.id}
-                colorImages={getVariantImages()}
+                colorImages={allProductImages}
                 availableColors={colors}
                 selectedColor={selectedColor}
                 onColorChange={onColorChange}
@@ -379,7 +393,7 @@ export function ProductDetails({
                   onColorChange={onColorChange}
                   variants={variants}
                   selectedSize={selectedSize}
-                  productImages={getVariantImages()}
+                  productImages={{}}
                 />
               </div>
 

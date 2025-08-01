@@ -135,15 +135,36 @@ export function ProductForm({
   const cleanProductImages = (
     productImages: (string | File | Blob | ProductImage)[] | undefined,
   ): string[] => {
-    if (!productImages || !Array.isArray(productImages)) {
+    // Si pas d'images, retourner un tableau vide
+    if (!productImages) {
       return [];
     }
 
+    // Si c'est une chaîne JSON, essayer de la parser
+    if (typeof productImages === "string") {
+      try {
+        const parsed = JSON.parse(productImages);
+        return cleanProductImages(parsed);
+      } catch (error) {
+        // Si c'est une URL simple, la retourner
+        const imageString = productImages as string;
+        if (imageString.trim() !== "") {
+          return [imageString];
+        }
+        return [];
+      }
+    }
+
+    // Si ce n'est pas un tableau, essayer de le convertir
+    if (!Array.isArray(productImages)) {
+      return cleanProductImages([productImages]);
+    }
+
     const cleanedImageUrls = productImages
-      .map((img) => {
+      .map((img, index) => {
         // Si c'est une chaîne de caractères (URL)
         if (typeof img === "string") {
-          return img;
+          return img.trim() !== "" ? img : null;
         }
 
         // Si c'est un objet ProductImage
@@ -153,7 +174,16 @@ export function ProductForm({
           "url" in img &&
           typeof img.url === "string"
         ) {
-          return img.url;
+          return img.url.trim() !== "" ? img.url : null;
+        }
+
+        // Si c'est un objet avec d'autres propriétés
+        if (typeof img === "object" && img !== null) {
+          // Chercher une propriété qui pourrait être une URL
+          const possibleUrl = (img as any).url || (img as any).image_url || (img as any).src;
+          if (typeof possibleUrl === "string" && possibleUrl.trim() !== "") {
+            return possibleUrl;
+          }
         }
 
         return null;
@@ -165,6 +195,11 @@ export function ProductForm({
 
   // Initialiser le formulaire avec les données du produit
   const initialImages = cleanProductImages(product?.images);
+  
+  // Fallback : si pas d'images dans le tableau mais qu'il y a une image_url, l'ajouter
+  const finalImages = initialImages.length > 0 
+    ? initialImages 
+    : (product?.image_url ? [product.image_url] : []);
 
   const [formData, setFormData] = useState<Product>({
     id: product?.id || "",
@@ -177,7 +212,7 @@ export function ProductForm({
     brand: product?.brand || "",
     image_url: product?.image_url || "",
     image: product?.image || "",
-    images: initialImages,
+    images: finalImages, // Utiliser les images finales avec fallback
     imagesText: product?.imagesText || "",
     variants: product?.variants || [],
     tags: product?.tags || [],
@@ -250,6 +285,9 @@ export function ProductForm({
         showTechnicalDetails: false,
       };
 
+    // Nettoyer les images du produit
+    const cleanedImages = cleanProductImages(product.images);
+
     return {
       id: product.id,
       name: product.name,
@@ -261,7 +299,7 @@ export function ProductForm({
       brand: product.brand || "",
       image_url: product.image_url || "",
       image: product.image || "",
-      images: product.images,
+      images: cleanedImages, // Utiliser les images nettoyées
       imagesText: product.imagesText || "",
       variants: product.variants,
       tags: product.tags,
@@ -388,6 +426,8 @@ export function ProductForm({
       return;
     }
 
+    console.log("🚀 Début upload - Fichiers sélectionnés:", files.length);
+
     // Vérifier la taille et le type des fichiers
     const maxSize = 5 * 1024 * 1024; // 5MB
     const validTypes = ["image/jpeg", "image/png", "image/webp"];
@@ -408,6 +448,7 @@ export function ProductForm({
 
     try {
       setIsUploading(true);
+      console.log("⏳ Upload en cours...");
 
       // Obtenir la signature du serveur
       const timestamp = Math.round(new Date().getTime() / 1000);
@@ -427,9 +468,12 @@ export function ProductForm({
       }
 
       const { signature } = await signatureResponse.json();
+      console.log("✅ Signature obtenue");
 
-      const uploadPromises = Array.from(files).map(async (file) => {
+      const uploadPromises = Array.from(files).map(async (file, index) => {
         try {
+          console.log(`📤 Upload fichier ${index + 1}/${files.length}:`, file.name);
+          
           const formData = new FormData();
           formData.append("file", file);
           formData.append("api_key", "699182784731453");
@@ -447,20 +491,23 @@ export function ProductForm({
 
           if (!response.ok) {
             const errorData = await response.text();
-            console.error("Erreur Cloudinary:", errorData);
+            console.error("❌ Erreur Cloudinary:", errorData);
             throw new Error(`Upload failed: ${errorData}`);
           }
 
           const data = await response.json();
+          console.log(`✅ Fichier ${index + 1} uploadé:`, data.secure_url);
           return data.secure_url;
         } catch (error) {
-          console.error("Erreur lors de l'upload d'une image:", error);
+          console.error(`❌ Erreur lors de l'upload du fichier ${index + 1}:`, error);
           throw error;
         }
       });
 
       const uploadedUrls = await Promise.all(uploadPromises);
       const validUrls = uploadedUrls.filter((url) => url);
+
+      console.log("🎯 URLs uploadées:", validUrls);
 
       if (validUrls.length) {
         const existingImages = formData.images || [];
@@ -478,6 +525,8 @@ export function ProductForm({
           ...validUrls,
         ];
 
+        console.log("📝 Images mises à jour dans le formulaire:", updatedImages);
+
         setFormData((prev) => ({
           ...prev,
           images: updatedImages,
@@ -491,7 +540,7 @@ export function ProductForm({
       }
     } catch (error) {
       console.error(
-        "Erreur upload:",
+        "❌ Erreur upload:",
         error instanceof Error ? error.message : String(error),
       );
       toast({
@@ -504,6 +553,7 @@ export function ProductForm({
       });
     } finally {
       setIsUploading(false);
+      console.log("🏁 Upload terminé");
     }
   };
 
@@ -555,6 +605,7 @@ export function ProductForm({
 
     try {
       setIsSubmitting(true);
+      console.log("🚀 Début soumission du formulaire");
 
       // Nettoyer et formater les images pour n'avoir que des URLs simples
       const cleanedImages = (formData.images || [])
@@ -566,6 +617,9 @@ export function ProductForm({
         .filter(
           (url): url is string => typeof url === "string" && url.trim() !== "",
         );
+
+      console.log("📸 Images nettoyées pour envoi:", cleanedImages);
+      console.log("📸 Nombre d'images:", cleanedImages.length);
 
       // Créer une copie de formData sans la propriété showTechnicalDetails
       const { showTechnicalDetails, ...productData } = formData;
@@ -593,11 +647,17 @@ export function ProductForm({
         featured: Boolean(productData.featured),
         active: Boolean(productData.active),
         new: Boolean(productData.new),
-        images: cleanedImages,
+        images: cleanedImages, // Utiliser les images nettoyées
         variants: cleanedVariants, // Utiliser les variants nettoyés
         tags: Array.isArray(productData.tags) ? productData.tags : [],
         details: Array.isArray(productData.details) ? productData.details : [],
       };
+
+      console.log("📦 Données du produit préparées:", {
+        name: tempProductData.name,
+        images: tempProductData.images,
+        imageCount: tempProductData.images.length
+      });
 
       // Ajouter les champs optionnels uniquement s'ils ont une valeur
       if (productData.sku) {
@@ -626,9 +686,17 @@ export function ProductForm({
         ? { ...tempProductData, id: formData.id }
         : tempProductData;
 
+      console.log("🎯 Données finales envoyées:", {
+        id: cleanedProductData.id,
+        images: cleanedProductData.images,
+        imageCount: cleanedProductData.images?.length || 0
+      });
+
       // Appeler la fonction onSubmit avec les données préparées
       try {
         await onSubmit(cleanedProductData as Product);
+
+        console.log("✅ Produit sauvegardé avec succès");
 
         toast({
           title: "Succès",
@@ -642,7 +710,7 @@ export function ProductForm({
           router.push("/admin");
         }
       } catch (submitError) {
-        console.error("Error in form submission:", submitError);
+        console.error("❌ Error in form submission:", submitError);
         toast({
           title: "Erreur lors de la soumission",
           description:
@@ -655,7 +723,7 @@ export function ProductForm({
       }
     } catch (error) {
       console.error(
-        "Erreur traitement formulaire:",
+        "❌ Erreur traitement formulaire:",
         error instanceof Error ? error.message : String(error),
       );
       toast({
@@ -668,6 +736,7 @@ export function ProductForm({
       });
     } finally {
       setIsSubmitting(false);
+      console.log("🏁 Soumission terminée");
     }
   };
 

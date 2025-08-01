@@ -1,0 +1,709 @@
+{
+  "metadata": {
+    "date": "30/07/25",
+    "heure": "9h58mn14s",
+    "marque": "mercer",
+    "genre": "Basket",
+    "total_general": 19001.00,
+    "total_genre": 19001.00,
+    "total_marque": 19001.00
+  },
+  "produits": [
+    {
+      "cod_article": "5 009 48673",
+      "reference": "ME241001/671 41",
+      "px_achat": 69.00,
+      "stock": 1,
+      "valeur": 69.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48710",
+      "reference": "ME243018/102 42",
+      "px_achat": 83.00,
+      "stock": 2,
+      "valeur": 166.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48889",
+      "reference": "ME251001/153 40",
+      "px_achat": 71.00,
+      "stock": 3,
+      "valeur": 213.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48890",
+      "reference": "ME251005/997 46",
+      "px_achat": 67.00,
+      "stock": 2,
+      "valeur": 134.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48891",
+      "reference": "ME251006/154 42",
+      "px_achat": 75.00,
+      "stock": 1,
+      "valeur": 75.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48912",
+      "reference": "ME251007/261 43",
+      "px_achat": 67.00,
+      "stock": 2,
+      "valeur": 134.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 49010",
+      "reference": "WE241003/997 36",
+      "px_achat": 82.00,
+      "stock": 1,
+      "valeur": 82.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 49011",
+      "reference": "WE251001/101 37",
+      "px_achat": 69.00,
+      "stock": 2,
+      "valeur": 138.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 49012",
+      "reference": "WE251005/350 37",
+      "px_achat": 67.00,
+      "stock": 1,
+      "valeur": 67.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 49013",
+      "reference": "WE251005/996 36",
+      "px_achat": 75.00,
+      "stock": 2,
+      "valeur": 150.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 49014",
+      "reference": "WE251006/154 37",
+      "px_achat": 65.00,
+      "stock": 3,
+      "valeur": 195.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 49015",
+      "reference": "WE251007/261 36",
+      "px_achat": 71.00,
+      "stock": 2,
+      "valeur": 142.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 49016",
+      "reference": "WE251008/981 36",
+      "px_achat": 65.00,
+      "stock": 2,
+      "valeur": 130.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48928",
+      "reference": "ME243018/103 42",
+      "px_achat": 83.00,
+      "stock": 3,
+      "valeur": 249.00,
+      "pla": "B25"
+    },
+    {
+      "cod_article": "5 009 48929",
+      "reference": "ME251001/154 40",
+      "px_achat": 71.00,
+      "stock": 1,
+      "valeur": 71.00,
+      "pla": "B25"
+    },
+    {
+      "cod_article": "5 009 48930",
+      "reference": "ME251005/998 46",
+      "px_achat": 67.00,
+      "stock": 2,
+      "valeur": 134.00,
+      "pla": "B25"
+    },
+    {
+      "cod_article": "5 009 48949",
+      "reference": "WE241004/998 36",
+      "px_achat": 82.00,
+      "stock": 1,
+      "valeur": 82.00,
+      "pla": "B25"
+    },
+    {
+      "cod_article": "5 009 48950",
+      "reference": "WE251002/102 37",
+      "px_achat": 69.00,
+      "stock": 2,
+      "valeur": 138.00,
+      "pla": "B25"
+    },
+    {
+      "cod_article": "5 009 48951",
+      "reference": "WE251006/155 37",
+      "px_achat": 65.00,
+      "stock": 3,
+      "valeur": 195.00,
+      "pla": "B25"
+    },
+    {
+      "cod_article": "5 009 48952",
+      "reference": "WE251007/262 36",
+      "px_achat": 71.00,
+      "stock": 1,
+      "valeur": 71.00,
+      "pla": "B25"
+    },
+    {
+      "cod_article": "5 009 48953",
+      "reference": "WE251008/982 36",
+      "px_achat": 65.00,
+      "stock": 2,
+      "valeur": 130.00,
+      "pla": "B25"
+    },
+    {
+      "cod_article": "5 009 48954",
+      "reference": "WE251009/263 36",
+      "px_achat": 75.00,
+      "stock": 1,
+      "valeur": 75.00,
+      "pla": "B25"
+    },
+    {
+      "cod_article": "5 009 48825",
+      "reference": "ME241002/672 41",
+      "px_achat": 69.00,
+      "stock": 2,
+      "valeur": 138.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48826",
+      "reference": "ME243019/103 42",
+      "px_achat": 83.00,
+      "stock": 1,
+      "valeur": 83.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48827",
+      "reference": "ME251002/154 40",
+      "px_achat": 71.00,
+      "stock": 3,
+      "valeur": 213.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48828",
+      "reference": "ME251006/154 46",
+      "px_achat": 67.00,
+      "stock": 2,
+      "valeur": 134.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48829",
+      "reference": "ME251007/261 42",
+      "px_achat": 75.00,
+      "stock": 1,
+      "valeur": 75.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48830",
+      "reference": "ME251008/261 43",
+      "px_achat": 67.00,
+      "stock": 2,
+      "valeur": 134.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48831",
+      "reference": "WE241004/997 36",
+      "px_achat": 82.00,
+      "stock": 1,
+      "valeur": 82.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48832",
+      "reference": "WE251002/101 37",
+      "px_achat": 69.00,
+      "stock": 2,
+      "valeur": 138.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48833",
+      "reference": "WE251006/155 36",
+      "px_achat": 65.00,
+      "stock": 3,
+      "valeur": 195.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48834",
+      "reference": "WE251007/262 37",
+      "px_achat": 71.00,
+      "stock": 1,
+      "valeur": 71.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48835",
+      "reference": "WE251008/982 37",
+      "px_achat": 65.00,
+      "stock": 2,
+      "valeur": 130.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48836",
+      "reference": "WE251009/263 37",
+      "px_achat": 75.00,
+      "stock": 1,
+      "valeur": 75.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48837",
+      "reference": "ME241003/673 41",
+      "px_achat": 69.00,
+      "stock": 2,
+      "valeur": 138.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48838",
+      "reference": "ME243020/104 42",
+      "px_achat": 83.00,
+      "stock": 1,
+      "valeur": 83.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48839",
+      "reference": "ME251003/155 40",
+      "px_achat": 71.00,
+      "stock": 3,
+      "valeur": 213.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48840",
+      "reference": "ME251007/262 46",
+      "px_achat": 67.00,
+      "stock": 2,
+      "valeur": 134.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48841",
+      "reference": "ME251008/262 42",
+      "px_achat": 75.00,
+      "stock": 1,
+      "valeur": 75.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48842",
+      "reference": "ME251009/262 43",
+      "px_achat": 67.00,
+      "stock": 2,
+      "valeur": 134.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48843",
+      "reference": "WE241005/998 36",
+      "px_achat": 82.00,
+      "stock": 1,
+      "valeur": 82.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48844",
+      "reference": "WE251003/102 37",
+      "px_achat": 69.00,
+      "stock": 2,
+      "valeur": 138.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48845",
+      "reference": "WE251007/263 36",
+      "px_achat": 65.00,
+      "stock": 3,
+      "valeur": 195.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48846",
+      "reference": "WE251008/983 37",
+      "px_achat": 71.00,
+      "stock": 1,
+      "valeur": 71.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48847",
+      "reference": "WE251009/264 37",
+      "px_achat": 65.00,
+      "stock": 2,
+      "valeur": 130.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48848",
+      "reference": "WE251010/264 36",
+      "px_achat": 75.00,
+      "stock": 1,
+      "valeur": 75.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48849",
+      "reference": "ME241004/674 41",
+      "px_achat": 69.00,
+      "stock": 2,
+      "valeur": 138.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48850",
+      "reference": "ME243021/105 42",
+      "px_achat": 83.00,
+      "stock": 1,
+      "valeur": 83.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48851",
+      "reference": "ME251004/156 40",
+      "px_achat": 71.00,
+      "stock": 3,
+      "valeur": 213.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48852",
+      "reference": "ME251008/263 46",
+      "px_achat": 67.00,
+      "stock": 2,
+      "valeur": 134.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48853",
+      "reference": "ME251009/263 42",
+      "px_achat": 75.00,
+      "stock": 1,
+      "valeur": 75.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48854",
+      "reference": "ME251010/263 43",
+      "px_achat": 67.00,
+      "stock": 2,
+      "valeur": 134.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48855",
+      "reference": "WE241006/999 36",
+      "px_achat": 82.00,
+      "stock": 1,
+      "valeur": 82.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48856",
+      "reference": "WE251004/103 37",
+      "px_achat": 69.00,
+      "stock": 2,
+      "valeur": 138.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48857",
+      "reference": "WE251008/984 36",
+      "px_achat": 65.00,
+      "stock": 3,
+      "valeur": 195.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48858",
+      "reference": "WE251009/265 37",
+      "px_achat": 71.00,
+      "stock": 1,
+      "valeur": 71.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48859",
+      "reference": "WE251010/265 37",
+      "px_achat": 65.00,
+      "stock": 2,
+      "valeur": 130.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48860",
+      "reference": "WE251011/265 36",
+      "px_achat": 75.00,
+      "stock": 1,
+      "valeur": 75.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48861",
+      "reference": "ME241005/675 41",
+      "px_achat": 69.00,
+      "stock": 2,
+      "valeur": 138.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48862",
+      "reference": "ME243022/106 42",
+      "px_achat": 83.00,
+      "stock": 1,
+      "valeur": 83.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48863",
+      "reference": "ME251005/157 40",
+      "px_achat": 71.00,
+      "stock": 3,
+      "valeur": 213.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48864",
+      "reference": "ME251009/264 46",
+      "px_achat": 67.00,
+      "stock": 2,
+      "valeur": 134.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48865",
+      "reference": "ME251010/264 42",
+      "px_achat": 75.00,
+      "stock": 1,
+      "valeur": 75.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48866",
+      "reference": "ME251011/264 43",
+      "px_achat": 67.00,
+      "stock": 2,
+      "valeur": 134.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48867",
+      "reference": "WE241007/1000 36",
+      "px_achat": 82.00,
+      "stock": 1,
+      "valeur": 82.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48868",
+      "reference": "WE251005/104 37",
+      "px_achat": 69.00,
+      "stock": 2,
+      "valeur": 138.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48869",
+      "reference": "WE251009/266 36",
+      "px_achat": 65.00,
+      "stock": 3,
+      "valeur": 195.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48870",
+      "reference": "WE251010/266 37",
+      "px_achat": 71.00,
+      "stock": 1,
+      "valeur": 71.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48871",
+      "reference": "WE251011/266 37",
+      "px_achat": 65.00,
+      "stock": 2,
+      "valeur": 130.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48872",
+      "reference": "WE251012/266 36",
+      "px_achat": 75.00,
+      "stock": 1,
+      "valeur": 75.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48873",
+      "reference": "ME241006/676 41",
+      "px_achat": 69.00,
+      "stock": 2,
+      "valeur": 138.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48874",
+      "reference": "ME243023/107 42",
+      "px_achat": 83.00,
+      "stock": 1,
+      "valeur": 83.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48875",
+      "reference": "ME251006/158 40",
+      "px_achat": 71.00,
+      "stock": 3,
+      "valeur": 213.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48876",
+      "reference": "ME251010/265 46",
+      "px_achat": 67.00,
+      "stock": 2,
+      "valeur": 134.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48877",
+      "reference": "ME251011/265 42",
+      "px_achat": 75.00,
+      "stock": 1,
+      "valeur": 75.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48878",
+      "reference": "ME251012/265 43",
+      "px_achat": 67.00,
+      "stock": 2,
+      "valeur": 134.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48879",
+      "reference": "WE241008/1001 36",
+      "px_achat": 82.00,
+      "stock": 1,
+      "valeur": 82.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48880",
+      "reference": "WE251006/105 37",
+      "px_achat": 69.00,
+      "stock": 2,
+      "valeur": 138.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48881",
+      "reference": "WE251010/267 36",
+      "px_achat": 65.00,
+      "stock": 3,
+      "valeur": 195.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48882",
+      "reference": "WE251011/267 37",
+      "px_achat": 71.00,
+      "stock": 1,
+      "valeur": 71.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48883",
+      "reference": "WE251012/267 37",
+      "px_achat": 65.00,
+      "stock": 2,
+      "valeur": 130.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48884",
+      "reference": "WE251013/267 36",
+      "px_achat": 75.00,
+      "stock": 1,
+      "valeur": 75.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48885",
+      "reference": "ME241007/677 41",
+      "px_achat": 69.00,
+      "stock": 2,
+      "valeur": 138.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48886",
+      "reference": "ME243024/108 42",
+      "px_achat": 83.00,
+      "stock": 1,
+      "valeur": 83.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48887",
+      "reference": "ME251007/159 40",
+      "px_achat": 71.00,
+      "stock": 3,
+      "valeur": 213.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48888",
+      "reference": "ME251011/266 46",
+      "px_achat": 67.00,
+      "stock": 2,
+      "valeur": 134.00,
+      "pla": "E25"
+    },
+    {
+      "cod_article": "5 009 48781",
+      "reference": "ME251012/266 42",
+      "px_achat": 75.00,
+      "stock": 1,
+      "valeur": 75.00,
+      "pla": "E25"
+    }
+  ]
+} 

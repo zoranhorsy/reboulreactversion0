@@ -640,6 +640,15 @@ export class Api {
         return null;
       }
 
+      // Log des images brutes reçues
+      console.log("🔍 API - Images brutes reçues:", {
+        image_url: response.data.image_url,
+        images: response.data.images,
+        imagesType: typeof response.data.images,
+        isArray: Array.isArray(response.data.images),
+        imagesLength: response.data.images?.length
+      });
+
       // Vérifier et nettoyer les données du produit
       const cleanProduct = {
         ...response.data,
@@ -699,6 +708,12 @@ export class Api {
         active: Boolean(response.data.active),
         new: Boolean(response.data.new),
       };
+
+      console.log("🔍 API - Images après nettoyage:", {
+        image_url: cleanProduct.image_url,
+        images: cleanProduct.images,
+        imagesLength: cleanProduct.images?.length
+      });
 
       console.log("Produit nettoyé:", cleanProduct);
 

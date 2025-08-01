@@ -272,7 +272,7 @@ export function ProductDetails({
               )}
               <ProductVariantPreview
                 productId={product.id}
-                colorImages={getVariantImages()}
+                colorImages={Object.values(getVariantImages())}
                 availableColors={colors}
                 selectedColor={selectedColor}
                 onColorChange={onColorChange}
