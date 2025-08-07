@@ -27,11 +27,8 @@ export const metadata: Metadata = {
   creator: "Reboul Store",
   metadataBase: new URL("https://reboul-store.com"),
   icons: {
-    icon: [
-      { url: "/icons/logo_black.ico", media: "(prefers-color-scheme: light)" },
-      { url: "/icons/logo_w.ico", media: "(prefers-color-scheme: dark)" },
-    ],
-    shortcut: "/icons/logo_w.ico",
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
   },
   manifest: "/site.webmanifest",
   openGraph: {
@@ -88,10 +85,8 @@ export default function RootLayout({
           crossOrigin="anonymous"
         />
         {/* Favicon explicite pour forcer l'utilisation */}
-        <link rel="icon" type="image/x-icon" href="/icons/logo_w.ico" />
-        <link rel="shortcut icon" type="image/x-icon" href="/icons/logo_w.ico" />
-        <link rel="icon" type="image/x-icon" href="/icons/logo_black.ico" media="(prefers-color-scheme: light)" />
-        <link rel="icon" type="image/x-icon" href="/icons/logo_w.ico" media="(prefers-color-scheme: dark)" />
+        <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
       </head>
       <body
         className={`min-h-screen bg-background font-sans antialiased ${inter.className}`}
