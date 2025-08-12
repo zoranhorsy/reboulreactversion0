@@ -6,6 +6,8 @@ import { Inter } from "next/font/google";
 import { ClientProviders } from "./client-providers";
 import { ClientSideLayout } from "@/components/layout/ClientSideLayout";
 import Footer from "@/components/Footer";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 // Utilisation de preload pour les polices
 const inter = Inter({
@@ -97,6 +99,8 @@ export default function RootLayout({
             <Footer />
           </ClientSideLayout>
         </ClientProviders>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
