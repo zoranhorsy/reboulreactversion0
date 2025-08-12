@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   creator: "Reboul Store",
   metadataBase: new URL("https://reboul-store.com"),
   icons: {
-    icon: "/favicon.ico",
+    icon: "/favicon.ico?v=3",
   },
   manifest: "/site.webmanifest",
   openGraph: {
@@ -86,7 +86,7 @@ export default function RootLayout({
           crossOrigin="anonymous"
         />
         {/* Favicon explicite pour forcer l'utilisation */}
-        <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/x-icon" href="/favicon.ico?v=3" />
       </head>
       <body
         className={`min-h-screen bg-background font-sans antialiased ${inter.className}`}
