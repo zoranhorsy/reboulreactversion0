@@ -78,6 +78,8 @@
     "@types/nodemailer": "^6.4.17",
     "@types/pg": "^8.11.11",
     "@types/three": "^0.170.0",
+    "@vercel/analytics": "^1.5.0",
+    "@vercel/speed-insights": "^1.2.0",
     "animejs": "^3.2.2",
     "axios": "^1.7.9",
     "bcrypt": "^5.1.1",
