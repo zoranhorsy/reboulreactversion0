@@ -30,7 +30,6 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://reboul-store.com"),
   icons: {
     icon: "/favicon.ico",
-    shortcut: "/favicon.ico",
   },
   manifest: "/site.webmanifest",
   openGraph: {
@@ -88,7 +87,6 @@ export default function RootLayout({
         />
         {/* Favicon explicite pour forcer l'utilisation */}
         <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-        <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
       </head>
       <body
         className={`min-h-screen bg-background font-sans antialiased ${inter.className}`}
