@@ -3,15 +3,21 @@
   "short_name": "Reboul",
   "icons": [
     {
-      "src": "/icons/logo_black.ico",
+      "src": "/favicon.ico",
       "sizes": "16x16 32x32",
       "type": "image/x-icon",
       "purpose": "any"
     },
     {
-      "src": "/icons/logo_w.ico",
-      "sizes": "16x16 32x32",
-      "type": "image/x-icon",
+      "src": "/favicon-reboul.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
       "purpose": "any"
     }
   ],
