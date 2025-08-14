@@ -78,7 +78,7 @@ export function AdminReturns() {
   // Actions
   const handleValidate = async (order_id: number, order_item_id: number, approved: boolean) => {
     try {
-      await fetch(`${API_URL}/api/orders/${order_id}/return/validate`, {
+              await fetch(`${API_URL}/orders/${order_id}/return/validate`, {
         method: 'PATCH',
         headers: getAuthHeaders(),
         body: JSON.stringify({
@@ -97,7 +97,7 @@ export function AdminReturns() {
 
   const handleRefund = async (order_id: number) => {
     try {
-      await fetch(`${API_URL}/api/orders/${order_id}/mark-refunded`, {
+              await fetch(`${API_URL}/orders/${order_id}/mark-refunded`, {
         method: 'PATCH',
         headers: getAuthHeaders(),
         body: JSON.stringify({ refund_id: '', admin_comment: 'Remboursement effectué' })

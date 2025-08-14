@@ -69,7 +69,7 @@ const AuthProviderInternal: React.FC<{ children: React.ReactNode }> = ({
   const login = useCallback(async (email: string, password: string) => {
     try {
       const apiResponse = await axios.post(
-        `${API_URL}/api/auth/login`,
+        `${API_URL}/auth/login`,
         { email, password }
       );
 
@@ -112,7 +112,7 @@ const AuthProviderInternal: React.FC<{ children: React.ReactNode }> = ({
   const register = useCallback(
     async (username: string, email: string, password: string) => {
       try {
-        const response = await axios.post(`${API_URL}/api/auth/inscription`, {
+        const response = await axios.post(`${API_URL}/auth/inscription`, {
           username,
           email,
           password,

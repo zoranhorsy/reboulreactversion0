@@ -138,7 +138,7 @@ export function UserOrders() {
         setIsSubmitting(false);
         return;
       }
-      const res = await fetch(`${API_URL}/api/orders/${orderId}/return`, {
+              const res = await fetch(`${API_URL}/orders/${orderId}/return`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -204,7 +204,7 @@ export function UserOrders() {
         setIsMultiSubmitting(false);
         return;
       }
-      const res = await fetch(`${API_URL}/api/orders/${order.id}/return`, {
+              const res = await fetch(`${API_URL}/orders/${order.id}/return`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

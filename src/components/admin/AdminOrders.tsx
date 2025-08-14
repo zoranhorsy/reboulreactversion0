@@ -370,7 +370,7 @@ export function AdminOrders() {
 
       console.log(`📤 Données envoyées au backend:`, stockItems);
 
-      const response = await fetch(`${API_URL}/api/products/update-stock`, {
+              const response = await fetch(`${API_URL}/products/update-stock`, {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({
@@ -431,7 +431,7 @@ export function AdminOrders() {
         type
       };
 
-      const response = await fetch(`${API_URL}/api/orders/send-email`, {
+              const response = await fetch(`${API_URL}/orders/send-email`, {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify(emailData),
