@@ -2,6 +2,7 @@
 
 import React, { useRef, useEffect } from "react";
 import { HeroSection } from "../HeroSection";
+import { CollectionsCarousel } from "../CollectionsCarousel";
 import OptimizedFeaturedProducts from "./OptimizedFeaturedProducts";
 import OptimizedStoreSelection from "./OptimizedStoreSelection";
 import dynamic from "next/dynamic";
@@ -48,6 +49,11 @@ export default function OptimizedHomeContent() {
       {/* Section principale */}
       <div className="opacity-100">
         <HeroSection />
+      </div>
+
+      {/* Carousel des collections */}
+      <div className="opacity-100 mb-8">
+        <CollectionsCarousel />
       </div>
 
       {/* Sections */}
