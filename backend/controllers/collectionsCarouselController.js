@@ -5,9 +5,38 @@ const { AppError } = require('../middleware/errorHandler');
 exports.getAllCollections = async (req, res) => {
     try {
         const result = await db.pool.query(`
-            SELECT * FROM collections_carousel 
-            WHERE is_active = true 
-            ORDER BY sort_order ASC, created_at ASC
+            SELECT 
+                cc.*,
+                b.name as brand_name,
+                COALESCE(p_count.count, 0) + COALESCE(sp_count.count, 0) + COALESCE(mp_count.count, 0) + COALESCE(cp_count.count, 0) as product_count
+            FROM collections_carousel cc
+            LEFT JOIN brands b ON cc.brand_id = b.id
+            LEFT JOIN (
+                SELECT brand_id, COUNT(*) as count 
+                FROM products 
+                WHERE active = true 
+                GROUP BY brand_id
+            ) p_count ON cc.brand_id = p_count.brand_id
+            LEFT JOIN (
+                SELECT brand_id, COUNT(*) as count 
+                FROM sneakers_products 
+                WHERE active = true 
+                GROUP BY brand_id
+            ) sp_count ON cc.brand_id = sp_count.brand_id
+            LEFT JOIN (
+                SELECT brand_id, COUNT(*) as count 
+                FROM minots_products 
+                WHERE active = true 
+                GROUP BY brand_id
+            ) mp_count ON cc.brand_id = mp_count.brand_id
+            LEFT JOIN (
+                SELECT brand_id, COUNT(*) as count 
+                FROM corner_products 
+                WHERE active = true 
+                GROUP BY brand_id
+            ) cp_count ON cc.brand_id = cp_count.brand_id
+            WHERE cc.is_active = true 
+            ORDER BY cc.sort_order ASC, cc.created_at ASC
         `);
         res.status(200).json(result.rows);
     } catch (error) {

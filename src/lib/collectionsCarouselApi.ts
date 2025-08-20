@@ -11,6 +11,9 @@ export interface CollectionCarousel {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  brand_id?: number;
+  brand_name?: string;
+  product_count?: number;
 }
 
 export interface CreateCollectionCarouselData {
@@ -36,15 +39,24 @@ class CollectionsCarouselAPI {
   private baseUrl: string;
 
   constructor() {
+    console.log("🔍 DEBUG - config.urls.api:", config.urls.api);
+    // config.urls.api contient déjà /api, donc on ajoute /collections-carousel à la fin
     this.baseUrl = `${config.urls.api}/collections-carousel`;
+    console.log("🔍 DEBUG - this.baseUrl:", this.baseUrl);
   }
 
   private async handleResponse<T>(response: Response): Promise<T> {
+    console.log("🔍 DEBUG - handleResponse appelé");
+    
     if (!response.ok) {
       const errorText = await response.text();
+      console.log("🔍 DEBUG - Erreur HTTP:", response.status, errorText);
       throw new Error(`HTTP ${response.status}: ${errorText}`);
     }
-    return response.json();
+    
+    const data = await response.json();
+    console.log("🔍 DEBUG - Données parsées:", data);
+    return data;
   }
 
   private async makeRequest<T>(
@@ -53,6 +65,10 @@ class CollectionsCarouselAPI {
   ): Promise<T> {
     try {
       const url = `${this.baseUrl}${endpoint}`;
+      console.log("🔍 DEBUG - baseUrl:", this.baseUrl);
+      console.log("🔍 DEBUG - endpoint:", endpoint);
+      console.log("🔍 DEBUG - URL complète:", url);
+      
       const response = await fetch(url, {
         headers: {
           'Content-Type': 'application/json',
@@ -60,6 +76,9 @@ class CollectionsCarouselAPI {
         },
         ...options,
       });
+
+      console.log("🔍 DEBUG - Status de la réponse:", response.status);
+      console.log("🔍 DEBUG - Headers de la réponse:", Object.fromEntries(response.headers.entries()));
 
       return this.handleResponse<T>(response);
     } catch (error) {
