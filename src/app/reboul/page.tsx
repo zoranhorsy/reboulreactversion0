@@ -98,19 +98,11 @@ export default async function ReboulPage({
     }
   });
 
-  console.log('🔍 Query params pour /reboul:', queryParams);
-  
   const [productsData, categories, brands] = await Promise.all([
     api.fetchProducts(queryParams),
     api.fetchCategories(),
     api.fetchBrands(),
   ]);
-  
-  console.log('📦 Résultat productsData:', {
-    total: productsData.total,
-    productsCount: productsData.products?.length || 0,
-    products: productsData.products?.slice(0, 3) // Afficher les 3 premiers produits pour debug
-  });
 
   return (
     <Suspense fallback={<LoaderComponent />}>
