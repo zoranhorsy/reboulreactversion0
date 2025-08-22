@@ -58,11 +58,11 @@ export default function OptimizedHomeContent() {
 
       {/* Sections */}
       <div className="opacity-100">
-        <OptimizedStoreSelection />
+        <OptimizedFeaturedProducts />
       </div>
 
       <div className="opacity-100">
-        <OptimizedFeaturedProducts />
+        <OptimizedStoreSelection />
       </div>
 
       <div className="opacity-100">

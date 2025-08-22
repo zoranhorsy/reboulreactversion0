@@ -578,11 +578,8 @@ const BoutiquesGallery = () => {
 
   return (
     <div className="h-full flex flex-col">
-      {/* Titre et introduction */}
+      {/* Introduction */}
       <div className="mb-6 text-center">
-        <h3 className="text-xl font-medium text-neutral-800 dark:text-neutral-100 mb-2 underline decoration-2 underline-offset-4">
-          NOS BOUTIQUES
-        </h3>
         <p className="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed max-w-3xl mx-auto">
           Depuis 1872, nous réinventons l&apos;élégance en alliant luxe et mode dans des espaces d&apos;exception. 
           Poussez les portes de l&apos;un de nos concept stores et laissez-vous séduire par une sélection raffinée 

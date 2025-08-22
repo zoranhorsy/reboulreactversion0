@@ -35,7 +35,7 @@ export function ReboulPageHeader({
   logoImage = "/images/logotype_w.png",
 }: ReboulPageHeaderProps) {
   return (
-    <div className="relative w-full h-[220px] overflow-hidden bg-zinc-900 transition-all duration-500 ease-out rounded-xl">
+    <div className="relative w-full h-[220px] overflow-hidden bg-zinc-900 transition-all duration-500 ease-out sm:rounded-xl">
       {/* Image de fond avec overlay amélioré */}
       {backgroundImage && (
         <div className="absolute inset-0 z-0">
@@ -59,7 +59,7 @@ export function ReboulPageHeader({
           <div className="flex items-center gap-1.5 text-xs sm:text-sm text-white/80">
             <Link
               href={backLink}
-              className="flex items-center gap-1 hover:text-white transition-colors duration-300 font-medium"
+              className="flex items-center gap-1 text-white hover:text-white/80 transition-colors duration-300 font-medium"
             >
               <span>←</span>
               <span className="transition-all duration-300 ease-out">
@@ -72,12 +72,7 @@ export function ReboulPageHeader({
                   {index > 0 && <span>→</span>}
                   <Link
                     href={crumb.href}
-                    className={cn(
-                      "hover:text-white transition-all duration-300 ease-out truncate max-w-[80px] sm:max-w-[200px]",
-                      index === breadcrumbs.length - 1
-                        ? "text-white"
-                        : "text-white/80",
-                    )}
+                    className="text-white hover:text-white/80 transition-all duration-300 ease-out truncate max-w-[80px] sm:max-w-[200px]"
                   >
                     {crumb.label}
                   </Link>

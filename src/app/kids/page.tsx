@@ -117,7 +117,6 @@ export default async function KidsPage({
         backLink="/"
         backText="Accueil"
         breadcrumbs={[
-          { label: "Accueil", href: "/" },
           { label: "Kids", href: "/kids" },
         ]}
       />

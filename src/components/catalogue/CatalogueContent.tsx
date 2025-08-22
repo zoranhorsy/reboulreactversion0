@@ -624,7 +624,6 @@ export function CatalogueContent({
         backLink="/"
         backText="Accueil"
         breadcrumbs={[
-          { label: "Accueil", href: "/" },
           { label: "Catalogue", href: "/catalogue" },
         ]}
       />

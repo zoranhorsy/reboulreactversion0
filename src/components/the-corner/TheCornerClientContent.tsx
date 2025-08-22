@@ -348,7 +348,6 @@ export function TheCornerClientContent({
         backLink="/"
         backText="Accueil"
         breadcrumbs={[
-          { label: "Accueil", href: "/" },
           { label: "The Corner", href: "/the-corner" },
         ]}
       />

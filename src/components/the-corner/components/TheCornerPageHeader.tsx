@@ -36,7 +36,7 @@ export function TheCornerPageHeader({
   logoImage = "/images/the-corner-logo-white.png",
 }: TheCornerPageHeaderProps) {
   return (
-    <div className="relative w-full h-[280px] overflow-hidden bg-zinc-900 transition-all duration-500 ease-in-out rounded-xl">
+    <div className="relative w-full h-[280px] overflow-hidden bg-zinc-900 transition-all duration-500 ease-in-out sm:rounded-xl">
       {/* Image de fond */}
       {backgroundImage && (
         <div className="absolute inset-0 z-0">
@@ -58,7 +58,7 @@ export function TheCornerPageHeader({
           <div className="flex items-center gap-2 text-sm text-white/70">
             <Link
               href={backLink}
-              className="flex items-center gap-1 hover:text-white transition-colors duration-300"
+              className="flex items-center gap-1 text-white hover:text-white/80 transition-colors duration-300"
             >
               <span>←</span>
               <span className="transition-all duration-500 ease-in-out">
@@ -72,12 +72,7 @@ export function TheCornerPageHeader({
                     {index > 0 && <span>→</span>}
                     <Link
                       href={crumb.href}
-                      className={cn(
-                        "hover:text-white transition-all duration-500 ease-in-out truncate max-w-[80px] sm:max-w-[200px]",
-                        index === breadcrumbs.length - 1
-                          ? "text-white"
-                          : "text-white/70",
-                      )}
+                      className="text-white hover:text-white/80 transition-all duration-500 ease-in-out truncate max-w-[80px] sm:max-w-[200px]"
                     >
                       {crumb.label}
                     </Link>
