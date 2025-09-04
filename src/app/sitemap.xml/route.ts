@@ -15,7 +15,7 @@ export async function GET() {
 
   // Récupérer un set de produits récents pour générer des URLs de pages produit
   try {
-    const resp = await fetch(`${apiBase}/products?limit=200`, {
+    const resp = await fetch(`${apiBase}/public/sitemap-products?limit=200`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
