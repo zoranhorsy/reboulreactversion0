@@ -19,15 +19,15 @@ const inter = Inter({
 // Metadata optimisée
 export const metadata: Metadata = {
   title: {
-    default: "Reboul Store 2.0 - Boutique de mode premium",
+    default: "Reboul Store 2.0",
     template: "%s | Reboul Store 2.0",
   },
   description:
-    "Découvrez la collection exclusive de vêtements et accessoires de mode premium chez Reboul Store. Qualité exceptionnelle et design avant-gardiste.",
+    "Boutique premium à Marseille, Cassis et Sanary. Collections mode, sneakers et créateurs. Livraison rapide et expérience shopping unique.",
   keywords: ["mode", "vêtements", "premium", "design", "qualité"],
   authors: [{ name: "Reboul Store" }],
   creator: "Reboul Store",
-  metadataBase: new URL("https://reboul-store.com"),
+  metadataBase: new URL("https://reboulstore.com"),
   icons: {
     icon: "/api/favicon",
   },
@@ -37,13 +37,13 @@ export const metadata: Metadata = {
     locale: "fr_FR",
     url: "https://reboul-store.com",
     title: "Reboul Store - Mode Premium",
-    description: "Collection exclusive de vêtements premium",
+    description: "Boutique premium à Marseille, Cassis et Sanary. Collections mode, sneakers et créateurs. Livraison rapide et expérience shopping unique.",
     siteName: "Reboul Store",
   },
   twitter: {
     card: "summary_large_image",
     title: "Reboul Store",
-    description: "Mode premium et design avant-gardiste",
+    description: "Boutique premium à Marseille, Cassis et Sanary. Collections mode, sneakers et créateurs. Livraison rapide et expérience shopping unique.",
   },
   robots: {
     index: true,
