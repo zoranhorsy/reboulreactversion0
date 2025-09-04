@@ -45,10 +45,10 @@ export async function generateMetadata({
       title,
       description,
       type: "website",
-      url: "https://reboul-store.com/kids",
+      url: "https://reboulstore.com/kids",
       images: [
         {
-          url: "https://reboul-store.com/og-image.jpg",
+          url: "https://reboulstore.com/og-image.jpg",
           width: 1200,
           height: 630,
           alt: "Reboul Kids Collection",

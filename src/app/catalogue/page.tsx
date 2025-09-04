@@ -46,10 +46,10 @@ export async function generateMetadata({
       title,
       description,
       type: "website",
-      url: "https://reboul-store.com/catalogue",
+      url: "https://reboulstore.com/catalogue",
       images: [
         {
-          url: "https://reboul-store.com/og-image.jpg",
+          url: "https://reboulstore.com/og-image.jpg",
           width: 1200,
           height: 630,
           alt: "Reboul Store Catalogue",

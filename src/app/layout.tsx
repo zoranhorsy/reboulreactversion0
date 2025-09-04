@@ -19,7 +19,7 @@ const inter = Inter({
 // Metadata optimisée
 export const metadata: Metadata = {
   title: {
-    default: "Reboul Store 2.0",
+    default: "Reboul Store – Mode premium, sneakers et créateurs à Marseille, Cassis, Sanary",
     template: "%s | Reboul Store 2.0",
   },
   description:
@@ -35,10 +35,21 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "fr_FR",
-    url: "https://reboul-store.com",
+    url: "https://reboulstore.com",
     title: "Reboul Store - Mode Premium",
     description: "Boutique premium à Marseille, Cassis et Sanary. Collections mode, sneakers et créateurs. Livraison rapide et expérience shopping unique.",
     siteName: "Reboul Store",
+    images: [
+      {
+        url: "https://reboulstore.com/og-image.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Reboul Store",
+      },
+    ],
+  },
+  alternates: {
+    canonical: "/",
   },
   twitter: {
     card: "summary_large_image",
@@ -57,7 +68,7 @@ export const metadata: Metadata = {
     },
   },
   verification: {
-    google: "google-site-verification=your-google-verification-code",
+    google: "2cShi_nuML5nZ4A596SC86B1aXj1rwT9OYX65woQIHY",
   },
 };
 
@@ -87,6 +98,33 @@ export default function RootLayout({
         />
         {/* Favicon explicite pour forcer l'utilisation */}
         <link rel="icon" type="image/x-icon" href="/api/favicon" />
+        {/* JSON-LD: Organization & Website */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@graph': [
+                {
+                  '@type': 'Organization',
+                  name: 'Reboul Store',
+                  url: 'https://reboulstore.com',
+                  logo: 'https://reboulstore.com/api/favicon',
+                },
+                {
+                  '@type': 'WebSite',
+                  name: 'Reboul Store',
+                  url: 'https://reboulstore.com',
+                  potentialAction: {
+                    '@type': 'SearchAction',
+                    target: 'https://reboulstore.com/catalogue?search={search_term_string}',
+                    'query-input': 'required name=search_term_string',
+                  },
+                },
+              ],
+            }),
+          }}
+        />
       </head>
       <body
         className={`min-h-screen bg-background font-sans antialiased ${inter.className}`}
