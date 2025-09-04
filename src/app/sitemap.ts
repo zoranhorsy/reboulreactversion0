@@ -6,37 +6,37 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   return [
     {
-      url: `${baseUrl}/`;
+      url: `${baseUrl}/`,
       lastModified: now,
       changeFrequency: "daily",
       priority: 1,
     },
     {
-      url: `${baseUrl}/catalogue`;
+      url: `${baseUrl}/catalogue`,
       lastModified: now,
       changeFrequency: "daily",
       priority: 0.9,
     },
     {
-      url: `${baseUrl}/reboul`;
+      url: `${baseUrl}/reboul`,
       lastModified: now,
       changeFrequency: "daily",
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/sneakers`;
+      url: `${baseUrl}/sneakers`,
       lastModified: now,
       changeFrequency: "daily",
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/kids`;
+      url: `${baseUrl}/kids`,
       lastModified: now,
       changeFrequency: "daily",
       priority: 0.7,
     },
     {
-      url: `${baseUrl}/the-corner`;
+      url: `${baseUrl}/the-corner`,
       lastModified: now,
       changeFrequency: "daily",
       priority: 0.7,
