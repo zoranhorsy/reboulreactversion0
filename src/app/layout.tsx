@@ -41,7 +41,7 @@ export const metadata: Metadata = {
     siteName: "Reboul Store",
     images: [
       {
-        url: "https://reboulstore.com/og-image.jpg",
+        url: "https://reboulstore.com/og-image.jpg?v=2025-09-05-1",
         width: 1200,
         height: 630,
         alt: "Reboul Store",
