@@ -24,8 +24,9 @@ export async function generateMetadata({
   const brand = searchParams.brand as string | undefined;
   const search = searchParams.search as string | undefined;
 
-  let title = "Reboul Adulte - Collection Premium";
-  let description = "Découvrez notre collection premium pour adultes chez Reboul.";
+  let title = "Reboul Adulte – Stone Island, C.P. Company, Off-White, A.P.C., ARTE";
+  let description =
+    "Collection adulte premium à Marseille. Plus grand dépositaire Stone Island. 37+ marques: C.P. Company (The Corner), Off-White, A.P.C., ARTE. Cassis, Sanary.";
 
   if (category) {
     title = `${category} - Reboul Adulte`;

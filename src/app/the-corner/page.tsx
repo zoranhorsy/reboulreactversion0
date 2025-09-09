@@ -44,9 +44,9 @@ export async function generateMetadata({
   const brand = searchParams.brand as string | undefined;
   const search = searchParams.search as string | undefined;
 
-  let title = "The Corner - Reboul Store";
+  let title = "The Corner – C.P. Company by Reboul";
   let description =
-    "Découvrez notre sélection de vêtements premium de The Corner chez Reboul Store.";
+    "Boutique référente C.P. Company à Marseille. Vestes, sweats, cargos, accessoires. Nouveautés et classiques.";
 
   if (category) {
     title = `${category} - The Corner | Reboul Store`;

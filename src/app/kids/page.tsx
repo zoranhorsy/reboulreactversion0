@@ -24,8 +24,8 @@ export async function generateMetadata({
   const brand = searchParams.brand as string | undefined;
   const search = searchParams.search as string | undefined;
 
-  let title = "Kids - Collection Enfants";
-  let description = "Découvrez notre collection mode pour enfants chez Reboul.";
+  let title = "Les Minots de Reboul – Enfant & bébé";
+  let description = "Collection enfant & bébé. Les Minots de Reboul à Marseille.";
 
   if (category) {
     title = `${category} - Kids Reboul`;

@@ -24,8 +24,9 @@ export async function generateMetadata({
   const brand = searchParams.brand as string | undefined;
   const search = searchParams.search as string | undefined;
 
-  let title = "Sneakers - Collection Urban";
-  let description = "Découvrez notre collection de sneakers et chaussures urbaines chez Reboul.";
+  let title = "Sneakers – Salomon, Autry, Asics, Axel Arigato, Off-White";
+  let description =
+    "Sélection sneakers best-sellers: Salomon, Autry, Asics, Axel Arigato, Off-White. Marseille, Cassis, Sanary.";
 
   if (category) {
     title = `${category} - Sneakers Reboul`;

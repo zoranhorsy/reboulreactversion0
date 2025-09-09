@@ -19,11 +19,11 @@ const inter = Inter({
 // Metadata optimisée
 export const metadata: Metadata = {
   title: {
-    default: "Reboul Store – Mode premium, sneakers et créateurs à Marseille, Cassis, Sanary",
-    template: "%s | Reboul Store 2.0",
+    default: "Reboul Store – Plus grand dépositaire Stone Island, C.P. Company, Autry | Marseille, Cassis, Sanary",
+    template: "%s | Reboul Online",
   },
   description:
-    "Boutique premium à Marseille, Cassis et Sanary. Collections mode, sneakers et créateurs. Livraison rapide et expérience shopping unique.",
+    "Reboul Store: adulte/enfant Marseille. Concept store & hôtel Cassis. Sanary. Plus grand dépositaire Stone Island. 37+ marques: C.P. Company, Off-White, A.P.C., ARTE, Autry.",
   keywords: ["mode", "vêtements", "premium", "design", "qualité"],
   authors: [{ name: "Reboul Store" }],
   creator: "Reboul Store",
@@ -36,8 +36,8 @@ export const metadata: Metadata = {
     type: "website",
     locale: "fr_FR",
     url: "https://reboulstore.com",
-    title: "Reboul Store - Mode Premium",
-    description: "Boutique premium à Marseille, Cassis et Sanary. Collections mode, sneakers et créateurs. Livraison rapide et expérience shopping unique.",
+    title: "Reboul Store – Plus grand dépositaire Stone Island, C.P. Company, Autry | Marseille, Cassis, Sanary",
+    description: "Reboul Store: adulte/enfant Marseille. Concept store & hôtel Cassis. Sanary. Plus grand dépositaire Stone Island. 37+ marques: C.P. Company, Off-White, A.P.C., ARTE, Autry.",
     siteName: "Reboul Store",
     images: [
       {
@@ -53,8 +53,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Reboul Store",
-    description: "Boutique premium à Marseille, Cassis et Sanary. Collections mode, sneakers et créateurs. Livraison rapide et expérience shopping unique.",
+    title: "Reboul Store – Plus grand dépositaire Stone Island, C.P. Company, Autry | Marseille, Cassis, Sanary",
+    description: "Reboul Store: adulte/enfant Marseille. Concept store & hôtel Cassis. Sanary. Plus grand dépositaire Stone Island. 37+ marques: C.P. Company, Off-White, A.P.C., ARTE, Autry.",
   },
   robots: {
     index: true,
