@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo, memo } from "react";
 import { motion } from "framer-motion";
 // TODO: Envisager de remplacer framer-motion par des animations CSS pour réduire la taille du bundle
 // TODO: Envisager de remplacer framer-motion par des animations CSS pour réduire la taille du bundle
-import { FeaturedProductCard } from "./products/FeaturedProductCard";
+import { DefinitiveProductCard } from "@/components/DefinitiveProductCard";
 import { Button } from "@/components/ui/button";
 import { fetchProducts, Product } from "@/lib/api";
 import {
@@ -150,7 +150,11 @@ const SimilarProductsComponent = ({
                       delay: Math.min(index * 0.05, 0.5),
                     }}
                   >
-                    <FeaturedProductCard product={product} />
+                    <DefinitiveProductCard
+                      product={product}
+                      baseUrl={product.is_corner_product ? "/the-corner" : "/produit"}
+                      variant={product.is_corner_product ? "corner" : "main"}
+                    />
                   </motion.div>
                 </CarouselItem>
               ))}
